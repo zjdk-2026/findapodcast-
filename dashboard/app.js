@@ -472,7 +472,7 @@ function renderDashboard(data) {
       gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">✓ Gmail Connected</span>`;
       gmailItem.style.cursor = 'default';
     } else {
-      gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">📬 Connect Gmail</a>`;
+      gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">Connect Gmail</a>`;
     }
   }
 
@@ -480,7 +480,7 @@ function renderDashboard(data) {
   const themeItem = $('theme-toggle-item');
   if (themeItem) {
     const isLight = document.documentElement.classList.contains('light-mode');
-    themeItem.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+    themeItem.textContent = isLight ? 'Dark Mode' : 'Light Mode';
   }
 
   // Close dropdown when clicking outside (attach once only)
@@ -926,7 +926,7 @@ function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light-mode');
   localStorage.setItem('pp-theme', isLight ? 'light' : 'dark');
   const themeItem = $('theme-toggle-item');
-  if (themeItem) themeItem.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+  if (themeItem) themeItem.textContent = isLight ? 'Dark Mode' : 'Light Mode';
   $('profile-dropdown').style.display = 'none';
 }
 
@@ -940,7 +940,7 @@ function copyDashboardLink() {
 async function runPipeline() {
   const btn = $('dropdown-run-pipeline');
   if (!btn || !state.client) return;
-  btn.textContent = '⏳ Running…';
+  btn.textContent = 'Running…';
   btn.disabled = true;
   $('profile-dropdown').style.display = 'none';
   try {
@@ -953,7 +953,7 @@ async function runPipeline() {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { btn.textContent = '▶ Run Pipeline Now'; btn.disabled = false; }
+  finally { btn.textContent = 'Run Pipeline Now'; btn.disabled = false; }
 }
 
 // ── Profile modal ─────────────────────────────────────────────────────

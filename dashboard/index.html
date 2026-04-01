@@ -32,14 +32,14 @@
   <div id="profile-dropdown" class="profile-dropdown" style="display:none;">
     <div class="dropdown-header" id="dropdown-client-info"></div>
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" id="theme-toggle-item" onclick="toggleTheme()">☀️ Light Mode</button>
-    <button class="dropdown-item" onclick="openProfileModal()">✏️ Edit My Profile</button>
-    <button class="dropdown-item" onclick="openTemplateModal()">📧 Customize Email Template</button>
+    <button class="dropdown-item" id="theme-toggle-item" onclick="toggleTheme()">Light Mode</button>
+    <button class="dropdown-item" onclick="openProfileModal()">Edit My Profile</button>
+    <button class="dropdown-item" onclick="openTemplateModal()">Customize Email Template</button>
     <div class="dropdown-item" id="dropdown-gmail-item"></div>
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" id="dropdown-run-pipeline" onclick="runPipeline()">▶ Run Pipeline Now</button>
+    <button class="dropdown-item" id="dropdown-run-pipeline" onclick="runPipeline()">Run Pipeline Now</button>
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" onclick="copyDashboardLink()">📋 Copy Dashboard Link</button>
+    <button class="dropdown-item" onclick="copyDashboardLink()">Copy Dashboard Link</button>
   </div>
 
   <!-- Main app container -->
@@ -53,7 +53,7 @@
 
     <!-- Error state -->
     <div id="error-state" class="error-container" style="display:none;">
-      <div class="error-icon">⚠️</div>
+      <div class="error-icon">!</div>
       <h2 class="error-title">Could not load dashboard</h2>
       <p class="error-message" id="error-message-text"></p>
       <button class="btn btn-primary" onclick="location.reload()">Try again</button>
@@ -61,7 +61,7 @@
 
     <!-- Empty state (no token) -->
     <div id="empty-state" class="empty-container" style="display:none;">
-      <div class="empty-icon">🔍</div>
+      <div class="empty-icon"></div>
       <h2 class="empty-title">No dashboard token found</h2>
       <p class="empty-desc">Visit your dashboard URL: <code>/dashboard/YOUR_TOKEN</code></p>
     </div>
@@ -234,13 +234,13 @@
   <!-- Confirm send modal -->
   <div id="confirm-modal" class="modal-overlay" style="display:none;">
     <div class="modal" style="max-width:420px;text-align:center;padding:32px">
-      <div style="font-size:36px;margin-bottom:16px">📬</div>
+      <div style="margin-bottom:16px"></div>
       <h3 style="margin-bottom:8px;font-size:18px;font-weight:600;">Send this pitch?</h3>
       <p id="confirm-send-show-name" style="color:var(--accent);font-weight:500;margin-bottom:8px;font-size:14px;"></p>
       <p style="color:var(--text-tertiary);margin-bottom:28px;font-size:13px;line-height:1.6;">This sends the email directly from your Gmail account. Once sent, it cannot be undone.</p>
       <div style="display:flex;gap:12px;justify-content:center;">
         <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
-        <button class="btn btn-primary" id="confirm-send-btn">Send It ✈️</button>
+        <button class="btn btn-primary" id="confirm-send-btn">Send It</button>
       </div>
     </div>
   </div>

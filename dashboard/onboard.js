@@ -140,7 +140,7 @@ async function submitForm() {
 
 // ── Show success screen ───────────────────────────────────────
 function showSuccess(data) {
-  const token        = data.dashboard_token || data.client?.dashboard_token || '';
+  const token        = data.dashboardToken || data.dashboard_token || data.client?.dashboard_token || '';
   const base         = window.location.origin;
   const dashboardUrl = `${base}/dashboard/${token}`;
   const gmailUrl     = `${base}/auth/gmail?token=${token}`;
@@ -189,7 +189,7 @@ function showPaymentBanner() {
     'gap:14px',
     'box-shadow:0 2px 12px rgba(34,197,94,0.15)',
   ].join(';');
-  banner.innerHTML = '<span style="font-size:28px;flex-shrink:0;">🎉</span><div><div style="font-size:17px;font-weight:700;margin-bottom:4px;">Payment confirmed — welcome aboard!</div><div style="font-size:14px;opacity:0.8;">Complete your profile below and your pipeline will be live within minutes.</div></div>';
+  banner.innerHTML = '<div><div style="font-size:17px;font-weight:700;margin-bottom:4px;">Payment confirmed — welcome aboard!</div><div style="font-size:14px;opacity:0.8;">Complete your profile below and your pipeline will be live within minutes.</div></div>';
   const wrap = document.querySelector('.onboard-wrap');
   const header = document.querySelector('.onboard-header');
   if (header) header.insertAdjacentElement('beforebegin', banner);
