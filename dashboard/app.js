@@ -529,16 +529,7 @@ function renderDashboard(data) {
     }
   }
 
-  // Show Gmail connect button in header if not yet connected
-  const headerActions = $('header-actions');
-  if (headerActions && !client.gmail_email) {
-    const gmailBtn = document.createElement('a');
-    gmailBtn.href = `/auth/gmail?clientId=${esc(client.id)}`;
-    gmailBtn.className = 'btn btn-outline';
-    gmailBtn.textContent = 'Connect Gmail';
-    gmailBtn.style.cssText = 'font-size:13px;';
-    headerActions.insertBefore(gmailBtn, headerActions.firstChild);
-  }
+  // Gmail connect is handled via the profile dropdown only
 
   // Set theme toggle label
   const themeItem = $('theme-toggle-item');
@@ -1046,6 +1037,16 @@ function copyDashboardLink() {
 async function runPipeline() {
   const btn = $('header-run-pipeline');
   if (!btn || !state.client) return;
+
+  // Prompt to connect Gmail if not yet connected
+  if (!state.client.gmail_email) {
+    const go = confirm('Connect your Gmail first so pitches can be sent directly from your inbox.\n\nClick OK to connect Gmail now.');
+    if (go) {
+      window.location.href = `/auth/gmail?clientId=${esc(state.client.id)}`;
+    }
+    return;
+  }
+
   btn.textContent = 'Running…';
   btn.disabled = true;
   $('profile-dropdown').style.display = 'none';
