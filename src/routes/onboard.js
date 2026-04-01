@@ -21,7 +21,7 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
   <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
     <div style="text-align:center;margin-bottom:32px;">
       <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Find A Podcast</p>
-      <h1 style="margin:0 0 12px;color:#f1f5f9;font-size:28px;font-weight:800;">You're in, ${escapeHtml(client.name.split(' ')[0])}! 🎙️</h1>
+      <h1 style="margin:0 0 12px;color:#f1f5f9;font-size:28px;font-weight:800;">You're in, ${escapeHtml(client.name.split(' ')[0])}.</h1>
       <p style="margin:0;color:#94a3b8;font-size:15px;line-height:1.6;">Your podcast booking pipeline is live. We'll start finding shows that match your topics and send you daily opportunities.</p>
     </div>
 
@@ -32,10 +32,16 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
       <p style="margin:12px 0 0;color:#475569;font-size:12px;word-break:break-all;">${dashboardUrl}</p>
     </div>
 
-    <div style="background:#1e1e2e;border-radius:12px;padding:24px;margin-bottom:32px;border:1px solid #2d2d3f;">
+    <div style="background:#1e1e2e;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #2d2d3f;">
       <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Connect Gmail (Optional)</h2>
       <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">Connect your Gmail so pitches can be sent directly from your inbox. Takes 30 seconds.</p>
       <a href="${gmailAuthUrl}" style="display:block;background:#1e1e2e;color:#6366f1;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #6366f1;">Connect Gmail →</a>
+    </div>
+
+    <div style="background:#1e293b;border-radius:12px;padding:24px;margin-bottom:32px;border:2px solid #6366f1;">
+      <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Book Your Free Strategy Session</h2>
+      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">As a new member, you get a complimentary 60-minute strategy session to optimise your pitch, CTA, and sales funnel. Book your slot below.</p>
+      <a href="https://api.leadconnectorhq.com/widget/bookings/60-minute-meeting-with-zac-deane" style="display:block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:700;text-align:center;">Book My Strategy Session →</a>
     </div>
 
     <div style="text-align:center;">
