@@ -31,7 +31,10 @@ function stripHtml(html) {
 
 function applyThemePreference() {
   const saved = localStorage.getItem('pp-theme');
-  if (saved === 'light') {
+  // Default is light mode; only go dark if explicitly saved as dark
+  if (saved === 'dark') {
+    document.documentElement.classList.remove('light-mode');
+  } else {
     document.documentElement.classList.add('light-mode');
   }
 }

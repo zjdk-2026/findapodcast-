@@ -101,9 +101,9 @@ app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));
 });
 
-// Root — redirect to onboarding page
+// Root — landing page
 app.get('/', (req, res) => {
-  res.redirect('/onboard');
+  res.sendFile(path.join(dashboardDir, 'landing.html'));
 });
 
 // ── 404 Handler ──────────────────────────────────────────────────────
