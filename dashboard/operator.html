@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podcast Pipeline — Operator</title>
+  <link rel="stylesheet" href="/dashboard/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Password gate -->
+  <div class="pw-gate" id="pw-gate">
+    <div class="pw-card">
+      <div class="pw-icon">🔐</div>
+      <h2 class="pw-title">Operator Access</h2>
+      <p class="pw-sub">Enter the operator password to continue.</p>
+      <input
+        type="password"
+        id="pw-input"
+        class="pw-input"
+        placeholder="Password"
+        onkeydown="if(event.key==='Enter')checkPassword()"
+        autocomplete="current-password"
+      />
+      <p class="pw-error" id="pw-error">Incorrect password. Try again.</p>
+      <button class="btn btn-primary" style="width:100%;" onclick="checkPassword()">Enter →</button>
+    </div>
+  </div>
+
+  <!-- Operator dashboard (hidden until auth) -->
+  <div class="op-wrap" id="op-wrap">
+
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <span class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+        </span>
+        <span class="brand-name">Podcast Pipeline</span>
+      </div>
+      <div class="navbar-right">
+        <span class="status-badge status-replied" style="font-size:11px;">Operator</span>
+        <a href="/onboard" class="btn btn-primary btn-sm">+ Add Client</a>
+      </div>
+    </nav>
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">All Clients</h1>
+        <p class="page-sub">Manage every client from one place.</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadClients()">↻ Refresh</button>
+    </div>
+
+    <!-- Totals strip -->
+    <div class="totals-strip" id="totals-strip">
+      <div class="stat-card">
+        <span class="stat-value" id="tot-clients">—</span>
+        <span class="stat-label">Total Clients</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value stat-purple" id="tot-today">—</span>
+        <span class="stat-label">Matches Today</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value stat-blue" id="tot-sent">—</span>
+        <span class="stat-label">Sent This Week</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section">
+      <div class="table-wrap">
+        <div id="table-loading" class="table-loading">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+          <p>Loading clients…</p>
+        </div>
+        <table id="clients-table" style="display:none;">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Email</th>
+              <th>Last Run</th>
+              <th style="text-align:center;">Total</th>
+              <th style="text-align:center;">Approved</th>
+              <th style="text-align:center;">Sent</th>
+              <th style="text-align:center;">Booked</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clients-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script src="/dashboard/operator.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podcast Pipeline — Get Started</title>
+  <link rel="stylesheet" href="/dashboard/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
+      </span>
+      <span class="brand-name">Podcast Pipeline</span>
+    </div>
+  </nav>
+
+  <div class="onboard-wrap">
+
+    <div class="onboard-header">
+      <h1>Get Started</h1>
+      <p>Tell us about yourself and we'll find the perfect podcasts for you.</p>
+    </div>
+
+    <!-- Progress steps -->
+    <div class="progress-bar-wrap">
+      <div class="progress-steps">
+        <div class="progress-step active" id="step-indicator-1">
+          <div class="step-dot">1</div>
+          <span class="step-label">You</span>
+        </div>
+        <div class="progress-step" id="step-indicator-2">
+          <div class="step-dot">2</div>
+          <span class="step-label">Topics</span>
+        </div>
+        <div class="progress-step" id="step-indicator-3">
+          <div class="step-dot">3</div>
+          <span class="step-label">Prefs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+
+      <!-- Step 1: About You -->
+      <div class="step-panel active" id="step-1">
+        <h2 class="step-title">About You</h2>
+        <p class="step-desc">Let's start with the basics so we can personalise your outreach.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-name">Full Name <span class="req">*</span></label>
+            <input type="text" id="f-name" class="form-input" placeholder="Jane Smith" autocomplete="name" />
+            <p class="field-error" id="err-name">Please enter your name.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-email">Email <span class="req">*</span></label>
+            <input type="email" id="f-email" class="form-input" placeholder="jane@example.com" autocomplete="email" />
+            <p class="field-error" id="err-email">Please enter a valid email.</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-business">Business / Brand</label>
+            <input type="text" id="f-business" class="form-input" placeholder="Acme Inc." />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-title">Your Title</label>
+            <input type="text" id="f-title" class="form-input" placeholder="CEO &amp; Author" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-bio-short">Short Bio <span class="req">*</span></label>
+          <textarea id="f-bio-short" class="form-textarea" rows="3" placeholder="2–3 sentences used in pitch emails…"></textarea>
+          <p class="field-error" id="err-bio-short">Please enter a short bio (at least 10 characters).</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-bio-long">Full Bio</label>
+          <textarea id="f-bio-long" class="form-textarea" rows="5" placeholder="Your full speaker / author bio for show notes…"></textarea>
+        </div>
+
+        <div class="form-nav">
+          <span></span>
+          <button class="btn btn-primary" onclick="goToStep(2)">Next: Topics &amp; Angles →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Topics & Angles -->
+      <div class="step-panel" id="step-2">
+        <h2 class="step-title">Topics &amp; Angles</h2>
+        <p class="step-desc">Tell us what you talk about so we can find shows that are a perfect fit.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="f-topics">Your Topics <span class="req">*</span></label>
+          <input type="text" id="f-topics" class="form-input" placeholder="entrepreneurship, health, leadership, AI" />
+          <p class="form-hint">Separate with commas. Be specific — "SaaS bootstrapping" beats "business".</p>
+          <p class="field-error" id="err-topics">Please enter at least one topic.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-angles">Speaking Angles</label>
+          <input type="text" id="f-angles" class="form-input" placeholder="from burnout to $1M, building in public, stoic leadership" />
+          <p class="form-hint">The specific stories or frameworks you bring to interviews.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-audience">Target Audience</label>
+          <input type="text" id="f-audience" class="form-input" placeholder="Founders, solo parents, health-conscious professionals…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-lead-magnet">Lead Magnet / Free Offer</label>
+          <input type="text" id="f-lead-magnet" class="form-input" placeholder="Free 5-day email course at example.com/free" />
+          <p class="form-hint">What you offer listeners. Used in the email CTA.</p>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn btn-outline" onclick="goToStep(1)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStep(3)">Next: Preferences →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Preferences -->
+      <div class="step-panel" id="step-3">
+        <h2 class="step-title">Preferences</h2>
+        <p class="step-desc">Final details — how you want outreach to sound and your links.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-website">Website</label>
+            <input type="url" id="f-website" class="form-input" placeholder="https://yoursite.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-booking">Booking Link</label>
+            <input type="url" id="f-booking" class="form-input" placeholder="https://cal.com/you" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-instagram">Instagram</label>
+            <input type="text" id="f-instagram" class="form-input" placeholder="@yourhandle" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-linkedin">LinkedIn URL</label>
+            <input type="url" id="f-linkedin" class="form-input" placeholder="https://linkedin.com/in/you" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-twitter">Twitter / X</label>
+            <input type="text" id="f-twitter" class="form-input" placeholder="@yourhandle" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-daily-target">Daily Podcast Target</label>
+            <input type="number" id="f-daily-target" class="form-input" value="10" min="1" max="50" />
+            <p class="form-hint">New shows to find per day.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-tone">Preferred Email Tone</label>
+          <select id="f-tone" class="form-select">
+            <option value="warm-professional">Warm &amp; Professional</option>
+            <option value="direct">Direct &amp; Confident</option>
+            <option value="casual">Casual &amp; Friendly</option>
+            <option value="formal">Formal</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">
+            <span id="submit-label">Launch My Pipeline →</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Success screen -->
+      <div class="step-panel" id="step-success">
+        <div class="success-screen">
+          <div class="success-icon">🎉</div>
+          <h2 class="success-title">You're in!</h2>
+          <p class="success-desc">Your Podcast Pipeline is live. Bookmark your personal dashboard — your matches will appear there.</p>
+          <p class="form-label" style="text-align:left;margin-bottom:8px;">Your Dashboard URL</p>
+          <div class="success-url-box" id="success-dashboard-url">Loading…</div>
+          <a id="success-dashboard-link" href="#" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px;">Open My Dashboard →</a>
+          <a id="success-gmail-link" href="#" class="btn btn-outline" style="width:100%;justify-content:center;">Connect Gmail to Enable Sending</a>
+          <p class="form-hint" style="margin-top:14px;text-align:center;">Connecting Gmail lets the pipeline send pitches directly from your inbox.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script src="/dashboard/onboard.js"></script>
+</body>
+</html>
