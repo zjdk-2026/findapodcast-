@@ -9,7 +9,7 @@ const FROM   = process.env.RESEND_FROM_EMAIL || 'hi@podcastpipeline.com';
 
 /**
  * sendWeeklyDigest(client)
- * Sends a Monday HTML email summarising the client's week in Podcast Pipeline.
+ * Sends a Monday HTML email summarising the client's week in Find A Podcast.
  */
 async function sendWeeklyDigest(client) {
   if (!client.email) {
@@ -61,7 +61,7 @@ async function sendWeeklyDigest(client) {
     await resend.emails.send({
       from:    FROM,
       to:      client.email,
-      subject: `Your week in Podcast Pipeline — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+      subject: `Your week in Find A Podcast — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
       html,
     });
     logger.info('Weekly digest sent', { clientId: client.id, email: client.email });
@@ -89,7 +89,7 @@ function buildDigestHtml({ clientName, sentThisWeek, repliedThisWeek, bookedThis
 
         <!-- Header -->
         <tr><td style="background:#111120;border:1px solid #252540;border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
-          <p style="color:#6366f1;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;">Podcast Pipeline</p>
+          <p style="color:#6366f1;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;">Find A Podcast</p>
           <h1 style="color:#f1f5f9;font-size:26px;font-weight:800;margin:0 0 8px;letter-spacing:-0.02em;">Your Week in Review</h1>
           <p style="color:#94a3b8;font-size:14px;margin:0;">Hi ${esc(clientName)}, here's what happened this week.</p>
         </td></tr>
@@ -141,7 +141,7 @@ function buildDigestHtml({ clientName, sentThisWeek, repliedThisWeek, bookedThis
         <!-- CTA -->
         <tr><td style="background:#16162a;border-left:1px solid #252540;border-right:1px solid #252540;border-bottom:1px solid #252540;border-radius:0 0 16px 16px;padding:24px 40px 36px;text-align:center;">
           <a href="${dashboardUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:-0.01em;">Review Your Pipeline →</a>
-          <p style="color:#4b5563;font-size:12px;margin:20px 0 0;">You're receiving this because you're a Podcast Pipeline client.<br/>Questions? Reply to this email.</p>
+          <p style="color:#4b5563;font-size:12px;margin:20px 0 0;">You're receiving this because you're a Find A Podcast client.<br/>Questions? Reply to this email.</p>
         </td></tr>
 
       </table>

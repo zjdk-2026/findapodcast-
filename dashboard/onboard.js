@@ -175,10 +175,25 @@ function showPaymentBanner() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('paid') !== 'true') return;
   const banner = document.createElement('div');
-  banner.style.cssText = 'background:#dcfce7;border:1px solid #86efac;color:#166534;padding:14px 24px;border-radius:12px;margin-bottom:24px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;';
-  banner.innerHTML = '<span style="font-size:20px;">✅</span><span><strong>Payment confirmed!</strong> Complete your profile below and we\'ll activate your pipeline immediately.</span>';
+  banner.style.cssText = [
+    'background:#f0fdf4',
+    'border:2px solid #22c55e',
+    'color:#14532d',
+    'padding:20px 28px',
+    'border-radius:16px',
+    'margin-bottom:28px',
+    'font-size:15px',
+    'font-weight:500',
+    'display:flex',
+    'align-items:center',
+    'gap:14px',
+    'box-shadow:0 2px 12px rgba(34,197,94,0.15)',
+  ].join(';');
+  banner.innerHTML = '<span style="font-size:28px;flex-shrink:0;">🎉</span><div><div style="font-size:17px;font-weight:700;margin-bottom:4px;">Payment confirmed — welcome aboard!</div><div style="font-size:14px;opacity:0.8;">Complete your profile below and your pipeline will be live within minutes.</div></div>';
+  const wrap = document.querySelector('.onboard-wrap');
   const header = document.querySelector('.onboard-header');
-  if (header) header.insertAdjacentElement('afterend', banner);
+  if (header) header.insertAdjacentElement('beforebegin', banner);
+  else if (wrap) wrap.prepend(banner);
 }
 
 // ── Clear errors on input ──────────────────────────────────────

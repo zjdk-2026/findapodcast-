@@ -20,7 +20,7 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Podcast Pipeline</p>
+      <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Find A Podcast</p>
       <h1 style="margin:0 0 12px;color:#f1f5f9;font-size:28px;font-weight:800;">You're in, ${escapeHtml(client.name.split(' ')[0])}! 🎙️</h1>
       <p style="margin:0;color:#94a3b8;font-size:15px;line-height:1.6;">Your podcast booking pipeline is live. We'll start finding shows that match your topics and send you daily opportunities.</p>
     </div>
@@ -39,7 +39,7 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
     </div>
 
     <div style="text-align:center;">
-      <p style="margin:0;color:#475569;font-size:12px;">Podcast Pipeline · findapodcast.club<br>Reply to this email if you need help.</p>
+      <p style="margin:0;color:#475569;font-size:12px;">Find A Podcast · findapodcast.club<br>Reply to this email if you need help.</p>
     </div>
   </div>
 </body>
@@ -51,7 +51,7 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
     body: JSON.stringify({
       from:    fromEmail,
       to:      [client.email],
-      subject: `Welcome to Podcast Pipeline, ${client.name.split(' ')[0]}! Your dashboard is ready`,
+      subject: `Welcome to Find A Podcast, ${client.name.split(' ')[0]}! Your dashboard is ready`,
       html,
     }),
   });

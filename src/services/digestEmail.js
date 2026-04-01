@@ -86,14 +86,14 @@ function buildDigestHtml(client, matches, dashboardUrl) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your Podcast Pipeline — ${date}</title>
+  <title>Your Find A Podcast — ${date}</title>
 </head>
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
 
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
-      <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Podcast Pipeline</p>
+      <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Find A Podcast</p>
       <h1 style="margin:0 0 8px;color:#f1f5f9;font-size:28px;font-weight:800;">Your Daily Opportunities</h1>
       <p style="margin:0;color:#64748b;font-size:14px;">${date}</p>
     </div>
@@ -129,7 +129,7 @@ function buildDigestHtml(client, matches, dashboardUrl) {
     <!-- Footer -->
     <div style="border-top:1px solid #2d2d3f;padding-top:24px;text-align:center;">
       <p style="margin:0;color:#475569;font-size:12px;">
-        Podcast Pipeline · Automated guest booking for ${escapeHtml(client.name)}<br>
+        Find A Podcast · Automated guest booking for ${escapeHtml(client.name)}<br>
         ${totalMatches} total match${totalMatches !== 1 ? 'es' : ''} found · ${highMatches} high-scoring opportunit${highMatches !== 1 ? 'ies' : 'y'}
       </p>
     </div>
@@ -172,7 +172,7 @@ async function sendDigestEmail(client, matches) {
   const payload = {
     from:    fromEmail,
     to:      [client.email],
-    subject: `Your Podcast Pipeline — ${date}`,
+    subject: `Your Find A Podcast — ${date}`,
     html,
   };
 
