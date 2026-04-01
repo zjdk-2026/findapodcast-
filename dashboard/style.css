@@ -698,9 +698,10 @@ html.light-mode ::-webkit-scrollbar-thumb {
   transition: width 0.6s var(--ease-spring);
 }
 
-.score-bar-fill.high { background: var(--success); }
-.score-bar-fill.mid  { background: var(--warning); }
-.score-bar-fill.low  { background: var(--danger); }
+.score-bar-fill.high    { background: var(--success); }
+.score-bar-fill.mid     { background: var(--warning); }
+.score-bar-fill.low     { background: var(--danger); }
+.score-bar-fill.neutral { background: #334155; }
 
 .score-row-value {
   font-size: 11px;
@@ -758,14 +759,13 @@ html.light-mode ::-webkit-scrollbar-thumb {
 
 .pitch-text {
   font-size: 13px;
-  color: var(--accent-hover);
+  color: var(--text-secondary);
   line-height: 1.5;
-  font-weight: 500;
 }
 
 .red-flags-text {
   font-size: 13px;
-  color: var(--warning);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 

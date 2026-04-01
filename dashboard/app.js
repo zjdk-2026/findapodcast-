@@ -134,7 +134,8 @@ function statusBadgeHtml(status) {
     sent:      'Sent',
     replied:   'Replied',
     booked:    'Booked',
-    dismissed: 'Dismissed',
+    dismissed: 'Ignored',
+    dream:     'Dream',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -161,17 +162,28 @@ function renderStats(stats) {
   set('stat-booked',   stats.booked);
 }
 
+// ── Score tooltips ────────────────────────────────────────────────────
+const SCORE_TOOLTIPS = {
+  'Relevance':   'How closely this show\'s topics match your niche and speaking angles.',
+  'Audience':    'The estimated size and quality of the show\'s listener base.',
+  'Recency':     'How recently the show published new episodes.',
+  'Reach':       'The show\'s overall footprint across platforms — YouTube subscribers, social following, listen score.',
+  'Contact':     'How easy it is to actually reach the host — email found, booking page, guest application form.',
+  'Brand Fit':   'How well your personal brand aligns with the show\'s tone and guest history.',
+  'Guest Qual.': 'The typical calibre of previous guests on this show.',
+};
+
 // ── Score bar HTML ────────────────────────────────────────────────────
 function scoreBarHtml(label, value) {
   const v   = Math.round(value || 0);
-  const cls = scoreColorClass(v);
+  const tip = SCORE_TOOLTIPS[label] || '';
   return `
     <div class="score-row">
-      <span class="score-row-label">${esc(label)}</span>
+      <span class="score-row-label" title="${esc(tip)}" style="cursor:help;">${esc(label)}${tip ? ' <span style="font-size:10px;opacity:0.5;border:1px solid currentColor;border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;margin-left:3px;">?</span>' : ''}</span>
       <div class="score-bar-track">
-        <div class="score-bar-fill ${cls}" style="width:${v}%"></div>
+        <div class="score-bar-fill neutral" style="width:${v}%"></div>
       </div>
-      <span class="score-row-value" style="color:${scoreColorVar(v)}">${v}</span>
+      <span class="score-row-value">${v}</span>
     </div>`;
 }
 
@@ -190,21 +202,26 @@ function contactChipsHtml(podcast) {
   if (podcast.guest_application_url) {
     chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply as Guest</a>`);
   }
-  return chips.length > 0
-    ? `<div class="card-contact">${chips.join('')}</div>`
+  const social = socialChipsHtml(podcast);
+  const all = [...chips, ...social];
+  return all.length > 0
+    ? `<div class="card-contact">${all.join('')}</div>`
     : `<div class="card-contact"><span class="text-muted" style="font-size:12px;">No contact info found</span></div>`;
 }
 
 // ── Social chips HTML ─────────────────────────────────────────────────
 function socialChipsHtml(podcast) {
   const chips = [];
+  if (podcast.apple_url)         chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
+  if (podcast.spotify_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
+  if (podcast.youtube_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
   if (podcast.instagram_url)     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
   if (podcast.twitter_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
+  if (podcast.tiktok_url)        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
   if (podcast.facebook_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
   if (podcast.linkedin_page_url) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
   if (podcast.linkedin_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (podcast.tiktok_url)        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
-  return chips.length > 0 ? `<div class="card-contact">${chips.join('')}</div>` : '';
+  return chips;
 }
 
 // ── Meta tags HTML ────────────────────────────────────────────────────
@@ -237,23 +254,40 @@ function actionButtonsHtml(match) {
   const hasEmail = (match.email_subject_edited || match.email_subject) && (match.email_body_edited || match.email_body);
   const buttons  = [];
 
-  if (hasEmail) {
-    buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
-  }
-
   if (status === 'new') {
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+    }
     buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">Approve</button>`);
-    buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Dismiss</button>`);
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
+    }
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'approved') {
-    buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Dismiss</button>`);
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
+    } else {
+      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Email being written…</span>`);
+    }
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
+  } else if (status === 'dream') {
+    buttons.push(`<span style="font-size:12px;font-weight:600;color:#8b5cf6;">Dream Show</span>`);
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="approveMatch('${id}')">Move to Active</button>`);
   } else if (status === 'sent') {
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+    }
     buttons.push(`<span style="font-size:11px;color:var(--text-tertiary);">Sent — awaiting reply</span>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'replied') {
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+    }
     buttons.push(`<span style="font-size:11px;color:var(--warning);font-weight:600;">Replied ↩</span>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'booked') {
@@ -275,20 +309,20 @@ function renderMatchCard(match) {
   const likeCls    = likelihoodClass(match.booking_likelihood);
 
   const redFlagsHtml = (match.red_flags && match.red_flags !== 'none')
-    ? `<div>
-        <p class="analysis-label" style="color:var(--danger);">Red Flags</p>
+    ? `<div class="why-fits-box">
+        <p class="why-fits-label">Red Flags</p>
         <p class="red-flags-text">${esc(match.red_flags)}</p>
        </div>`
     : '';
 
   const episodeHtml = (match.episode_to_reference && match.episode_to_reference !== 'none identified')
-    ? `<div>
-        <p class="analysis-label">Reference Episode</p>
+    ? `<div class="why-fits-box">
+        <p class="why-fits-label">Reference Episode</p>
         <p class="analysis-text">"${esc(match.episode_to_reference)}"</p>
        </div>`
     : '';
 
-  const socialHtml = socialChipsHtml(podcast);
+  const socialHtml = '';
 
   return `
   <article class="match-card status-${esc(match.status)} ${tierClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}">
@@ -317,7 +351,7 @@ function renderMatchCard(match) {
         </div>
       </div>
       <div class="fit-score-bar-track">
-        <div class="fit-score-bar-fill score-bar-fill ${tier}" style="width:${fitScore}%"></div>
+        <div class="fit-score-bar-fill score-bar-fill neutral" style="width:${fitScore}%"></div>
       </div>
     </div>
 
@@ -340,8 +374,8 @@ function renderMatchCard(match) {
     <!-- Analysis -->
     <div class="card-analysis">
       ${match.best_pitch_angle ? `
-      <div>
-        <p class="analysis-label">Best Pitch Angle</p>
+      <div class="why-fits-box">
+        <p class="why-fits-label">Best Pitch Angle</p>
         <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
       </div>` : ''}
       ${episodeHtml}
@@ -476,6 +510,22 @@ function renderDashboard(data) {
       gmailItem.style.cursor = 'default';
     } else {
       gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">Connect Gmail</a>`;
+    }
+  }
+
+  // Populate saved templates section in dropdown
+  const templatesSection = $('dropdown-templates-section');
+  if (templatesSection) {
+    const templates = client.email_templates || [];
+    if (templates.length > 0) {
+      templatesSection.innerHTML = `
+        <div class="dropdown-divider"></div>
+        <div style="padding:8px 16px 4px;font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;">Saved Templates</div>
+        ${templates.map((t) => `
+          <button class="dropdown-item" style="font-size:13px;" onclick="loadTemplate('${esc(t.id)}')">${esc(t.name)}</button>
+        `).join('')}`;
+    } else {
+      templatesSection.innerHTML = '';
     }
   }
 
@@ -647,13 +697,30 @@ async function dismissMatch(matchId) {
       updateMatchInState(matchId, { status: 'dismissed' });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Match dismissed.', 'info');
+      showToast('Match ignored.', 'info');
     } else {
       showToast(data.error || 'Dismiss failed.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
 }
+
+async function dreamMatch(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/dream', { matchId });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'dream' });
+      updateCard(matchId);
+      updateStatBadges();
+      showToast('Added to your Dream list.', 'success');
+    } else {
+      showToast(data.error || 'Failed.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally { setCardLoading(matchId, false); }
+}
+window.dreamMatch = dreamMatch;
 
 async function doSendMatch(matchId) {
   setCardLoading(matchId, true);
@@ -774,6 +841,9 @@ function openEmailModal(matchId) {
   const bodyEl    = $('modal-body-text');
   if (subjectEl) subjectEl.value = match.email_subject_edited || match.email_subject || '';
   if (bodyEl)    bodyEl.value    = match.email_body_edited    || match.email_body    || '';
+  if (subjectEl && bodyEl && !subjectEl.value && !bodyEl.value) {
+    bodyEl.placeholder = 'Approve this match to generate your personalised pitch email.';
+  }
 
   // Contact info row
   const contactRow = $('email-contact-row');
@@ -1135,6 +1205,48 @@ function resetTemplate() {
   showToast('Template cleared — will use default AI template.', 'info');
 }
 
+// ── Save as Template ──────────────────────────────────────────────────
+async function saveAsTemplate() {
+  const subject = $('modal-subject')?.value || '';
+  const body = $('modal-body-text')?.value || '';
+  if (!subject && !body) { showToast('Nothing to save.', 'error'); return; }
+  const name = prompt('Name this template (e.g. "Intro pitch", "Follow-up"):');
+  if (!name) return;
+  const templates = state.client.email_templates ? [...state.client.email_templates] : [];
+  const newTemplate = { id: Date.now().toString(), name: name.trim(), subject, body };
+  templates.push(newTemplate);
+  try {
+    const data = await apiPatch(`/api/onboard/${state.client.id}`, { email_templates: templates });
+    if (data.success) {
+      state.client.email_templates = templates;
+      showToast(`Template "${name}" saved.`, 'success');
+    } else {
+      showToast('Failed to save template.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+
+// ── Load Template ─────────────────────────────────────────────────────
+function loadTemplate(templateId) {
+  const templates = state.client.email_templates || [];
+  const t = templates.find((x) => x.id === templateId);
+  if (!t) return;
+  const subjectEl = $('modal-subject');
+  const bodyEl = $('modal-body-text');
+  if (subjectEl && bodyEl && $('email-modal').style.display !== 'none') {
+    subjectEl.value = t.subject;
+    bodyEl.value = t.body;
+    showToast(`Template "${t.name}" loaded.`, 'success');
+  } else {
+    const text = `Subject: ${t.subject}\n\n${t.body}`;
+    navigator.clipboard.writeText(text)
+      .then(() => showToast(`Template "${t.name}" copied to clipboard.`, 'success'))
+      .catch(() => showToast('Could not copy template.', 'error'));
+  }
+  $('profile-dropdown').style.display = 'none';
+}
+window.loadTemplate = loadTemplate;
+
 // ── Filter tabs ───────────────────────────────────────────────────────
 function initFilterTabs() {
   const tabs = $('filter-tabs');
@@ -1185,6 +1297,7 @@ function initModals() {
   emailModal?.addEventListener('click', (e) => { if (e.target === emailModal) closeEmailModal(); });
 
   $('email-save-btn')?.addEventListener('click', saveEmailDraft);
+  $('email-save-template-btn')?.addEventListener('click', saveAsTemplate);
   $('email-copy-btn')?.addEventListener('click', copyEmail);
   $('email-send-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;

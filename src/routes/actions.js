@@ -101,6 +101,30 @@ router.post('/dismiss', async (req, res) => {
 });
 
 /**
+ * POST /api/dream
+ */
+router.post('/dream', async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+  try {
+    const { data, error } = await supabase
+      .from('podcast_matches')
+      .update({ status: 'dream' })
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .select()
+      .single();
+    if (error) { logger.error('Failed to dream match', { matchId, error: error.message }); return res.status(500).json({ success: false, error: 'Failed.' }); }
+    if (!data) return res.status(404).json({ success: false, error: 'Match not found.' });
+    logger.info('Match added to dream', { matchId });
+    return res.json({ success: true, match: data });
+  } catch (err) {
+    logger.error('Dream route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
  * POST /api/send
  */
 router.post('/send', async (req, res) => {
