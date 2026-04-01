@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" class="light-mode">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find A Podcast — Sign In</title>
+  <link rel="stylesheet" href="/dashboard/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 420px; }
+    .login-logo { text-align: center; margin-bottom: 32px; }
+    .login-logo .brand-name { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .login-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px; text-align: center; }
+    .login-desc { font-size: 14px; color: var(--text-secondary); margin: 0 0 28px; text-align: center; line-height: 1.6; }
+    .sent-state { display: none; text-align: center; }
+    .sent-icon { font-size: 40px; margin-bottom: 16px; }
+    .sent-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px; }
+    .sent-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
+      </span>
+      <span class="brand-name">Find A Podcast</span>
+    </div>
+  </nav>
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <!-- Input state -->
+      <div id="input-state">
+        <h1 class="login-title">Sign in to your dashboard</h1>
+        <p class="login-desc">Enter the email you used when signing up. We'll send you a link to access your dashboard.</p>
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="jane@example.com" autocomplete="email" />
+          <p class="field-error" id="login-error" style="display:none;color:var(--error);font-size:13px;margin-top:6px;"></p>
+        </div>
+        <button class="btn btn-primary" id="login-btn" onclick="sendMagicLink()" style="width:100%;justify-content:center;margin-top:8px;">Send me a link</button>
+      </div>
+      <!-- Sent state -->
+      <div class="sent-state" id="sent-state">
+        <div class="sent-icon" style="color:var(--accent);">&#10003;</div>
+        <h2 class="sent-title">Check your inbox</h2>
+        <p class="sent-desc">We've sent a sign-in link to <strong id="sent-email"></strong>. Click the link in the email to access your dashboard.<br><br>It expires in 15 minutes.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" aria-live="polite"></div>
+  <script src="/dashboard/login.js"></script>
+</body>
+</html>

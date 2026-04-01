@@ -49,7 +49,7 @@ const currentYear = new Date().getFullYear();
 
 /**
  * Run Google Custom Search queries to supplement discovery.
- * Returns an array of domain strings found in results.
+ * Returns an array of result items (with link and title) found in results.
  */
 async function googleSearch(query) {
   const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
@@ -67,9 +67,7 @@ async function googleSearch(query) {
     });
 
     const items = response.data?.items || [];
-    return items
-      .map((item) => item.link)
-      .filter(Boolean);
+    return items.filter(Boolean);
   } catch (err) {
     logger.error('Google Custom Search failed', { query, message: err.message });
     return [];
@@ -108,15 +106,36 @@ function normalisePodcast(item) {
 /**
  * discoverPodcasts(client)
  * Main discovery pipeline for a single client.
- * Returns up to 60 raw, deduplicated, pre-filtered podcast objects.
+ * Returns up to 100 raw, deduplicated, pre-filtered podcast objects.
  */
 async function discoverPodcasts(client) {
   logger.info('Starting discovery', { clientId: client.id, clientName: client.name });
 
+  // ─────────────────────────────────────────────────────────────
+  // 0. Monthly booking cap check
+  // ─────────────────────────────────────────────────────────────
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const { count: bookedThisMonth } = await supabase
+    .from('podcast_matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', client.id)
+    .eq('status', 'booked')
+    .gte('updated_at', startOfMonth.toISOString());
+
+  const monthlyCap = client.monthly_booking_cap ?? 10;
+
+  if ((bookedThisMonth || 0) >= monthlyCap) {
+    logger.info('Monthly booking cap reached', { clientId: client.id, bookedThisMonth, monthlyCap });
+    return [];
+  }
+
   const allCandidates = new Map(); // external_id → podcast object
 
   // ─────────────────────────────────────────────────────────────
-  // 1. Build 5 Listen Notes search queries from client profile
+  // 1. Build 10 Listen Notes search queries from client profile
   // ─────────────────────────────────────────────────────────────
   const primaryTopic   = client.topics?.[0] || 'business';
   const secondaryTopic = client.topics?.[1] || primaryTopic;
@@ -125,10 +144,15 @@ async function discoverPodcasts(client) {
 
   const queries = [
     `${primaryTopic} podcast`,
-    `${secondaryTopic} experts interview podcast`,
-    `${audience} podcast guests`,
-    `${angle} podcast interview`,
-    `best ${primaryTopic} ${secondaryTopic} podcast`,
+    `${secondaryTopic} podcast`,
+    `${primaryTopic} interview podcast`,
+    `${audience} podcast`,
+    `best ${primaryTopic} podcast guest`,
+    `${angle} podcast`,
+    `${primaryTopic} ${secondaryTopic} podcast`,
+    `${audience} ${primaryTopic} podcast`,
+    `how to ${angle} podcast`,
+    `${primaryTopic} entrepreneurs podcast guest interview`,
   ];
 
   // 90-day published_after timestamp
@@ -190,11 +214,56 @@ async function discoverPodcasts(client) {
   ];
 
   for (const q of googleQueries) {
-    const links = await googleSearch(q);
-    logger.debug('Google search returned links', { query: q, count: links.length });
-    // We store the links as supplementary context — actual podcasts discovered
-    // here will be caught in future enrichment; for now we log.
+    const items = await googleSearch(q);
+    logger.debug('Google search returned items', { query: q, count: items.length });
+    for (const item of items) {
+      if (!item.link) continue;
+      try {
+        const domain = new URL(item.link).hostname.replace(/^www\./, '');
+        // Use domain as a keyword search to find the podcast on Listen Notes
+        const domainKeyword = domain.split('.')[0];
+        if (domainKeyword && domainKeyword.length > 2) {
+          const result = await listennotes.searchPodcasts(domainKeyword, {
+            type: 'podcast',
+            language,
+            len_min: 15,
+            safe_mode: 1,
+          });
+          const podcasts = result?.results || [];
+          for (const pod of podcasts) {
+            if (pod.id && !allCandidates.has(pod.id)) {
+              allCandidates.set(pod.id, normalisePodcast(pod));
+            }
+          }
+        }
+      } catch (_) {
+        // Skip malformed URLs
+      }
+    }
   }
+
+  logger.info('Google supplementary search complete', { candidatesSoFar: allCandidates.size });
+
+  // ─────────────────────────────────────────────────────────────
+  // 3b. Similar podcasts chaining (top 3 by listen_score)
+  // ─────────────────────────────────────────────────────────────
+  const top3 = Array.from(allCandidates.values())
+    .filter((p) => p.listen_score != null)
+    .sort((a, b) => (b.listen_score || 0) - (a.listen_score || 0))
+    .slice(0, 3);
+
+  for (const topPodcast of top3) {
+    logger.debug('Fetching similar podcasts', { podcastId: topPodcast.external_id, title: topPodcast.title });
+    const result = await listennotes.getSimilarPodcasts(topPodcast.external_id);
+    const recommendations = result?.recommendations || [];
+    for (const item of recommendations) {
+      if (item.id && !allCandidates.has(item.id)) {
+        allCandidates.set(item.id, normalisePodcast(item));
+      }
+    }
+  }
+
+  logger.info('Similar podcasts chaining complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
   // 4. Deduplicate (already done via Map) — fetch existing matches
@@ -241,7 +310,7 @@ async function discoverPodcasts(client) {
 
     filtered.push(podcast);
 
-    if (filtered.length >= 60) break;
+    if (filtered.length >= 100) break;
   }
 
   logger.info('Discovery complete', {

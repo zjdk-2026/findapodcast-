@@ -81,4 +81,24 @@ async function getPodcast(id) {
   }
 }
 
-module.exports = { searchPodcasts, getBestPodcasts, getPodcast };
+/**
+ * getSimilarPodcasts(podcastId)
+ * GET /podcasts/:id/recommendations
+ * @param {string} podcastId - Listen Notes podcast ID
+ * @returns {object|null}
+ */
+async function getSimilarPodcasts(podcastId) {
+  try {
+    const response = await client.get(`/podcasts/${podcastId}/recommendations`);
+    return response.data;
+  } catch (err) {
+    logger.error('Listen Notes getSimilarPodcasts failed', {
+      podcastId,
+      status: err.response?.status,
+      message: err.message,
+    });
+    return null;
+  }
+}
+
+module.exports = { searchPodcasts, getBestPodcasts, getPodcast, getSimilarPodcasts };

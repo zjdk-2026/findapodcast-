@@ -40,6 +40,32 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Client is not active.' });
     }
 
+    // ── Check monthly booking cap ─────────────────────────────
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { count: bookedThisMonth } = await supabase
+      .from('podcast_matches')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', clientId)
+      .eq('status', 'booked')
+      .gte('updated_at', startOfMonth.toISOString());
+
+    const monthlyCapDefault = 10;
+    const monthlyCap = client.monthly_booking_cap ?? monthlyCapDefault;
+
+    if ((bookedThisMonth || 0) >= monthlyCap && !client.unlimited_pitching) {
+      logger.info('Monthly booking cap reached — pipeline paused', { clientId, bookedThisMonth, monthlyCap });
+      return res.json({
+        success: true,
+        matchesFound: 0,
+        emailsWritten: 0,
+        capReached: true,
+        message: `You've booked ${bookedThisMonth} podcasts this month. Upgrade to Unlimited to keep pitching.`,
+      });
+    }
+
     // ── 2. Discovery ──────────────────────────────────────────
     logger.info('Step 1: Discovery', { clientId });
     const rawPodcasts = await discoverPodcasts(client);

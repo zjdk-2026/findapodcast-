@@ -25,6 +25,7 @@ const path     = require('path');
 const logger   = require('./lib/logger');
 
 // Routes
+const authRouter      = require('./routes/auth');
 const onboardRouter   = require('./routes/onboard');
 const pipelineRouter  = require('./routes/pipeline');
 const dashboardRouter = require('./routes/dashboard');
@@ -42,6 +43,7 @@ const PORT = process.env.PORT || 3000;
 // ── Middleware ───────────────────────────────────────────────────────
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(require('cookie-parser')()); // npm install cookie-parser (if not already installed)
 
 // Request logging
 app.use((req, res, next) => {
@@ -70,6 +72,7 @@ app.get('/health', async (req, res) => {
 });
 
 // ── API Routes ───────────────────────────────────────────────────────
+app.use('/api/auth', authRouter);
 app.use('/api', onboardRouter);
 app.use('/api', pipelineRouter);
 app.use('/api', dashboardRouter);
@@ -89,6 +92,16 @@ app.use('/dashboard', express.static(dashboardDir));
 // Catch-all for /dashboard/* — serve index.html for client-side routing
 app.get('/dashboard/*', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'index.html'));
+});
+
+// Login page
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dashboard/login.html'));
+});
+
+// Dashboard (no token in URL — auth via cookie)
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dashboard/index.html'));
 });
 
 // Onboard page

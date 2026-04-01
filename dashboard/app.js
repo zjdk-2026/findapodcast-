@@ -947,6 +947,13 @@ async function runPipeline() {
     const res  = await fetch(`/api/run/${state.client.id}`, { method: 'POST' });
     const data = await res.json();
     if (data.success) {
+      if (data.capReached) {
+        showToast(data.message, 'info');
+        showUnlimitedUpsell();
+        btn.textContent = 'Run Pipeline Now';
+        btn.disabled = false;
+        return;
+      }
       showToast(`Pipeline complete — ${data.matchesFound} new matches found!`, 'success');
       setTimeout(() => location.reload(), 2000);
     } else {
@@ -954,6 +961,23 @@ async function runPipeline() {
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
   finally { btn.textContent = 'Run Pipeline Now'; btn.disabled = false; }
+}
+
+function showUnlimitedUpsell() {
+  const existing = document.getElementById('unlimited-upsell-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'unlimited-upsell-banner';
+  banner.style.cssText = 'background:#faf5ff;border:2px solid #6366f1;border-radius:12px;padding:20px 24px;margin:20px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;';
+  banner.innerHTML = `
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px;">You've hit your 10 bookings this month.</div>
+      <div style="font-size:13px;color:#64748b;">Upgrade to Unlimited Pitching to keep finding opportunities — $297/month, cancel anytime.</div>
+    </div>
+    <a href="UNLIMITED_STRIPE_LINK" style="background:#6366f1;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;">Upgrade — $297/month</a>
+  `;
+  const content = document.getElementById('dashboard-content');
+  if (content) content.prepend(banner);
 }
 
 // ── Profile modal ─────────────────────────────────────────────────────
