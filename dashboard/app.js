@@ -181,7 +181,7 @@ function scoreBarHtml(label, value) {
     <div class="score-row">
       <span class="score-row-label" title="${esc(tip)}" style="cursor:help;">${esc(label)}${tip ? ' <span style="font-size:10px;opacity:0.5;border:1px solid currentColor;border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;margin-left:3px;">?</span>' : ''}</span>
       <div class="score-bar-track">
-        <div class="score-bar-fill neutral" style="width:${v}%"></div>
+        <div class="score-bar-fill ${v >= 70 ? 'high' : v >= 40 ? 'mid' : 'low'}" style="width:${v}%"></div>
       </div>
       <span class="score-row-value">${v}</span>
     </div>`;
@@ -351,7 +351,7 @@ function renderMatchCard(match) {
         </div>
       </div>
       <div class="fit-score-bar-track">
-        <div class="fit-score-bar-fill score-bar-fill neutral" style="width:${fitScore}%"></div>
+        <div class="fit-score-bar-fill score-bar-fill ${fitScore >= 70 ? 'high' : fitScore >= 40 ? 'mid' : 'low'}" style="width:${fitScore}%"></div>
       </div>
     </div>
 
