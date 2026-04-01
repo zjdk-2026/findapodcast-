@@ -179,16 +179,16 @@ function scoreBarHtml(label, value) {
 function contactChipsHtml(podcast) {
   const chips = [];
   if (podcast.contact_email) {
-    chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}" title="${esc(podcast.contact_email)}">✉ ${esc(podcast.contact_email)}</a>`);
+    chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}" title="${esc(podcast.contact_email)}">${esc(podcast.contact_email)}</a>`);
   }
   if (podcast.website) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">🌐 Website</a>`);
+    chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
   }
   if (podcast.booking_page_url) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">📅 Booking</a>`);
+    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Booking Page</a>`);
   }
   if (podcast.guest_application_url) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">📝 Apply</a>`);
+    chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply as Guest</a>`);
   }
   return chips.length > 0
     ? `<div class="card-contact">${chips.join('')}</div>`
@@ -198,12 +198,12 @@ function contactChipsHtml(podcast) {
 // ── Social chips HTML ─────────────────────────────────────────────────
 function socialChipsHtml(podcast) {
   const chips = [];
-  if (podcast.instagram_url)     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">📸 Instagram</a>`);
-  if (podcast.twitter_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">🐦 Twitter/X</a>`);
-  if (podcast.facebook_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">👥 Facebook</a>`);
-  if (podcast.linkedin_page_url) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">💼 LinkedIn</a>`);
-  if (podcast.linkedin_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">💼 LinkedIn</a>`);
-  if (podcast.tiktok_url)        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">🎵 TikTok</a>`);
+  if (podcast.instagram_url)     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (podcast.twitter_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
+  if (podcast.facebook_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+  if (podcast.linkedin_page_url) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (podcast.linkedin_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (podcast.tiktok_url)        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
   return chips.length > 0 ? `<div class="card-contact">${chips.join('')}</div>` : '';
 }
 
@@ -257,8 +257,8 @@ function actionButtonsHtml(match) {
     buttons.push(`<span style="font-size:11px;color:var(--warning);font-weight:600;">Replied ↩</span>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<span class="booked-badge">★ BOOKED ✓</span>`);
-    buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">✕ Undo</button>`);
+    buttons.push(`<span class="booked-badge">Booked</span>`);
+    buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">Undo</button>`);
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-outline btn-xs" onclick="approveMatch('${id}')">Restore</button>`);
   }
@@ -276,7 +276,7 @@ function renderMatchCard(match) {
 
   const redFlagsHtml = (match.red_flags && match.red_flags !== 'none')
     ? `<div>
-        <p class="analysis-label">⚠ Red Flags</p>
+        <p class="analysis-label" style="color:var(--danger);">Red Flags</p>
         <p class="red-flags-text">${esc(match.red_flags)}</p>
        </div>`
     : '';
@@ -299,7 +299,7 @@ function renderMatchCard(match) {
         <h2 class="card-title" title="${esc(podcast.title)}" onclick="openContactModal('${esc(match.id)}')">${esc(podcast.title) || 'Unknown Show'}</h2>
         <div class="card-host-category">
           ${podcast.host_name ? `<span class="card-host">Hosted by ${esc(podcast.host_name)}</span>` : ''}
-          ${podcast.category ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
+          ${podcast.category && isNaN(podcast.category) ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
         </div>
       </div>
       <div style="flex-shrink:0;">
@@ -444,9 +444,12 @@ function renderDashboard(data) {
   if (clientNameEl) clientNameEl.textContent = client.name || 'Your Pipeline';
   if (clientSubEl) {
     const parts = [client.business_name, client.title].filter(Boolean);
+    const lastRun = client.last_run_at
+      ? `Last run ${new Date(client.last_run_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+      : 'Pipeline not yet run';
     clientSubEl.textContent = parts.length > 0
-      ? parts.join(' · ')
-      : `${client.email || ''} · Last run: ${client.last_run_at ? new Date(client.last_run_at).toLocaleDateString() : 'Never'}`;
+      ? `${parts.join(' · ')} · ${lastRun}`
+      : lastRun;
   }
 
   // Navbar right: profile dropdown trigger
@@ -469,11 +472,22 @@ function renderDashboard(data) {
   const gmailItem = $('dropdown-gmail-item');
   if (gmailItem) {
     if (client.gmail_email) {
-      gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">✓ Gmail Connected</span>`;
+      gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">Gmail Connected</span>`;
       gmailItem.style.cursor = 'default';
     } else {
       gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">Connect Gmail</a>`;
     }
+  }
+
+  // Show Gmail connect button in header if not yet connected
+  const headerActions = $('header-actions');
+  if (headerActions && !client.gmail_email) {
+    const gmailBtn = document.createElement('a');
+    gmailBtn.href = `/auth/gmail?clientId=${esc(client.id)}`;
+    gmailBtn.className = 'btn btn-outline';
+    gmailBtn.textContent = 'Connect Gmail';
+    gmailBtn.style.cssText = 'font-size:13px;';
+    headerActions.insertBefore(gmailBtn, headerActions.firstChild);
   }
 
   // Set theme toggle label
@@ -599,7 +613,25 @@ async function approveMatch(matchId) {
       updateMatchInState(matchId, { status: 'approved', approved_at: data.match?.approved_at });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Match approved!', 'success');
+      showToast('Approved — writing your pitch email now…', 'success');
+      // Poll for email content (written async on server)
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        try {
+          const res = await fetch(`/api/dashboard/${state.token}`);
+          const d = await res.json();
+          if (d.success) {
+            const updated = (d.matches || []).find((m) => m.id === matchId);
+            if (updated?.email_subject) {
+              updateMatchInState(matchId, { email_subject: updated.email_subject, email_body: updated.email_body, gmail_draft_id: updated.gmail_draft_id });
+              updateCard(matchId);
+              clearInterval(poll);
+            }
+          }
+        } catch (_) {}
+        if (attempts >= 12) clearInterval(poll); // stop after 60s
+      }, 5000);
     } else {
       showToast(data.error || 'Approve failed.', 'error');
     }
@@ -643,6 +675,10 @@ function sendMatch(matchId) {
   // Show confirm modal, then send on confirm
   const overlay = $('confirm-modal');
   if (!overlay) { doSendMatch(matchId); return; }
+  const match = state.matches.find((m) => m.id === matchId);
+  const showName = match?.podcasts?.title || 'this podcast';
+  const showNameEl = $('confirm-send-show-name');
+  if (showNameEl) showNameEl.textContent = showName;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
@@ -743,10 +779,10 @@ function openEmailModal(matchId) {
   const contactRow = $('email-contact-row');
   if (contactRow) {
     const chips = [];
-    if (podcast.contact_email)       chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}">✉ ${esc(podcast.contact_email)}</a>`);
-    if (podcast.website)             chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank">🌐 Website</a>`);
-    if (podcast.booking_page_url)    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank">📅 Booking</a>`);
-    if (podcast.guest_application_url) chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank">📝 Apply</a>`);
+    if (podcast.contact_email)       chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}">${esc(podcast.contact_email)}</a>`);
+    if (podcast.website)             chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank">Website</a>`);
+    if (podcast.booking_page_url)    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank">Booking Page</a>`);
+    if (podcast.guest_application_url) chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank">Apply as Guest</a>`);
     if (chips.length > 0) {
       contactRow.innerHTML = chips.join('');
       contactRow.style.display = 'flex';
@@ -808,12 +844,12 @@ function openContactModal(matchId) {
 
   // Build social links
   const socialLinks = [];
-  if (p.instagram_url)     socialLinks.push(`<a href="${esc(p.instagram_url)}" target="_blank" class="social-link">📸 Instagram</a>`);
-  if (p.twitter_url)       socialLinks.push(`<a href="${esc(p.twitter_url)}" target="_blank" class="social-link">🐦 Twitter/X</a>`);
-  if (p.facebook_url)      socialLinks.push(`<a href="${esc(p.facebook_url)}" target="_blank" class="social-link">👥 Facebook</a>`);
-  if (p.linkedin_page_url) socialLinks.push(`<a href="${esc(p.linkedin_page_url)}" target="_blank" class="social-link">💼 LinkedIn</a>`);
-  if (p.linkedin_url)      socialLinks.push(`<a href="${esc(p.linkedin_url)}" target="_blank" class="social-link">💼 LinkedIn</a>`);
-  if (p.tiktok_url)        socialLinks.push(`<a href="${esc(p.tiktok_url)}" target="_blank" class="social-link">🎵 TikTok</a>`);
+  if (p.instagram_url)     socialLinks.push(`<a href="${esc(p.instagram_url)}" target="_blank" class="social-link">Instagram</a>`);
+  if (p.twitter_url)       socialLinks.push(`<a href="${esc(p.twitter_url)}" target="_blank" class="social-link">Twitter/X</a>`);
+  if (p.facebook_url)      socialLinks.push(`<a href="${esc(p.facebook_url)}" target="_blank" class="social-link">Facebook</a>`);
+  if (p.linkedin_page_url) socialLinks.push(`<a href="${esc(p.linkedin_page_url)}" target="_blank" class="social-link">LinkedIn</a>`);
+  if (p.linkedin_url)      socialLinks.push(`<a href="${esc(p.linkedin_url)}" target="_blank" class="social-link">LinkedIn</a>`);
+  if (p.tiktok_url)        socialLinks.push(`<a href="${esc(p.tiktok_url)}" target="_blank" class="social-link">TikTok</a>`);
 
   const scoreBreakdown = `
     <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">
@@ -852,10 +888,10 @@ function openContactModal(matchId) {
       <div>
         <p class="email-label">Contact Info</p>
         <div class="contact-section">
-          ${contactRowHtml('✉', 'Email', p.contact_email, `mailto:${p.contact_email}`, false)}
-          ${contactRowHtml('🌐', 'Website', p.website, p.website, true)}
-          ${contactRowHtml('📅', 'Booking', p.booking_page_url, p.booking_page_url, true)}
-          ${contactRowHtml('📝', 'Apply', p.guest_application_url, p.guest_application_url, true)}
+          ${contactRowHtml('', 'Email', p.contact_email, `mailto:${p.contact_email}`, false)}
+          ${contactRowHtml('', 'Website', p.website, p.website, true)}
+          ${contactRowHtml('', 'Booking', p.booking_page_url, p.booking_page_url, true)}
+          ${contactRowHtml('', 'Apply', p.guest_application_url, p.guest_application_url, true)}
           ${!p.contact_email && !p.website && !p.booking_page_url && !p.guest_application_url
             ? '<p style="color:var(--text-tertiary);font-size:13px;">No contact info found</p>' : ''}
         </div>
