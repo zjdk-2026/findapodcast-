@@ -6,7 +6,7 @@ const logger   = require('../lib/logger');
 
 const router = express.Router();
 
-const OPERATOR_KEY = 'pipeline2026';
+const OPERATOR_KEY = process.env.OPERATOR_KEY || 'pipeline2026';
 
 /**
  * Middleware: require x-operator-key header

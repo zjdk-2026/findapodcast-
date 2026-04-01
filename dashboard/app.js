@@ -465,14 +465,17 @@ function renderDashboard(data) {
     themeItem.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
   }
 
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    const trigger = $('profile-trigger');
-    const dropdown = $('profile-dropdown');
-    if (dropdown && trigger && !trigger.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.style.display = 'none';
-    }
-  }, true);
+  // Close dropdown when clicking outside (attach once only)
+  if (!window._dropdownListenerAdded) {
+    window._dropdownListenerAdded = true;
+    document.addEventListener('click', (e) => {
+      const trigger = $('profile-trigger');
+      const dropdown = $('profile-dropdown');
+      if (dropdown && trigger && !trigger.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    }, true);
+  }
 
   // Stats
   const highCount = state.matches.filter((m) => (m.fit_score || 0) >= 80).length;

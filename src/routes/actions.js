@@ -178,6 +178,37 @@ router.post('/book', async (req, res) => {
 });
 
 /**
+ * POST /api/unbook
+ * Body: { matchId }
+ * Reverts status back to 'approved', clears booked_at
+ */
+router.post('/unbook', async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  try {
+    const { data, error } = await supabase
+      .from('podcast_matches')
+      .update({ status: 'approved', booked_at: null })
+      .eq('id', matchId)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Failed to unbook match', { matchId, error: error.message });
+      return res.status(500).json({ success: false, error: 'Failed to unbook match.' });
+    }
+    if (!data) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    logger.info('Match unbooked', { matchId });
+    return res.json({ success: true, match: data });
+  } catch (err) {
+    logger.error('Unbook route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
  * POST /api/notes
  * Body: { matchId, notes }
  * Saves client_notes to the match.

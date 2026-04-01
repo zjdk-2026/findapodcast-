@@ -6,6 +6,20 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 if (!process.env.BASE_URL) process.env.BASE_URL = 'http://localhost:3000';
 if (!process.env.GOOGLE_REDIRECT_URI) process.env.GOOGLE_REDIRECT_URI = `${process.env.BASE_URL}/auth/gmail/callback`;
 
+// ── Validate required env vars ───────────────────────────────────────
+const REQUIRED_ENV = [
+  'ANTHROPIC_API_KEY',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_KEY',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
+
 const express  = require('express');
 const path     = require('path');
 const logger   = require('./lib/logger');
@@ -44,13 +58,15 @@ app.use((req, res, next) => {
 });
 
 // ── Health check ─────────────────────────────────────────────────────
-app.get('/health', (req, res) => {
-  res.json({
-    status:    'ok',
-    timestamp: new Date().toISOString(),
-    version:   process.env.npm_package_version || '1.0.0',
-    uptime:    Math.floor(process.uptime()),
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const supabase = require('./lib/supabase');
+    const { error } = await supabase.from('clients').select('id').limit(1);
+    if (error) throw error;
+    res.json({ status: 'ok', db: 'ok', uptime: Math.floor(process.uptime()) });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'unreachable', error: err.message });
+  }
 });
 
 // ── API Routes ───────────────────────────────────────────────────────
