@@ -37,9 +37,6 @@
     <button class="dropdown-item" onclick="openTemplateModal()">Customize Email Template</button>
     <div class="dropdown-item" id="dropdown-gmail-item"></div>
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" id="dropdown-run-pipeline" onclick="runPipeline()">Run Pipeline Now</button>
-    <div class="dropdown-divider"></div>
-    <button class="dropdown-item" onclick="copyDashboardLink()">Copy Dashboard Link</button>
   </div>
 
   <!-- Main app container -->
@@ -78,6 +75,7 @@
           </div>
           <div class="header-actions" id="header-actions">
             <!-- Gmail connect / status injected by JS -->
+            <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()">Run Pipeline</button>
           </div>
         </div>
       </header>

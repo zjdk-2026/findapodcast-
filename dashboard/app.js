@@ -938,7 +938,7 @@ function copyDashboardLink() {
 }
 
 async function runPipeline() {
-  const btn = $('dropdown-run-pipeline');
+  const btn = $('header-run-pipeline');
   if (!btn || !state.client) return;
   btn.textContent = 'Running…';
   btn.disabled = true;
@@ -950,7 +950,7 @@ async function runPipeline() {
       if (data.capReached) {
         showToast(data.message, 'info');
         showUnlimitedUpsell();
-        btn.textContent = 'Run Pipeline Now';
+        btn.textContent = 'Run Pipeline';
         btn.disabled = false;
         return;
       }
@@ -960,7 +960,7 @@ async function runPipeline() {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { btn.textContent = 'Run Pipeline Now'; btn.disabled = false; }
+  finally { btn.textContent = 'Run Pipeline'; btn.disabled = false; }
 }
 
 function showUnlimitedUpsell() {
