@@ -63,6 +63,71 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
   });
 }
 
+/**
+ * Add a newly onboarded client to GoHighLevel CRM.
+ * Creates a contact then adds an opportunity in the Find A Podcast pipeline.
+ */
+async function addToGHL(client) {
+  const apiKey     = process.env.GHL_API_KEY;
+  const locationId = process.env.GHL_LOCATION_ID;
+  const pipelineId = process.env.GHL_PIPELINE_ID;
+
+  if (!apiKey || !locationId) {
+    logger.warn('GHL not configured — skipping CRM sync');
+    return;
+  }
+
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type':  'application/json',
+    'Version':       '2021-07-28',
+  };
+
+  // 1. Create or update contact
+  const contactRes = await fetch('https://services.leadconnectorhq.com/contacts/', {
+    method:  'POST',
+    headers,
+    body: JSON.stringify({
+      locationId,
+      firstName:   client.name.split(' ')[0],
+      lastName:    client.name.split(' ').slice(1).join(' ') || '',
+      email:       client.email,
+      companyName: client.business_name || undefined,
+      tags:        ['find-a-podcast', 'new-client'],
+      source:      'Find A Podcast Onboarding',
+    }),
+  });
+
+  const contactData = await contactRes.json();
+  const contactId   = contactData?.contact?.id;
+
+  if (!contactId) {
+    logger.warn('GHL contact creation failed', { response: contactData });
+    return;
+  }
+
+  logger.info('GHL contact created', { contactId, clientId: client.id });
+
+  // 2. Create opportunity in pipeline (only if pipeline ID is configured)
+  if (!pipelineId) return;
+
+  const oppRes = await fetch('https://services.leadconnectorhq.com/opportunities/', {
+    method:  'POST',
+    headers,
+    body: JSON.stringify({
+      locationId,
+      pipelineId,
+      name:      `${client.name} — Find A Podcast`,
+      contactId,
+      status:    'open',
+      stageId:   null, // drops into first stage automatically
+    }),
+  });
+
+  const oppData = await oppRes.json();
+  logger.info('GHL opportunity created', { opportunityId: oppData?.opportunity?.id, clientId: client.id });
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -176,6 +241,11 @@ router.post('/onboard', async (req, res) => {
     // Send welcome email (fire-and-forget — don't block the response)
     sendWelcomeEmail(data, dashboardUrl, gmailAuthUrl).catch((err) => {
       logger.warn('Welcome email failed', { clientId: data.id, error: err.message });
+    });
+
+    // Add to GHL CRM (fire-and-forget)
+    addToGHL(data).catch((err) => {
+      logger.warn('GHL sync failed', { clientId: data.id, error: err.message });
     });
 
     return res.status(201).json({
