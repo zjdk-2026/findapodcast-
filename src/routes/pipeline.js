@@ -10,6 +10,7 @@ const { writeEmail }        = require('../services/emailWriter');
 const { createDraft }       = require('../services/gmailService');
 const { sendDigestEmail }   = require('../services/digestEmail');
 
+const requireDashboardToken = require('../middleware/requireDashboardToken');
 const router = express.Router();
 
 /**
@@ -17,8 +18,8 @@ const router = express.Router();
  * Runs the full pipeline for a single client:
  *   discover → enrich → score → save matches → write emails → create drafts → send digest
  */
-router.post('/run/:clientId', async (req, res) => {
-  const { clientId } = req.params;
+router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
+  const clientId = req.clientId; // from middleware — verified token owner
 
   logger.info('Pipeline run started', { clientId });
 

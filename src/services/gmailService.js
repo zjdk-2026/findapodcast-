@@ -1,7 +1,40 @@
 'use strict';
 
 const { google } = require('googleapis');
+const crypto = require('crypto');
 const logger = require('../lib/logger');
+
+function stateSecret() {
+  const s = process.env.GMAIL_STATE_SECRET || process.env.OPERATOR_KEY;
+  if (!s) throw new Error('No secret available for Gmail OAuth state signing');
+  return s;
+}
+
+function signState(clientId) {
+  const ts = Date.now();
+  const payload = `${clientId}:${ts}`;
+  const sig = crypto.createHmac('sha256', stateSecret()).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${sig}`).toString('base64url');
+}
+
+function verifyState(state) {
+  let payload;
+  try {
+    payload = Buffer.from(state, 'base64url').toString('utf8');
+  } catch {
+    throw new Error('Invalid OAuth state encoding');
+  }
+  const parts = payload.split(':');
+  if (parts.length !== 3) throw new Error('Invalid OAuth state format');
+  const [clientId, ts, sig] = parts;
+  const expected = crypto.createHmac('sha256', stateSecret()).update(`${clientId}:${ts}`).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) {
+    throw new Error('OAuth state signature invalid');
+  }
+  const age = Date.now() - parseInt(ts, 10);
+  if (age > 10 * 60 * 1000) throw new Error('OAuth state expired');
+  return clientId;
+}
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.compose',
@@ -30,7 +63,7 @@ function getAuthUrl(clientId) {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
-    state: clientId,
+    state: signState(clientId),
     prompt: 'consent', // force refresh_token to be returned
   });
 }
@@ -153,4 +186,4 @@ async function sendDraft(refreshToken, draftId) {
   }
 }
 
-module.exports = { getAuthUrl, exchangeCode, getAccessToken, createDraft, sendDraft };
+module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft };

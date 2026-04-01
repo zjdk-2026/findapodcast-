@@ -128,9 +128,10 @@ router.post('/onboard', async (req, res) => {
  * PATCH /api/onboard/:clientId
  * Update an existing client's profile fields.
  */
-router.patch('/onboard/:clientId', async (req, res) => {
-  const { clientId } = req.params;
-  if (!clientId) return res.status(400).json({ success: false, error: 'clientId is required.' });
+const requireDashboardToken = require('../middleware/requireDashboardToken');
+
+router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
+  const clientId = req.clientId; // verified token owner — ignore URL param to prevent IDOR
 
   const allowed = [
     'name', 'title', 'business_name', 'bio_short', 'bio_long',

@@ -101,7 +101,7 @@ function renderClientRow(c) {
     ? new Date(c.last_run_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : 'Never';
 
-  const dashUrl = `/dashboard/${esc(c.dashboard_token || '')}`;
+  const dashUrl = `/api/operator/dashboard/${esc(c.id)}?key=${encodeURIComponent(OPERATOR_KEY)}`;
 
   return `<tr id="row-${esc(c.id)}">
     <td>

@@ -12,7 +12,7 @@ const OPERATOR_KEY = process.env.OPERATOR_KEY || 'pipeline2026';
  * Middleware: require x-operator-key header
  */
 function requireOperatorKey(req, res, next) {
-  const key = req.headers['x-operator-key'];
+  const key = req.headers['x-operator-key'] || req.query.key;
   if (key !== OPERATOR_KEY) {
     return res.status(401).json({ success: false, error: 'Unauthorized.' });
   }
@@ -28,7 +28,7 @@ router.get('/clients', requireOperatorKey, async (req, res) => {
     // Fetch all clients
     const { data: clients, error: clientsError } = await supabase
       .from('clients')
-      .select('id, name, email, last_run_at, is_active, dashboard_token')
+      .select('id, name, email, last_run_at, is_active')
       .order('onboarded_at', { ascending: false });
 
     if (clientsError) {
@@ -96,6 +96,31 @@ router.get('/clients', requireOperatorKey, async (req, res) => {
     });
   } catch (err) {
     logger.error('Operator clients route error', { error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * GET /api/operator/dashboard/:clientId
+ * Redirects to the client's dashboard without exposing the token in the client list.
+ */
+router.get('/dashboard/:clientId', requireOperatorKey, async (req, res) => {
+  const { clientId } = req.params;
+  try {
+    const { data: client, error } = await supabase
+      .from('clients')
+      .select('dashboard_token')
+      .eq('id', clientId)
+      .single();
+
+    if (error || !client) {
+      return res.status(404).json({ success: false, error: 'Client not found.' });
+    }
+
+    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+    return res.redirect(`${baseUrl}/dashboard/${client.dashboard_token}`);
+  } catch (err) {
+    logger.error('Operator dashboard redirect error', { error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
   }
 });

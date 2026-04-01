@@ -70,8 +70,23 @@ function showToast(message, type = 'info') {
 async function apiPost(url, body) {
   const res = await fetch(url, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    headers: {
+      'Content-Type':     'application/json',
+      'x-dashboard-token': state.token || '',
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function apiPatch(url, body) {
+  const res = await fetch(url, {
+    method:  'PATCH',
+    headers: {
+      'Content-Type':     'application/json',
+      'x-dashboard-token': state.token || '',
+    },
+    body: JSON.stringify(body),
   });
   return res.json();
 }
@@ -990,12 +1005,7 @@ async function saveProfile() {
     bio_long:         $('profile-bio-long').value.trim(),
   };
   try {
-    const res  = await fetch(`/api/onboard/${state.client.id}`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(updates),
-    });
-    const data = await res.json();
+    const data = await apiPatch(`/api/onboard/${state.client.id}`, updates);
     if (data.success) {
       state.client = { ...state.client, ...data.client };
       showToast('Profile saved!', 'success');

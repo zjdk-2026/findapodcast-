@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { getAuthUrl, exchangeCode } = require('../services/gmailService');
+const { getAuthUrl, verifyState, exchangeCode } = require('../services/gmailService');
 const { google } = require('googleapis');
 
 const router = express.Router();
@@ -38,15 +38,23 @@ router.get('/auth/gmail', (req, res) => {
  * then redirect to the client's dashboard.
  */
 router.get('/auth/gmail/callback', async (req, res) => {
-  const { code, state: clientId, error: oauthError } = req.query;
+  const { code, state: rawState, error: oauthError } = req.query;
 
   if (oauthError) {
-    logger.warn('Google OAuth denied by user', { clientId, oauthError });
+    logger.warn('Google OAuth denied by user', { oauthError });
     return res.status(400).send(`Google OAuth failed: ${oauthError}`);
   }
 
-  if (!code || !clientId) {
+  if (!code || !rawState) {
     return res.status(400).send('Missing code or state in callback.');
+  }
+
+  let clientId;
+  try {
+    clientId = verifyState(rawState);
+  } catch (err) {
+    logger.warn('Gmail OAuth state verification failed', { error: err.message });
+    return res.status(400).send('Invalid or expired OAuth state. Please start the Gmail connection again.');
   }
 
   try {
