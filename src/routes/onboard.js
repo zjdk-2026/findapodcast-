@@ -7,6 +7,62 @@ const logger   = require('../lib/logger');
 const router = express.Router();
 
 /**
+ * Send a welcome email to a newly onboarded client.
+ */
+async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
+  const apiKey   = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.club';
+  if (!apiKey) return;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <p style="margin:0 0 8px;color:#6366f1;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Podcast Pipeline</p>
+      <h1 style="margin:0 0 12px;color:#f1f5f9;font-size:28px;font-weight:800;">You're in, ${escapeHtml(client.name.split(' ')[0])}! 🎙️</h1>
+      <p style="margin:0;color:#94a3b8;font-size:15px;line-height:1.6;">Your podcast booking pipeline is live. We'll start finding shows that match your topics and send you daily opportunities.</p>
+    </div>
+
+    <div style="background:#1e1e2e;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #2d2d3f;">
+      <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Your Dashboard</h2>
+      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">Bookmark this link — it's your personal dashboard where all your podcast matches will appear.</p>
+      <a href="${dashboardUrl}" style="display:block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:700;text-align:center;">Open My Dashboard →</a>
+      <p style="margin:12px 0 0;color:#475569;font-size:12px;word-break:break-all;">${dashboardUrl}</p>
+    </div>
+
+    <div style="background:#1e1e2e;border-radius:12px;padding:24px;margin-bottom:32px;border:1px solid #2d2d3f;">
+      <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Connect Gmail (Optional)</h2>
+      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">Connect your Gmail so pitches can be sent directly from your inbox. Takes 30 seconds.</p>
+      <a href="${gmailAuthUrl}" style="display:block;background:#1e1e2e;color:#6366f1;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #6366f1;">Connect Gmail →</a>
+    </div>
+
+    <div style="text-align:center;">
+      <p style="margin:0;color:#475569;font-size:12px;">Podcast Pipeline · findapodcast.club<br>Reply to this email if you need help.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  await fetch('https://api.resend.com/emails', {
+    method:  'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from:    fromEmail,
+      to:      [client.email],
+      subject: `Welcome to Podcast Pipeline, ${client.name.split(' ')[0]}! Your dashboard is ready`,
+      html,
+    }),
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
  * POST /api/onboard
  * Onboard a new client into the system.
  *
@@ -110,6 +166,11 @@ router.post('/onboard', async (req, res) => {
     const gmailAuthUrl = `${baseUrl}/auth/gmail?clientId=${data.id}`;
 
     logger.info('Client onboarded', { clientId: data.id, email: data.email });
+
+    // Send welcome email (fire-and-forget — don't block the response)
+    sendWelcomeEmail(data, dashboardUrl, gmailAuthUrl).catch((err) => {
+      logger.warn('Welcome email failed', { clientId: data.id, error: err.message });
+    });
 
     return res.status(201).json({
       success:      true,
