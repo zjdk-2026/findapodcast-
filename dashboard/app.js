@@ -972,9 +972,8 @@ function showUnlimitedUpsell() {
   banner.innerHTML = `
     <div>
       <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px;">You've hit your 10 bookings this month.</div>
-      <div style="font-size:13px;color:#64748b;">Upgrade to Unlimited Pitching to keep finding opportunities — $297/month, cancel anytime.</div>
+      <div style="font-size:13px;color:#64748b;">You've reached your monthly limit. Get in touch to unlock unlimited pitching.</div>
     </div>
-    <a href="https://buy.stripe.com/9B67sL7Dqb8heZv0EL8IU0K" style="background:#6366f1;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;">Upgrade — $297/month</a>
   `;
   const content = document.getElementById('dashboard-content');
   if (content) content.prepend(banner);
