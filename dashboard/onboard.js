@@ -170,8 +170,20 @@ function showSuccess(data) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ── Payment confirmation banner ───────────────────────────────
+function showPaymentBanner() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('paid') !== 'true') return;
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:#dcfce7;border:1px solid #86efac;color:#166534;padding:14px 24px;border-radius:12px;margin-bottom:24px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;';
+  banner.innerHTML = '<span style="font-size:20px;">✅</span><span><strong>Payment confirmed!</strong> Complete your profile below and we\'ll activate your pipeline immediately.</span>';
+  const header = document.querySelector('.onboard-header');
+  if (header) header.insertAdjacentElement('afterend', banner);
+}
+
 // ── Clear errors on input ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  showPaymentBanner();
   ['f-name','f-email','f-bio-short','f-topics'].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
