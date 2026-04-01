@@ -68,7 +68,8 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
 
     // ── 2. Discovery ──────────────────────────────────────────
     logger.info('Step 1: Discovery', { clientId });
-    const rawPodcasts = await discoverPodcasts(client);
+    const isManual = req.query.manual !== 'false'; // manual by default for POST runs
+    const rawPodcasts = await discoverPodcasts(client, { isManual });
     logger.info('Discovery complete', { clientId, count: rawPodcasts.length });
 
     if (rawPodcasts.length === 0) {
@@ -77,19 +78,26 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
       return res.json({ success: true, matchesFound: 0, emailsWritten: 0 });
     }
 
-    // ── 3. Enrich & Score ─────────────────────────────────────
+    // ── 3. Enrich & Score in parallel batches of 5 ───────────
     logger.info('Step 2: Enrichment + Scoring', { clientId, total: rawPodcasts.length });
 
     const savedMatches = [];
-    let emailsWritten  = 0;
+    const BATCH_SIZE = 5;
 
-    for (const rawPodcast of rawPodcasts) {
-      try {
-        // Enrich
-        const enriched = await enrichPodcast(rawPodcast);
+    for (let i = 0; i < rawPodcasts.length; i += BATCH_SIZE) {
+      const batch = rawPodcasts.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map(async (rawPodcast) => {
+        // Cache check — skip enrichment if enriched within 30 days
+        const { data: cached } = await supabase
+          .from('podcasts')
+          .select('*')
+          .eq('external_id', rawPodcast.external_id)
+          .gte('enriched_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+          .maybeSingle();
 
-        // Upsert podcast record
+        const enriched = cached || await enrichPodcast(rawPodcast);
         const podcastRecord = buildPodcastRecord(enriched);
+
         const { data: savedPodcast, error: podcastError } = await supabase
           .from('podcasts')
           .upsert(podcastRecord, { onConflict: 'external_id' })
@@ -97,17 +105,12 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
           .single();
 
         if (podcastError || !savedPodcast) {
-          logger.error('Failed to upsert podcast', {
-            title: rawPodcast.title,
-            error: podcastError?.message,
-          });
-          continue;
+          logger.error('Failed to upsert podcast', { title: rawPodcast.title, error: podcastError?.message });
+          return null;
         }
 
-        // Score
         const scoring = await scorePodcast(savedPodcast, client);
 
-        // Save initial match record
         const matchRecord = {
           client_id:            client.id,
           podcast_id:           savedPodcast.id,
@@ -135,74 +138,24 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
           .single();
 
         if (matchError || !savedMatch) {
-          logger.error('Failed to insert podcast match', {
-            podcastId: savedPodcast.id,
-            error: matchError?.message,
-          });
-          continue;
+          logger.error('Failed to insert match', { podcastId: savedPodcast.id, error: matchError?.message });
+          return null;
         }
 
-        savedMatches.push({ ...savedMatch, podcasts: savedPodcast });
+        // Email is written on approve — not at discovery time
+        return { ...savedMatch, podcasts: savedPodcast };
+      }));
 
-        // ── 4. Write email ────────────────────────────────────
-        logger.debug('Writing email for match', { matchId: savedMatch.id });
-        const email = await writeEmail(client, scoring, savedPodcast);
-
-        // ── 5. Create Gmail draft if client has OAuth ─────────
-        let gmailDraftId = null;
-        if (client.gmail_refresh_token) {
-          const contactEmail = savedPodcast.contact_email
-            || savedPodcast.booking_page_url
-            || null;
-
-          if (contactEmail && contactEmail.includes('@')) {
-            try {
-              gmailDraftId = await createDraft(
-                client.gmail_refresh_token,
-                contactEmail,
-                email.subject,
-                email.body
-              );
-            } catch (draftErr) {
-              logger.warn('Gmail draft creation failed', {
-                matchId: savedMatch.id,
-                error: draftErr.message,
-              });
-            }
-          }
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          savedMatches.push(result.value);
+        } else if (result.status === 'rejected') {
+          logger.error('Batch item failed', { error: result.reason?.message });
         }
-
-        // Update match with email content and draft ID
-        const { error: updateError } = await supabase
-          .from('podcast_matches')
-          .update({
-            email_subject:  email.subject,
-            email_body:     email.body,
-            gmail_draft_id: gmailDraftId,
-          })
-          .eq('id', savedMatch.id);
-
-        if (updateError) {
-          logger.warn('Failed to update match with email', {
-            matchId: savedMatch.id,
-            error: updateError.message,
-          });
-        } else {
-          emailsWritten++;
-          // Sync local object for digest
-          savedMatch.email_subject  = email.subject;
-          savedMatch.email_body     = email.body;
-          savedMatch.gmail_draft_id = gmailDraftId;
-        }
-      } catch (podcastErr) {
-        logger.error('Error processing podcast', {
-          title: rawPodcast.title,
-          error: podcastErr.message,
-          stack: podcastErr.stack,
-        });
-        // Continue with next podcast
       }
     }
+
+    const emailsWritten = 0; // emails now written on approve
 
     logger.info('Step 3: Emails written', { clientId, emailsWritten });
 

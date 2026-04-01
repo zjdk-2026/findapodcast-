@@ -108,7 +108,7 @@ function normalisePodcast(item) {
  * Main discovery pipeline for a single client.
  * Returns up to 100 raw, deduplicated, pre-filtered podcast objects.
  */
-async function discoverPodcasts(client) {
+async function discoverPodcasts(client, { isManual = false } = {}) {
   logger.info('Starting discovery', { clientId: client.id, clientName: client.name });
 
   // ─────────────────────────────────────────────────────────────
@@ -245,9 +245,12 @@ async function discoverPodcasts(client) {
   logger.info('Google supplementary search complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
-  // 3b. Similar podcasts chaining (top 3 by listen_score)
+  // 3b. Similar podcasts chaining — skipped on manual runs for speed
   // ─────────────────────────────────────────────────────────────
-  const top3 = Array.from(allCandidates.values())
+  if (isManual) {
+    logger.info('Manual run — skipping similar podcast chaining');
+  }
+  const top3 = isManual ? [] : Array.from(allCandidates.values())
     .filter((p) => p.listen_score != null)
     .sort((a, b) => (b.listen_score || 0) - (a.listen_score || 0))
     .slice(0, 3);
@@ -310,7 +313,7 @@ async function discoverPodcasts(client) {
 
     filtered.push(podcast);
 
-    if (filtered.length >= 100) break;
+    if (filtered.length >= 25) break;
   }
 
   logger.info('Discovery complete', {

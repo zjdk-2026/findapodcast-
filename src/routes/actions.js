@@ -3,7 +3,8 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { sendDraft } = require('../services/gmailService');
+const { sendDraft, createDraft } = require('../services/gmailService');
+const { writeEmail } = require('../services/emailWriter');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
@@ -19,6 +20,17 @@ router.post('/approve', async (req, res) => {
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
   try {
+    // Fetch match + podcast + client for email writing
+    const { data: match, error: fetchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(*), clients(*, gmail_refresh_token)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    // Mark approved
     const { data, error } = await supabase
       .from('podcast_matches')
       .update({ status: 'approved', approved_at: new Date().toISOString() })
@@ -28,7 +40,30 @@ router.post('/approve', async (req, res) => {
       .single();
 
     if (error) { logger.error('Failed to approve match', { matchId, error: error.message }); return res.status(500).json({ success: false, error: 'Failed to approve match.' }); }
-    if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    // Write email now (fire-and-forget so response is instant)
+    if (!match.email_subject) {
+      (async () => {
+        try {
+          const email = await writeEmail(match.clients, match, match.podcasts);
+          let gmailDraftId = null;
+          if (match.clients?.gmail_refresh_token) {
+            const contactEmail = match.podcasts?.contact_email || null;
+            if (contactEmail?.includes('@')) {
+              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body).catch(() => null);
+            }
+          }
+          await supabase.from('podcast_matches').update({
+            email_subject: email.subject,
+            email_body: email.body,
+            gmail_draft_id: gmailDraftId,
+          }).eq('id', matchId);
+          logger.info('Email written on approve', { matchId });
+        } catch (err) {
+          logger.warn('Email write on approve failed', { matchId, error: err.message });
+        }
+      })();
+    }
 
     logger.info('Match approved', { matchId });
     return res.json({ success: true, match: data });
