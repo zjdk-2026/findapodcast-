@@ -277,11 +277,11 @@ html.light-mode ::-webkit-scrollbar-thumb {
 .btn-ghost:hover { color: var(--text-secondary); background: var(--bg-tertiary); }
 
 .btn-gold {
-  background: transparent;
-  color: var(--gold);
-  border-color: rgba(255,214,10,0.3);
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
 }
-.btn-gold:hover { background: rgba(255,214,10,0.08); }
+.btn-gold:hover { background: #1e293b; border-color: #1e293b; }
 
 .btn-sm  { padding: 6px 12px; font-size: 12px; }
 .btn-xs  { padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm); }
