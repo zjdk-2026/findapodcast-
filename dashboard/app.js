@@ -944,7 +944,7 @@ async function runPipeline() {
   btn.disabled = true;
   $('profile-dropdown').style.display = 'none';
   try {
-    const res  = await fetch(`/api/run/${state.client.id}`, { method: 'POST' });
+    const res  = await fetch(`/api/run/${state.client.id}`, { method: 'POST', headers: { 'x-dashboard-token': state.token } });
     const data = await res.json();
     if (data.success) {
       if (data.capReached) {
