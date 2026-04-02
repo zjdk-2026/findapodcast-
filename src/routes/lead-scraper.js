@@ -331,6 +331,11 @@ async function addToGHL(firstName, lastName, email, podcast) {
 
 // ── Route ─────────────────────────────────────────────────────────────────────
 
+router.get('/scrape-debug', (req, res) => {
+  const t = process.env.SCRAPER_TOKEN || '';
+  res.json({ scraper_token_len: t.length, scraper_token_first6: t.slice(0,6) });
+});
+
 router.post('/scrape-leads', async (req, res) => {
   const secret         = (req.headers['x-cron-secret'] || '').trim();
   const expectedSecret = (process.env.SCRAPER_TOKEN || '').trim();
