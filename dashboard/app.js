@@ -151,6 +151,54 @@ function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
+// ── Stats strip (this month) ──────────────────────────────────────────
+function renderStatsStrip() {
+  const el = $('stats-strip');
+  if (!el) return;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const thisMonth = (m) => {
+    const d = m.updated_at || m.booked_at || m.approved_at || m.discovered_at;
+    return d && new Date(d) >= monthStart;
+  };
+
+  const pitchesSent = state.matches.filter((m) =>
+    ['approved', 'dismissed', 'dream', 'booked', 'sent', 'replied'].includes(m.status) && thisMonth(m)
+  ).length;
+
+  const active = state.matches.filter((m) =>
+    m.status === 'new' || m.status === 'approved'
+  ).length;
+
+  const bookedThisMonth = state.matches.filter((m) =>
+    m.status === 'booked' && thisMonth(m)
+  ).length;
+
+  el.innerHTML = [
+    `<div class="stat-pill"><strong>${pitchesSent}</strong> pitches sent this month</div>`,
+    `<div class="stat-pill"><strong>${bookedThisMonth}</strong> booked this month</div>`,
+    `<div class="stat-pill"><strong>${active}</strong> active</div>`,
+  ].join('');
+}
+
+// ── Content boost modal ───────────────────────────────────────────────
+function showContentBoostModal() {
+  const modal = $('content-boost-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeContentBoostModal() {
+  const modal = $('content-boost-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeContentBoostModal = closeContentBoostModal;
+
 // ── Render stats ──────────────────────────────────────────────────────
 function renderStats(stats) {
   const set = (id, val) => { const el = $(id); if (el) el.textContent = val ?? '0'; };
@@ -577,6 +625,7 @@ function renderDashboard(data) {
   }
 
   renderGrid();
+  renderStatsStrip();
 
   $('loading-state').style.display   = 'none';
   $('dashboard-content').style.display = 'block';
@@ -780,7 +829,9 @@ async function bookMatch(matchId) {
         updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
         updateCard(matchId);
         updateStatBadges();
+        renderStatsStrip();
         showToast('Marked as booked!', 'success');
+        showContentBoostModal();
       } else {
         showToast(data.error || 'Book failed.', 'error');
       }

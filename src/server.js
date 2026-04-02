@@ -32,6 +32,7 @@ const dashboardRouter = require('./routes/dashboard');
 const actionsRouter   = require('./routes/actions');
 const gmailRouter     = require('./routes/gmail');
 const operatorRouter  = require('./routes/operator');
+const followupRouter  = require('./routes/followup');
 
 // Scheduler
 const { initScheduler } = require('./scheduler');
@@ -78,6 +79,7 @@ app.use('/api', pipelineRouter);
 app.use('/api', dashboardRouter);
 app.use('/api', actionsRouter);
 app.use('/api/operator', operatorRouter);
+app.use('/api', followupRouter);
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);

@@ -176,6 +176,16 @@ router.post('/book', async (req, res) => {
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
   try {
+    // Fetch match with podcast + client so we can send the congrats email
+    const { data: matchFull, error: fetchErr } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(*), clients(*)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (fetchErr || !matchFull) return res.status(404).json({ success: false, error: 'Match not found.' });
+
     const { data, error } = await supabase
       .from('podcast_matches')
       .update({ status: 'booked', booked_at: new Date().toISOString() })
@@ -188,6 +198,52 @@ router.post('/book', async (req, res) => {
     if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
 
     logger.info('Match booked', { matchId });
+
+    // Send congrats email via Resend (fire-and-forget)
+    (async () => {
+      try {
+        const apiKey   = process.env.RESEND_API_KEY;
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'pipeline@podcastpipeline.com';
+        if (!apiKey) return;
+
+        const client = matchFull.clients || {};
+        const podcast = matchFull.podcasts || {};
+        if (!client.email) return;
+
+        const firstName = (client.name || '').split(' ')[0] || 'there';
+        const podcastTitle = podcast.title || 'the podcast';
+
+        const html = `
+<p>Hi ${firstName},</p>
+<p>You're booked on <strong>${podcastTitle}</strong>. Well done.</p>
+<p>A few things to do now:</p>
+<ul>
+<li>Confirm the date and time with the host</li>
+<li>Prepare your core story and your CTA</li>
+<li>Think about what you want listeners to do after they hear you</li>
+</ul>
+<p>Want to turn this episode into 30 days of content? Our team handles the editing, captions, YouTube cut, and written posts. Reply to this email and we'll tell you how it works.</p>
+<p>Keep going,<br>Zac</p>`;
+
+        await fetch('https://api.resend.com/emails', {
+          method:  'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type':  'application/json',
+          },
+          body: JSON.stringify({
+            from:    fromEmail,
+            to:      [client.email],
+            subject: 'You just got booked.',
+            html,
+          }),
+        });
+        logger.info('Booking congrats email sent', { matchId, clientEmail: client.email });
+      } catch (emailErr) {
+        logger.warn('Booking congrats email failed', { matchId, error: emailErr.message });
+      }
+    })();
+
     return res.json({ success: true, match: data });
   } catch (err) {
     logger.error('Book route error', { matchId, error: err.message });

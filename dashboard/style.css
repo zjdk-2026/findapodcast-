@@ -1246,6 +1246,27 @@ html.light-mode ::-webkit-scrollbar-thumb {
 .toast.toast-error   { border-color: rgba(255,69,58,0.3);  color: var(--danger); }
 .toast.toast-info    { border-color: rgba(10,132,255,0.3); color: var(--accent-hover); }
 
+/* ── Stats strip ─────────────────────────────────────────────── */
+.stats-strip {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px 16px;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.stat-pill strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
 /* ── Onboarding ─────────────────────────────────────────────── */
 .onboard-wrap {
   min-height: 100vh;
