@@ -176,10 +176,11 @@ function renderStatsStrip() {
     m.status === 'booked' && thisMonth(m)
   ).length;
 
+  const monthName = now.toLocaleString('default', { month: 'long' });
   el.innerHTML = [
-    `<div class="stat-pill"><strong>${pitchesSent}</strong> pitches sent this month</div>`,
-    `<div class="stat-pill"><strong>${bookedThisMonth}</strong> booked this month</div>`,
-    `<div class="stat-pill"><strong>${active}</strong> active</div>`,
+    `<div class="stat-pill">📬 <strong>${pitchesSent}</strong> pitched in ${monthName}</div>`,
+    `<div class="stat-pill">🎙️ <strong>${bookedThisMonth}</strong> booked in ${monthName}</div>`,
+    `<div class="stat-pill">⚡ <strong>${active}</strong> in progress</div>`,
   ].join('');
 }
 
