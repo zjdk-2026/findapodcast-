@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're Booked — Find A Podcast Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #f5f5f7;
+      color: #1d1d1f;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 32px;
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+    .nav-brand svg { color: #6366f1; }
+
+    .page-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 24px 96px;
+    }
+
+    /* Confirmation header */
+    .confirm-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .check-circle {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+    }
+    .confirm-header h1 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: #1d1d1f;
+      margin-bottom: 14px;
+    }
+    .confirm-header p {
+      font-size: 17px;
+      color: #6e6e73;
+      line-height: 1.75;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Steps */
+    .steps-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6366f1;
+      margin-bottom: 20px;
+    }
+    .step-card {
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 16px;
+      padding: 24px 26px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      min-width: 36px;
+      background: rgba(99,102,241,0.09);
+      border: 1px solid rgba(99,102,241,0.22);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #6366f1;
+    }
+    .step-content h3 { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 5px; }
+    .step-content p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
+
+    /* Policy card */
+    .policy-card {
+      background: #fff8f0;
+      border: 2px solid #f59e0b;
+      border-radius: 16px;
+      padding: 26px 28px;
+      margin: 32px 0;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .policy-icon {
+      width: 36px; height: 36px; min-width: 36px;
+      background: #fef3c7;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .policy-content h3 { font-size: 15px; font-weight: 700; color: #92400e; margin-bottom: 6px; }
+    .policy-content p { font-size: 14px; color: #a16207; line-height: 1.65; }
+
+    /* Calendar CTA */
+    .calendar-cta {
+      background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(168,85,247,0.05));
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 20px;
+      padding: 36px;
+      text-align: center;
+      margin-top: 32px;
+    }
+    .calendar-cta h3 { font-size: 18px; font-weight: 800; color: #1d1d1f; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .calendar-cta p { font-size: 14px; color: #6e6e73; line-height: 1.65; margin-bottom: 22px; }
+    .btn-calendar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1d1d1f;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-calendar:hover { background: #3a3a3c; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      Find A Podcast
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- Confirmation -->
+    <div class="confirm-header">
+      <div class="check-circle">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h1>You're confirmed.<br>See you soon.</h1>
+      <p>Your 15-minute demo is booked. Check your email for the calendar invite with the call link.</p>
+    </div>
+
+    <!-- Prep steps -->
+    <p class="steps-label">How to prepare</p>
+
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Add it to your diary now</h3>
+        <p>Don't rely on memory. Open your calendar, find the invite, and block the time. Treat it like a client meeting — because it is one.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Think about your niche and goals</h3>
+        <p>Who is your ideal audience? What topics do you speak on? What would 10 booked podcasts per month mean for your business? The clearer you are, the more useful the demo.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Write down your 3 biggest questions</h3>
+        <p>What are you most curious or skeptical about? We want to answer what actually matters to you — not just run through a script.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>Show up on time, on camera</h3>
+        <p>Find a quiet spot with decent lighting. We'll be there on time and ready to go. 15 minutes is enough — but only if we start on time.</p>
+      </div>
+    </div>
+
+    <!-- Zero cancellation policy -->
+    <div class="policy-card">
+      <div class="policy-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="policy-content">
+        <h3>Zero Cancellation Policy</h3>
+        <p>We respect your time and ask that you respect ours. If you need to reschedule, please do so at least <strong>24 hours in advance</strong>. No-shows without notice forfeit their slot and will not be offered another. We hold this standard with every client — it's how we keep things running well.</p>
+      </div>
+    </div>
+
+    <!-- Calendar add -->
+    <div class="calendar-cta">
+      <h3>Add it to your calendar</h3>
+      <p>Check your email for the calendar invite. If you don't see it, check spam — or add the time manually so you don't miss it.</p>
+      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" class="btn-calendar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        View or Reschedule Booking
+      </a>
+    </div>
+
+  </div>
+
+</body>
+</html>

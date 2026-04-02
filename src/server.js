@@ -119,6 +119,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'landing.html'));
 });
 
+app.get('/book-demo', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'book-demo.html'));
+});
+
+app.get('/demo-confirmed', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'demo-confirmed.html'));
+});
+
 // ── 404 Handler ──────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Not found.' });
