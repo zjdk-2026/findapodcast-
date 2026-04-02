@@ -373,37 +373,29 @@ router.post('/scrape-leads', async (req, res) => {
       return true;
     });
 
-    // ── Enrich, dedup vs GHL, add to GHL, collect per-source leads ─────
-    const rssLeads    = [];
+    // ── Enrich + collect per-source leads (GHL disabled — review in Sheets first) ─────
+    const rssLeads     = [];
     const youtubeLeads = [];
-    const appleLeads  = [];
+    const appleLeads   = [];
 
     for (const guest of unique) {
       const enriched = await findEmail(guest.name);
       if (!enriched) { skipped++; continue; }
 
-      const exists = await contactExistsInGHL(enriched.email);
-      if (exists) { skipped++; continue; }
+      added++;
+      logger.info('lead-scraper: lead enriched', { name: guest.name, email: enriched.email, source: guest.sourceLabel });
 
-      const ok = await addToGHL(enriched.firstName, enriched.lastName, enriched.email, guest.podcast);
-      if (ok) {
-        added++;
-        logger.info('lead-scraper: contact added', { name: guest.name, email: enriched.email, source: guest.sourceLabel });
+      const leadRecord = {
+        firstName: enriched.firstName,
+        lastName:  enriched.lastName,
+        email:     enriched.email,
+        source:    guest.sourceLabel,
+        podcast:   guest.podcast,
+      };
 
-        const leadRecord = {
-          firstName: enriched.firstName,
-          lastName:  enriched.lastName,
-          email:     enriched.email,
-          source:    guest.sourceLabel,
-          podcast:   guest.podcast,
-        };
-
-        if (guest.sourceLabel === 'YouTube')        youtubeLeads.push(leadRecord);
-        else if (guest.sourceLabel === 'Apple Podcasts') appleLeads.push(leadRecord);
-        else                                         rssLeads.push(leadRecord);
-      } else {
-        skipped++;
-      }
+      if (guest.sourceLabel === 'YouTube')             youtubeLeads.push(leadRecord);
+      else if (guest.sourceLabel === 'Apple Podcasts') appleLeads.push(leadRecord);
+      else                                             rssLeads.push(leadRecord);
     }
 
     // ── Write to Google Sheets ──────────────────────────────────────────
