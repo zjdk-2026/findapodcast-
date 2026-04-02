@@ -332,10 +332,10 @@ async function addToGHL(firstName, lastName, email, podcast) {
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 router.post('/scrape-leads', async (req, res) => {
-  const secret          = (req.headers['x-cron-secret'] || '').trim();
-  const expectedSecret  = (process.env.SCRAPER_TOKEN || process.env.OPERATOR_SECRET || process.env.OPERATOR_KEY || '').trim();
+  const secret         = (req.headers['x-cron-secret'] || '').trim();
+  const expectedSecret = (process.env.SCRAPER_TOKEN || '').trim();
   if (!expectedSecret || secret !== expectedSecret) {
-    return res.status(401).json({ success: false, error: 'Unauthorised', hint: `got:${secret.slice(0,6)} len:${secret.length} expected_len:${expectedSecret.length}` });
+    return res.status(401).json({ success: false, error: 'Unauthorised' });
   }
 
   let found = 0, added = 0, skipped = 0;
