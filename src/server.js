@@ -60,6 +60,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Scrape token debug (remove after fix) ───────────────────────────
+app.get('/env-check', (req, res) => {
+  const t = process.env.SCRAPER_TOKEN || '';
+  res.json({ scraper_token_len: t.length, first6: t.slice(0, 6) });
+});
+
 // ── Health check ─────────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   try {
