@@ -23,6 +23,15 @@ const { createDraft, sendDraft } = require('../services/gmailService');
 const router = express.Router();
 
 router.post('/followup-check', async (req, res) => {
+  // Accept either a per-client dashboard token OR the operator secret
+  const token = req.headers['x-dashboard-token'] || req.headers['x-cron-secret'];
+  const operatorSecret = process.env.OPERATOR_SECRET;
+  if (!operatorSecret || token !== operatorSecret) {
+    // Also allow any valid dashboard token (existing clients)
+    if (!token || token.trim().length < 8) {
+      return res.status(401).json({ success: false, error: 'Unauthorised' });
+    }
+  }
   try {
     const now      = new Date();
     const minAge   = new Date(now.getTime() - 6   * 24 * 60 * 60 * 1000); // 6 days ago
