@@ -129,6 +129,8 @@ app.get('/demo-confirmed', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'demo-confirmed.html'));
 });
 
+app.use('/api', require('./routes/lead-scraper'));
+
 // ── 404 Handler ──────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Not found.' });
