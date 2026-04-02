@@ -77,9 +77,10 @@ app.use('/api/auth', authRouter);
 app.use('/api', onboardRouter);
 app.use('/api', pipelineRouter);
 app.use('/api', dashboardRouter);
-app.use('/api', actionsRouter);
 app.use('/api/operator', operatorRouter);
 app.use('/api', followupRouter);
+app.use('/api', require('./routes/lead-scraper'));
+app.use('/api', actionsRouter);
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);
@@ -128,8 +129,6 @@ app.get('/book-demo', (req, res) => {
 app.get('/demo-confirmed', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'demo-confirmed.html'));
 });
-
-app.use('/api', require('./routes/lead-scraper'));
 
 // ── 404 Handler ──────────────────────────────────────────────────────
 app.use((req, res) => {
