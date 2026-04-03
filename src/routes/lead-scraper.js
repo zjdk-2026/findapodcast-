@@ -411,16 +411,22 @@ router.post('/scrape-leads', async (req, res) => {
 
     // ── Write to Google Sheets ──────────────────────────────────────────
     let sheetUpdated = false;
-    const sheetResults = await Promise.all([
-      writeToGoogleSheet(rssLeads,     'RSS Podcasts'),
-      writeToGoogleSheet(youtubeLeads, 'YouTube'),
-      writeToGoogleSheet(appleLeads,   'Apple Podcasts'),
-    ]);
-    if (sheetResults.some(Boolean)) sheetUpdated = true;
+    let sheetError   = null;
+    try {
+      const sheetResults = await Promise.all([
+        writeToGoogleSheet(rssLeads,     'RSS Podcasts'),
+        writeToGoogleSheet(youtubeLeads, 'YouTube'),
+        writeToGoogleSheet(appleLeads,   'Apple Podcasts'),
+      ]);
+      if (sheetResults.some(Boolean)) sheetUpdated = true;
+    } catch (sheetErr) {
+      sheetError = sheetErr.message;
+    }
 
     // ── Response ────────────────────────────────────────────────────────
     return res.json({
       success: true,
+      sheetError,
       found,
       added,
       skipped,

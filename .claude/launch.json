@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Find A Podcast (dev)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--watch", "src/server.js"],
+      "port": 3000
+    },
+    {
+      "name": "Find A Podcast (prod)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["src/server.js"],
+      "port": 3000
+    }
+  ]
+}
