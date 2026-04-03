@@ -406,7 +406,7 @@ function renderMatchCard(match) {
   <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
     <!-- Collapsed row — click to expand -->
-    <div class="card-row" draggable="true" onclick="toggleCardExpand('${esc(match.id)}')" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
+    <div class="card-row" draggable="true" onclick="isDragging=false;toggleCardExpand('${esc(match.id)}')" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
       <div class="card-row-left">
         <div class="card-row-title">
           ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
@@ -609,7 +609,7 @@ function featuredPodcastCardHtml() {
   const id = 'featured-demo';
   return `
   <article class="match-card" id="card-${id}" data-expanded="false">
-    <div class="card-row" onclick="toggleCardExpand('${id}')">
+    <div class="card-row" draggable="false" onclick="isDragging=false;toggleCardExpand('${id}')">
       <div class="card-row-left">
         <div class="card-row-title">
           The Breakthrough Moment Podcast
