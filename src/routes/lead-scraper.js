@@ -16,9 +16,16 @@ const GOOGLE_SERVICE_ACCOUNT_EMAIL      = process.env.GOOGLE_SERVICE_ACCOUNT_EMA
 const GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
 const RSS_FEEDS = [
-  { name: 'Faith Driven Entrepreneur',   url: 'https://feeds.transistor.fm/faith-driven-entrepreneur' },
-  { name: 'Carey Nieuwhof Leadership',   url: 'https://feeds.transistor.fm/carey-nieuwhof-leadership-podcast' },
-  { name: 'Kingdom Driven Entrepreneur', url: 'https://feeds.libsyn.com/520878/rss' },
+  { name: 'Faith Driven Entrepreneur',      url: 'https://feeds.transistor.fm/faith-driven-entrepreneur' },
+  { name: 'Carey Nieuwhof Leadership',      url: 'https://feeds.transistor.fm/carey-nieuwhof-leadership-podcast' },
+  { name: 'Kingdom Driven Entrepreneur',    url: 'https://feeds.libsyn.com/520878/rss' },
+  { name: 'Entrepreneurs on Fire',          url: 'https://feeds.libsyn.com/51722/rss' },
+  { name: 'How I Built This',               url: 'https://feeds.npr.org/510313/podcast.xml' },
+  { name: 'The Tim Ferriss Show',           url: 'https://feeds.megaphone.fm/FST3928562931' },
+  { name: 'Masters of Scale',               url: 'https://feeds.megaphone.fm/MASTERS' },
+  { name: 'SmartPassive Income',            url: 'https://feeds.libsyn.com/21612/rss' },
+  { name: 'The Goal Digger Podcast',        url: 'https://feeds.libsyn.com/126625/rss' },
+  { name: 'Online Marketing Made Easy',     url: 'https://feeds.libsyn.com/38699/rss' },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -280,7 +287,7 @@ async function findEmail(fullName) {
     const url = `https://api.hunter.io/v2/email-finder?first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&api_key=${HUNTER_API_KEY}`;
     const res  = await fetchWithTimeout(url);
     const data = await res.json();
-    if (data.data && data.data.email && (data.data.score || 0) >= 70) {
+    if (data.data && data.data.email && (data.data.score || 0) >= 50) {
       return { email: data.data.email, firstName, lastName };
     }
     return null;
