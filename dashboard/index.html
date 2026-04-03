@@ -330,6 +330,48 @@
     </div>
   </div>
 
+  <!-- Share win modal -->
+  <div id="share-modal" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <h2 class="modal-title">📣 Share Your Win</h2>
+        <button class="modal-close" onclick="closeShareModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Edit and share to your socials:</p>
+        <textarea id="share-text" rows="5" class="email-edit-field" style="width:100%;margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="copyShareText()">📋 Copy</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareToTwitter()">𝕏 Twitter/X</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareToLinkedIn()">in LinkedIn</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeShareModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Follow-up modal -->
+  <div id="followup-modal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-wide" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🔄 Follow Up: <span id="followup-podcast-name"></span></h2>
+        <button class="modal-close" onclick="closeFollowUpModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">Subject</label>
+        <input id="followup-subject" class="email-edit-field" style="margin-bottom:12px;" />
+        <label class="field-label">Message</label>
+        <textarea id="followup-body" rows="8" class="email-edit-field" style="margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveFollowUpTemplate()">💾 Save Template</button>
+          <button class="btn btn-secondary btn-sm" onclick="copyFollowUp()">📋 Copy</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeFollowUpModal()">Close</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">Template auto-saves per podcast. Edits persist next time you open it.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 

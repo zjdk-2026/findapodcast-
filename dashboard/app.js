@@ -273,6 +273,21 @@ function socialChipsHtml(podcast) {
   return chips;
 }
 
+// ── Listener count estimate from listen_score (0-100) ────────────────
+function listenersLabel(listenScore) {
+  if (!listenScore) return null;
+  const s = parseInt(listenScore, 10);
+  if (s >= 90) return '1M+ listeners';
+  if (s >= 80) return '~500k listeners';
+  if (s >= 70) return '~100k listeners';
+  if (s >= 60) return '~50k listeners';
+  if (s >= 50) return '~20k listeners';
+  if (s >= 40) return '~10k listeners';
+  if (s >= 30) return '~5k listeners';
+  if (s >= 20) return '~2k listeners';
+  return '~1k listeners';
+}
+
 // ── Meta tags HTML ────────────────────────────────────────────────────
 function metaTagsHtml(podcast) {
   const tags = [];
@@ -283,7 +298,8 @@ function metaTagsHtml(podcast) {
   }
   if (podcast.language && podcast.language !== 'English') tags.push(podcast.language);
   if (podcast.country) tags.push(podcast.country);
-  if (podcast.listen_score) tags.push(`LS ${podcast.listen_score}`);
+  const ll = listenersLabel(podcast.listen_score);
+  if (ll) tags.push(`&#127909; ${ll}`);
   if (podcast.has_guest_history) tags.push('Has Guests');
   if (podcast.youtube_subscribers) {
     const subs = podcast.youtube_subscribers >= 1000
@@ -332,6 +348,7 @@ function actionButtonsHtml(match) {
       buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
     buttons.push(`<span style="font-size:11px;color:var(--text-tertiary);">Sent — awaiting reply</span>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showFollowUpModal('${id}')">🔄 Follow Up</button>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'replied') {
     if (hasEmail) {
@@ -342,6 +359,7 @@ function actionButtonsHtml(match) {
   } else if (status === 'booked') {
     buttons.push(`<span class="booked-badge">Booked</span>`);
     buttons.push(`<button class="btn btn-primary btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Interview Prep</button>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">📣 Share Win</button>`);
     buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">Undo</button>`);
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-outline btn-xs" onclick="approveMatch('${id}')">Restore</button>`);
@@ -384,6 +402,7 @@ function renderMatchCard(match) {
         <div class="card-host-category">
           ${podcast.host_name ? `<span class="card-host">Hosted by ${esc(podcast.host_name)}</span>` : ''}
           ${podcast.category && isNaN(podcast.category) ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
+          ${listenersLabel(podcast.listen_score) ? `<span class="category-tag" style="background:var(--accent-subtle,rgba(99,102,241,.12));color:var(--accent,#6366f1);">&#127909; ${listenersLabel(podcast.listen_score)}</span>` : ''}
         </div>
       </div>
       <div style="flex-shrink:0;">
@@ -1551,6 +1570,98 @@ function initModals() {
     if (templateModal && templateModal.style.display !== 'none') closeTemplateModal();
   });
 }
+
+// ── Share Win modal ───────────────────────────────────────────────────
+function showShareModal(matchId) {
+  const match = state.matches.find((m) => m.id === matchId);
+  if (!match) return;
+  const podcastName = match.podcasts?.title || 'a podcast';
+  const text = `Just landed a podcast appearance on ${podcastName} 🎙️ Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.club #podcast #entrepreneur #personalbrand`;
+  const textarea = $('share-text');
+  if (textarea) textarea.value = text;
+  const m = $('share-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+window.showShareModal = showShareModal;
+
+function closeShareModal() {
+  const m = $('share-modal'); if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeShareModal = closeShareModal;
+
+function copyShareText() {
+  const t = $('share-text'); if (t) navigator.clipboard.writeText(t.value).then(() => showToast('Copied!', 'success'));
+}
+window.copyShareText = copyShareText;
+
+function shareToTwitter() {
+  const t = $('share-text'); if (!t) return;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t.value), '_blank');
+}
+window.shareToTwitter = shareToTwitter;
+
+function shareToLinkedIn() {
+  const t = $('share-text'); if (!t) return;
+  window.open('https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.club&summary=' + encodeURIComponent(t.value), '_blank');
+}
+window.shareToLinkedIn = shareToLinkedIn;
+
+// ── Follow-up modal ───────────────────────────────────────────────────
+function showFollowUpModal(matchId) {
+  const match = state.matches.find((m) => m.id === matchId);
+  if (!match) return;
+  const podcastName = match.podcasts?.title || 'the podcast';
+  const nameEl = $('followup-podcast-name');
+  if (nameEl) nameEl.textContent = podcastName;
+
+  const saved = localStorage.getItem(`followup_template_${matchId}`);
+  let subject, body;
+  if (saved) {
+    try { ({ subject, body } = JSON.parse(saved)); } catch { subject = null; }
+  }
+  if (!subject) subject = `Following up — ${podcastName} guest appearance`;
+  if (!body) body = `Hi [Host Name],\n\nI wanted to follow up on my pitch to appear on ${podcastName}. I believe my experience with [topic] would genuinely resonate with your audience.\n\nHappy to send over any additional info that would help. Looking forward to hearing from you!\n\nBest,\n[Your Name]`;
+
+  const subjectEl = $('followup-subject');
+  const bodyEl    = $('followup-body');
+  if (subjectEl) subjectEl.value = subject;
+  if (bodyEl)    bodyEl.value    = body;
+
+  // Store matchId on modal for save function
+  const modal = $('followup-modal');
+  if (modal) {
+    modal.dataset.matchId   = matchId;
+    modal.style.display     = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+window.showFollowUpModal = showFollowUpModal;
+
+function closeFollowUpModal() {
+  const m = $('followup-modal'); if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeFollowUpModal = closeFollowUpModal;
+
+function saveFollowUpTemplate() {
+  const modal   = $('followup-modal');
+  const matchId = modal?.dataset.matchId;
+  if (!matchId) return;
+  const subject = $('followup-subject')?.value || '';
+  const body    = $('followup-body')?.value    || '';
+  localStorage.setItem(`followup_template_${matchId}`, JSON.stringify({ subject, body }));
+  showToast('Template saved!', 'success');
+}
+window.saveFollowUpTemplate = saveFollowUpTemplate;
+
+function copyFollowUp() {
+  const subject = $('followup-subject')?.value || '';
+  const body    = $('followup-body')?.value    || '';
+  const combined = `Subject: ${subject}\n\n${body}`;
+  navigator.clipboard.writeText(combined).then(() => showToast('Copied!', 'success'));
+}
+window.copyFollowUp = copyFollowUp;
 
 // ── Expose globals for inline onclick handlers ────────────────────────
 window.approveMatch      = approveMatch;
