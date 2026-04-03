@@ -152,6 +152,19 @@ function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
+function copyEmail(e, email) {
+  e.preventDefault();
+  navigator.clipboard.writeText(email).then(() => {
+    const el = e.currentTarget;
+    const orig = el.innerHTML;
+    el.innerHTML = '✓ Copied!';
+    el.style.background = 'rgba(34,197,94,0.15)';
+    el.style.borderColor = 'rgba(34,197,94,0.4)';
+    el.style.color = '#22c55e';
+    setTimeout(() => { el.innerHTML = orig; el.style = ''; }, 1800);
+  });
+}
+
 // ── Hero section (replaces stats strip) ──────────────────────────────
 function renderHeroSection() {
   const heroEl = $('hero-section');
@@ -246,7 +259,7 @@ function contactChipsHtml(podcast) {
   const social   = [];
 
   // Reach out
-  if (podcast.contact_email)        reachOut.push(`<a class="contact-chip contact-chip-primary" href="mailto:${esc(podcast.contact_email)}" title="Email the host"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
+  if (podcast.contact_email)        reachOut.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
   if (podcast.booking_page_url)     reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Book a Time</a>`);
   if (podcast.guest_application_url) reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Apply as Guest</a>`);
   if (podcast.website)              reachOut.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>`);
@@ -647,14 +660,14 @@ function featuredPodcastCardHtml() {
         <div class="contact-chips">
           <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">Spotify</a>
           <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">YouTube</a>
-          <a href="mailto:hi@zacdeane.com" class="contact-chip">hi@zacdeane.com</a>
+          <a href="#" class="contact-chip" onclick="copyEmail(event,'hi@zacdeane.com')">hi@zacdeane.com</a>
           <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="contact-chip">Book a Chat</a>
         </div>
 
         <!-- Action buttons -->
         <div class="card-footer">
           <button class="btn btn-action-view btn-xs" onclick="window.open('https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute','_blank')">Book a Chat</button>
-          <button class="btn btn-action-send btn-xs" onclick="window.open('mailto:hi@zacdeane.com','_blank')">Email Me</button>
+          <button class="btn btn-action-send btn-xs" onclick="window.open('https://mail.google.com/mail/?view=cm&to=hi@zacdeane.com','_blank')">Email Me</button>
           <button class="btn btn-action-prep btn-xs" onclick="window.open('https://open.spotify.com/show/7FBW99BOy9CavEse731bK5','_blank')">Listen Now</button>
         </div>
 
@@ -1229,7 +1242,7 @@ function openEmailModal(matchId) {
   const contactRow = $('email-contact-row');
   if (contactRow) {
     const chips = [];
-    if (podcast.contact_email)       chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}">${esc(podcast.contact_email)}</a>`);
+    if (podcast.contact_email)       chips.push(`<a class="contact-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')">${esc(podcast.contact_email)}</a>`);
     if (podcast.website)             chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank">Website</a>`);
     if (podcast.booking_page_url)    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank">Booking Page</a>`);
     if (podcast.guest_application_url) chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank">Apply as Guest</a>`);
