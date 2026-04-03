@@ -1106,7 +1106,7 @@ function showInterviewPrepModal(matchId) {
           <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid || '')}</p></div>`;
       } catch { contentEl.innerHTML = '<p>Loading prep…</p>'; }
     } else {
-      contentEl.innerHTML = '<p style="color:#6e6e73;text-align:center;padding:20px;">✨ Generating your interview briefing…</p>';
+      contentEl.innerHTML = '';
       apiPost('/api/interview-prep', { matchId }).then((data) => {
         if (data.success && contentEl) {
           const prep = data.prep;
