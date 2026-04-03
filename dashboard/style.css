@@ -1126,6 +1126,37 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   line-height: 1.5;
 }
 
+/* Contact section grouping */
+.contact-section { display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+.contact-group { display: flex; align-items: flex-start; gap: 8px; }
+.contact-group-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); white-space: nowrap; padding-top: 5px; min-width: 56px; }
+.contact-chip-primary { border-color: var(--accent); color: var(--accent); font-weight: 600; background: var(--accent-subtle); }
+.contact-chip-primary:hover { background: var(--accent); color: #fff; }
+
+/* Pitch section */
+.card-pitch-section { border-top: 1px solid var(--border-subtle); padding: 12px 0 4px; }
+.pitch-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 150ms ease;
+}
+.pitch-toggle-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-subtle); }
+.pitch-toggle-btn-saved { border-color: var(--success); color: var(--success); }
+.pitch-toggle-btn-saved:hover { background: rgba(48,209,88,0.08); }
+.pitch-saved-badge { font-size: 10px; font-weight: 700; background: rgba(48,209,88,0.12); color: var(--success); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.04em; }
+.pitch-ai-badge { font-size: 10px; font-weight: 700; background: var(--accent-subtle); color: var(--accent); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.04em; }
+.pitch-field-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px; margin-top: 10px; letter-spacing: 0.03em; text-transform: uppercase; }
+
 .note-toggle-btn {
   align-self: flex-start;
   font-size: 12px;

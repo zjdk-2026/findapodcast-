@@ -241,40 +241,41 @@ function scoreBarHtml(label, value) {
 
 // ── Contact chips HTML ────────────────────────────────────────────────
 function contactChipsHtml(podcast) {
-  const chips = [];
-  if (podcast.contact_email) {
-    chips.push(`<a class="contact-chip" href="mailto:${esc(podcast.contact_email)}" title="${esc(podcast.contact_email)}">${esc(podcast.contact_email)}</a>`);
-  }
-  if (podcast.website) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
-  }
-  if (podcast.booking_page_url) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Booking Page</a>`);
-  }
-  if (podcast.guest_application_url) {
-    chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply as Guest</a>`);
-  }
-  const social = socialChipsHtml(podcast);
-  const all = [...chips, ...social];
-  return all.length > 0
-    ? `<div class="card-contact">${all.join('')}</div>`
-    : `<div class="card-contact"><span class="text-muted" style="font-size:12px;">No contact info found</span></div>`;
+  const reachOut = [];
+  const listen   = [];
+  const social   = [];
+
+  // Reach out
+  if (podcast.contact_email)        reachOut.push(`<a class="contact-chip contact-chip-primary" href="mailto:${esc(podcast.contact_email)}" title="Email the host"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
+  if (podcast.booking_page_url)     reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Book a Time</a>`);
+  if (podcast.guest_application_url) reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Apply as Guest</a>`);
+  if (podcast.website)              reachOut.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>`);
+
+  // Listen
+  if (podcast.spotify_url)          listen.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
+  if (podcast.apple_url)            listen.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
+  if (podcast.youtube_url)          listen.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
+
+  // Social
+  if (podcast.instagram_url)        social.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (podcast.twitter_url)          social.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
+  if (podcast.tiktok_url)           social.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
+  if (podcast.facebook_url)         social.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+  if (podcast.linkedin_page_url)    social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (podcast.linkedin_url)         social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+
+  const rows = [];
+  if (reachOut.length) rows.push(`<div class="contact-group"><span class="contact-group-label">Reach Out</span><div class="contact-chips">${reachOut.join('')}</div></div>`);
+  if (listen.length)   rows.push(`<div class="contact-group"><span class="contact-group-label">Listen</span><div class="contact-chips">${listen.join('')}</div></div>`);
+  if (social.length)   rows.push(`<div class="contact-group"><span class="contact-group-label">Social</span><div class="contact-chips">${social.join('')}</div></div>`);
+
+  return rows.length > 0
+    ? `<div class="contact-section">${rows.join('')}</div>`
+    : `<div class="contact-section"><span style="font-size:12px;color:var(--text-tertiary);">No contact info found yet — try running Find Me Podcasts to enrich this card.</span></div>`;
 }
 
-// ── Social chips HTML ─────────────────────────────────────────────────
-function socialChipsHtml(podcast) {
-  const chips = [];
-  if (podcast.apple_url)         chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
-  if (podcast.spotify_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
-  if (podcast.youtube_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
-  if (podcast.instagram_url)     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
-  if (podcast.twitter_url)       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
-  if (podcast.tiktok_url)        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
-  if (podcast.facebook_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
-  if (podcast.linkedin_page_url) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (podcast.linkedin_url)      chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  return chips;
-}
+// ── Social chips HTML (legacy, kept for compatibility) ─────────────────
+function socialChipsHtml(podcast) { return []; }
 
 // ── Listener count estimate from listen_score (0-100) ────────────────
 function listenersLabel(listenScore) {
@@ -486,14 +487,16 @@ function renderMatchCard(match) {
     ${socialHtml}
 
     <!-- Pitch section -->
-    <div class="card-notes" id="pitch-area-${esc(match.id)}">
-      <button class="note-toggle-btn" onclick="togglePitchArea('${esc(match.id)}')">
-        ✍️ ${match.email_subject ? 'View / Edit Pitch' : 'Write My Pitch'}
+    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}">
+      <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        ${match.email_subject ? 'View / Edit Pitch Email' : 'Write My Pitch Email'}
+        ${match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">AI</span>'}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
-        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Subject line</label>
-        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
-          <option value="">— Choose a subject line template —</option>
+        <label class="pitch-field-label">Subject Line</label>
+        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:10px;">
+          <option value="">— Choose a subject line —</option>
           <option value="Guest inquiry — ${esc(podcast.title || 'your show')}">Guest inquiry — ${esc(podcast.title || 'your show')}</option>
           <option value="Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}">Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}</option>
           <option value="Speaker/guest pitch — ${esc(podcast.title || 'your show')}">Speaker/guest pitch — ${esc(podcast.title || 'your show')}</option>
@@ -501,25 +504,25 @@ function renderMatchCard(match) {
           <option value="Guest feature request — ${esc(podcast.title || 'your show')}">Guest feature request — ${esc(podcast.title || 'your show')}</option>
           <option value="Collaboration enquiry: ${esc(podcast.title || 'your show')}">Collaboration enquiry: ${esc(podcast.title || 'your show')}</option>
         </select>
-        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="6" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
-        <div class="note-actions" style="gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">💾 Save</button>
-          <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">📋 Copy</button>
+        <label class="pitch-field-label">Pitch Email Body</label>
+        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
+        <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
+          <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
     </div>
 
     <!-- Notes -->
-    <div class="card-notes" id="notes-area-${esc(match.id)}">
-      ${match.client_notes
-        ? `<div class="note-display">${esc(match.client_notes)}</div>`
-        : ''}
-      <button class="note-toggle-btn" onclick="toggleNoteArea('${esc(match.id)}')">
-        ${match.client_notes ? 'Edit note' : '+ Add a note…'}
+    <div class="card-pitch-section" id="notes-area-${esc(match.id)}">
+      ${match.client_notes ? `<div class="note-display">${esc(match.client_notes)}</div>` : ''}
+      <button class="pitch-toggle-btn" onclick="toggleNoteArea('${esc(match.id)}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        ${match.client_notes ? 'Edit Note' : 'Add a Private Note'}
       </button>
       <div class="note-editor" id="note-editor-${esc(match.id)}">
-        <textarea class="note-textarea" id="note-text-${esc(match.id)}" rows="2" placeholder="Add a private note…">${esc(match.client_notes || '')}</textarea>
+        <textarea class="note-textarea" id="note-text-${esc(match.id)}" rows="2" placeholder="Jot down anything — what you pitched, follow-up dates, host contact info…">${esc(match.client_notes || '')}</textarea>
         <div class="note-actions">
           <button class="btn btn-primary btn-xs" onclick="saveNote('${esc(match.id)}')">Save</button>
           <button class="btn btn-ghost btn-xs" onclick="toggleNoteArea('${esc(match.id)}')">Cancel</button>
