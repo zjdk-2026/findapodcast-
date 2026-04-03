@@ -612,16 +612,15 @@ function getFilteredSorted() {
 function featuredPodcastCardHtml() {
   const id = 'featured-demo';
   return `
-  <article class="match-card score-tier-high" id="card-${id}" data-expanded="false">
+  <article class="match-card score-tier-high status-new" id="card-${id}" data-status="new" data-score="98" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${id}')" ondragend="handleCardDragEnd(event,'${id}')">
 
-    <!-- Collapsed row — same as renderMatchCard -->
-    <div class="card-row" draggable="true" ondragstart="handleCardDragStart(event,'${id}')" ondragend="handleCardDragEnd(event,'${id}')" onclick="isDragging=false;toggleCardExpand('${id}')">
+    <div class="card-row" onclick="isDragging=false;toggleCardExpand('${id}')">
       <div class="card-row-left">
         <div class="card-row-title">
           The Breakthrough Moment Podcast
           <span class="inline-pill">Entrepreneurship</span>
         </div>
-        <div class="card-row-host">Hosted by Zac Deane</div>
+        <div class="card-row-host">Zac Deane</div>
       </div>
       <div class="card-row-right">
         <span class="score-pill high">98</span>
@@ -630,11 +629,9 @@ function featuredPodcastCardHtml() {
       </div>
     </div>
 
-    <!-- Expanded section — same structure as other cards -->
     <div class="card-expanded" id="card-expanded-${id}">
       <div class="card-expanded-inner">
 
-        <!-- Compatibility score -->
         <div class="fit-score-section">
           <div class="fit-score-header">
             <span class="fit-score-label">Compatibility Score</span>
@@ -653,13 +650,11 @@ function featuredPodcastCardHtml() {
           </div>
         </div>
 
-        <!-- About -->
         <div class="why-fits-box">
           <p class="why-fits-label">About the Show</p>
           <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
         </div>
 
-        <!-- Contact chips -->
         <div class="contact-chips">
           <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">Spotify</a>
           <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">YouTube</a>
@@ -667,7 +662,6 @@ function featuredPodcastCardHtml() {
           <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="contact-chip">Book a Chat</a>
         </div>
 
-        <!-- Action buttons -->
         <div class="card-footer">
           <button class="btn btn-action-send btn-xs btn-action-primary" onclick="approveMatch('${id}')">🚀 Send Pitch</button>
           <button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>
