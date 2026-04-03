@@ -2061,6 +2061,36 @@ async function joinReferralWaitlist() {
 window.joinReferralWaitlist = joinReferralWaitlist;
 window.openTestimonialLink = openTestimonialLink;
 
+// ── Support Modal ─────────────────────────────────────────────────────
+function openSupportModal() {
+  closeProfileDropdown();
+  const modal = $('support-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeSupportModal() {
+  const modal = $('support-modal');
+  if (modal) modal.style.display = 'none';
+  const subj = $('support-subject');
+  const msg  = $('support-message');
+  if (subj) subj.value = '';
+  if (msg)  msg.value  = '';
+}
+function sendSupportEmail() {
+  const subject = ($('support-subject')?.value || '').trim();
+  const message = ($('support-message')?.value || '').trim();
+  if (!message) { showToast('Please enter a message.', 'error'); return; }
+  const name  = state.client?.name  || '';
+  const email = state.client?.email || '';
+  const body  = encodeURIComponent(`From: ${name} (${email})\n\n${message}`);
+  const subj  = encodeURIComponent(subject || 'Support Request — Find A Podcast');
+  window.open(`https://mail.google.com/mail/?view=cm&to=hi@findapodcast.club&su=${subj}&body=${body}`, '_blank');
+  closeSupportModal();
+  showToast('Opening Gmail with your message pre-filled.', 'success');
+}
+window.openSupportModal  = openSupportModal;
+window.closeSupportModal = closeSupportModal;
+window.sendSupportEmail  = sendSupportEmail;
+
 // ── Init ──────────────────────────────────────────────────────────────
 function init() {
   initFilterTabs();
