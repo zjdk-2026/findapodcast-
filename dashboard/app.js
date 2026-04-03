@@ -132,11 +132,11 @@ function statusBadgeHtml(status) {
     new:       'New',
     approved:  'Approved',
     sent:      'Sent',
-    replied:   '💬 Replied',
-    booked:    '🎉 Booked',
+    replied:   'Replied',
+    booked:    'Booked',
     dismissed: 'Ignored',
-    dream:     '✨ Wish List',
-    appeared:  '⭐ Appeared',
+    dream:     'Wish List',
+    appeared:  'Appeared',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -167,13 +167,13 @@ function renderHeroSection() {
 
   const chips = [];
   if (repliedCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-blue">💬 ${repliedCount} new repl${repliedCount === 1 ? 'y' : 'ies'}</span>`);
+    chips.push(`<span class="stat-chip stat-chip-blue">${repliedCount} new repl${repliedCount === 1 ? 'y' : 'ies'}</span>`);
   }
   if (bookedCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-green">🎉 ${bookedCount} booked</span>`);
+    chips.push(`<span class="stat-chip stat-chip-green">${bookedCount} booked</span>`);
   }
   if (newCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-purple">✨ ${newCount} new match${newCount === 1 ? '' : 'es'}</span>`);
+    chips.push(`<span class="stat-chip stat-chip-purple">${newCount} new match${newCount === 1 ? '' : 'es'}</span>`);
   }
 
   heroEl.innerHTML = `
@@ -294,15 +294,9 @@ function listenersLabel(listenScore) {
 // ── Meta tags HTML ────────────────────────────────────────────────────
 function metaTagsHtml(podcast) {
   const tags = [];
-  if (podcast.total_episodes) tags.push(`${podcast.total_episodes} eps`);
-  if (podcast.last_episode_date) {
-    const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
-    tags.push(`${days}d ago`);
-  }
+  // eps + recency shown inline on title row — not repeated here
   if (podcast.language && podcast.language !== 'English') tags.push(podcast.language);
   if (podcast.country) tags.push(podcast.country);
-  const ll = listenersLabel(podcast.listen_score);
-  if (ll) tags.push(`&#127909; ${ll}`);
   if (podcast.has_guest_history) tags.push('Has Guests');
   if (podcast.youtube_subscribers) {
     const subs = podcast.youtube_subscribers >= 1000
@@ -324,41 +318,41 @@ function actionButtonsHtml(match) {
 
   if (status === 'new') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
-      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Now</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
     }
-    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">✕ Ignore</button>`);
+    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">Pitch Sent</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
   } else if (status === 'approved') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
-      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Now</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
     } else {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Email being written…</span>`);
     }
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">✕ Ignore</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">Pitch Sent</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'sent') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📬 Follow Up</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'replied') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-prep btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Prep Me</button>`);
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">🌟 I Appeared!</button>`);
-    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-prep btn-xs" onclick="showInterviewPrepModal('${id}')">Prep Me</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">I Appeared!</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
   } else if (status === 'appeared') {
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
@@ -518,12 +512,10 @@ function renderMatchCard(match) {
           <option value="Guest feature request — ${esc(podcast.title || 'your show')}">Guest feature request — ${esc(podcast.title || 'your show')}</option>
           <option value="Collaboration enquiry: ${esc(podcast.title || 'your show')}">Collaboration enquiry: ${esc(podcast.title || 'your show')}</option>
         </select>
-        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="Or type your own subject…" value="${esc(match.email_subject || '')}">
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="6" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:6px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">💾 Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">📋 Copy</button>
-          <button class="btn btn-secondary btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✨ Regenerate</button>
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
@@ -629,7 +621,7 @@ function featuredPodcastCardHtml() {
         <span class="card-chevron">&#9658;</span>
       </div>
     </div>
-    <div class="card-expanded" id="card-expanded-${id}" style="display:none;">
+    <div class="card-expanded" id="card-expanded-${id}">
       <div class="why-fits-box" style="margin-top:12px;">
         <p class="why-fits-label">About the Show</p>
         <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
@@ -1014,12 +1006,7 @@ window.markAppeared = markAppeared;
 
 // ── Subject preset picker ─────────────────────────────────────────────
 function applySubjectPreset(matchId) {
-  const select = $(`pitch-subject-select-${matchId}`);
-  const input  = $(`pitch-subject-${matchId}`);
-  if (select && input && select.value) {
-    input.value = select.value;
-    select.value = ''; // reset dropdown so user can pick again
-  }
+  // subject is stored directly in the select value — nothing extra needed
 }
 window.applySubjectPreset = applySubjectPreset;
 
@@ -1032,19 +1019,18 @@ function togglePitchArea(matchId) {
   editor.style.flexDirection = 'column';
   if (!isVisible) {
     const match = state.matches.find((m) => m.id === matchId);
-    const subjectEl = $(`pitch-subject-${matchId}`);
+    const subjectEl = $(`pitch-subject-select-${matchId}`);
     if (subjectEl && !subjectEl.value) {
       const podcastName = match?.podcasts?.title || '';
       subjectEl.value = podcastName ? `Guest inquiry — ${podcastName}` : '';
     }
-    if (!match?.email_subject) regeneratePitch(matchId);
   }
 }
 window.togglePitchArea = togglePitchArea;
 
 async function regeneratePitch(matchId) {
   const bodyEl   = $(`pitch-body-${matchId}`);
-  const subjectEl = $(`pitch-subject-${matchId}`);
+  const subjectEl = $(`pitch-subject-select-${matchId}`);
   if (!bodyEl) return;
   bodyEl.value = '✨ Generating pitch in your voice…';
   if (subjectEl) subjectEl.value = '';
@@ -1068,7 +1054,7 @@ window.regeneratePitch = regeneratePitch;
 
 async function savePitch(matchId) {
   const bodyEl    = $(`pitch-body-${matchId}`);
-  const subjectEl = $(`pitch-subject-${matchId}`);
+  const subjectEl = $(`pitch-subject-select-${matchId}`);
   if (!bodyEl) return;
   const body    = bodyEl.value.trim();
   const subject = subjectEl?.value.trim() || '';
@@ -1086,7 +1072,7 @@ window.savePitch = savePitch;
 
 function copyPitch(matchId) {
   const bodyEl    = $(`pitch-body-${matchId}`);
-  const subjectEl = $(`pitch-subject-${matchId}`);
+  const subjectEl = $(`pitch-subject-select-${matchId}`);
   const text = `Subject: ${subjectEl?.value || ''}\n\n${bodyEl?.value || ''}`;
   navigator.clipboard.writeText(text).then(() => showToast('Pitch copied!', 'success'));
 }
