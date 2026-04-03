@@ -610,31 +610,38 @@ function getFilteredSorted() {
 
 // ── Render grid ───────────────────────────────────────────────────────
 function featuredPodcastCardHtml() {
+  const id = 'featured-demo';
   return `
-  <article class="match-card" style="position:relative;">
-    <div class="card-header">
-      <div class="card-title-group">
-        <h2 class="card-title">The Breakthrough Moment Podcast</h2>
-        <div class="card-host-category">
-          <span class="card-host">Hosted by Zac Deane</span>
-          <span class="category-tag">Entrepreneurship</span>
+  <article class="match-card" id="card-${id}" data-expanded="false">
+    <div class="card-row" onclick="toggleCardExpand('${id}')">
+      <div class="card-row-left">
+        <div class="card-row-title">
+          The Breakthrough Moment Podcast
+          <span class="inline-pill">Entrepreneurship</span>
         </div>
+        <div class="card-row-host">Hosted by Zac Deane</div>
+      </div>
+      <div class="card-row-right">
+        <span class="score-pill high">98</span>
+        <span class="status-badge status-new">New</span>
+        <span class="card-chevron">&#9658;</span>
       </div>
     </div>
-    <div class="why-fits-box">
-      <p class="why-fits-label">About the Show</p>
-      <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
-    </div>
-    <div class="contact-chips">
-      <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="chip chip-contact">&#127925; Spotify</a>
-      <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="chip chip-contact">&#9654;&#65039; YouTube</a>
-      <a href="mailto:hi@zacdeane.com" class="chip chip-contact">&#9993;&#65039; hi@zacdeane.com</a>
-    </div>
-    <div class="card-footer">
-      <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="btn btn-primary btn-xs">
-        &#127908; Book a Pre-Podcast Chat
-      </a>
-      <span style="font-size:12px;color:var(--text-tertiary);">Perfect for entrepreneurs &amp; investors</span>
+    <div class="card-expanded" id="card-expanded-${id}" style="display:none;">
+      <div class="why-fits-box" style="margin-top:12px;">
+        <p class="why-fits-label">About the Show</p>
+        <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
+      </div>
+      <div class="contact-chips" style="margin-top:10px;">
+        <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">&#127925; Spotify</a>
+        <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">&#9654;&#65039; YouTube</a>
+        <a href="mailto:hi@zacdeane.com" class="contact-chip">&#9993;&#65039; hi@zacdeane.com</a>
+      </div>
+      <div class="card-footer" style="margin-top:12px;">
+        <button class="btn btn-action-view btn-xs" onclick="window.open('https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute','_blank')">&#127908; Book a Chat</button>
+        <button class="btn btn-action-send btn-xs" onclick="window.open('mailto:hi@zacdeane.com','_blank')">&#9993;&#65039; Email Me</button>
+        <button class="btn btn-action-prep btn-xs" onclick="window.open('https://open.spotify.com/show/7FBW99BOy9CavEse731bK5','_blank')">&#127925; Listen Now</button>
+      </div>
     </div>
   </article>`;
 }
@@ -648,13 +655,14 @@ function renderGrid() {
 
   const FEATURED_TITLE = 'The Breakthrough Moment Podcast';
   const deduped = filtered.filter((m) => (m.podcasts?.title || '').trim() !== FEATURED_TITLE);
+  const showFeatured = state.filter === 'all';
 
   if (deduped.length === 0) {
-    grid.innerHTML = featuredPodcastCardHtml();
-    if (noResults) noResults.style.display = 'block';
+    grid.innerHTML = showFeatured ? featuredPodcastCardHtml() : '';
+    if (noResults) noResults.style.display = deduped.length === 0 && !showFeatured ? 'block' : 'none';
   } else {
     if (noResults) noResults.style.display = 'none';
-    grid.innerHTML = featuredPodcastCardHtml() + deduped.map(renderMatchCard).join('');
+    grid.innerHTML = (showFeatured ? featuredPodcastCardHtml() : '') + deduped.map(renderMatchCard).join('');
   }
 }
 
