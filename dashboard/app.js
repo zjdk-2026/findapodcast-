@@ -614,13 +614,16 @@ function featuredPodcastCardHtml() {
   return `
   <article class="match-card score-tier-high status-new" id="card-${id}" data-status="new" data-score="98" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${id}')" ondragend="handleCardDragEnd(event,'${id}')">
 
-    <div class="card-row" onclick="isDragging=false;toggleCardExpand('${id}')">
+    <div class="card-row" onclick="toggleCardExpand('${id}')">
       <div class="card-row-left">
         <div class="card-row-title">
           The Breakthrough Moment Podcast
-          <span class="inline-pill">Entrepreneurship</span>
+          <span class="inline-pill">488 eps</span>
+          <span class="inline-pill">2d ago</span>
+          <span class="inline-pill">AU</span>
+          <span class="inline-pill inline-pill-accent">&#127909; Medium (50K+)</span>
         </div>
-        <div class="card-row-host">Zac Deane</div>
+        <div class="card-row-host">Hosted by Zac Deane</div>
       </div>
       <div class="card-row-right">
         <span class="score-pill high">98</span>
