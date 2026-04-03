@@ -135,7 +135,7 @@ function statusBadgeHtml(status) {
     replied:   '💬 Replied',
     booked:    '🎉 Booked',
     dismissed: 'Ignored',
-    dream:     'Dream',
+    dream:     '⭐ Dream List',
     appeared:  '⭐ Appeared',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
@@ -327,13 +327,13 @@ function actionButtonsHtml(match) {
     if (hasEmail) {
       buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">Approve</button>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
     if (hasEmail) {
       buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
     }
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
+    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'approved') {
     if (hasEmail) {
       buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
@@ -343,28 +343,32 @@ function actionButtonsHtml(match) {
     }
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
+    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'dream') {
     buttons.push(`<span style="font-size:12px;font-weight:600;color:#8b5cf6;">Dream Show</span>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="approveMatch('${id}')">Move to Active</button>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
   } else if (status === 'sent') {
     if (hasEmail) {
       buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
     buttons.push(`<span style="font-size:11px;color:var(--text-tertiary);">Sent — awaiting reply</span>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showFollowUpModal('${id}')">🔄 Follow Up</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showFollowUpModal('${id}')">📬 Send Follow-Up</button>`);
+    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'replied') {
     if (hasEmail) {
       buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
     }
     buttons.push(`<span style="font-size:11px;color:var(--warning);font-weight:600;">Replied ↩</span>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
+    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'booked') {
     buttons.push(`<span class="booked-badge">Booked</span>`);
-    buttons.push(`<button class="btn btn-primary btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Interview Prep</button>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">📣 Share Win</button>`);
-    buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">Undo</button>`);
+    buttons.push(`<button class="btn btn-primary btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Prep Me</button>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
+    buttons.push(`<button class="btn btn-gold btn-xs" onclick="markAppeared('${id}')">🌟 I Appeared!</button>`);
+    buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
+  } else if (status === 'appeared') {
+    buttons.push(`<span class="booked-badge" style="background:#f59e0b;color:#fff;">🌟 Appeared</span>`);
+    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-outline btn-xs" onclick="approveMatch('${id}')">Restore</button>`);
   }
@@ -414,7 +418,16 @@ function renderMatchCard(match) {
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
         <div class="card-row-title">${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}</div>
-        ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
+        ${(() => {
+          const parts = [];
+          if (podcast.host_name) parts.push(`Hosted by ${esc(podcast.host_name)}`);
+          if (podcast.total_episodes) parts.push(`${podcast.total_episodes} eps`);
+          if (podcast.last_episode_date) {
+            const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
+            parts.push(`${days}d ago`);
+          }
+          return parts.length > 0 ? `<div class="card-row-host">${parts.join('  ·  ')}</div>` : '';
+        })()}
       </div>
       <div class="card-row-middle">
         <span class="score-pill ${tier}">${fitScore}</span>
@@ -444,10 +457,10 @@ function renderMatchCard(match) {
           </div>
         </div>
 
-        <!-- Fit score + bar -->
+        <!-- Opportunity score + bar -->
         <div class="fit-score-section">
           <div class="fit-score-header">
-            <span class="fit-score-label">Fit Score</span>
+            <span class="fit-score-label">Opportunity Score</span>
             <div style="display:flex;align-items:center;gap:10px;">
               <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
               <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
@@ -497,10 +510,10 @@ function renderMatchCard(match) {
     <!-- Pitch section -->
     <div class="card-notes" id="pitch-area-${esc(match.id)}">
       <button class="note-toggle-btn" onclick="togglePitchArea('${esc(match.id)}')">
-        📧 ${match.email_subject ? 'View / Edit Pitch' : 'Generate Pitch'}
+        ✍️ ${match.email_subject ? 'View / Edit Pitch' : 'Write My Pitch'}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
-        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="Email subject…" value="${esc(match.email_subject || '')}">
+        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="e.g. Guest inquiry — ${esc(podcast.title || 'your show')}" value="${esc(match.email_subject || '')}">
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="6" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:6px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">💾 Save</button>
@@ -541,7 +554,19 @@ function renderMatchCard(match) {
 
 // ── Filter & sort ─────────────────────────────────────────────────────
 function getFilteredSorted() {
-  let matches = [...state.matches];
+  // Deduplicate by podcast_id — keep the one with higher fit_score (or first if tied)
+  const seen = new Map();
+  for (const m of state.matches) {
+    const pid = m.podcast_id || m.podcasts?.id;
+    if (!pid) continue;
+    const existing = seen.get(pid);
+    if (!existing || (m.fit_score || 0) > (existing.fit_score || 0)) {
+      seen.set(pid, m);
+    }
+  }
+  // Include any matches without a podcast_id
+  const noPid = state.matches.filter((m) => !m.podcast_id && !m.podcasts?.id);
+  let matches = [...seen.values(), ...noPid];
 
   if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
@@ -575,7 +600,6 @@ function getFilteredSorted() {
 function featuredPodcastCardHtml() {
   return `
   <article class="match-card" style="position:relative;">
-    <div style="position:absolute;top:12px;right:12px;" class="status-badge status-booked">&#11088; Featured</div>
     <div class="card-header">
       <div class="card-title-group">
         <h2 class="card-title">The Breakthrough Moment Podcast</h2>
@@ -610,12 +634,15 @@ function renderGrid() {
 
   const filtered = getFilteredSorted();
 
-  if (filtered.length === 0) {
+  const FEATURED_TITLE = 'The Breakthrough Moment Podcast';
+  const deduped = filtered.filter((m) => (m.podcasts?.title || '').trim() !== FEATURED_TITLE);
+
+  if (deduped.length === 0) {
     grid.innerHTML = featuredPodcastCardHtml();
     if (noResults) noResults.style.display = 'block';
   } else {
     if (noResults) noResults.style.display = 'none';
-    grid.innerHTML = featuredPodcastCardHtml() + filtered.map(renderMatchCard).join('');
+    grid.innerHTML = featuredPodcastCardHtml() + deduped.map(renderMatchCard).join('');
   }
 }
 
@@ -946,6 +973,23 @@ async function bookMatch(matchId) {
   finally  { setCardLoading(matchId, false); }
 }
 
+async function markAppeared(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/appeared', { matchId });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'appeared' });
+      updateCard(matchId);
+      updateStatBadges();
+      showToast('🌟 Marked as appeared!', 'success');
+    } else {
+      showToast(data.error || 'Failed.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally { setCardLoading(matchId, false); }
+}
+window.markAppeared = markAppeared;
+
 // ── Pitch generator ───────────────────────────────────────────────────
 function togglePitchArea(matchId) {
   const editor = $(`pitch-editor-${matchId}`);
@@ -955,6 +999,11 @@ function togglePitchArea(matchId) {
   editor.style.flexDirection = 'column';
   if (!isVisible) {
     const match = state.matches.find((m) => m.id === matchId);
+    const subjectEl = $(`pitch-subject-${matchId}`);
+    if (subjectEl && !subjectEl.value) {
+      const podcastName = match?.podcasts?.title || '';
+      subjectEl.value = podcastName ? `Guest inquiry — ${podcastName}` : '';
+    }
     if (!match?.email_subject) regeneratePitch(matchId);
   }
 }
