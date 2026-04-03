@@ -663,9 +663,10 @@ function featuredPodcastCardHtml() {
 
         <!-- Action buttons -->
         <div class="card-footer">
-          <button class="btn btn-action-view btn-xs" onclick="window.open('https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute','_blank')">Book a Chat</button>
-          <button class="btn btn-action-send btn-xs" onclick="window.open('https://mail.google.com/mail/?view=cm&to=hi@zacdeane.com','_blank')">Email Me</button>
-          <button class="btn btn-action-prep btn-xs" onclick="window.open('https://open.spotify.com/show/7FBW99BOy9CavEse731bK5','_blank')">Listen Now</button>
+          <button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">Pitch Sent</button>
+          <button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>
+          <button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Wish List</button>
+          <button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Ignore</button>
         </div>
 
       </div>
