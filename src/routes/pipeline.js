@@ -166,6 +166,15 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
     // ── 7. Update last_run_at ─────────────────────────────────
     await updateLastRun(clientId);
 
+    // Fire-and-forget deep enrichment for new podcasts (reachable shows only)
+    const newPodcastIds = savedMatches.map((m) => m.podcast_id || m.podcasts?.id).filter(Boolean);
+    if (newPodcastIds.length > 0) {
+      const { deepEnrichNewPodcasts } = require('../lib/deep-enricher');
+      deepEnrichNewPodcasts(newPodcastIds).catch((err) =>
+        logger.warn('Deep enrichment background error', { error: err.message })
+      );
+    }
+
     logger.info('Pipeline run complete', {
       clientId,
       matchesFound:  savedMatches.length,
