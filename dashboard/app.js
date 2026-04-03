@@ -135,7 +135,7 @@ function statusBadgeHtml(status) {
     replied:   '💬 Replied',
     booked:    '🎉 Booked',
     dismissed: 'Ignored',
-    dream:     '⭐ Dream List',
+    dream:     '✨ Wish List',
     appeared:  '⭐ Appeared',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
@@ -332,7 +332,7 @@ function actionButtonsHtml(match) {
       buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
     }
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'approved') {
     if (hasEmail) {
@@ -342,10 +342,10 @@ function actionButtonsHtml(match) {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Email being written…</span>`);
     }
     buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">Add to Dream</button>`);
+    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<span style="font-size:12px;font-weight:600;color:#8b5cf6;">Dream Show</span>`);
+    buttons.push(`<span style="font-size:12px;font-weight:600;color:#8b5cf6;">✨ Wish List</span>`);
     buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
   } else if (status === 'sent') {
     if (hasEmail) {
