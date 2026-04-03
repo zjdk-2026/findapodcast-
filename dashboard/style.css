@@ -1138,21 +1138,22 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 .pitch-toggle-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border);
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
   border-radius: var(--radius-md);
-  padding: 8px 14px;
+  padding: 10px 20px;
   cursor: pointer;
   font-family: var(--font-sans);
   transition: all 150ms ease;
+  letter-spacing: 0.01em;
 }
-.pitch-toggle-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-subtle); }
-.pitch-toggle-btn-saved { border-color: var(--success); color: var(--success); }
-.pitch-toggle-btn-saved:hover { background: rgba(48,209,88,0.08); }
+.pitch-toggle-btn:hover { background: #4f52e0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.35); }
+.pitch-toggle-btn-saved { background: var(--success); }
+.pitch-toggle-btn-saved:hover { background: #28b560; }
 .pitch-saved-badge { font-size: 10px; font-weight: 700; background: rgba(48,209,88,0.12); color: var(--success); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.04em; }
 .pitch-ai-badge { font-size: 10px; font-weight: 700; background: var(--accent-subtle); color: var(--accent); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.04em; }
 .pitch-field-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px; margin-top: 10px; letter-spacing: 0.03em; text-transform: uppercase; }

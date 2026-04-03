@@ -277,13 +277,10 @@ function contactChipsHtml(podcast) {
   if (podcast.linkedin_page_url)    social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
   if (podcast.linkedin_url)         social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
 
-  const rows = [];
-  if (reachOut.length) rows.push(`<div class="contact-group"><span class="contact-group-label">Reach Out</span><div class="contact-chips">${reachOut.join('')}</div></div>`);
-  if (listen.length)   rows.push(`<div class="contact-group"><span class="contact-group-label">Listen</span><div class="contact-chips">${listen.join('')}</div></div>`);
-  if (social.length)   rows.push(`<div class="contact-group"><span class="contact-group-label">Social</span><div class="contact-chips">${social.join('')}</div></div>`);
+  const allChips = [...reachOut, ...listen, ...social];
 
-  return rows.length > 0
-    ? `<div class="contact-section">${rows.join('')}</div>`
+  return allChips.length > 0
+    ? `<div class="contact-section"><div class="contact-chips">${allChips.join('')}</div></div>`
     : `<div class="contact-section"><span style="font-size:12px;color:var(--text-tertiary);">No contact info found yet — try running Find Me Podcasts to enrich this card.</span></div>`;
 }
 
