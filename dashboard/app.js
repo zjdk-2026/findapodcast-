@@ -363,8 +363,12 @@ function actionButtonsHtml(match) {
   return buttons.join('');
 }
 
+// ── Drag-and-drop state ───────────────────────────────────────────────
+let isDragging = false;
+
 // ── Toggle card expand ────────────────────────────────────────────────
 function toggleCardExpand(matchId) {
+  if (isDragging) return;
   const card = $(`card-${matchId}`);
   if (!card) return;
   const isExpanded = card.getAttribute('data-expanded') === 'true';
@@ -402,7 +406,7 @@ function renderMatchCard(match) {
   <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
     <!-- Collapsed row — click to expand -->
-    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
+    <div class="card-row" draggable="true" onclick="toggleCardExpand('${esc(match.id)}')" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
       <div class="card-row-left">
         <div class="card-row-title">
           ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
@@ -1768,6 +1772,68 @@ function copyFollowUp() {
 }
 window.copyFollowUp = copyFollowUp;
 
+// ── Drag-and-drop handlers ────────────────────────────────────────────
+function handleCardDragStart(event, matchId) {
+  isDragging = true;
+  event.dataTransfer.setData('text/plain', matchId);
+  event.dataTransfer.effectAllowed = 'move';
+  event.stopPropagation();
+  const card = $(`card-${matchId}`);
+  if (card) card.classList.add('dragging');
+}
+window.handleCardDragStart = handleCardDragStart;
+
+function handleCardDragEnd(event, matchId) {
+  isDragging = false;
+  const card = $(`card-${matchId}`);
+  if (card) card.classList.remove('dragging');
+}
+window.handleCardDragEnd = handleCardDragEnd;
+
+async function updateMatchStatus(matchId, newStatus) {
+  try {
+    const data = await apiPost('/api/update-status', { matchId, status: newStatus });
+    if (data.success) {
+      updateMatchInState(matchId, { status: newStatus });
+      renderGrid();
+      showToast(`Moved to ${newStatus}`, 'success');
+      // Dismiss drag hint after first successful drop
+      localStorage.setItem('drag-hint-dismissed', '1');
+      const hint = $('drag-hint');
+      if (hint) hint.style.display = 'none';
+    } else {
+      showToast(data.error || 'Update failed.', 'error');
+    }
+  } catch (err) {
+    showToast('Update failed.', 'error');
+  }
+}
+
+function initDragDropTabs() {
+  const tabs = document.querySelectorAll('.filter-tab');
+  tabs.forEach((tab) => {
+    const status = tab.dataset.status;
+    if (status === 'all' || status === 'dismissed') return;
+
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tab.classList.add('drag-over');
+    });
+
+    tab.addEventListener('dragleave', () => {
+      tab.classList.remove('drag-over');
+    });
+
+    tab.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tab.classList.remove('drag-over');
+      const matchId = e.dataTransfer.getData('text/plain');
+      if (matchId) updateMatchStatus(matchId, status);
+    });
+  });
+}
+
 // ── Expose globals for inline onclick handlers ────────────────────────
 window.approveMatch      = approveMatch;
 window.dismissMatch      = dismissMatch;
@@ -1786,6 +1852,12 @@ function init() {
   initSortSelect();
   initExtraFilters();
   initModals();
+  initDragDropTabs();
+  // Hide drag hint if already dismissed
+  if (localStorage.getItem('drag-hint-dismissed') === '1') {
+    const hint = $('drag-hint');
+    if (hint) hint.style.display = 'none';
+  }
   loadDashboard();
 }
 
