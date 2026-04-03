@@ -559,26 +559,28 @@ function renderMatchCard(match) {
 
 // ── Filter & sort ─────────────────────────────────────────────────────
 function getFilteredSorted() {
-  // Deduplicate by podcast_id — keep the one with higher fit_score (or first if tied)
-  const seen = new Map();
+  // Deduplicate: first by podcast_id, then by title — keep highest fit_score
+  const byId    = new Map();
+  const byTitle = new Map();
   for (const m of state.matches) {
-    const pid = m.podcast_id || m.podcasts?.id;
-    if (!pid) continue;
-    const existing = seen.get(pid);
+    const pid   = m.podcast_id || m.podcasts?.id;
+    const title = (m.podcasts?.title || '').toLowerCase().trim();
+    const key   = pid || title || m.id;
+    const existing = byId.get(key);
     if (!existing || (m.fit_score || 0) > (existing.fit_score || 0)) {
-      seen.set(pid, m);
+      byId.set(key, m);
     }
   }
-  // For matches without podcast_id, dedup by podcast title (fallback)
-  const seenTitles = new Set([...seen.values()].map((m) => (m.podcasts?.title || '').toLowerCase().trim()));
-  const noPid = state.matches.filter((m) => {
-    if (m.podcast_id || m.podcasts?.id) return false;
+  // Second pass: dedup any remaining title duplicates (different podcast_ids, same title)
+  const seenTitles = new Set();
+  const deduped = [];
+  for (const m of byId.values()) {
     const title = (m.podcasts?.title || '').toLowerCase().trim();
-    if (title && seenTitles.has(title)) return false;
+    if (title && seenTitles.has(title)) continue;
     if (title) seenTitles.add(title);
-    return true;
-  });
-  let matches = [...seen.values(), ...noPid];
+    deduped.push(m);
+  }
+  let matches = deduped;
 
   if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
