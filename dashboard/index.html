@@ -105,14 +105,14 @@
       <div id="hero-section"></div>
 
       <!-- Client header -->
-      <header class="client-header" style="padding-top:16px;">
-        <div class="client-header-inner">
+      <header class="client-header" style="padding-top:20px;padding-bottom:4px;">
+        <div class="client-header-inner" style="align-items:center;">
           <div class="client-info">
-            <h1 class="client-name" id="client-name"></h1>
-            <p class="client-subtitle" id="client-subtitle"></p>
+            <h1 class="client-name" id="client-name" style="font-size:22px;margin-bottom:4px;"></h1>
+            <p class="client-subtitle" id="client-subtitle" style="font-size:13px;color:var(--text-tertiary);margin:0;"></p>
           </div>
-          <div class="header-actions" id="header-actions">
-            <!-- Gmail connect / status injected by JS -->
+          <div class="header-actions" id="header-actions" style="display:flex;align-items:center;gap:12px;">
+            <span id="last-run-badge" style="font-size:12px;color:var(--text-tertiary);white-space:nowrap;"></span>
             <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()">Find Me Podcasts</button>
           </div>
         </div>
@@ -129,12 +129,11 @@
         </div>
         <div class="stat-card">
           <span class="stat-value stat-green" id="stat-high">—</span>
-          <span class="stat-label">High Score (80+)</span>
+          <span class="stat-label">Strong Matches</span>
         </div>
-
         <div class="stat-card">
           <span class="stat-value stat-purple" id="stat-sent">—</span>
-          <span class="stat-label">Sent</span>
+          <span class="stat-label">Pitched</span>
         </div>
         <div class="stat-card">
           <span class="stat-value stat-gold" id="stat-booked">—</span>

@@ -706,12 +706,13 @@ function renderDashboard(data) {
   if (clientNameEl) clientNameEl.textContent = client.name || 'Your Pipeline';
   if (clientSubEl) {
     const parts = [client.business_name, client.title].filter(Boolean);
-    const lastRun = client.last_run_at
-      ? `Last run ${new Date(client.last_run_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-      : 'Pipeline not yet run';
-    clientSubEl.textContent = parts.length > 0
-      ? `${parts.join(' · ')} · ${lastRun}`
-      : lastRun;
+    clientSubEl.textContent = parts.join(' · ');
+  }
+  const lastRunBadge = $('last-run-badge');
+  if (lastRunBadge) {
+    lastRunBadge.textContent = client.last_run_at
+      ? `Last updated ${new Date(client.last_run_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+      : '';
   }
 
   // Navbar right: profile dropdown trigger
