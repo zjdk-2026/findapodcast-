@@ -387,15 +387,19 @@ router.post('/scrape-leads', async (req, res) => {
 
     for (const guest of unique) {
       const enriched = await findEmail(guest.name);
-      if (!enriched) { skipped++; continue; }
+      // Write to sheet even if no email found — capture name for manual enrichment
+      const nameParts = guest.name.trim().split(' ');
+      const firstName = enriched?.firstName || nameParts[0] || '';
+      const lastName  = enriched?.lastName  || nameParts.slice(1).join(' ') || '';
+      const email     = enriched?.email     || '';
 
       added++;
-      logger.info('lead-scraper: lead enriched', { name: guest.name, email: enriched.email, source: guest.sourceLabel });
+      logger.info('lead-scraper: lead captured', { name: guest.name, email: email || 'none', source: guest.sourceLabel });
 
       const leadRecord = {
-        firstName: enriched.firstName,
-        lastName:  enriched.lastName,
-        email:     enriched.email,
+        firstName,
+        lastName,
+        email,
         source:    guest.sourceLabel,
         podcast:   guest.podcast,
       };
