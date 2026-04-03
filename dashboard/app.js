@@ -555,28 +555,26 @@ function renderMatchCard(match) {
 
 // ── Filter & sort ─────────────────────────────────────────────────────
 function getFilteredSorted() {
-  // Deduplicate: first by podcast_id, then by title — keep highest fit_score
-  const byId    = new Map();
+  // Deduplicate by title (primary) — keep the match with most data / highest score
   const byTitle = new Map();
   for (const m of state.matches) {
-    const pid   = m.podcast_id || m.podcasts?.id;
     const title = (m.podcasts?.title || '').toLowerCase().trim();
-    const key   = pid || title || m.id;
-    const existing = byId.get(key);
-    if (!existing || (m.fit_score || 0) > (existing.fit_score || 0)) {
-      byId.set(key, m);
+    const key   = title || m.podcast_id || m.id;
+    const existing = byTitle.get(key);
+    if (!existing) {
+      byTitle.set(key, m);
+    } else {
+      // Prefer: higher fit_score, or more podcast data (has title), or booked status
+      const mScore = m.fit_score || 0;
+      const eScore = existing.fit_score || 0;
+      const mHasData = !!(m.podcasts?.total_episodes || m.podcasts?.contact_email);
+      const eHasData = !!(existing.podcasts?.total_episodes || existing.podcasts?.contact_email);
+      if (mScore > eScore || (mScore === eScore && mHasData && !eHasData)) {
+        byTitle.set(key, m);
+      }
     }
   }
-  // Second pass: dedup any remaining title duplicates (different podcast_ids, same title)
-  const seenTitles = new Set();
-  const deduped = [];
-  for (const m of byId.values()) {
-    const title = (m.podcasts?.title || '').toLowerCase().trim();
-    if (title && seenTitles.has(title)) continue;
-    if (title) seenTitles.add(title);
-    deduped.push(m);
-  }
-  let matches = deduped;
+  let matches = [...byTitle.values()];
 
   if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
@@ -1311,8 +1309,6 @@ function openContactModal(matchId) {
       <div>
         <p class="email-label">Show Stats</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${p.total_episodes    ? `<span class="meta-tag">${p.total_episodes} episodes</span>` : ''}
-          ${p.last_episode_date ? `<span class="meta-tag">Last: ${new Date(p.last_episode_date).toLocaleDateString()}</span>` : ''}
           ${p.publish_frequency ? `<span class="meta-tag">${esc(p.publish_frequency)}</span>` : ''}
           ${p.avg_episode_duration_mins ? `<span class="meta-tag">${p.avg_episode_duration_mins} min avg</span>` : ''}
           ${p.language && p.language !== 'English' ? `<span class="meta-tag">${esc(p.language)}</span>` : ''}
