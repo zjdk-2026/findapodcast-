@@ -83,49 +83,64 @@ async function addToGHL(client) {
     'Version':       '2021-07-28',
   };
 
-  // 1. Create or update contact
-  const contactRes = await fetch('https://services.leadconnectorhq.com/contacts/', {
-    method:  'POST',
-    headers,
-    body: JSON.stringify({
-      locationId,
-      firstName:   client.name.split(' ')[0],
-      lastName:    client.name.split(' ').slice(1).join(' ') || '',
-      email:       client.email,
-      companyName: client.business_name || undefined,
-      tags:        ['find-a-podcast', 'new-client'],
-      source:      'Find A Podcast Onboarding',
-    }),
-  });
+  // 1. Create contact
+  let contactRes, contactData;
+  try {
+    contactRes  = await fetch('https://services.leadconnectorhq.com/contacts/', {
+      method:  'POST',
+      headers,
+      body: JSON.stringify({
+        locationId,
+        firstName:   client.name.split(' ')[0],
+        lastName:    client.name.split(' ').slice(1).join(' ') || '',
+        email:       client.email,
+        companyName: client.business_name || undefined,
+        tags:        ['find-a-podcast', 'new-client'],
+        source:      'Find A Podcast Onboarding',
+      }),
+    });
+    contactData = await contactRes.json();
+  } catch (fetchErr) {
+    logger.error('GHL contact fetch failed', { error: fetchErr.message });
+    return;
+  }
 
-  const contactData = await contactRes.json();
-  const contactId   = contactData?.contact?.id;
+  logger.info('GHL contact response', { status: contactRes.status, body: JSON.stringify(contactData).slice(0, 300) });
+
+  // GHL v2 returns contact directly or nested under .contact
+  const contactId = contactData?.contact?.id || contactData?.id;
 
   if (!contactId) {
-    logger.warn('GHL contact creation failed', { response: contactData });
+    logger.warn('GHL contact creation failed — no contactId', { status: contactRes.status, response: JSON.stringify(contactData).slice(0, 300) });
     return;
   }
 
   logger.info('GHL contact created', { contactId, clientId: client.id });
 
-  // 2. Create opportunity in pipeline (only if pipeline ID is configured)
+  // 2. Create opportunity in pipeline
   if (!pipelineId) return;
 
-  const oppRes = await fetch('https://services.leadconnectorhq.com/opportunities/', {
-    method:  'POST',
-    headers,
-    body: JSON.stringify({
-      locationId,
-      pipelineId,
-      name:      `${client.name} — Find A Podcast`,
-      contactId,
-      status:    'open',
-      stageId:   null, // drops into first stage automatically
-    }),
-  });
+  let oppRes, oppData;
+  try {
+    oppRes  = await fetch('https://services.leadconnectorhq.com/opportunities/', {
+      method:  'POST',
+      headers,
+      body: JSON.stringify({
+        locationId,
+        pipelineId,
+        name:      `${client.name} — Find A Podcast`,
+        contactId,
+        status:    'open',
+      }),
+    });
+    oppData = await oppRes.json();
+  } catch (oppErr) {
+    logger.error('GHL opportunity fetch failed', { error: oppErr.message });
+    return;
+  }
 
-  const oppData = await oppRes.json();
-  logger.info('GHL opportunity created', { opportunityId: oppData?.opportunity?.id, clientId: client.id });
+  logger.info('GHL opportunity response', { status: oppRes.status, body: JSON.stringify(oppData).slice(0, 300) });
+  logger.info('GHL opportunity created', { opportunityId: oppData?.opportunity?.id || oppData?.id, clientId: client.id });
 }
 
 function escapeHtml(str) {
