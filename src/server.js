@@ -62,8 +62,16 @@ app.use((req, res, next) => {
 
 // ── Scrape token debug (remove after fix) ───────────────────────────
 app.get('/env-check', (req, res) => {
-  const t = process.env.SCRAPER_TOKEN || '';
-  res.json({ scraper_token_len: t.length, first6: t.slice(0, 6) });
+  const t  = process.env.SCRAPER_TOKEN || '';
+  const sa = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+  const pk = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '';
+  const sh = process.env.LEADS_SPREADSHEET_ID || '';
+  res.json({
+    scraper_token_len: t.length,
+    service_account_email: sa ? sa.slice(0, 20) + '…' : 'NOT SET',
+    private_key_len: pk.length,
+    spreadsheet_id: sh ? sh.slice(0, 10) + '…' : 'NOT SET',
+  });
 });
 
 // ── Health check ─────────────────────────────────────────────────────
