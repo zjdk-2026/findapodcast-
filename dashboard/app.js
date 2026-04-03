@@ -593,7 +593,9 @@ function getFilteredSorted() {
 function featuredPodcastCardHtml() {
   const id = 'featured-demo';
   return `
-  <article class="match-card" id="card-${id}" data-expanded="false">
+  <article class="match-card score-tier-high" id="card-${id}" data-expanded="false">
+
+    <!-- Collapsed row — same as renderMatchCard -->
     <div class="card-row" draggable="false" onclick="isDragging=false;toggleCardExpand('${id}')">
       <div class="card-row-left">
         <div class="card-row-title">
@@ -608,20 +610,51 @@ function featuredPodcastCardHtml() {
         <span class="card-chevron">&#9658;</span>
       </div>
     </div>
+
+    <!-- Expanded section — same structure as other cards -->
     <div class="card-expanded" id="card-expanded-${id}">
-      <div class="why-fits-box" style="margin-top:12px;">
-        <p class="why-fits-label">About the Show</p>
-        <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
-      </div>
-      <div class="contact-chips" style="margin-top:10px;">
-        <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">&#127925; Spotify</a>
-        <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">&#9654;&#65039; YouTube</a>
-        <a href="mailto:hi@zacdeane.com" class="contact-chip">&#9993;&#65039; hi@zacdeane.com</a>
-      </div>
-      <div class="card-footer" style="margin-top:12px;">
-        <button class="btn btn-action-view btn-xs" onclick="window.open('https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute','_blank')">&#127908; Book a Chat</button>
-        <button class="btn btn-action-send btn-xs" onclick="window.open('mailto:hi@zacdeane.com','_blank')">&#9993;&#65039; Email Me</button>
-        <button class="btn btn-action-prep btn-xs" onclick="window.open('https://open.spotify.com/show/7FBW99BOy9CavEse731bK5','_blank')">&#127925; Listen Now</button>
+      <div class="card-expanded-inner">
+
+        <!-- Compatibility score -->
+        <div class="fit-score-section">
+          <div class="fit-score-header">
+            <span class="fit-score-label">Compatibility Score</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="likelihood-badge likelihood-high">HIGH</span>
+              <span class="fit-score-value" style="color:var(--success)">98</span>
+            </div>
+          </div>
+          <div class="score-bar-wrap"><div class="score-bar-fill high" style="width:98%"></div></div>
+          <div class="score-breakdown">
+            <div class="score-row"><span class="score-row-label">Relevance</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:98%"></div></div><span class="score-row-val">98</span></div>
+            <div class="score-row"><span class="score-row-label">Audience</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:95%"></div></div><span class="score-row-val">95</span></div>
+            <div class="score-row"><span class="score-row-label">Recency</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:100%"></div></div><span class="score-row-val">100</span></div>
+            <div class="score-row"><span class="score-row-label">Reach</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:90%"></div></div><span class="score-row-val">90</span></div>
+            <div class="score-row"><span class="score-row-label">Contact</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:100%"></div></div><span class="score-row-val">100</span></div>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="why-fits-box">
+          <p class="why-fits-label">About the Show</p>
+          <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
+        </div>
+
+        <!-- Contact chips -->
+        <div class="contact-chips">
+          <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">Spotify</a>
+          <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">YouTube</a>
+          <a href="mailto:hi@zacdeane.com" class="contact-chip">hi@zacdeane.com</a>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="contact-chip">Book a Chat</a>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="card-footer">
+          <button class="btn btn-action-view btn-xs" onclick="window.open('https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute','_blank')">Book a Chat</button>
+          <button class="btn btn-action-send btn-xs" onclick="window.open('mailto:hi@zacdeane.com','_blank')">Email Me</button>
+          <button class="btn btn-action-prep btn-xs" onclick="window.open('https://open.spotify.com/show/7FBW99BOy9CavEse731bK5','_blank')">Listen Now</button>
+        </div>
+
       </div>
     </div>
   </article>`;
