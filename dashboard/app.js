@@ -341,6 +341,7 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">Mark Booked</button>`);
   } else if (status === 'booked') {
     buttons.push(`<span class="booked-badge">Booked</span>`);
+    buttons.push(`<button class="btn btn-primary btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Interview Prep</button>`);
     buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">Undo</button>`);
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-outline btn-xs" onclick="approveMatch('${id}')">Restore</button>`);
@@ -439,6 +440,23 @@ function renderMatchCard(match) {
 
     <!-- Social chips -->
     ${socialHtml}
+
+    <!-- Pitch section -->
+    <div class="card-notes" id="pitch-area-${esc(match.id)}">
+      <button class="note-toggle-btn" onclick="togglePitchArea('${esc(match.id)}')">
+        📧 ${match.email_subject ? 'View / Edit Pitch' : 'Generate Pitch'}
+      </button>
+      <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
+        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="Email subject…" value="${esc(match.email_subject || '')}">
+        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="6" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
+        <div class="note-actions" style="gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">💾 Save</button>
+          <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">📋 Copy</button>
+          <button class="btn btn-secondary btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✨ Regenerate</button>
+          <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Notes -->
     <div class="card-notes" id="notes-area-${esc(match.id)}">
@@ -868,6 +886,122 @@ async function bookMatch(matchId) {
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
 }
+
+// ── Pitch generator ───────────────────────────────────────────────────
+function togglePitchArea(matchId) {
+  const editor = $(`pitch-editor-${matchId}`);
+  if (!editor) return;
+  const isVisible = editor.style.display !== 'none';
+  editor.style.display = isVisible ? 'none' : 'flex';
+  editor.style.flexDirection = 'column';
+  if (!isVisible) {
+    const match = state.matches.find((m) => m.id === matchId);
+    if (!match?.email_subject) regeneratePitch(matchId);
+  }
+}
+window.togglePitchArea = togglePitchArea;
+
+async function regeneratePitch(matchId) {
+  const bodyEl   = $(`pitch-body-${matchId}`);
+  const subjectEl = $(`pitch-subject-${matchId}`);
+  if (!bodyEl) return;
+  bodyEl.value = '✨ Generating pitch in your voice…';
+  if (subjectEl) subjectEl.value = '';
+  try {
+    const data = await apiPost('/api/generate-pitch', { matchId });
+    if (data.success) {
+      if (subjectEl) subjectEl.value = data.subject || '';
+      bodyEl.value = data.body || '';
+      updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
+      showToast('Pitch generated!', 'success');
+    } else {
+      bodyEl.value = '';
+      showToast(data.error || 'Could not generate pitch.', 'error');
+    }
+  } catch {
+    bodyEl.value = '';
+    showToast('Network error.', 'error');
+  }
+}
+window.regeneratePitch = regeneratePitch;
+
+async function savePitch(matchId) {
+  const bodyEl    = $(`pitch-body-${matchId}`);
+  const subjectEl = $(`pitch-subject-${matchId}`);
+  if (!bodyEl) return;
+  const body    = bodyEl.value.trim();
+  const subject = subjectEl?.value.trim() || '';
+  try {
+    const data = await apiPost('/api/save-pitch', { matchId, subject, body });
+    if (data.success) {
+      updateMatchInState(matchId, { email_subject: subject, email_body: body });
+      showToast('Pitch saved!', 'success');
+    } else {
+      showToast(data.error || 'Save failed.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+window.savePitch = savePitch;
+
+function copyPitch(matchId) {
+  const bodyEl    = $(`pitch-body-${matchId}`);
+  const subjectEl = $(`pitch-subject-${matchId}`);
+  const text = `Subject: ${subjectEl?.value || ''}\n\n${bodyEl?.value || ''}`;
+  navigator.clipboard.writeText(text).then(() => showToast('Pitch copied!', 'success'));
+}
+window.copyPitch = copyPitch;
+
+// ── Interview prep modal ──────────────────────────────────────────────
+function showInterviewPrepModal(matchId) {
+  const modal = $('interview-prep-modal');
+  if (!modal) return;
+  const match   = state.matches.find((m) => m.id === matchId);
+  const podcast = match?.podcasts || {};
+  const titleEl = $('prep-podcast-title');
+  if (titleEl) titleEl.textContent = podcast.title || 'this podcast';
+
+  const contentEl = $('prep-content');
+  if (contentEl) {
+    if (match?.interview_prep) {
+      try {
+        const prep = typeof match.interview_prep === 'string'
+          ? JSON.parse(match.interview_prep) : match.interview_prep;
+        contentEl.innerHTML = `
+          <div class="prep-section"><strong>About the host</strong><p>${esc(prep.host_background || '')}</p></div>
+          <div class="prep-section"><strong>Show format</strong><p>${esc(prep.show_format || '')}</p></div>
+          <div class="prep-section"><strong>Suggested topics</strong><ul>${(prep.suggested_topics||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+          <div class="prep-section"><strong>Likely questions</strong><ul>${(prep.likely_questions||[]).map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>
+          <div class="prep-section"><strong>Your talking points</strong><ul>${(prep.talking_points||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
+          <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid || '')}</p></div>`;
+      } catch { contentEl.innerHTML = '<p>Loading prep…</p>'; }
+    } else {
+      contentEl.innerHTML = '<p style="color:#6e6e73;text-align:center;padding:20px;">✨ Generating your interview briefing…</p>';
+      apiPost('/api/interview-prep', { matchId }).then((data) => {
+        if (data.success && contentEl) {
+          const prep = data.prep;
+          contentEl.innerHTML = `
+            <div class="prep-section"><strong>About the host</strong><p>${esc(prep.host_background||'')}</p></div>
+            <div class="prep-section"><strong>Show format</strong><p>${esc(prep.show_format||'')}</p></div>
+            <div class="prep-section"><strong>Suggested topics</strong><ul>${(prep.suggested_topics||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+            <div class="prep-section"><strong>Likely questions</strong><ul>${(prep.likely_questions||[]).map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>
+            <div class="prep-section"><strong>Your talking points</strong><ul>${(prep.talking_points||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
+            <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid||'')}</p></div>`;
+          updateMatchInState(matchId, { interview_prep: JSON.stringify(prep) });
+        }
+      });
+    }
+  }
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+window.showInterviewPrepModal = showInterviewPrepModal;
+
+function closeInterviewPrepModal() {
+  const modal = $('interview-prep-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeInterviewPrepModal = closeInterviewPrepModal;
 
 // ── Notes ─────────────────────────────────────────────────────────────
 function toggleNoteArea(matchId) {
