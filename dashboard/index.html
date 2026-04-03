@@ -67,8 +67,11 @@
     <!-- Main dashboard content -->
     <div id="dashboard-content" style="display:none;">
 
+      <!-- Hero greeting section -->
+      <div id="hero-section"></div>
+
       <!-- Client header -->
-      <header class="client-header">
+      <header class="client-header" style="padding-top:16px;">
         <div class="client-header-inner">
           <div class="client-info">
             <h1 class="client-name" id="client-name"></h1>
@@ -81,8 +84,8 @@
         </div>
       </header>
 
-      <!-- Stats strip (this month) -->
-      <div id="stats-strip" class="stats-strip"></div>
+      <!-- Stats strip (this month) — now renders hero section -->
+      <div id="stats-strip" class="stats-strip" style="display:none;"></div>
 
       <!-- Stats bar -->
       <section class="stats-bar" id="stats-bar">
@@ -114,15 +117,15 @@
 
       <!-- Filter bar -->
       <section class="filter-bar">
-        <div class="filter-tabs" id="filter-tabs">
-          <button class="filter-tab active" data-status="all">All</button>
-          <button class="filter-tab" data-status="new">New</button>
-          <button class="filter-tab" data-status="approved">Approved</button>
-          <button class="filter-tab" data-status="sent">Sent</button>
-          <button class="filter-tab" data-status="replied">Replied</button>
-          <button class="filter-tab" data-status="booked">Booked</button>
-          <button class="filter-tab" data-status="dream">Dream</button>
-          <button class="filter-tab" data-status="dismissed">Ignore</button>
+        <div class="tab-pills filter-tabs" id="filter-tabs">
+          <button class="tab-pill filter-tab active" data-status="all">All</button>
+          <button class="tab-pill filter-tab" data-status="new">New</button>
+          <button class="tab-pill filter-tab" data-status="approved">Approved</button>
+          <button class="tab-pill filter-tab" data-status="sent">Sent</button>
+          <button class="tab-pill filter-tab" data-status="replied">💬 Replied</button>
+          <button class="tab-pill filter-tab" data-status="booked">🎉 Booked</button>
+          <button class="tab-pill filter-tab" data-status="dream">Dream</button>
+          <button class="tab-pill filter-tab" data-status="dismissed">Ignore</button>
         </div>
         <div class="filter-right">
           <label class="filter-label">

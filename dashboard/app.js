@@ -132,10 +132,11 @@ function statusBadgeHtml(status) {
     new:       'New',
     approved:  'Approved',
     sent:      'Sent',
-    replied:   'Replied',
-    booked:    'Booked',
+    replied:   '💬 Replied',
+    booked:    '🎉 Booked',
     dismissed: 'Ignored',
     dream:     'Dream',
+    appeared:  '⭐ Appeared',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -151,37 +152,40 @@ function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
-// ── Stats strip (this month) ──────────────────────────────────────────
+// ── Hero section (replaces stats strip) ──────────────────────────────
+function renderHeroSection() {
+  const heroEl = $('hero-section');
+  if (!heroEl) return;
+
+  const name = state.client?.name || 'there';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  const bookedCount  = state.matches.filter((m) => m.status === 'booked').length;
+  const repliedCount = state.matches.filter((m) => m.status === 'replied').length;
+  const newCount     = state.matches.filter((m) => m.status === 'new').length;
+
+  const chips = [];
+  if (repliedCount > 0) {
+    chips.push(`<span class="stat-chip stat-chip-blue">💬 ${repliedCount} new repl${repliedCount === 1 ? 'y' : 'ies'}</span>`);
+  }
+  if (bookedCount > 0) {
+    chips.push(`<span class="stat-chip stat-chip-green">🎉 ${bookedCount} booked</span>`);
+  }
+  if (newCount > 0) {
+    chips.push(`<span class="stat-chip stat-chip-purple">✨ ${newCount} new match${newCount === 1 ? '' : 'es'}</span>`);
+  }
+
+  heroEl.innerHTML = `
+    <div class="hero-greeting">
+      <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
+      ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
+    </div>`;
+}
+
+// ── Stats strip (this month) — legacy kept for bookMatch calls ────────
 function renderStatsStrip() {
-  const el = $('stats-strip');
-  if (!el) return;
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const thisMonth = (m) => {
-    const d = m.updated_at || m.booked_at || m.approved_at || m.discovered_at;
-    return d && new Date(d) >= monthStart;
-  };
-
-  const pitchesSent = state.matches.filter((m) =>
-    ['approved', 'dismissed', 'dream', 'booked', 'sent', 'replied'].includes(m.status) && thisMonth(m)
-  ).length;
-
-  const active = state.matches.filter((m) =>
-    m.status === 'new' || m.status === 'approved'
-  ).length;
-
-  const bookedThisMonth = state.matches.filter((m) =>
-    m.status === 'booked' && thisMonth(m)
-  ).length;
-
-  const monthName = now.toLocaleString('default', { month: 'long' });
-  el.innerHTML = [
-    `<div class="stat-pill"><span style="margin-right:4px;">&#128140;</span><strong>${pitchesSent}</strong> pitched in ${monthName}</div>`,
-    `<div class="stat-pill"><span style="margin-right:4px;">&#127908;</span><strong>${bookedThisMonth}</strong> booked in ${monthName}</div>`,
-    `<div class="stat-pill"><span style="margin-right:4px;">&#9889;</span><strong>${active}</strong> in progress</div>`,
-  ].join('');
+  renderHeroSection();
 }
 
 // ── Content boost modal ───────────────────────────────────────────────
@@ -368,6 +372,15 @@ function actionButtonsHtml(match) {
   return buttons.join('');
 }
 
+// ── Toggle card expand ────────────────────────────────────────────────
+function toggleCardExpand(matchId) {
+  const card = $(`card-${matchId}`);
+  if (!card) return;
+  const isExpanded = card.getAttribute('data-expanded') === 'true';
+  card.setAttribute('data-expanded', isExpanded ? 'false' : 'true');
+}
+window.toggleCardExpand = toggleCardExpand;
+
 // ── Render a single match card ────────────────────────────────────────
 function renderMatchCard(match) {
   const podcast    = match.podcasts || {};
@@ -375,6 +388,8 @@ function renderMatchCard(match) {
   const tier       = scoreTier(fitScore);
   const tierClass  = `score-tier-${tier}`;
   const likeCls    = likelihoodClass(match.booking_likelihood);
+  const isBooked   = match.status === 'booked';
+  const bookedClass = isBooked ? 'card-booked-highlight' : '';
 
   const redFlagsHtml = (match.red_flags && match.red_flags !== 'none')
     ? `<div class="why-fits-box">
@@ -393,60 +408,79 @@ function renderMatchCard(match) {
   const socialHtml = '';
 
   return `
-  <article class="match-card status-${esc(match.status)} ${tierClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}">
+  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
-    <!-- Header: title + status badge -->
-    <div class="card-header">
-      <div class="card-title-group">
-        <h2 class="card-title" title="${esc(podcast.title)}" onclick="openContactModal('${esc(match.id)}')">${esc(podcast.title) || 'Unknown Show'}</h2>
-        <div class="card-host-category">
-          ${podcast.host_name ? `<span class="card-host">Hosted by ${esc(podcast.host_name)}</span>` : ''}
-          ${podcast.category && isNaN(podcast.category) ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
-          ${listenersLabel(podcast.listen_score) ? `<span class="category-tag" style="background:var(--accent-subtle,rgba(99,102,241,.12));color:var(--accent,#6366f1);">&#127909; ${listenersLabel(podcast.listen_score)}</span>` : ''}
-        </div>
+    <!-- Collapsed row — click to expand -->
+    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
+      <div class="card-row-left">
+        <div class="card-row-title">${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}</div>
+        ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
       </div>
-      <div style="flex-shrink:0;">
+      <div class="card-row-middle">
+        <span class="score-pill ${tier}">${fitScore}</span>
+      </div>
+      <div class="card-row-right">
         ${statusBadgeHtml(match.status)}
+        <span class="card-chevron">▸</span>
       </div>
     </div>
 
-    <!-- Fit score + bar -->
-    <div class="fit-score-section">
-      <div class="fit-score-header">
-        <span class="fit-score-label">Fit Score</span>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
-          <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
+    <!-- Expanded content -->
+    <div class="card-expanded">
+      <div class="card-expanded-inner">
+
+        <!-- Header: title + status badge -->
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title" title="${esc(podcast.title)}" onclick="openContactModal('${esc(match.id)}')">${esc(podcast.title) || 'Unknown Show'}</h2>
+            <div class="card-host-category">
+              ${podcast.host_name ? `<span class="card-host">Hosted by ${esc(podcast.host_name)}</span>` : ''}
+              ${podcast.category && isNaN(podcast.category) ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
+              ${listenersLabel(podcast.listen_score) ? `<span class="category-tag" style="background:var(--accent-subtle);color:var(--accent);">🎧 ${listenersLabel(podcast.listen_score)}</span>` : ''}
+            </div>
+          </div>
+          <div style="flex-shrink:0;">
+            ${statusBadgeHtml(match.status)}
+          </div>
         </div>
-      </div>
-      <div class="fit-score-bar-track">
-        <div class="fit-score-bar-fill score-bar-fill ${fitScore >= 70 ? 'high' : fitScore >= 40 ? 'mid' : 'low'}" style="width:${fitScore}%"></div>
-      </div>
-    </div>
 
-    <!-- Sub-scores -->
-    <div class="score-bars">
-      ${scoreBarHtml('Relevance',  match.relevance_score)}
-      ${scoreBarHtml('Audience',   match.audience_score)}
-      ${scoreBarHtml('Recency',    match.recency_score)}
-      ${scoreBarHtml('Reach',      match.reach_score)}
-      ${scoreBarHtml('Contact',    match.contactability_score)}
-    </div>
+        <!-- Fit score + bar -->
+        <div class="fit-score-section">
+          <div class="fit-score-header">
+            <span class="fit-score-label">Fit Score</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
+              <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
+            </div>
+          </div>
+          <div class="fit-score-bar-track">
+            <div class="fit-score-bar-fill score-bar-fill ${fitScore >= 70 ? 'high' : fitScore >= 40 ? 'mid' : 'low'}" style="width:${fitScore}%"></div>
+          </div>
+        </div>
 
-    <!-- Why fits -->
-    ${match.why_this_client_fits ? `
-    <div class="why-fits-box">
-      <p class="why-fits-label">Why You Fit</p>
-      <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
-    </div>` : ''}
+        <!-- Sub-scores -->
+        <div class="score-bars">
+          ${scoreBarHtml('Relevance',  match.relevance_score)}
+          ${scoreBarHtml('Audience',   match.audience_score)}
+          ${scoreBarHtml('Recency',    match.recency_score)}
+          ${scoreBarHtml('Reach',      match.reach_score)}
+          ${scoreBarHtml('Contact',    match.contactability_score)}
+        </div>
 
-    <!-- Analysis -->
-    <div class="card-analysis">
-      ${match.best_pitch_angle ? `
-      <div class="why-fits-box">
-        <p class="why-fits-label">Best Pitch Angle</p>
-        <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
-      </div>` : ''}
+        <!-- Why fits -->
+        ${match.why_this_client_fits ? `
+        <div class="why-fits-box">
+          <p class="why-fits-label">Why You Fit</p>
+          <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
+        </div>` : ''}
+
+        <!-- Analysis -->
+        <div class="card-analysis">
+          ${match.best_pitch_angle ? `
+          <div class="why-fits-box">
+            <p class="why-fits-label">Best Pitch Angle</p>
+            <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
+          </div>` : ''}
       ${episodeHtml}
       ${redFlagsHtml}
     </div>
@@ -494,10 +528,13 @@ function renderMatchCard(match) {
       </div>
     </div>
 
-    <!-- Footer: action buttons -->
-    <div class="card-footer">
-      ${actionButtonsHtml(match)}
-    </div>
+        <!-- Footer: action buttons -->
+        <div class="card-footer">
+          ${actionButtonsHtml(match)}
+        </div>
+
+      </div><!-- /.card-expanded-inner -->
+    </div><!-- /.card-expanded -->
 
   </article>`;
 }
