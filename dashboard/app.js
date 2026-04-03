@@ -361,8 +361,8 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'booked') {
     buttons.push(`<button class="btn btn-action-prep btn-xs" onclick="showInterviewPrepModal('${id}')">Prep Me</button>`);
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">I Appeared!</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">I Appeared!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
   } else if (status === 'appeared') {
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
