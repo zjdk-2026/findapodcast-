@@ -52,7 +52,7 @@
     <p class="dropdown-section-label">Grow</p>
     <button class="dropdown-item dropdown-item-highlight" onclick="openReferralModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Refer a Friend — Earn 40% Per Month
+      Refer a Friend — Earn 40% Per Month <span style="font-size:10px;font-weight:700;background:rgba(99,102,241,0.15);color:var(--accent);border-radius:20px;padding:2px 7px;margin-left:4px;">Coming Soon</span>
     </button>
     <button class="dropdown-item" onclick="openTestimonialLink()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -435,14 +435,12 @@
         <h3 class="modal-title">Refer a Friend — Earn 40% Per Month</h3>
         <button class="modal-close" onclick="closeReferralModal()" aria-label="Close">✕</button>
       </div>
-      <div class="modal-body" style="padding:24px;">
-        <p style="font-size:14px;color:var(--text-secondary);margin:0 0 20px;">Share your unique referral link. When a friend signs up and stays for 30 days, you earn 40% of their subscription every month they stay.</p>
-        <label style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);display:block;margin-bottom:6px;">Your Referral Link</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="referral-link-input" type="text" readonly style="flex:1;padding:10px 14px;border:1.5px solid var(--border-medium);border-radius:var(--radius-md);font-size:13px;background:var(--bg-secondary);color:var(--text-primary);font-family:var(--font-mono,monospace);" />
-          <button class="btn btn-primary btn-xs" onclick="copyReferralLink()">Copy</button>
-        </div>
-        <p style="font-size:12px;color:var(--text-tertiary);margin:10px 0 0;">Your link is unique to your account. Share it anywhere — email, socials, DMs.</p>
+      <div class="modal-body" style="padding:28px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">🔜</div>
+        <h4 style="margin:0 0 10px;font-size:17px;font-weight:700;color:var(--text-primary);">Referrals are coming soon.</h4>
+        <p style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin:0 0 24px;">Earn 40% recurring commission every month for every client you refer. Join the waitlist and we'll notify you the moment it goes live.</p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" id="referral-waitlist-btn" onclick="joinReferralWaitlist()">Join the Waitlist</button>
+        <p style="font-size:12px;color:var(--text-tertiary);margin:12px 0 0;">We'll email you when it launches.</p>
       </div>
     </div>
   </div>

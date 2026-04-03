@@ -416,7 +416,7 @@ function renderMatchCard(match) {
   <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
 
     <!-- Collapsed row — click to expand -->
-    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">`
+    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
         <div class="card-row-title">
           ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
@@ -2040,6 +2040,20 @@ function openTestimonialLink() {
 window.openReferralModal  = openReferralModal;
 window.closeReferralModal = closeReferralModal;
 window.copyReferralLink   = copyReferralLink;
+
+async function joinReferralWaitlist() {
+  const btn = $('referral-waitlist-btn');
+  if (btn) { btn.textContent = 'Joining…'; btn.disabled = true; }
+  try {
+    await apiPost('/api/referral-waitlist', { clientId: state.client?.id, email: state.client?.email, name: state.client?.name });
+    if (btn) { btn.textContent = "You're on the list!"; btn.style.background = 'var(--success)'; }
+    showToast('You\'re on the waitlist — we\'ll email you when it launches.', 'success');
+  } catch {
+    if (btn) { btn.textContent = 'Join the Waitlist'; btn.disabled = false; }
+    showToast('Something went wrong. Try again.', 'error');
+  }
+}
+window.joinReferralWaitlist = joinReferralWaitlist;
 window.openTestimonialLink = openTestimonialLink;
 
 // ── Init ──────────────────────────────────────────────────────────────
