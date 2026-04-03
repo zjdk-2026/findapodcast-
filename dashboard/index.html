@@ -107,13 +107,12 @@
       <!-- Client header -->
       <header class="client-header" style="padding-top:20px;padding-bottom:4px;">
         <div class="client-header-inner" style="align-items:center;">
-          <div class="client-info">
-            <h1 class="client-name" id="client-name" style="font-size:22px;margin-bottom:4px;"></h1>
-            <p class="client-subtitle" id="client-subtitle" style="font-size:13px;color:var(--text-tertiary);margin:0;"></p>
+          <div class="client-info" style="display:flex;align-items:center;gap:16px;">
+            <h1 class="client-name" id="client-name" style="font-size:22px;margin:0;"></h1>
+            <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()" style="flex-shrink:0;">Find Me Podcasts</button>
           </div>
           <div class="header-actions" id="header-actions" style="display:flex;align-items:center;gap:12px;">
             <span id="last-run-badge" style="font-size:12px;color:var(--text-tertiary);white-space:nowrap;"></span>
-            <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()">Find Me Podcasts</button>
           </div>
         </div>
       </header>

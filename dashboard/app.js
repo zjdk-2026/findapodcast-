@@ -706,7 +706,7 @@ function renderDashboard(data) {
   const clientSubEl  = $('client-subtitle');
   if (clientNameEl) clientNameEl.textContent = client.name || 'Your Pipeline';
   if (clientSubEl) {
-    clientSubEl.textContent = client.business_name || '';
+    clientSubEl.style.display = 'none';
   }
   const lastRunBadge = $('last-run-badge');
   if (lastRunBadge) {
