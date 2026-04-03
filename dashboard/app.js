@@ -2055,6 +2055,32 @@ async function joinReferralWaitlist() {
 window.joinReferralWaitlist = joinReferralWaitlist;
 window.openTestimonialLink = openTestimonialLink;
 
+async function refreshDashboard() {
+  const btn  = $('refresh-btn');
+  const icon = $('refresh-icon');
+  if (btn) btn.disabled = true;
+  if (icon) icon.style.animation = 'spin 0.7s linear infinite';
+  try {
+    const res  = await fetch(`/api/dashboard/${state.token}`);
+    const data = await res.json();
+    if (data.success) {
+      state.matches = data.matches || [];
+      state.client  = data.client  || state.client;
+      renderGrid();
+      updateStatBadges();
+      showToast('Dashboard refreshed.', 'success');
+    } else {
+      showToast('Refresh failed — try again.', 'error');
+    }
+  } catch {
+    showToast('Could not reach server. Check your connection.', 'error');
+  } finally {
+    if (btn)  btn.disabled = false;
+    if (icon) icon.style.animation = '';
+  }
+}
+window.refreshDashboard = refreshDashboard;
+
 // ── Support Modal ─────────────────────────────────────────────────────
 function openSupportModal() {
   closeProfileDropdown();
