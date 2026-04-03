@@ -508,7 +508,17 @@ function renderMatchCard(match) {
         ✍️ ${match.email_subject ? 'View / Edit Pitch' : 'Write My Pitch'}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
-        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="e.g. Guest inquiry — ${esc(podcast.title || 'your show')}" value="${esc(match.email_subject || '')}">
+        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Subject line</label>
+        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
+          <option value="">— Choose a subject line template —</option>
+          <option value="Guest inquiry — ${esc(podcast.title || 'your show')}">Guest inquiry — ${esc(podcast.title || 'your show')}</option>
+          <option value="Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}">Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}</option>
+          <option value="Speaker/guest pitch — ${esc(podcast.title || 'your show')}">Speaker/guest pitch — ${esc(podcast.title || 'your show')}</option>
+          <option value="I'd love to be a guest on ${esc(podcast.title || 'your show')}">I'd love to be a guest on ${esc(podcast.title || 'your show')}</option>
+          <option value="Guest feature request — ${esc(podcast.title || 'your show')}">Guest feature request — ${esc(podcast.title || 'your show')}</option>
+          <option value="Collaboration enquiry: ${esc(podcast.title || 'your show')}">Collaboration enquiry: ${esc(podcast.title || 'your show')}</option>
+        </select>
+        <input id="pitch-subject-${esc(match.id)}" class="note-textarea" style="margin-bottom:6px;padding:8px;" placeholder="Or type your own subject…" value="${esc(match.email_subject || '')}">
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="6" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:6px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">💾 Save</button>
@@ -991,6 +1001,17 @@ async function markAppeared(matchId) {
   finally { setCardLoading(matchId, false); }
 }
 window.markAppeared = markAppeared;
+
+// ── Subject preset picker ─────────────────────────────────────────────
+function applySubjectPreset(matchId) {
+  const select = $(`pitch-subject-select-${matchId}`);
+  const input  = $(`pitch-subject-${matchId}`);
+  if (select && input && select.value) {
+    input.value = select.value;
+    select.value = ''; // reset dropdown so user can pick again
+  }
+}
+window.applySubjectPreset = applySubjectPreset;
 
 // ── Pitch generator ───────────────────────────────────────────────────
 function togglePitchArea(matchId) {
