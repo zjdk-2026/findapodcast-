@@ -435,25 +435,10 @@ function renderMatchCard(match) {
     <div class="card-expanded">
       <div class="card-expanded-inner">
 
-        <!-- Header: title + status badge -->
-        <div class="card-header">
-          <div class="card-title-group">
-            <h2 class="card-title" title="${esc(podcast.title)}" onclick="openContactModal('${esc(match.id)}')">${esc(podcast.title) || 'Unknown Show'}</h2>
-            <div class="card-host-category">
-              ${podcast.host_name ? `<span class="card-host">Hosted by ${esc(podcast.host_name)}</span>` : ''}
-              ${podcast.category && isNaN(podcast.category) ? `<span class="category-tag">${esc(podcast.category)}</span>` : ''}
-              ${listenersLabel(podcast.listen_score) ? `<span class="category-tag" style="background:var(--accent-subtle);color:var(--accent);">🎧 ${listenersLabel(podcast.listen_score)}</span>` : ''}
-            </div>
-          </div>
-          <div style="flex-shrink:0;">
-            ${statusBadgeHtml(match.status)}
-          </div>
-        </div>
-
-        <!-- Opportunity score + bar -->
+        <!-- Compatibility score + bar -->
         <div class="fit-score-section">
           <div class="fit-score-header">
-            <span class="fit-score-label">Opportunity Score</span>
+            <span class="fit-score-label">Compatibility Score</span>
             <div style="display:flex;align-items:center;gap:10px;">
               <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
               <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
@@ -1022,14 +1007,38 @@ function togglePitchArea(matchId) {
   editor.style.flexDirection = 'column';
   if (!isVisible) {
     const match = state.matches.find((m) => m.id === matchId);
+    const bodyEl    = $(`pitch-body-${matchId}`);
     const subjectEl = $(`pitch-subject-select-${matchId}`);
-    if (subjectEl && !subjectEl.value) {
-      const podcastName = match?.podcasts?.title || '';
-      subjectEl.value = podcastName ? `Guest inquiry — ${podcastName}` : '';
+    // Auto-generate if no pitch exists yet
+    if (bodyEl && !match?.email_body) {
+      autoGeneratePitch(matchId, bodyEl, subjectEl);
     }
   }
 }
 window.togglePitchArea = togglePitchArea;
+
+async function autoGeneratePitch(matchId, bodyEl, subjectEl) {
+  bodyEl.value = '';
+  bodyEl.placeholder = 'Writing your pitch…';
+  bodyEl.disabled = true;
+  try {
+    const data = await apiPost('/api/generate-pitch', { matchId });
+    if (data.success) {
+      if (subjectEl) subjectEl.value = data.subject || '';
+      bodyEl.value = data.body || '';
+      bodyEl.placeholder = 'Your pitch email…';
+      updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
+    } else {
+      bodyEl.placeholder = 'Could not generate — write manually or try again.';
+      showToast(data.error || 'Could not generate pitch.', 'error');
+    }
+  } catch {
+    bodyEl.placeholder = 'Network error — write manually or try again.';
+    showToast('Network error generating pitch.', 'error');
+  } finally {
+    bodyEl.disabled = false;
+  }
+}
 
 async function regeneratePitch(matchId) {
   const bodyEl   = $(`pitch-body-${matchId}`);
