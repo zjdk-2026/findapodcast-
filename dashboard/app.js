@@ -210,7 +210,6 @@ function renderStats(stats) {
   set('stat-total',    stats.total);
   set('stat-high',     stats.high);
   set('stat-avg',      stats.avgScore ?? '—');
-  set('stat-approved', stats.approved);
   set('stat-sent',     stats.sent);
   set('stat-booked',   stats.booked);
 }
