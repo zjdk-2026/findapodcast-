@@ -1717,6 +1717,41 @@ function shareToLinkedIn() {
 }
 window.shareToLinkedIn = shareToLinkedIn;
 
+// ── Follow-up sequence presets ────────────────────────────────────────
+const FOLLOWUP_SEQUENCES = {
+  followup1: {
+    subject: (p) => `Quick follow-up — ${p} guest spot`,
+    body: (p) => `Hi [Host Name],\n\nJust wanted to follow up on my pitch to join you on ${p}.\n\nI know inboxes get busy — happy to send any extra info that would help make the decision easier.\n\nLooking forward to potentially connecting!\n\nBest,\n[Your Name]`,
+  },
+  followup2: {
+    subject: (p) => `One more thought — ${p}`,
+    body: (p) => `Hi [Host Name],\n\nFollowing up once more on my pitch for ${p}. I wanted to share a quick thought that might be relevant for your audience:\n\n[Add a specific insight, stat, or story relevant to their show's topic]\n\nI think this angle could make for a really compelling episode. Would love to explore it with you.\n\nBest,\n[Your Name]`,
+  },
+  followup3: {
+    subject: (p) => `Last note — ${p} collaboration`,
+    body: (p) => `Hi [Host Name],\n\nI'll keep this short — last follow-up on my pitch to appear on ${p}.\n\nIf the timing isn't right, no worries at all. If you'd ever like to revisit it down the track, I'd love to hear from you.\n\nWishing you and the show continued success!\n\nBest,\n[Your Name]`,
+  },
+};
+
+function applyFollowUpSequence() {
+  const modal     = $('followup-modal');
+  const matchId   = modal?.dataset.matchId;
+  const select    = $('followup-sequence-select');
+  const seq       = select?.value;
+  if (!seq || seq === 'custom') return;
+
+  const match       = state.matches.find((m) => m.id === matchId);
+  const podcastName = match?.podcasts?.title || 'the podcast';
+  const preset      = FOLLOWUP_SEQUENCES[seq];
+  if (!preset) return;
+
+  const subjectEl = $('followup-subject');
+  const bodyEl    = $('followup-body');
+  if (subjectEl) subjectEl.value = preset.subject(podcastName);
+  if (bodyEl)    bodyEl.value    = preset.body(podcastName);
+}
+window.applyFollowUpSequence = applyFollowUpSequence;
+
 // ── Follow-up modal ───────────────────────────────────────────────────
 function showFollowUpModal(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
@@ -1744,6 +1779,9 @@ function showFollowUpModal(matchId) {
     modal.dataset.matchId   = matchId;
     modal.style.display     = 'flex';
     document.body.style.overflow = 'hidden';
+    // Reset sequence dropdown to custom
+    const sel = $('followup-sequence-select');
+    if (sel) sel.value = 'custom';
   }
 }
 window.showFollowUpModal = showFollowUpModal;
