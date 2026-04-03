@@ -1948,12 +1948,11 @@ function initDragDropTabs() {
   if (!container) return;
 
   container.addEventListener('dragover', (e) => {
-    const tab = e.target.closest('.filter-tab');
-    if (!tab) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    const tab = e.target.closest('.filter-tab');
     container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
-    tab.classList.add('drag-over');
+    if (tab) tab.classList.add('drag-over');
   });
 
   container.addEventListener('dragleave', (e) => {
@@ -1963,10 +1962,10 @@ function initDragDropTabs() {
   });
 
   container.addEventListener('drop', (e) => {
-    const tab = e.target.closest('.filter-tab');
-    if (!tab) return;
     e.preventDefault();
     container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
     const status = tab.dataset.status;
     if (status === 'all' || status === 'dismissed') return;
     const matchId = e.dataTransfer.getData('text/plain');
