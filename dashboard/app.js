@@ -154,14 +154,25 @@ function esc(str) {
 
 function copyEmail(e, email) {
   e.preventDefault();
+  e.stopPropagation();
+  const el = e.currentTarget || e.target;
   navigator.clipboard.writeText(email).then(() => {
-    const el = e.currentTarget;
     const orig = el.innerHTML;
     el.innerHTML = '✓ Copied!';
-    el.style.background = 'rgba(34,197,94,0.15)';
-    el.style.borderColor = 'rgba(34,197,94,0.4)';
-    el.style.color = '#22c55e';
-    setTimeout(() => { el.innerHTML = orig; el.style = ''; }, 1800);
+    el.style.cssText += ';background:rgba(34,197,94,0.15)!important;border-color:rgba(34,197,94,0.4)!important;color:#22c55e!important;';
+    showToast(`Copied: ${email}`, 'success');
+    setTimeout(() => { el.innerHTML = orig; el.style.cssText = ''; }, 1800);
+  }).catch(() => {
+    // Fallback for browsers that block clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = email;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(`Copied: ${email}`, 'success');
   });
 }
 
@@ -1350,7 +1361,7 @@ function openContactModal(matchId) {
       <div>
         <p class="email-label">Contact Info</p>
         <div class="contact-section">
-          ${contactRowHtml('', 'Email', p.contact_email, `mailto:${p.contact_email}`, false)}
+          ${p.contact_email ? `<div class="contact-row"><span class="contact-row-label"> Email</span><span class="contact-row-value" title="${esc(p.contact_email)}">${esc(p.contact_email)}</span><div class="contact-row-actions"><button class="btn btn-ghost btn-xs" onclick="copyEmail(event,'${esc(p.contact_email)}')">Copy</button></div></div>` : ''}
           ${contactRowHtml('', 'Website', p.website, p.website, true)}
           ${contactRowHtml('', 'Booking', p.booking_page_url, p.booking_page_url, true)}
           ${contactRowHtml('', 'Apply', p.guest_application_url, p.guest_application_url, true)}
