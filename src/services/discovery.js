@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const axios = require('axios');
 const listennotes = require('../lib/listennotes');
 const supabase = require('../lib/supabase');
@@ -100,6 +101,137 @@ function normalisePodcast(item) {
     thumbnail:               item.thumbnail || null,
     // raw listennotes url for further fetching
     listennotes_url:         item.listennotes_url || null,
+    phone_number:            null,
+    source:                  'listennotes',
+  };
+}
+
+async function searchItunes(query, language) {
+  try {
+    const term = encodeURIComponent(query);
+    const lang = language === 'English' ? 'en_us' : 'en_us';
+    const url = `https://itunes.apple.com/search?term=${term}&media=podcast&entity=podcast&limit=25&lang=${lang}`;
+    const res = await axios.get(url, { timeout: 8000 });
+    return res.data?.results || [];
+  } catch (err) {
+    logger.warn('iTunes search failed', { query, error: err.message });
+    return [];
+  }
+}
+
+function normaliseItunes(item) {
+  return {
+    external_id: `itunes_${item.collectionId}`,
+    title: item.collectionName || item.trackName || 'Untitled',
+    host_name: item.artistName || null,
+    description: item.description || null,
+    website: item.collectionViewUrl || null,
+    apple_url: item.collectionViewUrl || null,
+    spotify_url: null,
+    youtube_url: null,
+    category: item.primaryGenreName || null,
+    niche_tags: item.genres || [],
+    total_episodes: item.trackCount ?? null,
+    last_episode_date: item.releaseDate ? item.releaseDate.slice(0, 10) : null,
+    country: item.country || null,
+    language: 'English',
+    listen_score: null,
+    image: item.artworkUrl600 || item.artworkUrl100 || null,
+    thumbnail: item.artworkUrl100 || null,
+    listennotes_url: null,
+    phone_number: null,
+    source: 'itunes',
+  };
+}
+
+async function searchPodcastIndex(query) {
+  const apiKey = process.env.PODCAST_INDEX_API_KEY;
+  const apiSecret = process.env.PODCAST_INDEX_API_SECRET;
+  if (!apiKey || !apiSecret) {
+    logger.warn('Podcast Index not configured — skipping');
+    return [];
+  }
+  try {
+    const epoch = Math.floor(Date.now() / 1000);
+    const hash = crypto.createHash('sha1').update(apiKey + apiSecret + epoch).digest('hex');
+    const url = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=25&clean`;
+    const res = await axios.get(url, {
+      headers: {
+        'X-Auth-Date': epoch.toString(),
+        'X-Auth-Key': apiKey,
+        'Authorization': hash,
+        'User-Agent': 'FindAPodcast/1.0',
+      },
+      timeout: 8000,
+    });
+    return res.data?.feeds || [];
+  } catch (err) {
+    logger.warn('Podcast Index search failed', { query, error: err.message });
+    return [];
+  }
+}
+
+function normalisePodcastIndex(item) {
+  return {
+    external_id: `podcastindex_${item.id}`,
+    title: item.title || 'Untitled',
+    host_name: item.author || item.ownerName || null,
+    description: item.description || null,
+    website: item.link || null,
+    apple_url: null,
+    spotify_url: null,
+    youtube_url: null,
+    category: item.categories ? Object.values(item.categories)[0] : null,
+    niche_tags: item.categories ? Object.values(item.categories) : [],
+    total_episodes: item.episodeCount ?? null,
+    last_episode_date: item.lastUpdateTime ? new Date(item.lastUpdateTime * 1000).toISOString().slice(0, 10) : null,
+    country: null,
+    language: item.language || 'English',
+    listen_score: null,
+    image: item.artwork || item.image || null,
+    thumbnail: item.image || null,
+    listennotes_url: null,
+    phone_number: null,
+    source: 'podcastindex',
+  };
+}
+
+async function searchYouTubePodcasts(topic, apiKey) {
+  if (!apiKey) return [];
+  try {
+    const query = encodeURIComponent(`${topic} podcast interview`);
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=channel&maxResults=15&key=${apiKey}`;
+    const res = await axios.get(url, { timeout: 8000 });
+    return res.data?.items || [];
+  } catch (err) {
+    logger.warn('YouTube podcast search failed', { topic, error: err.message });
+    return [];
+  }
+}
+
+function normaliseYouTube(item) {
+  const channelId = item.id?.channelId || item.snippet?.channelId;
+  return {
+    external_id: `youtube_${channelId}`,
+    title: item.snippet?.title || 'Untitled',
+    host_name: item.snippet?.channelTitle || null,
+    description: item.snippet?.description || null,
+    website: channelId ? `https://www.youtube.com/channel/${channelId}` : null,
+    apple_url: null,
+    spotify_url: null,
+    youtube_url: channelId ? `https://www.youtube.com/channel/${channelId}` : null,
+    category: null,
+    niche_tags: [],
+    total_episodes: null,
+    last_episode_date: item.snippet?.publishedAt ? item.snippet.publishedAt.slice(0, 10) : null,
+    country: null,
+    language: 'English',
+    listen_score: null,
+    image: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url || null,
+    thumbnail: item.snippet?.thumbnails?.default?.url || null,
+    listennotes_url: null,
+    phone_number: null,
+    source: 'youtube',
   };
 }
 
@@ -204,6 +336,58 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   }
 
   logger.info('Best podcasts fetch complete', { candidatesSoFar: allCandidates.size });
+
+  // ─────────────────────────────────────────────────────────────
+  // 2b. iTunes + Podcast Index + YouTube parallel searches
+  // ─────────────────────────────────────────────────────────────
+  const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+
+  // Run top 3 topic queries across all 3 new sources in parallel
+  const newSourceQueries = queries.slice(0, 3);
+  const [itunesResults, podcastIndexResults, youtubeResults] = await Promise.allSettled([
+    Promise.all(newSourceQueries.map(q => searchItunes(q, language))),
+    Promise.all(newSourceQueries.map(q => searchPodcastIndex(q))),
+    Promise.all(client.topics?.slice(0, 2).map(t => searchYouTubePodcasts(t, GOOGLE_SEARCH_API_KEY)) || []),
+  ]);
+
+  // Add iTunes results
+  if (itunesResults.status === 'fulfilled') {
+    for (const batch of itunesResults.value) {
+      for (const item of batch) {
+        const id = `itunes_${item.collectionId}`;
+        if (item.collectionId && !allCandidates.has(id)) {
+          allCandidates.set(id, normaliseItunes(item));
+        }
+      }
+    }
+  }
+
+  // Add Podcast Index results
+  if (podcastIndexResults.status === 'fulfilled') {
+    for (const batch of podcastIndexResults.value) {
+      for (const item of batch) {
+        const id = `podcastindex_${item.id}`;
+        if (item.id && !allCandidates.has(id)) {
+          allCandidates.set(id, normalisePodcastIndex(item));
+        }
+      }
+    }
+  }
+
+  // Add YouTube results
+  if (youtubeResults.status === 'fulfilled') {
+    for (const batch of youtubeResults.value) {
+      for (const item of batch) {
+        const channelId = item.id?.channelId;
+        const id = `youtube_${channelId}`;
+        if (channelId && !allCandidates.has(id)) {
+          allCandidates.set(id, normaliseYouTube(item));
+        }
+      }
+    }
+  }
+
+  logger.info('Multi-source discovery complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
   // 3. Google Custom Search supplementary discovery
@@ -315,6 +499,14 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
 
     if (filtered.length >= 50) break;
   }
+
+  // Sort: email first → listen_score descending → rest
+  filtered.sort((a, b) => {
+    const aHasEmail = a.email_contact ? 1 : 0;
+    const bHasEmail = b.email_contact ? 1 : 0;
+    if (bHasEmail !== aHasEmail) return bHasEmail - aHasEmail;
+    return (b.listen_score || 0) - (a.listen_score || 0);
+  });
 
   logger.info('Discovery complete', {
     clientId: client.id,

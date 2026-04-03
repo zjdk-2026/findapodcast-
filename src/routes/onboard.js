@@ -263,6 +263,41 @@ router.post('/onboard', async (req, res) => {
       logger.warn('GHL sync failed', { clientId: data.id, error: err.message });
     });
 
+    // ── Background discovery — pre-warm matches on signup (fire-and-forget)
+    const { discoverPodcasts } = require('../services/discovery');
+    setImmediate(async () => {
+      try {
+        logger.info('Background discovery started for new client', { clientId: data.id });
+        const rawPodcasts = await discoverPodcasts(data, { isManual: true });
+        logger.info('Background discovery complete', { clientId: data.id, count: rawPodcasts.length });
+        // Upsert raw podcasts to the podcasts table so they're cached
+        for (const pod of rawPodcasts) {
+          await supabase.from('podcasts').upsert({
+            external_id: pod.external_id,
+            title: pod.title,
+            host_name: pod.host_name,
+            description: pod.description,
+            website: pod.website,
+            apple_url: pod.apple_url,
+            spotify_url: pod.spotify_url,
+            youtube_url: pod.youtube_url,
+            category: pod.category,
+            niche_tags: pod.niche_tags || [],
+            total_episodes: pod.total_episodes,
+            last_episode_date: pod.last_episode_date,
+            country: pod.country,
+            language: pod.language,
+            listen_score: pod.listen_score,
+            image: pod.image,
+            thumbnail: pod.thumbnail,
+          }, { onConflict: 'external_id', ignoreDuplicates: true });
+        }
+        logger.info('Background podcast cache complete', { clientId: data.id, cached: rawPodcasts.length });
+      } catch (bgErr) {
+        logger.warn('Background discovery failed', { clientId: data.id, error: bgErr.message });
+      }
+    });
+
     return res.status(201).json({
       success:      true,
       clientId:     data.id,
