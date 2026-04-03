@@ -1806,28 +1806,50 @@ async function updateMatchStatus(matchId, newStatus) {
 }
 
 function initDragDropTabs() {
-  const tabs = document.querySelectorAll('.filter-tab');
-  tabs.forEach((tab) => {
+  // Use delegation on the stable container so re-renders don't break listeners
+  const container = $('filter-tabs');
+  if (!container) return;
+
+  container.addEventListener('dragover', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
+    tab.classList.add('drag-over');
+  });
+
+  container.addEventListener('dragleave', (e) => {
+    if (!container.contains(e.relatedTarget)) {
+      container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
+    }
+  });
+
+  container.addEventListener('drop', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    e.preventDefault();
+    container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
     const status = tab.dataset.status;
     if (status === 'all' || status === 'dismissed') return;
-
-    tab.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      tab.classList.add('drag-over');
-    });
-
-    tab.addEventListener('dragleave', () => {
-      tab.classList.remove('drag-over');
-    });
-
-    tab.addEventListener('drop', (e) => {
-      e.preventDefault();
-      tab.classList.remove('drag-over');
-      const matchId = e.dataTransfer.getData('text/plain');
-      if (matchId) updateMatchStatus(matchId, status);
-    });
+    const matchId = e.dataTransfer.getData('text/plain');
+    if (matchId) updateMatchStatus(matchId, status);
   });
+
+  // Auto-scroll while dragging near top/bottom of viewport
+  let scrollInterval = null;
+  document.addEventListener('dragover', (e) => {
+    const zone = 80;
+    const speed = 10;
+    clearInterval(scrollInterval);
+    if (e.clientY < zone) {
+      scrollInterval = setInterval(() => window.scrollBy(0, -speed), 16);
+    } else if (e.clientY > window.innerHeight - zone) {
+      scrollInterval = setInterval(() => window.scrollBy(0, speed), 16);
+    }
+  });
+  document.addEventListener('dragend', () => clearInterval(scrollInterval));
+  document.addEventListener('drop',    () => clearInterval(scrollInterval));
 }
 
 // ── Expose globals for inline onclick handlers ────────────────────────
