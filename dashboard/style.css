@@ -296,8 +296,39 @@ html:not(.light-mode) .navbar {
 }
 .btn-gold:hover { opacity: 0.82; }
 
-.btn-sm  { padding: 6px 14px; font-size: 12px; min-height: 32px; }
-.btn-xs  { padding: 5px 12px; font-size: 12px; min-height: 30px; border-radius: var(--radius-pill); }
+.btn-sm  { padding: 8px 18px; font-size: 13px; min-height: 36px; }
+.btn-xs  { padding: 8px 16px; font-size: 13px; font-weight: 600; min-height: 38px; border-radius: var(--radius-pill); letter-spacing: -0.01em; }
+
+/* ── Action button colour variants ─────────────────────────── */
+.btn-action-send     { background: #6366f1; color: #fff; border-color: transparent; }
+.btn-action-send:hover { background: #4f46e5; }
+
+.btn-action-book     { background: #30D158; color: #fff; border-color: transparent; }
+.btn-action-book:hover { background: #28b84d; }
+
+.btn-action-appeared { background: #FF9F0A; color: #fff; border-color: transparent; }
+.btn-action-appeared:hover { background: #e68900; }
+
+.btn-action-share    { background: #0A84FF; color: #fff; border-color: transparent; }
+.btn-action-share:hover { background: #0071e3; }
+
+.btn-action-prep     { background: #BF5AF2; color: #fff; border-color: transparent; }
+.btn-action-prep:hover { background: #a347d9; }
+
+.btn-action-followup { background: #FF6B6B; color: #fff; border-color: transparent; }
+.btn-action-followup:hover { background: #e55c5c; }
+
+.btn-action-pitched  { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
+.btn-action-pitched:hover { background: var(--bg-tertiary); }
+
+.btn-action-view     { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
+.btn-action-view:hover { background: var(--bg-tertiary); }
+
+.btn-action-wish     { background: rgba(99,102,241,0.08); color: #6366f1; border: 1.5px solid rgba(99,102,241,0.25); }
+.btn-action-wish:hover { background: rgba(99,102,241,0.15); }
+
+.btn-action-ignore   { background: transparent; color: var(--text-tertiary); border: 1.5px solid var(--border-subtle); }
+.btn-action-ignore:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,69,58,0.06); }
 
 /* ── Status Badges ─────────────────────────────────────────── */
 .status-badge {
@@ -704,6 +735,28 @@ html:not(.light-mode) .navbar {
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
   transition: color 120ms ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.inline-pill {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.inline-pill-accent {
+  color: var(--accent);
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.2);
 }
 
 .card-row-host {
@@ -1095,12 +1148,12 @@ html:not(.light-mode) .navbar {
 /* Card footer */
 .card-footer {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   flex-wrap: wrap;
   border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
-  margin-top: 4px;
+  padding-top: 14px;
+  margin-top: 8px;
 }
 
 .card-footer .status-badge {

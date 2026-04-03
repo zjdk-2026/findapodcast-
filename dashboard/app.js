@@ -324,52 +324,46 @@ function actionButtonsHtml(match) {
 
   if (status === 'new') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Now</button>`);
     }
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
-    if (hasEmail) {
-      buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
-    }
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">✕ Ignore</button>`);
   } else if (status === 'approved') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
-      buttons.push(`<button class="btn btn-primary btn-xs" onclick="sendMatch('${id}')">Send Now</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Now</button>`);
     } else {
-      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Email being written…</span>`);
+      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Email being written…</span>`);
     }
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dismissMatch('${id}')">Ignore</button>`);
-    buttons.push(`<button class="btn btn-ghost btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">✨ Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">✕ Ignore</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<span style="font-size:12px;font-weight:600;color:#8b5cf6;">✨ Wish List</span>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
+    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">✉️ Pitch Sent</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'sent') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
     }
-    buttons.push(`<span style="font-size:11px;color:var(--text-tertiary);">Sent — awaiting reply</span>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showFollowUpModal('${id}')">📬 Send Follow-Up</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📬 Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'replied') {
     if (hasEmail) {
-      buttons.push(`<button class="btn btn-outline btn-xs" onclick="openEmailModal('${id}')">View Email</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">👁 View Email</button>`);
     }
-    buttons.push(`<span style="font-size:11px;color:var(--warning);font-weight:600;">Replied ↩</span>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<span class="booked-badge">Booked</span>`);
-    buttons.push(`<button class="btn btn-primary btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Prep Me</button>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
-    buttons.push(`<button class="btn btn-gold btn-xs" onclick="markAppeared('${id}')">🌟 I Appeared!</button>`);
-    buttons.push(`<button class="btn unbook-btn btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
+    buttons.push(`<button class="btn btn-action-prep btn-xs" onclick="showInterviewPrepModal('${id}')">🎙️ Prep Me</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">🌟 I Appeared!</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
   } else if (status === 'appeared') {
-    buttons.push(`<span class="booked-badge" style="background:#f59e0b;color:#fff;">🌟 Appeared</span>`);
-    buttons.push(`<button class="btn btn-secondary btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
   } else if (status === 'dismissed') {
-    buttons.push(`<button class="btn btn-outline btn-xs" onclick="approveMatch('${id}')">Restore</button>`);
+    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">↩ Restore</button>`);
   }
 
   return buttons.join('');
@@ -416,22 +410,24 @@ function renderMatchCard(match) {
     <!-- Collapsed row — click to expand -->
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
-        <div class="card-row-title">${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}</div>
-        ${(() => {
-          const parts = [];
-          if (podcast.host_name) parts.push(`Hosted by ${esc(podcast.host_name)}`);
-          if (podcast.total_episodes) parts.push(`${podcast.total_episodes} eps`);
-          if (podcast.last_episode_date) {
-            const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
-            parts.push(`${days}d ago`);
-          }
-          return parts.length > 0 ? `<div class="card-row-host">${parts.join('  ·  ')}</div>` : '';
-        })()}
-      </div>
-      <div class="card-row-middle">
-        <span class="score-pill ${tier}">${fitScore}</span>
+        <div class="card-row-title">
+          ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
+          ${(() => {
+            const pills = [];
+            if (podcast.total_episodes) pills.push(`<span class="inline-pill">${podcast.total_episodes} eps</span>`);
+            if (podcast.last_episode_date) {
+              const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
+              pills.push(`<span class="inline-pill">${days}d ago</span>`);
+            }
+            const ll = listenersLabel(podcast.listen_score);
+            if (ll) pills.push(`<span class="inline-pill inline-pill-accent">&#127909; ${ll}</span>`);
+            return pills.join('');
+          })()}
+        </div>
+        ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
       </div>
       <div class="card-row-right">
+        <span class="score-pill ${tier}">${fitScore}</span>
         ${statusBadgeHtml(match.status)}
         <span class="card-chevron">▸</span>
       </div>
@@ -563,8 +559,15 @@ function getFilteredSorted() {
       seen.set(pid, m);
     }
   }
-  // Include any matches without a podcast_id
-  const noPid = state.matches.filter((m) => !m.podcast_id && !m.podcasts?.id);
+  // For matches without podcast_id, dedup by podcast title (fallback)
+  const seenTitles = new Set([...seen.values()].map((m) => (m.podcasts?.title || '').toLowerCase().trim()));
+  const noPid = state.matches.filter((m) => {
+    if (m.podcast_id || m.podcasts?.id) return false;
+    const title = (m.podcasts?.title || '').toLowerCase().trim();
+    if (title && seenTitles.has(title)) return false;
+    if (title) seenTitles.add(title);
+    return true;
+  });
   let matches = [...seen.values(), ...noPid];
 
   if (state.filter !== 'all') {
