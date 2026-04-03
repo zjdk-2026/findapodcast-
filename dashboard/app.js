@@ -612,7 +612,7 @@ function featuredPodcastCardHtml() {
   <article class="match-card score-tier-high" id="card-${id}" data-expanded="false">
 
     <!-- Collapsed row — same as renderMatchCard -->
-    <div class="card-row" draggable="false" onclick="isDragging=false;toggleCardExpand('${id}')">
+    <div class="card-row" draggable="true" ondragstart="handleCardDragStart(event,'${id}')" ondragend="handleCardDragEnd(event,'${id}')" onclick="isDragging=false;toggleCardExpand('${id}')">
       <div class="card-row-left">
         <div class="card-row-title">
           The Breakthrough Moment Podcast
