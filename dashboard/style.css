@@ -314,7 +314,9 @@ html:not(.light-mode) .navbar {
 .btn-gold:hover { opacity: 0.82; }
 
 .btn-sm  { padding: 8px 18px; font-size: 13px; min-height: 36px; }
-.btn-xs  { padding: 8px 16px; font-size: 13px; font-weight: 600; min-height: 38px; border-radius: var(--radius-pill); letter-spacing: -0.01em; }
+.btn-xs  { padding: 10px 20px; font-size: 13px; font-weight: 700; min-height: 42px; border-radius: var(--radius-pill); letter-spacing: -0.01em; box-shadow: 0 1px 4px rgba(0,0,0,0.12); transition: transform 80ms ease, box-shadow 80ms ease, background 120ms ease; }
+.btn-xs:hover  { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.16); }
+.btn-xs:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(0,0,0,0.10); }
 
 /* ── Action button colour variants ─────────────────────────── */
 .btn-action-send     { background: #6366f1; color: #fff; border-color: transparent; }
@@ -335,17 +337,19 @@ html:not(.light-mode) .navbar {
 .btn-action-followup { background: #FF6B6B; color: #fff; border-color: transparent; }
 .btn-action-followup:hover { background: #e55c5c; }
 
-.btn-action-pitched  { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
-.btn-action-pitched:hover { background: var(--bg-tertiary); }
+.btn-action-pitched  { background: #334155; color: #fff; border-color: transparent; }
+.btn-action-pitched:hover { background: #1e293b; }
+html.light-mode .btn-action-pitched { background: #475569; color: #fff; }
 
-.btn-action-view     { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
-.btn-action-view:hover { background: var(--bg-tertiary); }
+.btn-action-view     { background: #334155; color: #fff; border-color: transparent; }
+.btn-action-view:hover { background: #1e293b; }
+html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
-.btn-action-wish     { background: rgba(99,102,241,0.08); color: #6366f1; border: 1.5px solid rgba(99,102,241,0.25); }
-.btn-action-wish:hover { background: rgba(99,102,241,0.15); }
+.btn-action-wish     { background: #6366f1; color: #fff; border-color: transparent; opacity: 0.82; }
+.btn-action-wish:hover { opacity: 1; background: #4f46e5; }
 
-.btn-action-ignore   { background: transparent; color: var(--text-tertiary); border: 1.5px solid var(--border-subtle); }
-.btn-action-ignore:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,69,58,0.06); }
+.btn-action-ignore   { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); font-weight: 700; }
+.btn-action-ignore:hover { color: #FF453A; border-color: #FF453A; background: rgba(255,69,58,0.07); }
 
 /* ── Status Badges ─────────────────────────────────────────── */
 .status-badge {
