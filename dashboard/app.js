@@ -1330,7 +1330,7 @@ async function runPipeline() {
       if (data.capReached) {
         showToast(data.message, 'info');
         showUnlimitedUpsell();
-        btn.textContent = 'Run Pipeline';
+        btn.textContent = 'Find Me Podcasts';
         btn.disabled = false;
         return;
       }
@@ -1340,7 +1340,7 @@ async function runPipeline() {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { btn.textContent = 'Run Pipeline'; btn.disabled = false; }
+  finally { btn.textContent = 'Find Me Podcasts'; btn.disabled = false; }
 }
 
 function showUnlimitedUpsell() {
