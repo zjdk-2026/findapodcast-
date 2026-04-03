@@ -313,7 +313,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
 
     filtered.push(podcast);
 
-    if (filtered.length >= 25) break;
+    if (filtered.length >= 50) break;
   }
 
   logger.info('Discovery complete', {
