@@ -669,10 +669,10 @@ function featuredPodcastCardHtml() {
 
         <!-- Action buttons -->
         <div class="card-footer">
-          <button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">Pitch Sent</button>
-          <button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">It's Booked!</button>
-          <button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Wish List</button>
-          <button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Ignore</button>
+          <button class="btn btn-action-send btn-xs btn-action-primary" onclick="approveMatch('${id}')">🚀 Send Pitch</button>
+          <button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>
+          <button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Save for Later</button>
+          <button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>
         </div>
 
       </div>
