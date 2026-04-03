@@ -1452,9 +1452,22 @@ async function runPipeline() {
     return;
   }
 
-  btn.textContent = 'Running…';
   btn.disabled = true;
   $('profile-dropdown').style.display = 'none';
+  const steps = [
+    'Activating AI matching engine…',
+    'Scanning global podcast network…',
+    'Filtering by audience alignment…',
+    'Scoring shows by buyer intent…',
+    'Ranking best-fit opportunities…',
+    'Finalising your match list…',
+  ];
+  let stepIdx = 0;
+  btn.textContent = steps[0];
+  const stepInterval = setInterval(() => {
+    stepIdx = (stepIdx + 1) % steps.length;
+    btn.textContent = steps[stepIdx];
+  }, 2200);
   try {
     const res  = await fetch(`/api/run/${state.client.id}`, { method: 'POST', headers: { 'x-dashboard-token': state.token } });
     const data = await res.json();
@@ -1466,13 +1479,37 @@ async function runPipeline() {
         btn.disabled = false;
         return;
       }
-      showToast(`Pipeline complete — ${data.matchesFound} new matches found!`, 'success');
-      setTimeout(() => location.reload(), 2000);
+      showToast(`Pipeline complete — checking for new matches…`, 'success');
+      pollForNewMatches();
     } else {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { btn.textContent = 'Find Me Podcasts'; btn.disabled = false; }
+  finally { clearInterval(stepInterval); btn.textContent = 'Find Me Podcasts'; btn.disabled = false; }
+}
+
+function pollForNewMatches() {
+  const knownCount = state.matches.length;
+  let attempts = 0;
+  const maxAttempts = 20; // poll for up to ~60s
+  const interval = setInterval(async () => {
+    attempts++;
+    try {
+      const res  = await fetch(`/api/dashboard/${state.token}`);
+      const data = await res.json();
+      if (data.success && data.matches) {
+        const newCount = data.matches.length;
+        if (newCount > knownCount) {
+          clearInterval(interval);
+          state.matches = data.matches;
+          const added = newCount - knownCount;
+          renderDashboard(data);
+          showToast(`${added} new podcast match${added === 1 ? '' : 'es'} added!`, 'success');
+        }
+      }
+    } catch { /* silent */ }
+    if (attempts >= maxAttempts) clearInterval(interval);
+  }, 3000);
 }
 
 function showUnlimitedUpsell() {
