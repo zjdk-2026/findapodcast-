@@ -178,9 +178,9 @@ function renderStatsStrip() {
 
   const monthName = now.toLocaleString('default', { month: 'long' });
   el.innerHTML = [
-    `<div class="stat-pill">📬 <strong>${pitchesSent}</strong> pitched in ${monthName}</div>`,
-    `<div class="stat-pill">🎙️ <strong>${bookedThisMonth}</strong> booked in ${monthName}</div>`,
-    `<div class="stat-pill">⚡ <strong>${active}</strong> in progress</div>`,
+    `<div class="stat-pill"><span style="margin-right:4px;">&#128140;</span><strong>${pitchesSent}</strong> pitched in ${monthName}</div>`,
+    `<div class="stat-pill"><span style="margin-right:4px;">&#127908;</span><strong>${bookedThisMonth}</strong> booked in ${monthName}</div>`,
+    `<div class="stat-pill"><span style="margin-right:4px;">&#9889;</span><strong>${active}</strong> in progress</div>`,
   ].join('');
 }
 
@@ -518,28 +518,31 @@ function getFilteredSorted() {
 // ── Render grid ───────────────────────────────────────────────────────
 function featuredPodcastCardHtml() {
   return `
-  <article class="match-card featured-podcast-card" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);position:relative;">
-    <div style="position:absolute;top:12px;right:12px;background:#f59e0b;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;">⭐ FEATURED</div>
+  <article class="match-card" style="position:relative;">
+    <div style="position:absolute;top:12px;right:12px;" class="status-badge status-booked">&#11088; Featured</div>
     <div class="card-header">
       <div class="card-title-group">
-        <h2 class="card-title" style="color:#92400e;">The Breakthrough Moment Podcast</h2>
-        <p class="card-host" style="color:#b45309;">Hosted by Zac Deane</p>
+        <h2 class="card-title">The Breakthrough Moment Podcast</h2>
+        <div class="card-host-category">
+          <span class="card-host">Hosted by Zac Deane</span>
+          <span class="category-tag">Entrepreneurship</span>
+        </div>
       </div>
     </div>
-    <div style="margin:8px 0 12px;font-size:13px;color:#78350f;">
-      A show for successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.
+    <div class="why-fits-box">
+      <p class="why-fits-label">About the Show</p>
+      <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-      <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="chip chip-contact">🎵 Spotify</a>
-      <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="chip chip-contact">▶️ YouTube</a>
-      <a href="mailto:hi@zacdeane.com" class="chip chip-contact">✉️ hi@zacdeane.com</a>
+    <div class="contact-chips">
+      <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="chip chip-contact">&#127925; Spotify</a>
+      <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="chip chip-contact">&#9654;&#65039; YouTube</a>
+      <a href="mailto:hi@zacdeane.com" class="chip chip-contact">&#9993;&#65039; hi@zacdeane.com</a>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank"
-         style="background:#0f172a;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;">
-        🎙️ Book a Pre-Podcast Chat
+    <div class="card-footer">
+      <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="btn btn-primary btn-xs">
+        &#127908; Book a Pre-Podcast Chat
       </a>
-      <span style="font-size:12px;color:#92400e;">Perfect for entrepreneurs &amp; investors</span>
+      <span style="font-size:12px;color:var(--text-tertiary);">Perfect for entrepreneurs &amp; investors</span>
     </div>
   </article>`;
 }
