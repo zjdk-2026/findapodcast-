@@ -703,7 +703,8 @@ function renderDashboard(data) {
   const gmailItem = $('dropdown-gmail-item');
   if (gmailItem) {
     if (client.gmail_email) {
-      gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">Gmail Connected</span>`;
+      const gmailLabel = client.gmail_email === 'connected' ? 'Gmail Connected' : `Gmail: ${client.gmail_email}`;
+      gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">${gmailLabel}</span>`;
       gmailItem.style.cursor = 'default';
     } else {
       gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">Connect Gmail</a>`;

@@ -89,7 +89,9 @@ router.get('/auth/gmail/callback', async (req, res) => {
     // Save refresh token and email to client record
     const updateFields = {};
     if (tokens.refresh_token) updateFields.gmail_refresh_token = tokens.refresh_token;
-    if (gmailEmail) updateFields.gmail_email = gmailEmail;
+    // Always mark gmail as connected — use actual email or a fallback so the
+    // frontend can detect connection even if userInfo call failed
+    updateFields.gmail_email = gmailEmail || 'connected';
 
     if (Object.keys(updateFields).length > 0) {
       const { error: updateError } = await supabase
