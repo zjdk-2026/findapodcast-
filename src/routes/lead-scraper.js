@@ -94,21 +94,23 @@ const SHEET_NAME_MAP = {
 
 async function writeToGoogleSheet(leads, source) {
   try {
-    if (!GOOGLE_SERVICE_ACCOUNT_EMAIL || !LEADS_SPREADSHEET_ID) {
-      logger.info('lead-scraper: Google Sheets env vars not set, skipping sheet write', { source });
+    const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+    const sheetId = process.env.LEADS_SPREADSHEET_ID || '';
+    if (!saEmail || !sheetId) {
+      logger.info('lead-scraper: Google Sheets env vars not set, skipping sheet write', { source, saEmail: saEmail.slice(0,10), sheetId: sheetId.slice(0,5) });
       return false;
     }
     if (!leads || leads.length === 0) return false;
 
-    const privateKey = (GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+    const privateKey = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '').replace(/\\n/g, '\n');
     if (!privateKey) {
       logger.warn('lead-scraper: GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY not set, skipping', { source });
       return false;
     }
 
-    const token     = await getAccessToken(GOOGLE_SERVICE_ACCOUNT_EMAIL, privateKey);
+    const token     = await getAccessToken(saEmail, privateKey);
     const sheetName = SHEET_NAME_MAP[source] || 'Other';
-    const sheetsBase = `https://sheets.googleapis.com/v4/spreadsheets/${LEADS_SPREADSHEET_ID}`;
+    const sheetsBase = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`;
     const authHeader = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
     // Get spreadsheet metadata to check if the sheet tab exists
@@ -173,7 +175,7 @@ async function writeToGoogleSheet(leads, source) {
     return true;
   } catch (err) {
     logger.warn('lead-scraper: writeToGoogleSheet error', { source, error: err.message });
-    return false;
+    return err.message; // return error string so caller can surface it
   }
 }
 
