@@ -31,12 +31,41 @@
   <!-- Profile dropdown (injected into navbar-right by JS) -->
   <div id="profile-dropdown" class="profile-dropdown" style="display:none;">
     <div class="dropdown-header" id="dropdown-client-info"></div>
+
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" id="theme-toggle-item" onclick="toggleTheme()">Light Mode</button>
-    <button class="dropdown-item" onclick="openProfileModal()">Edit My Profile</button>
-    <button class="dropdown-item" onclick="openTemplateModal()">Customize Email Template</button>
+    <p class="dropdown-section-label">Account</p>
+    <button class="dropdown-item" onclick="openProfileModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Edit My Profile
+    </button>
+    <button class="dropdown-item" onclick="openTemplateModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Customize Email Template
+    </button>
     <div class="dropdown-item" id="dropdown-gmail-item"></div>
+    <button class="dropdown-item" id="theme-toggle-item" onclick="toggleTheme()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span id="theme-toggle-label">Dark Mode</span>
+    </button>
+
     <div class="dropdown-divider"></div>
+    <p class="dropdown-section-label">Grow</p>
+    <button class="dropdown-item dropdown-item-highlight" onclick="openReferralModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Refer a Friend — Earn a Month Free
+    </button>
+    <button class="dropdown-item" onclick="openTestimonialLink()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Leave a Review
+    </button>
+
+    <div class="dropdown-divider"></div>
+    <p class="dropdown-section-label">Support</p>
+    <a class="dropdown-item" href="mailto:hi@findapodcast.club" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Email Support
+    </a>
+
     <div id="dropdown-templates-section"></div>
   </div>
 
@@ -366,6 +395,25 @@
           <button class="btn btn-ghost btn-sm" onclick="closeFollowUpModal()">Close</button>
         </div>
         <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">Template auto-saves per podcast. Edits persist next time you open it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Referral Modal -->
+  <div id="referral-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Refer a Friend — Earn a Month Free</h3>
+        <button class="modal-close" onclick="closeReferralModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <p style="font-size:14px;color:var(--text-secondary);margin:0 0 20px;">Share your unique referral link. When a friend signs up and stays for 30 days, you both get a free month.</p>
+        <label style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);display:block;margin-bottom:6px;">Your Referral Link</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="referral-link-input" type="text" readonly style="flex:1;padding:10px 14px;border:1.5px solid var(--border-medium);border-radius:var(--radius-md);font-size:13px;background:var(--bg-secondary);color:var(--text-primary);font-family:var(--font-mono,monospace);" />
+          <button class="btn btn-primary btn-xs" onclick="copyReferralLink()">Copy</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-tertiary);margin:10px 0 0;">Your link is unique to your account. Share it anywhere — email, socials, DMs.</p>
       </div>
     </div>
   </div>

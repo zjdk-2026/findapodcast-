@@ -1360,19 +1360,24 @@ function toggleProfileDropdown() {
   }
 }
 
+function closeProfileDropdown() {
+  const d = $('profile-dropdown');
+  if (d) d.style.display = 'none';
+}
+
 function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light-mode');
   localStorage.setItem('pp-theme', isLight ? 'light' : 'dark');
-  const themeItem = $('theme-toggle-item');
-  if (themeItem) themeItem.textContent = isLight ? 'Dark Mode' : 'Light Mode';
-  $('profile-dropdown').style.display = 'none';
+  const label = document.getElementById('theme-toggle-label');
+  if (label) label.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+  closeProfileDropdown();
 }
 
 function copyDashboardLink() {
   navigator.clipboard.writeText(window.location.href)
     .then(() => showToast('Dashboard link copied!', 'success'))
     .catch(() => showToast('Could not copy link.', 'error'));
-  $('profile-dropdown').style.display = 'none';
+  closeProfileDropdown();
 }
 
 async function runPipeline() {
@@ -1863,6 +1868,47 @@ window.openTemplateModal = openTemplateModal;
 window.toggleNoteArea    = toggleNoteArea;
 window.saveNote          = saveNote;
 window.showToast         = showToast;
+
+// ── Referral Modal ────────────────────────────────────────────────────
+function openReferralModal() {
+  closeProfileDropdown();
+  const modal = $('referral-modal');
+  if (!modal) return;
+  // Build referral link from current token
+  const token = state.token || (window.location.pathname.split('/dashboard/')[1] || '').split('/')[0];
+  const base = window.location.origin;
+  const link = `${base}/onboard?ref=${token}`;
+  const input = document.getElementById('referral-link-input');
+  if (input) input.value = link;
+  modal.style.display = 'flex';
+}
+function closeReferralModal() {
+  const modal = $('referral-modal');
+  if (modal) modal.style.display = 'none';
+}
+function copyReferralLink() {
+  const input = document.getElementById('referral-link-input');
+  if (!input) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast('Referral link copied!', 'success');
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+    showToast('Referral link copied!', 'success');
+  });
+}
+
+// ── Testimonial link ──────────────────────────────────────────────────
+function openTestimonialLink() {
+  closeProfileDropdown();
+  // Opens a Google review / testimonial page — update URL as needed
+  window.open('https://findapodcast.club/review', '_blank');
+}
+
+window.openReferralModal  = openReferralModal;
+window.closeReferralModal = closeReferralModal;
+window.copyReferralLink   = copyReferralLink;
+window.openTestimonialLink = openTestimonialLink;
 
 // ── Init ──────────────────────────────────────────────────────────────
 function init() {

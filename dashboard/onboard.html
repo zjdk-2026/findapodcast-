@@ -54,8 +54,8 @@
 
       <!-- Step 1: About You -->
       <div class="step-panel active" id="step-1">
-        <h2 class="step-title">About You</h2>
-        <p class="step-desc">Let's start with the basics so we can personalise your outreach.</p>
+        <h2 class="step-title">Let's build your profile</h2>
+        <p class="step-desc">This goes directly into your pitch emails — take 2 minutes to make it shine and you'll get far better responses.</p>
 
         <div class="form-row">
           <div class="form-group">
@@ -64,122 +64,129 @@
             <p class="field-error" id="err-name">Please enter your name.</p>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-email">Email <span class="req">*</span></label>
+            <label class="form-label" for="f-email">Email Address <span class="req">*</span></label>
             <input type="email" id="f-email" class="form-input" placeholder="jane@example.com" autocomplete="email" />
+            <p class="form-hint">Your dashboard link and matches are sent here.</p>
             <p class="field-error" id="err-email">Please enter a valid email.</p>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="f-business">Business / Brand</label>
-            <input type="text" id="f-business" class="form-input" placeholder="Acme Inc." />
+            <label class="form-label" for="f-title">How do you introduce yourself?</label>
+            <input type="text" id="f-title" class="form-input" placeholder="e.g. Anxiety Coach &amp; Author, CEO &amp; Speaker, Mindset Coach" />
+            <p class="form-hint">Used as your title in pitch emails — keep it clear and credible.</p>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-title">Your Title</label>
-            <input type="text" id="f-title" class="form-input" placeholder="CEO &amp; Author" />
+            <label class="form-label" for="f-business">Business / Brand Name</label>
+            <input type="text" id="f-business" class="form-input" placeholder="e.g. The Anxiety Reset, Zac Deane Coaching" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-bio-short">Short Bio <span class="req">*</span></label>
-          <textarea id="f-bio-short" class="form-textarea" rows="3" placeholder="2–3 sentences used in pitch emails…"></textarea>
+          <label class="form-label" for="f-bio-short">Your pitch bio <span class="req">*</span></label>
+          <textarea id="f-bio-short" class="form-textarea" rows="4" placeholder="e.g. Jane Smith is an anxiety coach and bestselling author who has helped over 3,000 high-achievers break free from chronic stress and burnout. Her CBT-based approach has been featured in Forbes, and she's the host of the top-rated podcast The Calm Mind."></textarea>
+          <p class="form-hint">2–4 sentences written in third person. This is the bio that goes inside every pitch — the better this is, the higher your open and reply rates. Include credentials, results, and any notable features or media.</p>
           <p class="field-error" id="err-bio-short">Please enter a short bio (at least 10 characters).</p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="f-bio-long">Full Bio</label>
-          <textarea id="f-bio-long" class="form-textarea" rows="5" placeholder="Your full speaker / author bio for show notes…"></textarea>
         </div>
 
         <div class="form-nav">
           <span></span>
-          <button class="btn btn-primary" onclick="goToStep(2)">Next: Topics &amp; Angles →</button>
+          <button class="btn btn-primary" onclick="goToStep(2)">Next: Your Expertise →</button>
         </div>
       </div>
 
-      <!-- Step 2: Topics & Angles -->
+      <!-- Step 2: Your Expertise -->
       <div class="step-panel" id="step-2">
-        <h2 class="step-title">Topics &amp; Angles</h2>
-        <p class="step-desc">Tell us what you talk about so we can find shows that are a perfect fit.</p>
+        <h2 class="step-title">Your Expertise</h2>
+        <p class="step-desc">The more detail you give us, the more shows we can match you with — and the stronger your pitches will be.</p>
 
         <div class="form-group">
-          <label class="form-label" for="f-topics">Your Topics <span class="req">*</span></label>
-          <input type="text" id="f-topics" class="form-input" placeholder="entrepreneurship, health, leadership, AI" />
-          <p class="form-hint">Separate with commas. Be specific — "SaaS bootstrapping" beats "business".</p>
+          <label class="form-label" for="f-topics">What topics do you speak about? <span class="req">*</span></label>
+          <textarea id="f-topics" class="form-textarea" rows="3" placeholder="e.g. anxiety recovery, CBT tools, mindset shifts, burnout, self-worth, resilience, mental fitness, stress management, high performance…"></textarea>
+          <p class="form-hint">List everything — the more topics you include, the more podcast categories we can pitch you into. Separate with commas.</p>
           <p class="field-error" id="err-topics">Please enter at least one topic.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-angles">Speaking Angles</label>
-          <input type="text" id="f-angles" class="form-input" placeholder="from burnout to $1M, building in public, stoic leadership" />
-          <p class="form-hint">The specific stories or frameworks you bring to interviews.</p>
+          <label class="form-label" for="f-angles">What are your best interview stories or talking points?</label>
+          <textarea id="f-angles" class="form-textarea" rows="3" placeholder="e.g. How I went from burnout to a thriving practice, Why most anxiety advice actually makes it worse, The 3-step CBT method my clients use to stop panic attacks, My rock-bottom moment that changed everything…"></textarea>
+          <p class="form-hint">These become your pitch hooks — the more specific and story-driven, the better. Think: what do hosts always want you to talk about?</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-audience">Target Audience</label>
-          <input type="text" id="f-audience" class="form-input" placeholder="Founders, solo parents, health-conscious professionals…" />
+          <label class="form-label" for="f-audience">Who is your ideal listener?</label>
+          <input type="text" id="f-audience" class="form-input" placeholder="e.g. Women 30–50 dealing with anxiety, high-achievers burning out, entrepreneurs with impostor syndrome" />
+          <p class="form-hint">We match you with shows whose audiences would genuinely benefit from — and buy from — you.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-lead-magnet">Lead Magnet / Free Offer</label>
-          <input type="text" id="f-lead-magnet" class="form-input" placeholder="Free 5-day email course at example.com/free" />
-          <p class="form-hint">What you offer listeners. Used in the email CTA.</p>
+          <label class="form-label" for="f-lead-magnet">What do you want listeners to do after the interview?</label>
+          <input type="text" id="f-lead-magnet" class="form-input" placeholder="e.g. Download my free anxiety toolkit at yoursite.com/free, Book a free discovery call at…" />
+          <p class="form-hint">Your listener call-to-action. We include this in pitches so hosts know you'll actively drive their audience to take action.</p>
         </div>
 
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(1)">← Back</button>
-          <button class="btn btn-primary" onclick="goToStep(3)">Next: Preferences →</button>
+          <button class="btn btn-primary" onclick="goToStep(3)">Next: Links &amp; Style →</button>
         </div>
       </div>
 
-      <!-- Step 3: Preferences -->
+      <!-- Step 3: Links & Pitch Style -->
       <div class="step-panel" id="step-3">
-        <h2 class="step-title">Preferences</h2>
-        <p class="step-desc">Final details — how you want outreach to sound and your links.</p>
+        <h2 class="step-title">Links &amp; Pitch Style</h2>
+        <p class="step-desc">We embed these into every pitch email — a complete profile gets significantly higher reply rates from hosts.</p>
 
+        <p class="form-section-label">YOUR KEY LINKS</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-website">Website</label>
             <input type="url" id="f-website" class="form-input" placeholder="https://yoursite.com" />
+            <p class="form-hint">Hosts will check this before replying. Make sure it's current.</p>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-booking">Booking Link</label>
+            <label class="form-label" for="f-booking">Booking / Calendar Link</label>
             <input type="url" id="f-booking" class="form-input" placeholder="https://cal.com/you" />
+            <p class="form-hint">Goes in every pitch so interested hosts can book you with one click.</p>
           </div>
         </div>
 
+        <p class="form-section-label" style="margin-top:8px;">SOCIAL PROFILES <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">— Hosts check these to gauge your audience &amp; credibility</span></p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-instagram">Instagram</label>
             <input type="text" id="f-instagram" class="form-input" placeholder="@yourhandle" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-linkedin">LinkedIn URL</label>
+            <label class="form-label" for="f-linkedin">LinkedIn</label>
             <input type="url" id="f-linkedin" class="form-input" placeholder="https://linkedin.com/in/you" />
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-twitter">Twitter / X</label>
             <input type="text" id="f-twitter" class="form-input" placeholder="@yourhandle" />
           </div>
-          <div class="form-group">
-            <label class="form-label" for="f-daily-target">How many podcasts would you like to book in the next 30 days? (realistically)</label>
-            <input type="number" id="f-daily-target" class="form-input" value="10" min="1" max="50" />
-            <p class="form-hint">We'll use this to calibrate how aggressively we pitch on your behalf.</p>
-          </div>
+          <div class="form-group"><!-- spacer --></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="f-tone">Preferred Email Tone</label>
-          <select id="f-tone" class="form-select">
-            <option value="warm-professional">Warm &amp; Professional</option>
-            <option value="direct">Direct &amp; Confident</option>
-            <option value="casual">Casual &amp; Friendly</option>
-            <option value="formal">Formal</option>
-          </select>
+        <p class="form-section-label" style="margin-top:8px;">PITCH SETTINGS</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-daily-target">How many podcast bookings do you want in the next 30 days?</label>
+            <input type="number" id="f-daily-target" class="form-input" value="10" min="1" max="50" />
+            <p class="form-hint">This sets how aggressively we pitch. Most members aim for 4–8 per month to start.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-tone">Pitch Email Tone</label>
+            <select id="f-tone" class="form-select">
+              <option value="warm-professional">Warm &amp; Professional</option>
+              <option value="direct">Direct &amp; Confident</option>
+              <option value="casual">Casual &amp; Friendly</option>
+              <option value="formal">Formal &amp; Polished</option>
+            </select>
+            <p class="form-hint">How should your pitches sound? You can change this any time in your dashboard.</p>
+          </div>
         </div>
 
         <div class="form-nav">

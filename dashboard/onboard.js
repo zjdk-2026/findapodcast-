@@ -107,8 +107,26 @@ function collectFormData() {
 }
 
 // ── Submit ────────────────────────────────────────────────────
+function showFormError(msg) {
+  let el = document.getElementById('form-submit-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'form-submit-error';
+    el.style.cssText = 'background:#fff1f0;border:1.5px solid #ff4d4f;color:#cf1322;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500;margin-top:14px;';
+    const nav = document.querySelector('#step-3 .form-nav');
+    if (nav) nav.insertAdjacentElement('beforebegin', el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 async function submitForm() {
   if (!validateStep(3)) return;
+
+  // Clear any previous error
+  const errEl = document.getElementById('form-submit-error');
+  if (errEl) errEl.style.display = 'none';
 
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
@@ -118,23 +136,43 @@ async function submitForm() {
   try {
     const payload = collectFormData();
 
+    // Sanity check: make sure required fields are present before sending
+    if (!payload.name || !payload.email || !payload.topics || payload.topics.length === 0) {
+      const missing = [];
+      if (!payload.name)   missing.push('Full Name (Step 1)');
+      if (!payload.email)  missing.push('Email (Step 1)');
+      if (!payload.topics || payload.topics.length === 0) missing.push('Topics (Step 2)');
+      throw new Error('Missing required fields: ' + missing.join(', ') + '. Please go back and fill them in.');
+    }
+
     const res  = await fetch('/api/onboard', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch (_) {
+      throw new Error(`Server returned an unexpected response (${res.status}). Please try again.`);
+    }
 
     if (!res.ok || !data.success) {
-      throw new Error(data.error || `Server error (${res.status})`);
+      // Handle both `error` (string) and `errors` (array) from server
+      const msg = data.error
+        || (Array.isArray(data.errors) ? data.errors.join('. ') : null)
+        || `Something went wrong (${res.status}). Please try again.`;
+      throw new Error(msg);
     }
 
     showSuccess(data);
   } catch (err) {
-    showToast(err.message || 'Something went wrong. Please try again.', 'error');
+    const msg = err.message || 'Something went wrong. Please try again.';
+    showFormError(msg);
+    showToast(msg, 'error');
     btn.disabled  = false;
-    label.textContent = 'Launch My Pipeline 🚀';
+    label.textContent = 'Launch My Pipeline →';
   }
 }
 
