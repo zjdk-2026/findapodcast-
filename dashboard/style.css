@@ -351,6 +351,8 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 .btn-action-ignore   { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); font-weight: 700; }
 .btn-action-ignore:hover { color: #FF453A; border-color: #FF453A; background: rgba(255,69,58,0.07); }
 
+.btn-action-primary { font-size: 13px !important; padding: 7px 16px !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+
 /* ── Status Badges ─────────────────────────────────────────── */
 .status-badge {
   display: inline-flex;
