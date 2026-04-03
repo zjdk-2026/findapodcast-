@@ -413,10 +413,10 @@ function renderMatchCard(match) {
   const socialHtml = '';
 
   return `
-  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
+  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
 
     <!-- Collapsed row — click to expand -->
-    <div class="card-row" draggable="true" onclick="isDragging=false;toggleCardExpand('${esc(match.id)}')" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
+    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">`
       <div class="card-row-left">
         <div class="card-row-title">
           ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
