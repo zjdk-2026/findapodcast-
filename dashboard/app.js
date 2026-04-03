@@ -1284,7 +1284,7 @@ async function saveEmailDraft() {
   } catch { showToast('Network error.', 'error'); }
 }
 
-function copyEmail() {
+function copyEmailDraft() {
   const subject = $('modal-subject')?.value || '';
   const body    = $('modal-body-text')?.value || '';
   const text    = `Subject: ${subject}\n\n${body}`;
@@ -1739,7 +1739,7 @@ function initModals() {
 
   $('email-save-btn')?.addEventListener('click', saveEmailDraft);
   $('email-save-template-btn')?.addEventListener('click', saveAsTemplate);
-  $('email-copy-btn')?.addEventListener('click', copyEmail);
+  $('email-copy-btn')?.addEventListener('click', copyEmailDraft);
   $('email-send-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;
     await saveEmailDraft();
