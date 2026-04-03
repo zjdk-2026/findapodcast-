@@ -114,7 +114,7 @@ async function scorePodcast(podcast, client) {
       why_this_client_fits:  '',
       best_pitch_angle:      '',
       episode_to_reference:  'none identified',
-      red_flags:             `API error: ${err.message}`,
+      red_flags:             '',
       booking_likelihood:    'low',
     };
   }

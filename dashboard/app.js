@@ -310,8 +310,6 @@ function metaTagsHtml(podcast) {
   const tags = [];
   // eps + recency shown inline on title row — not repeated here
   if (podcast.language && podcast.language !== 'English') tags.push(podcast.language);
-  if (podcast.country) tags.push(podcast.country);
-  if (podcast.has_guest_history) tags.push('Has Guests');
   if (podcast.youtube_subscribers) {
     const subs = podcast.youtube_subscribers >= 1000
       ? `${(podcast.youtube_subscribers / 1000).toFixed(0)}K YT`
@@ -400,7 +398,8 @@ function renderMatchCard(match) {
   const isBooked   = match.status === 'booked';
   const bookedClass = isBooked ? 'card-booked-highlight' : '';
 
-  const redFlagsHtml = (match.red_flags && match.red_flags !== 'none')
+  const redFlagsClean = match.red_flags && match.red_flags !== 'none' && !match.red_flags.startsWith('API error') && !match.red_flags.startsWith('Scoring');
+  const redFlagsHtml = redFlagsClean
     ? `<div class="why-fits-box">
         <p class="why-fits-label">Red Flags</p>
         <p class="red-flags-text">${esc(match.red_flags)}</p>
@@ -431,6 +430,7 @@ function renderMatchCard(match) {
               const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
               pills.push(`<span class="inline-pill">${days}d ago</span>`);
             }
+            if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
             const ll = listenersLabel(podcast.listen_score);
             if (ll) pills.push(`<span class="inline-pill inline-pill-accent">&#127909; ${ll}</span>`);
             return pills.join('');
