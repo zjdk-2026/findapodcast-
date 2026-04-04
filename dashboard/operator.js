@@ -60,6 +60,7 @@ async function loadClients() {
 
     renderTotals(data.totals || {});
     renderTable(data.clients || []);
+    populateClientDropdown(data.clients || []);
   } catch (err) {
     showToast(`Failed to load clients: ${err.message}`, 'error');
     if (loading) loading.innerHTML = `<p style="color:var(--score-low);">Error: ${esc(err.message)}</p>`;
@@ -176,6 +177,62 @@ async function runPipeline(clientId, clientName) {
   }
 }
 
+// ── Populate client dropdown for manual add ───────────────────
+function populateClientDropdown(clients) {
+  const sel = document.getElementById('manual-client-id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select client…</option>' +
+    clients.map(c => `<option value="${esc(c.id)}">${esc(c.name || c.email || c.id)}</option>`).join('');
+}
+
+// ── Add Podcast Manually ──────────────────────────────────────
+async function addPodcastManually() {
+  const clientId    = document.getElementById('manual-client-id')?.value?.trim();
+  const podcastUrl  = document.getElementById('manual-podcast-url')?.value?.trim();
+  const podcastName = document.getElementById('manual-podcast-name')?.value?.trim();
+  const statusEl    = document.getElementById('manual-add-status');
+  const btn         = document.getElementById('manual-add-btn');
+
+  if (!clientId) { showToast('Select a client first.', 'error'); return; }
+  if (!podcastUrl && !podcastName) { showToast('Enter a podcast URL or name.', 'error'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+  if (statusEl) { statusEl.style.display = 'none'; }
+
+  try {
+    const res  = await fetch('/api/operator/add-podcast', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-operator-key': OPERATOR_KEY },
+      body: JSON.stringify({ clientId, podcastUrl: podcastUrl || null, podcastName: podcastName || null }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const msg = data.message || `Added "${data.podcast?.title || podcastName || podcastUrl}" to pipeline.`;
+      showToast(msg, 'success');
+      if (statusEl) {
+        statusEl.textContent = '✅ ' + msg;
+        statusEl.style.color = 'var(--score-high, green)';
+        statusEl.style.display = 'block';
+      }
+      // Clear inputs
+      if (document.getElementById('manual-podcast-url')) document.getElementById('manual-podcast-url').value = '';
+      if (document.getElementById('manual-podcast-name')) document.getElementById('manual-podcast-name').value = '';
+    } else {
+      showToast(data.error || 'Failed to add podcast.', 'error');
+      if (statusEl) {
+        statusEl.textContent = '❌ ' + (data.error || 'Failed to add podcast.');
+        statusEl.style.color = 'var(--score-low, red)';
+        statusEl.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Add to Pipeline'; }
+  }
+}
+
 // ── HTML escape ───────────────────────────────────────────────
 function esc(str) {
   if (!str) return '';
@@ -188,7 +245,8 @@ function esc(str) {
 }
 
 // ── Expose to global scope ────────────────────────────────────
-window.checkPassword = checkPassword;
-window.loadClients   = loadClients;
-window.runPipeline   = runPipeline;
-window.toggleActive  = toggleActive;
+window.checkPassword      = checkPassword;
+window.loadClients        = loadClients;
+window.runPipeline        = runPipeline;
+window.toggleActive       = toggleActive;
+window.addPodcastManually = addPodcastManually;

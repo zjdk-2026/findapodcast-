@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const axios = require('axios');
+const cheerio = require('cheerio');
 const listennotes = require('../lib/listennotes');
 const supabase = require('../lib/supabase');
 const logger = require('../lib/logger');
@@ -101,6 +102,7 @@ function normalisePodcast(item) {
     thumbnail:               item.thumbnail || null,
     // raw listennotes url for further fetching
     listennotes_url:         item.listennotes_url || null,
+    rss_feed_url:            item.rss || item.feed_url || null,
     phone_number:            null,
     source:                  'listennotes',
   };
@@ -191,8 +193,9 @@ function normalisePodcastIndex(item) {
     image: item.artwork || item.image || null,
     thumbnail: item.image || null,
     listennotes_url: null,
-    phone_number: null,
-    source: 'podcastindex',
+    rss_feed_url:    item.url || null,
+    phone_number:    null,
+    source:          'podcastindex',
   };
 }
 
@@ -255,6 +258,71 @@ async function fetchYouTubeChannelDetails(channelId, apiKey) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Scrape Podmatch public directory for a given topic.
+ * Returns normalised podcast objects with source: 'podmatch'.
+ */
+async function scrapePodmatch(topics) {
+  const results = [];
+  const topicsToSearch = (topics || []).slice(0, 2);
+
+  for (const topic of topicsToSearch) {
+    try {
+      const url = `https://www.podmatch.com/podcasts?search=${encodeURIComponent(topic)}`;
+      const res = await axios.get(url, {
+        timeout: 8000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      });
+      const $ = cheerio.load(res.data);
+
+      // Podmatch podcast cards — extract what we can
+      $('[class*="podcast"], [class*="show"], [class*="card"]').each((_, el) => {
+        const titleEl = $(el).find('h2, h3, h4, [class*="title"], [class*="name"]').first();
+        const title = titleEl.text().trim();
+        if (!title) return;
+
+        const hostEl = $(el).find('[class*="host"], [class*="author"]').first();
+        const host_name = hostEl.text().trim() || null;
+
+        const linkEl = $(el).find('a[href]').first();
+        const href = linkEl.attr('href') || '';
+        const website = href.startsWith('http') ? href : (href ? `https://www.podmatch.com${href}` : null);
+
+        results.push({
+          external_id:        `podmatch_${crypto.createHash('md5').update(title + (website || '')).digest('hex').slice(0, 12)}`,
+          title,
+          host_name,
+          description:        null,
+          website,
+          apple_url:          null,
+          spotify_url:        null,
+          youtube_url:        null,
+          category:           topic,
+          niche_tags:         [topic],
+          total_episodes:     null,
+          last_episode_date:  null,
+          country:            null,
+          language:           'English',
+          listen_score:       null,
+          image:              null,
+          thumbnail:          null,
+          listennotes_url:    null,
+          rss_feed_url:       null,
+          phone_number:       null,
+          has_guest_history:  true,
+          source:             'podmatch',
+        });
+      });
+
+      logger.debug('Podmatch scraped', { topic, found: results.length });
+    } catch (err) {
+      logger.warn('Podmatch scrape failed', { topic, error: err.message });
+    }
+  }
+
+  return results;
 }
 
 /**
@@ -473,6 +541,58 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   }
 
   logger.info('Similar podcasts chaining complete', { candidatesSoFar: allCandidates.size });
+
+  // ─────────────────────────────────────────────────────────────
+  // 3c. Listen Notes /recommendations for top 5 by listen_score
+  // ─────────────────────────────────────────────────────────────
+  if (!isManual) {
+    const LISTENNOTES_API_KEY = process.env.LISTENNOTES_API_KEY;
+    const top5ForRecs = Array.from(allCandidates.values())
+      .filter((p) => p.listennotes_url && p.listen_score != null)
+      .sort((a, b) => (b.listen_score || 0) - (a.listen_score || 0))
+      .slice(0, 5);
+
+    await Promise.all(top5ForRecs.map(async (pod) => {
+      // Extract podcast ID from listennotes_url or external_id
+      const podId = pod.external_id && !pod.external_id.startsWith('itunes_') && !pod.external_id.startsWith('podcastindex_') && !pod.external_id.startsWith('youtube_')
+        ? pod.external_id
+        : null;
+      if (!podId || !LISTENNOTES_API_KEY) return;
+
+      try {
+        const recRes = await axios.get(
+          `https://listen-api.listennotes.com/api/v2/podcasts/${podId}/recommendations`,
+          {
+            headers: { 'X-ListenAPI-Key': LISTENNOTES_API_KEY },
+            timeout: 8000,
+            params: { safe_mode: 1 },
+          }
+        );
+        const recs = recRes.data?.recommendations || [];
+        for (const item of recs.slice(0, 8)) {
+          if (item.id && !allCandidates.has(item.id)) {
+            allCandidates.set(item.id, normalisePodcast(item));
+          }
+        }
+        logger.debug('LN recommendations fetched', { podId, count: recs.length });
+      } catch (err) {
+        logger.warn('LN recommendations failed', { podId, error: err.message });
+      }
+    }));
+
+    logger.info('Listen Notes recommendations complete', { candidatesSoFar: allCandidates.size });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 3d. Podmatch scraping
+  // ─────────────────────────────────────────────────────────────
+  const podmatchResults = await scrapePodmatch(client.topics);
+  for (const pod of podmatchResults) {
+    if (!allCandidates.has(pod.external_id)) {
+      allCandidates.set(pod.external_id, pod);
+    }
+  }
+  logger.info('Podmatch scraping complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
   // 4. Deduplicate (already done via Map) — fetch existing matches

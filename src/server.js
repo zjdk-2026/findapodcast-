@@ -95,6 +95,7 @@ app.use('/api', onboardRouter);
 app.use('/api', pipelineRouter);
 app.use('/api', dashboardRouter);
 app.use('/api/operator', operatorRouter);
+app.use('/api/operator', require('./routes/manual-podcast'));
 app.use('/api', followupRouter);
 app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));
