@@ -975,9 +975,9 @@ async function doSendMatch(matchId) {
     const data = await apiPost('/api/send', { matchId });
     if (data.success) {
       updateMatchInState(matchId, { status: 'sent', sent_at: data.match?.sent_at });
-      updateCard(matchId);
       updateStatBadges();
       showToast('Email sent successfully!', 'success');
+      switchToFilter('sent');
     } else {
       showToast(data.error || 'Send failed.', 'error');
     }
