@@ -378,12 +378,8 @@ function actionButtonsHtml(match) {
   return buttons.join('');
 }
 
-// ── Drag-and-drop state ───────────────────────────────────────────────
-let isDragging = false;
-
 // ── Toggle card expand ────────────────────────────────────────────────
 function toggleCardExpand(matchId) {
-  if (isDragging) return;
   const card = $(`card-${matchId}`);
   if (!card) return;
   const isExpanded = card.getAttribute('data-expanded') === 'true';
@@ -419,7 +415,7 @@ function renderMatchCard(match) {
   const socialHtml = '';
 
   return `
-  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${esc(match.id)}')" ondragend="handleCardDragEnd(event,'${esc(match.id)}')">
+  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
     <!-- Collapsed row — click to expand -->
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
@@ -1888,88 +1884,6 @@ async function sendFollowUp() {
 }
 window.sendFollowUp = sendFollowUp;
 
-// ── Drag-and-drop handlers ────────────────────────────────────────────
-function handleCardDragStart(event, matchId) {
-  isDragging = true;
-  event.dataTransfer.setData('text/plain', matchId);
-  event.dataTransfer.effectAllowed = 'move';
-  event.stopPropagation();
-  const card = $(`card-${matchId}`);
-  if (card) card.classList.add('dragging');
-}
-window.handleCardDragStart = handleCardDragStart;
-
-function handleCardDragEnd(event, matchId) {
-  isDragging = false;
-  const card = $(`card-${matchId}`);
-  if (card) card.classList.remove('dragging');
-}
-window.handleCardDragEnd = handleCardDragEnd;
-
-async function updateMatchStatus(matchId, newStatus) {
-  try {
-    const data = await apiPost('/api/update-status', { matchId, status: newStatus });
-    if (data.success) {
-      updateMatchInState(matchId, { status: newStatus });
-      renderGrid();
-      showToast(`Moved to ${newStatus}`, 'success');
-      // Dismiss drag hint after first successful drop
-      localStorage.setItem('drag-hint-dismissed', '1');
-      const hint = $('drag-hint');
-      if (hint) hint.style.display = 'none';
-    } else {
-      showToast(data.error || 'Update failed.', 'error');
-    }
-  } catch (err) {
-    showToast('Update failed.', 'error');
-  }
-}
-
-function initDragDropTabs() {
-  // Use delegation on the stable container so re-renders don't break listeners
-  const container = $('filter-tabs');
-  if (!container) return;
-
-  container.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const tab = e.target.closest('.filter-tab');
-    container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
-    if (tab) tab.classList.add('drag-over');
-  });
-
-  container.addEventListener('dragleave', (e) => {
-    if (!container.contains(e.relatedTarget)) {
-      container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
-    }
-  });
-
-  container.addEventListener('drop', (e) => {
-    e.preventDefault();
-    container.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('drag-over'));
-    const tab = e.target.closest('.filter-tab');
-    if (!tab) return;
-    const status = tab.dataset.status;
-    if (status === 'all' || status === 'dismissed') return;
-    const matchId = e.dataTransfer.getData('text/plain');
-    if (matchId) updateMatchStatus(matchId, status);
-  });
-
-  // Auto-scroll while dragging near top/bottom of viewport
-  let scrollInterval = null;
-  document.addEventListener('dragover', (e) => {
-    const zone = 80;
-    const speed = 10;
-    clearInterval(scrollInterval);
-    if (e.clientY < zone) {
-      scrollInterval = setInterval(() => window.scrollBy(0, -speed), 16);
-    } else if (e.clientY > window.innerHeight - zone) {
-      scrollInterval = setInterval(() => window.scrollBy(0, speed), 16);
-    }
-  });
-  document.addEventListener('dragend', () => clearInterval(scrollInterval));
-  document.addEventListener('drop',    () => clearInterval(scrollInterval));
-}
 
 // ── Expose globals for inline onclick handlers ────────────────────────
 window.approveMatch      = approveMatch;
@@ -2100,12 +2014,6 @@ function init() {
   initSortSelect();
   initExtraFilters();
   initModals();
-  initDragDropTabs();
-  // Hide drag hint if already dismissed
-  if (localStorage.getItem('drag-hint-dismissed') === '1') {
-    const hint = $('drag-hint');
-    if (hint) hint.style.display = 'none';
-  }
   loadDashboard();
 }
 
