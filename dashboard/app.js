@@ -359,8 +359,7 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
@@ -539,7 +538,7 @@ function renderMatchCard(match) {
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="${match.status === 'appeared' ? 'Write your thank you email…' : 'Your pitch email…'}">${match.status === 'appeared' ? '' : esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
-          ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
+          ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Generate with AI</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
