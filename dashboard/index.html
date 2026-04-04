@@ -42,11 +42,6 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       Edit My Profile
     </button>
-    <label class="dropdown-item" style="cursor:pointer;" title="Upload profile photo">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Upload Profile Photo
-      <input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)" />
-    </label>
 
     <div class="dropdown-divider"></div>
     <p class="dropdown-section-label">Personalise</p>
@@ -324,6 +319,14 @@
         <button class="modal-close" onclick="closeProfileModal()">&#x2715;</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <label class="field-label">Profile Photo</label>
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;background:none;border:1.5px solid var(--border-medium);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--text-secondary);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Photo
+            <input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)" />
+          </label>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div><label class="field-label">Name</label><input type="text" id="profile-name" class="email-edit-field" /></div>
           <div><label class="field-label">Title</label><input type="text" id="profile-title" class="email-edit-field" placeholder="e.g. CEO & Author" /></div>
@@ -365,18 +368,6 @@
               <button type="button" class="vibe-pill" data-vibe="creative-bold">🎨 Creative &amp; Bold</button>
             </div>
             <input type="hidden" id="profile-visual-vibe" value="bold-professional" />
-          </div>
-          <div style="margin-top:12px;display:flex;gap:24px;align-items:flex-start;">
-            <div>
-              <label class="field-label">Primary Colour</label>
-              <input type="color" id="profile-color-primary" value="#6C3EFF" style="width:48px;height:48px;border:none;border-radius:10px;cursor:pointer;padding:2px;display:block;margin-top:4px;" />
-              <input type="text" id="profile-color-primary-hex" value="#6C3EFF" style="width:76px;margin-top:4px;font-size:12px;text-align:center;border:1px solid var(--border-medium);border-radius:6px;padding:4px;" maxlength="7" />
-            </div>
-            <div>
-              <label class="field-label">Secondary Colour</label>
-              <input type="color" id="profile-color-secondary" value="#F59E0B" style="width:48px;height:48px;border:none;border-radius:10px;cursor:pointer;padding:2px;display:block;margin-top:4px;" />
-              <input type="text" id="profile-color-secondary-hex" value="#F59E0B" style="width:76px;margin-top:4px;font-size:12px;text-align:center;border:1px solid var(--border-medium);border-radius:6px;padding:4px;" maxlength="7" />
-            </div>
           </div>
         </div>
       </div>
