@@ -209,30 +209,52 @@ async function searchYouTubePodcasts(topic, apiKey) {
   }
 }
 
-function normaliseYouTube(item) {
+function normaliseYouTube(item, channelDetails) {
   const channelId = item.id?.channelId || item.snippet?.channelId;
+  const details   = channelDetails || {};
+  const stats     = details.statistics || {};
+  const brandSettings = details.brandingSettings?.channel || {};
+  // Extract email from description if present
+  const desc = details.snippet?.description || item.snippet?.description || '';
+  const emailMatch = desc.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  const contactEmail = emailMatch ? emailMatch[0] : null;
+  // Custom URL (e.g. youtube.com/@channelname)
+  const customUrl = details.snippet?.customUrl
+    ? `https://www.youtube.com/${details.snippet.customUrl}`
+    : channelId ? `https://www.youtube.com/channel/${channelId}` : null;
   return {
     external_id: `youtube_${channelId}`,
-    title: item.snippet?.title || 'Untitled',
-    host_name: item.snippet?.channelTitle || null,
-    description: item.snippet?.description || null,
-    website: channelId ? `https://www.youtube.com/channel/${channelId}` : null,
+    title: item.snippet?.title || details.snippet?.title || 'Untitled',
+    host_name: item.snippet?.channelTitle || details.snippet?.title || null,
+    description: desc || null,
+    website: brandSettings.unsubscribedTrailer ? null : (details.snippet?.country ? customUrl : customUrl),
     apple_url: null,
     spotify_url: null,
-    youtube_url: channelId ? `https://www.youtube.com/channel/${channelId}` : null,
-    category: null,
+    youtube_url: customUrl,
+    category: brandSettings.keywords || null,
     niche_tags: [],
-    total_episodes: null,
+    total_episodes: stats.videoCount ? parseInt(stats.videoCount, 10) : null,
     last_episode_date: item.snippet?.publishedAt ? item.snippet.publishedAt.slice(0, 10) : null,
-    country: null,
+    country: details.snippet?.country || null,
     language: 'English',
-    listen_score: null,
-    image: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url || null,
+    listen_score: stats.subscriberCount ? Math.min(99, Math.floor(Math.log10(parseInt(stats.subscriberCount, 10) + 1) * 20)) : null,
+    image: details.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.high?.url || null,
     thumbnail: item.snippet?.thumbnails?.default?.url || null,
     listennotes_url: null,
     phone_number: null,
+    contact_email: contactEmail,
     source: 'youtube',
   };
+}
+
+async function fetchYouTubeChannelDetails(channelId, apiKey) {
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${channelId}&key=${apiKey}`;
+    const res = await axios.get(url, { timeout: 8000 });
+    return res.data?.items?.[0] || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -287,8 +309,8 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     `${primaryTopic} entrepreneurs podcast guest interview`,
   ];
 
-  // 90-day published_after timestamp
-  const ninetyDaysAgo = Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000);
+  // 365-day published_after timestamp
+  const ninetyDaysAgo = Math.floor((Date.now() - 365 * 24 * 60 * 60 * 1000) / 1000);
   const language = client.languages?.[0] || 'English';
 
   for (const query of queries) {
@@ -374,17 +396,17 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     }
   }
 
-  // Add YouTube results
+  // Add YouTube results — fetch channel details for richer data
   if (youtubeResults.status === 'fulfilled') {
-    for (const batch of youtubeResults.value) {
-      for (const item of batch) {
-        const channelId = item.id?.channelId;
-        const id = `youtube_${channelId}`;
-        if (channelId && !allCandidates.has(id)) {
-          allCandidates.set(id, normaliseYouTube(item));
-        }
+    const ytItems = youtubeResults.value.flat().filter(item => item.id?.channelId);
+    await Promise.all(ytItems.map(async (item) => {
+      const channelId = item.id?.channelId;
+      const id = `youtube_${channelId}`;
+      if (channelId && !allCandidates.has(id)) {
+        const details = await fetchYouTubeChannelDetails(channelId, GOOGLE_SEARCH_API_KEY);
+        allCandidates.set(id, normaliseYouTube(item, details));
       }
-    }
+    }));
   }
 
   logger.info('Multi-source discovery complete', { candidatesSoFar: allCandidates.size });
@@ -477,7 +499,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // 5. Filter pipeline
   // ─────────────────────────────────────────────────────────────
   const now = Date.now();
-  const maxAgeMs  = (client.max_show_age_days || 90)  * 24 * 60 * 60 * 1000;
+  const maxAgeMs  = (client.max_show_age_days || 365) * 24 * 60 * 60 * 1000;
   const minEps    = client.min_show_episodes || 20;
 
   const filtered = [];

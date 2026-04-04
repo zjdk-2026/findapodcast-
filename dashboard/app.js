@@ -271,35 +271,39 @@ function scoreBarHtml(label, value) {
 }
 
 // ── Contact chips HTML ────────────────────────────────────────────────
+function isValidUrl(url) {
+  if (!url) return false;
+  try { new URL(url); return true; } catch { return false; }
+}
+
 function contactChipsHtml(podcast) {
-  const reachOut = [];
-  const listen   = [];
-  const social   = [];
+  const chips = [];
 
-  // Reach out
-  if (podcast.contact_email)        reachOut.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
-  if (podcast.guest_application_url) reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Apply as Guest</a>`);
-  else if (podcast.booking_page_url) reachOut.push(`<a class="contact-chip contact-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Book a Time</a>`);
-  if (podcast.website)              reachOut.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>`);
+  // Email (always first if present)
+  if (podcast.contact_email) {
+    chips.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
+  }
 
-  // Listen
-  if (podcast.spotify_url)          listen.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
-  if (podcast.apple_url)            listen.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
-  if (podcast.youtube_url)          listen.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
+  // Single Website button (best available URL)
+  const siteUrl = podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url;
+  if (isValidUrl(siteUrl)) {
+    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener">🌐 Website</a>`);
+  }
 
-  // Social
-  if (podcast.instagram_url)        social.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
-  if (podcast.twitter_url)          social.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
-  if (podcast.tiktok_url)           social.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
-  if (podcast.facebook_url)         social.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
-  if (podcast.linkedin_page_url)    social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (podcast.linkedin_url)         social.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  // Social links — validated only
+  if (isValidUrl(podcast.instagram_url))     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (isValidUrl(podcast.twitter_url))       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
+  if (isValidUrl(podcast.linkedin_page_url)) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  else if (isValidUrl(podcast.linkedin_url)) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (isValidUrl(podcast.facebook_url))      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+  if (isValidUrl(podcast.tiktok_url))        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
+  if (isValidUrl(podcast.youtube_url) && podcast.website) chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
+  if (isValidUrl(podcast.spotify_url))       chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
+  if (isValidUrl(podcast.apple_url))         chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>`);
 
-  const allChips = [...reachOut, ...listen, ...social];
-
-  return allChips.length > 0
-    ? `<div class="contact-section"><div class="contact-chips">${allChips.join('')}</div></div>`
-    : `<div class="contact-section"><span style="font-size:12px;color:var(--text-tertiary);">No contact info found yet — try running Find Me Podcasts to enrich this card.</span></div>`;
+  return chips.length > 0
+    ? `<div class="contact-section"><div class="contact-chips">${chips.join('')}</div></div>`
+    : `<div class="contact-section"><span style="font-size:12px;color:var(--text-tertiary);">No contact info found yet.</span></div>`;
 }
 
 // ── Social chips HTML (legacy, kept for compatibility) ─────────────────
