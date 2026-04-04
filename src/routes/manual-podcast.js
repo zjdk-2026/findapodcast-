@@ -10,7 +10,7 @@ const router = express.Router();
 // Body: { clientId, podcastUrl, podcastName }
 // Operator pastes a podcast URL or name, system scrapes and adds to client pipeline
 router.post('/add-podcast', async (req, res) => {
-  const { clientId, podcastUrl, podcastName } = req.body;
+  const { clientId, podcastUrl, podcastName, contactEmail, instagramUrl, linkedinUrl, facebookUrl, spotifyUrl, appleUrl } = req.body;
   if (!clientId || (!podcastUrl && !podcastName)) {
     return res.status(400).json({ success: false, error: 'clientId and podcastUrl or podcastName required.' });
   }
@@ -23,7 +23,12 @@ router.post('/add-podcast', async (req, res) => {
       website: podcastUrl || null,
       source: 'manual',
       host_name: null,
-      contact_email: null,
+      contact_email: contactEmail || null,
+      instagram_url: instagramUrl || null,
+      linkedin_url: linkedinUrl || null,
+      facebook_url: facebookUrl || null,
+      spotify_url: spotifyUrl || null,
+      apple_url: appleUrl || null,
       description: null,
       total_episodes: null,
       last_episode_date: null,

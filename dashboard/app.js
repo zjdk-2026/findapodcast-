@@ -2309,8 +2309,9 @@ function openAddPodcastModal() {
 function closeAddPodcastModal() {
   const modal = document.getElementById('add-podcast-modal');
   if (modal) modal.style.display = 'none';
-  document.getElementById('add-podcast-url').value = '';
-  document.getElementById('add-podcast-name').value = '';
+  ['add-podcast-url','add-podcast-name','add-podcast-email','add-podcast-instagram','add-podcast-linkedin','add-podcast-facebook','add-podcast-spotify','add-podcast-apple'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
   const btn = document.getElementById('add-podcast-btn');
   if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
 }
@@ -2321,10 +2322,17 @@ async function submitAddPodcast() {
   const btn = document.getElementById('add-podcast-btn');
   if (btn) { btn.textContent = '⏳ Adding…'; btn.disabled = true; }
   try {
+    const g = (id) => { const el = document.getElementById(id); return el?.value.trim() || null; };
     const data = await apiPost('/api/operator/add-podcast', {
-      clientId: state.client?.id,
-      podcastUrl: url || null,
-      podcastName: name || null,
+      clientId:      state.client?.id,
+      podcastUrl:    url || null,
+      podcastName:   name || null,
+      contactEmail:  g('add-podcast-email'),
+      instagramUrl:  g('add-podcast-instagram'),
+      linkedinUrl:   g('add-podcast-linkedin'),
+      facebookUrl:   g('add-podcast-facebook'),
+      spotifyUrl:    g('add-podcast-spotify'),
+      appleUrl:      g('add-podcast-apple'),
     });
     if (data.success) {
       closeAddPodcastModal();

@@ -539,16 +539,41 @@
         <button class="modal-close" onclick="closeAddPodcastModal()">&#x2715;</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
-        <p style="font-size:14px;color:var(--text-secondary);margin:0;">Found a podcast you'd love to be on? Paste the URL or name and we'll add it to your pipeline.</p>
-        <div>
-          <label class="field-label">Podcast Website URL</label>
-          <input type="url" id="add-podcast-url" class="email-edit-field" placeholder="https://theirpodcast.com" />
+        <p style="font-size:14px;color:var(--text-secondary);margin:0;">Found a podcast you'd love to be on? Fill in what you know and we'll drop it into your New tab ready to pitch.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="field-label">Podcast Name</label>
+            <input type="text" id="add-podcast-name" class="email-edit-field" placeholder="The Breakthrough Moment" />
+          </div>
+          <div>
+            <label class="field-label">Website URL</label>
+            <input type="url" id="add-podcast-url" class="email-edit-field" placeholder="https://theirpodcast.com" />
+          </div>
+          <div>
+            <label class="field-label">Host Email</label>
+            <input type="email" id="add-podcast-email" class="email-edit-field" placeholder="host@podcast.com" />
+          </div>
+          <div>
+            <label class="field-label">Instagram</label>
+            <input type="text" id="add-podcast-instagram" class="email-edit-field" placeholder="@theirhandle" />
+          </div>
+          <div>
+            <label class="field-label">LinkedIn</label>
+            <input type="url" id="add-podcast-linkedin" class="email-edit-field" placeholder="https://linkedin.com/in/host" />
+          </div>
+          <div>
+            <label class="field-label">Facebook</label>
+            <input type="url" id="add-podcast-facebook" class="email-edit-field" placeholder="https://facebook.com/show" />
+          </div>
+          <div>
+            <label class="field-label">Spotify URL</label>
+            <input type="url" id="add-podcast-spotify" class="email-edit-field" placeholder="https://open.spotify.com/show/…" />
+          </div>
+          <div>
+            <label class="field-label">Apple Podcasts URL</label>
+            <input type="url" id="add-podcast-apple" class="email-edit-field" placeholder="https://podcasts.apple.com/…" />
+          </div>
         </div>
-        <div>
-          <label class="field-label">Podcast Name</label>
-          <input type="text" id="add-podcast-name" class="email-edit-field" placeholder="The Breakthrough Moment Podcast" />
-        </div>
-        <p style="font-size:12px;color:var(--text-tertiary);margin:0;">We'll scrape their website, find contact details, and drop it into your New tab ready to pitch.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost btn-sm" onclick="closeAddPodcastModal()">Cancel</button>
