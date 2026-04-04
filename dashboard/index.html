@@ -115,20 +115,6 @@
       <div id="hero-section"></div>
 
       <!-- Client header -->
-      <header class="client-header" style="padding-top:20px;padding-bottom:4px;">
-        <div class="client-header-inner" style="align-items:center;">
-          <div class="client-info" style="display:flex;align-items:center;gap:16px;">
-            <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()" style="flex-shrink:0;font-size:18px;padding:14px 32px;border-radius:14px;">Find a Podcast</button>
-          </div>
-          <div class="header-actions" id="header-actions" style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
-            <span id="last-run-badge" style="font-size:12px;color:var(--text-tertiary);white-space:nowrap;"></span>
-            <button onclick="openAddPodcastModal()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border-medium);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all 0.15s;flex-shrink:0;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-medium)';this.style.color='var(--text-secondary)'">
-              ➕ Add a Podcast
-            </button>
-          </div>
-        </div>
-      </header>
-
       <!-- Vision Board -->
       <div id="vision-board-section" style="display:none;padding:0 24px 16px 24px;max-width:1400px;margin:0 auto;">
         <!-- Skeleton loader -->
@@ -160,6 +146,19 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
       </style>
+
+      <!-- Find a Podcast bar -->
+      <div style="padding:12px 24px 4px 24px;max-width:1400px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <button class="btn btn-primary" id="header-run-pipeline" onclick="runPipeline()" style="flex-shrink:0;font-size:18px;padding:14px 32px;border-radius:14px;">Find a Podcast</button>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span id="last-run-badge" style="font-size:12px;color:var(--text-tertiary);white-space:nowrap;"></span>
+            <button onclick="openAddPodcastModal()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border-medium);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all 0.15s;flex-shrink:0;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-medium)';this.style.color='var(--text-secondary)'">
+              ➕ Add a Podcast
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Stats strip (this month) — now renders hero section -->
       <div id="stats-strip" class="stats-strip" style="display:none;"></div>
