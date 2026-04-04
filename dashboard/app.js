@@ -583,7 +583,11 @@ function getFilteredSorted() {
       const eScore = existing.fit_score || 0;
       const mHasData = !!(m.podcasts?.total_episodes || m.podcasts?.contact_email);
       const eHasData = !!(existing.podcasts?.total_episodes || existing.podcasts?.contact_email);
-      if (mScore > eScore || (mScore === eScore && mHasData && !eHasData)) {
+      const mBooked = m.status === 'booked';
+      const eBooked = existing.status === 'booked';
+      if (mBooked && !eBooked) {
+        byTitle.set(key, m);
+      } else if (!eBooked && (mScore > eScore || (mScore === eScore && mHasData && !eHasData))) {
         byTitle.set(key, m);
       }
     }
