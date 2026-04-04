@@ -1603,33 +1603,119 @@ function showUnlimitedUpsell() {
 
 // ── Vision Board ──────────────────────────────────────────────────────
 function renderVisionBoard(client) {
-  const section = document.getElementById('vision-board-section');
-  const img = document.getElementById('vision-board-img');
-  if (!section || !img) return;
+  const section  = document.getElementById('vision-board-section');
+  const skeleton = document.getElementById('vision-board-skeleton');
+  const imgWrap  = document.getElementById('vision-board-img-wrap');
+  const img      = document.getElementById('vision-board-img');
+  const prompt   = document.getElementById('vision-board-prompt');
+  if (!section) return;
+
+  const hasProfileData = client.life_purpose || client.best_in_world_at;
+
   if (client.vision_board_url) {
-    img.src = client.vision_board_url;
+    // Image ready — show it
     section.style.display = 'block';
+    if (skeleton) skeleton.style.display = 'none';
+    if (imgWrap)  { imgWrap.style.display = 'block'; }
+    if (img)      img.src = client.vision_board_url;
+    if (prompt)   prompt.style.display = 'none';
+
+  } else if (window._visionBoardGenerating) {
+    // Currently generating — show skeleton, start polling
+    section.style.display = 'block';
+    if (skeleton) skeleton.style.display = 'flex';
+    if (imgWrap)  imgWrap.style.display = 'none';
+    if (prompt)   prompt.style.display = 'none';
+
+    if (!window._visionBoardPollTimer) {
+      window._visionBoardPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/vision-board/status`, {
+            headers: { 'x-dashboard-token': state.token }
+          });
+          const data = await res.json();
+          if (data.imageUrl) {
+            clearInterval(window._visionBoardPollTimer);
+            window._visionBoardPollTimer = null;
+            window._visionBoardGenerating = false;
+            state.client.vision_board_url = data.imageUrl;
+            renderVisionBoard(state.client);
+            showToast('🎨 Your vision board is ready!', 'success');
+          }
+        } catch { /* keep polling */ }
+      }, 8000);
+    }
+
+  } else if (hasProfileData) {
+    // Has profile data but no image — auto-trigger generation
+    section.style.display = 'block';
+    if (skeleton) skeleton.style.display = 'flex';
+    if (imgWrap)  imgWrap.style.display = 'none';
+    if (prompt)   prompt.style.display = 'none';
+    window._visionBoardGenerating = true;
+
+    // Kick off generation in background
+    apiPost('/api/vision-board/generate', { token: state.token }).then((data) => {
+      if (data.success && data.imageUrl) {
+        window._visionBoardGenerating = false;
+        state.client.vision_board_url = data.imageUrl;
+        renderVisionBoard(state.client);
+        showToast('🎨 Your vision board is ready!', 'success');
+      } else if (data.cooldown) {
+        // Cooldown but no image — hide section
+        window._visionBoardGenerating = false;
+        section.style.display = 'none';
+      } else {
+        window._visionBoardGenerating = false;
+        section.style.display = 'none';
+      }
+    }).catch(() => {
+      window._visionBoardGenerating = false;
+      section.style.display = 'none';
+    });
+
   } else {
-    section.style.display = 'none';
+    // No profile data — show unlock prompt
+    section.style.display = 'block';
+    if (skeleton) skeleton.style.display = 'none';
+    if (imgWrap)  imgWrap.style.display = 'none';
+    if (prompt)   prompt.style.display = 'flex';
   }
 }
 
 async function triggerVisionBoardRegenerate() {
   const btn = document.getElementById('regen-vision-btn');
   if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
-  $('profile-dropdown').style.display = 'none';
+  const profileDropdown = document.getElementById('profile-dropdown');
+  if (profileDropdown) profileDropdown.style.display = 'none';
+
+  // Clear old image so skeleton shows while regenerating
+  if (state.client) state.client.vision_board_url = null;
+  window._visionBoardGenerating = true;
+  if (window._visionBoardPollTimer) { clearInterval(window._visionBoardPollTimer); window._visionBoardPollTimer = null; }
+  renderVisionBoard(state.client);
+  showToast('🎨 Generating your vision board…', 'info');
+
   try {
     const data = await apiPost('/api/vision-board/generate', { token: state.token });
-    if (data.success) {
-      showToast('🎨 Vision board updated!', 'success');
-      if (state.client) state.client.vision_board_url = data.imageUrl;
+    if (data.success && data.imageUrl) {
+      window._visionBoardGenerating = false;
+      state.client.vision_board_url = data.imageUrl;
       renderVisionBoard(state.client);
+      showToast('🎨 Vision board ready!', 'success');
     } else if (data.cooldown) {
+      window._visionBoardGenerating = false;
+      if (state.client) state.client.vision_board_url = null;
+      renderVisionBoard(state.client);
       showToast(`⏳ Next generation available in ${data.hoursLeft}h`, 'info');
     } else {
+      window._visionBoardGenerating = false;
       showToast(data.error || 'Generation failed.', 'error');
     }
-  } catch { showToast('Network error.', 'error'); }
+  } catch {
+    window._visionBoardGenerating = false;
+    showToast('Network error.', 'error');
+  }
   if (btn) { btn.textContent = '🎨 Regenerate Vision Board'; btn.disabled = false; }
 }
 window.triggerVisionBoardRegenerate = triggerVisionBoardRegenerate;
