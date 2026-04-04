@@ -1846,12 +1846,18 @@ async function saveProfile() {
   try {
     const data = await apiPatch(`/api/onboard/${state.client.id}`, updates);
     if (data.success) {
+      const hadVisionData = !!(state.client.life_purpose || state.client.best_in_world_at);
       state.client = { ...state.client, ...data.client };
       showToast('Profile saved!', 'success');
       closeProfileModal();
       // Update name in nav
       const trigger = $('profile-trigger');
       if (trigger) trigger.innerHTML = `${esc(state.client.name)} <span style="opacity:0.5;font-size:11px;">▾</span>`;
+      // If vision data was just added for the first time, trigger generation
+      const nowHasVisionData = !!(state.client.life_purpose || state.client.best_in_world_at);
+      if (nowHasVisionData && !state.client.vision_board_url) {
+        renderVisionBoard(state.client); // will auto-trigger generation
+      }
     } else {
       showToast(data.error || 'Save failed.', 'error');
     }
