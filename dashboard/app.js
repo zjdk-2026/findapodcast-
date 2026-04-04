@@ -837,6 +837,17 @@ function updateCard(matchId) {
   card.replaceWith(tmp.firstElementChild);
 }
 
+// ── Switch active filter tab programmatically ─────────────────────────
+function switchToFilter(status) {
+  const tabs = $('filter-tabs');
+  if (!tabs) return;
+  tabs.querySelectorAll('.filter-tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.status === status);
+  });
+  state.filter = status;
+  renderGrid();
+}
+
 // ── Update stat badges live ───────────────────────────────────────────
 function updateStatBadges() {
   const m = state.matches;
@@ -993,11 +1004,17 @@ async function bookMatch(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   if (matchId === DEMO_ID) {
-    const newStatus = match.status === 'booked' ? 'approved' : 'booked';
+    const newStatus = match.status === 'booked' ? 'new' : 'booked';
     updateMatchInState(matchId, { status: newStatus });
-    updateCard(matchId); updateStatBadges();
-    if (newStatus === 'booked') { showToast('Demo: booked! See how the booked state looks.', 'success'); showContentBoostModal(); }
-    else showToast('Demo: booking undone.', 'info');
+    updateStatBadges();
+    if (newStatus === 'booked') {
+      showToast('Demo: booked! Moving to your Booked tab.', 'success');
+      switchToFilter('booked');
+      showContentBoostModal();
+    } else {
+      showToast('Demo: booking undone.', 'info');
+      switchToFilter('new');
+    }
     return;
   }
   setCardLoading(matchId, true);
@@ -1022,6 +1039,7 @@ async function bookMatch(matchId) {
         updateStatBadges();
         renderStatsStrip();
         showToast('Marked as booked!', 'success');
+        switchToFilter('booked');
         showContentBoostModal();
       } else {
         showToast(data.error || 'Book failed.', 'error');
