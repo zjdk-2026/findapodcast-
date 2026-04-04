@@ -567,8 +567,8 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     `${primaryTopic} entrepreneurs podcast guest interview`,
   ];
 
-  // 365-day published_after timestamp
-  const ninetyDaysAgo = Math.floor((Date.now() - 365 * 24 * 60 * 60 * 1000) / 1000);
+  // 180-day published_after timestamp
+  const ninetyDaysAgo = Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000);
   const language = client.languages?.[0] || 'English';
 
   for (const query of queries) {
@@ -877,7 +877,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // 5. Filter pipeline
   // ─────────────────────────────────────────────────────────────
   const now = Date.now();
-  const maxAgeMs  = (client.max_show_age_days || 365) * 24 * 60 * 60 * 1000;
+  const maxAgeMs  = (client.max_show_age_days || 180) * 24 * 60 * 60 * 1000;
   const minEps    = client.min_show_episodes || 20;
 
   const filtered = [];
