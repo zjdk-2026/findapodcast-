@@ -54,7 +54,7 @@ async function generateVisionBoard(clientId) {
 
   if (!client) throw new Error('Client not found');
 
-  if (client.vision_board_generated_at) {
+  if (client.vision_board_url && client.vision_board_generated_at) {
     const lastGen = new Date(client.vision_board_generated_at).getTime();
     const hoursSince = (Date.now() - lastGen) / (1000 * 60 * 60);
     if (hoursSince < 24) {
