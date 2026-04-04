@@ -337,37 +337,35 @@ function actionButtonsHtml(match) {
   const buttons  = [];
 
   if (status === 'new') {
-    if (hasEmail) {
-      buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">Preview</button>`);
-    }
+    // Always show Send Pitch as primary — if no email yet, approve first then send
+    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
+    if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">Preview Email</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">Already Pitched</button>`);
     buttons.push(`<button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Save for Later</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'approved') {
     if (hasEmail) {
       buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
-      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">Preview</button>`);
+      buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">Preview Email</button>`);
     } else {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch…</span>`);
     }
     buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="approveMatch('${id}')">Ready to Pitch</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'sent') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
     if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Pitch</button>`);
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Thread</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-prep btn-xs btn-action-primary" onclick="showInterviewPrepModal('${id}')">🎙️ Prepare for This</button>`);
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">I Appeared!</button>`);
-    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-prep btn-xs btn-action-primary" onclick="showInterviewPrepModal('${id}')">🎙️ Prepare for Interview</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="bookMatch('${id}')">↩ Undo</button>`);
   } else if (status === 'appeared') {
     buttons.push(`<button class="btn btn-action-share btn-xs btn-action-primary" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
@@ -919,8 +917,40 @@ async function doSendMatch(matchId) {
   finally  { setCardLoading(matchId, false); }
 }
 
-function sendMatch(matchId) {
-  // Show confirm modal, then send on confirm
+async function sendMatch(matchId) {
+  const match = state.matches.find((m) => m.id === matchId);
+  if (!match) return;
+
+  // If card is new (not yet approved), approve first to trigger email generation
+  if (match.status === 'new' || match.status === 'dream') {
+    setCardLoading(matchId, true);
+    showToast('Generating your pitch email…', 'info');
+    const approveData = await apiPost('/api/approve', { matchId });
+    if (!approveData.success) {
+      setCardLoading(matchId, false);
+      showToast(approveData.error || 'Could not generate pitch.', 'error');
+      return;
+    }
+    updateMatchInState(matchId, { status: 'approved' });
+    updateCard(matchId);
+    setCardLoading(matchId, false);
+    // Poll for email to be written then open confirm modal
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      const fresh = state.matches.find((m) => m.id === matchId);
+      if ((fresh?.email_subject || fresh?.email_body) || attempts >= 12) {
+        clearInterval(poll);
+        showSendConfirmModal(matchId);
+      }
+    }, 3000);
+    return;
+  }
+
+  showSendConfirmModal(matchId);
+}
+
+function showSendConfirmModal(matchId) {
   const overlay = $('confirm-modal');
   if (!overlay) { doSendMatch(matchId); return; }
   const match = state.matches.find((m) => m.id === matchId);
@@ -931,7 +961,6 @@ function sendMatch(matchId) {
   document.body.style.overflow = 'hidden';
 
   const confirmBtn = $('confirm-send-btn');
-  // Remove any previous listener by cloning
   const freshBtn = confirmBtn.cloneNode(true);
   confirmBtn.parentNode.replaceChild(freshBtn, confirmBtn);
 
