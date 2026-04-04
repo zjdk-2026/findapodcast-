@@ -1516,6 +1516,7 @@ async function runPipeline() {
   }
 
   btn.disabled = true;
+  btn.style.color = '#fff';
   $('profile-dropdown').style.display = 'none';
   const steps = [
     'Activating AI matching engine…',
@@ -1548,7 +1549,7 @@ async function runPipeline() {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { clearInterval(stepInterval); btn.textContent = 'Find a Podcast'; btn.disabled = false; }
+  finally { clearInterval(stepInterval); btn.textContent = 'Find a Podcast'; btn.disabled = false; btn.style.color = ''; }
 }
 
 function pollForNewMatches() {
