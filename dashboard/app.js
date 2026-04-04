@@ -550,21 +550,6 @@ function renderMatchCard(match) {
 
     ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${esc(match.id)}')">📩 Send Another Follow Up</button>` : ''}
 
-    <!-- Notes -->
-    <div class="card-pitch-section" id="notes-area-${esc(match.id)}" style="flex-shrink:0;${match.status === 'dismissed' ? 'display:none;' : ''}">
-      ${match.client_notes ? `<div class="note-display">${esc(match.client_notes)}</div>` : ''}
-      <button class="pitch-toggle-btn" onclick="toggleNoteArea('${esc(match.id)}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        ${match.client_notes ? 'Edit Note' : 'Notes'}
-      </button>
-      <div class="note-editor" id="note-editor-${esc(match.id)}">
-        <textarea class="note-textarea" id="note-text-${esc(match.id)}" rows="2" placeholder="Jot down anything — what you pitched, follow-up dates, host contact info…">${esc(match.client_notes || '')}</textarea>
-        <div class="note-actions">
-          <button class="btn btn-primary btn-xs" onclick="saveNote('${esc(match.id)}')">Save</button>
-          <button class="btn btn-ghost btn-xs" onclick="toggleNoteArea('${esc(match.id)}')">Cancel</button>
-        </div>
-      </div>
-    </div>
 
     </div><!-- /.pitch-notes-row -->
 
