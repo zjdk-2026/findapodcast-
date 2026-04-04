@@ -29,8 +29,9 @@ router.post('/api/upload-photo', async (req, res) => {
     });
 
     const body = Buffer.concat(chunks);
-    const boundary = contentType.split('boundary=')[1]?.trim();
+    let boundary = contentType.split('boundary=')[1]?.trim();
     if (!boundary) return res.status(400).json({ success: false, error: 'No boundary in multipart.' });
+    boundary = boundary.replace(/^"|"$/g, ''); // strip surrounding quotes if present
 
     // Parse multipart parts
     const parts = parseMultipart(body, boundary);
@@ -38,7 +39,8 @@ router.post('/api/upload-photo', async (req, res) => {
     const photoPart = parts.find((p) => p.name === 'photo');
 
     if (!tokenPart || !photoPart) {
-      return res.status(400).json({ success: false, error: 'Missing token or photo.' });
+      logger.warn('Upload missing parts', { parts: parts.map(p => p.name), hasToken: !!tokenPart, hasPhoto: !!photoPart });
+      return res.status(400).json({ success: false, error: `Missing ${!tokenPart ? 'token' : 'photo'}.` });
     }
 
     const token = tokenPart.data.toString('utf8').trim();
