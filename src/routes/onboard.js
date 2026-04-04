@@ -128,6 +128,7 @@ async function addToGHL(client) {
       body: JSON.stringify({
         locationId,
         pipelineId,
+        pipelineStageId: process.env.GHL_STAGE_ID || '2023867b-46fe-4f3f-b00c-8e242653974f',
         name:      `${client.name} — Find A Podcast`,
         contactId,
         status:    'open',
