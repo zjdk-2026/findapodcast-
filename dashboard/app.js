@@ -243,7 +243,7 @@ function renderStats(stats) {
   set('stat-total',    stats.total);
   set('stat-high',     stats.high);
   set('stat-avg',      stats.avgScore ?? '—');
-  set('stat-sent',     stats.sent);
+  set('stat-sent',     (stats.approved ?? 0) + (stats.sent ?? 0));
   set('stat-booked',   stats.booked);
 }
 
@@ -2297,7 +2297,7 @@ function openAddPodcastModal() {
 function closeAddPodcastModal() {
   const modal = document.getElementById('add-podcast-modal');
   if (modal) modal.style.display = 'none';
-  ['add-podcast-url','add-podcast-name','add-podcast-email','add-podcast-instagram','add-podcast-linkedin','add-podcast-facebook','add-podcast-spotify','add-podcast-apple'].forEach(id => {
+  ['add-podcast-url','add-podcast-name','add-podcast-email','add-podcast-instagram','add-podcast-linkedin','add-podcast-facebook','add-podcast-spotify','add-podcast-apple','add-podcast-notes'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const btn = document.getElementById('add-podcast-btn');
@@ -2321,6 +2321,7 @@ async function submitAddPodcast() {
       facebookUrl:   g('add-podcast-facebook'),
       spotifyUrl:    g('add-podcast-spotify'),
       appleUrl:      g('add-podcast-apple'),
+      notes:         g('add-podcast-notes'),
     });
     if (data.success) {
       closeAddPodcastModal();

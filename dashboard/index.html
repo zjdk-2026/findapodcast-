@@ -118,34 +118,8 @@
       <!-- Hero greeting section -->
       <div id="hero-section"></div>
 
-      <!-- Client header -->
-      <!-- Vision Board -->
-      <div id="vision-board-section" style="display:none;padding:0 24px 16px 24px;max-width:1400px;margin:0 auto;">
-        <!-- Skeleton loader -->
-        <div id="vision-board-skeleton" style="display:none;border-radius:16px;overflow:hidden;height:280px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
-          <div style="font-size:28px;animation:pulse 1.5s ease-in-out infinite;">✨</div>
-          <p style="color:rgba(255,255,255,0.8);font-size:15px;font-weight:600;margin:0;">Your vision board is being created…</p>
-          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">This takes about 30 seconds</p>
-          <div style="width:200px;height:4px;background:rgba(255,255,255,0.15);border-radius:999px;margin-top:8px;overflow:hidden;">
-            <div style="height:100%;width:40%;background:linear-gradient(90deg,#6C3EFF,#a78bfa);border-radius:999px;animation:shimmer 1.5s ease-in-out infinite;"></div>
-          </div>
-        </div>
-        <!-- Actual image -->
-        <div id="vision-board-img-wrap" style="position:relative;border-radius:16px;overflow:hidden;max-height:320px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:none;">
-          <img id="vision-board-img" src="" alt="Your Vision Board" style="width:100%;max-height:320px;object-fit:cover;object-position:center top;border-radius:16px;display:block;" />
-          <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.5));border-radius:0 0 16px 16px;"></div>
-          <div style="position:absolute;top:12px;right:12px;">
-            <button onclick="triggerVisionBoardRegenerate()" style="background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(6px);">🎨 Regenerate</button>
-          </div>
-        </div>
-        <!-- Unlock prompt (shown when profile not filled) -->
-        <div id="vision-board-prompt" style="display:none;border-radius:16px;border:2px dashed var(--border-medium);padding:32px 24px;flex-direction:column;align-items:center;gap:12px;text-align:center;">
-          <div style="font-size:32px;">🎨</div>
-          <p style="font-weight:700;font-size:16px;margin:0;color:var(--text-primary);">Unlock Your Vision Board</p>
-          <p style="font-size:13px;color:var(--text-secondary);margin:0;max-width:320px;">Complete your profile with your purpose and expertise to generate your personalised magazine cover.</p>
-          <button class="btn btn-primary" onclick="openProfileModal()" style="margin-top:4px;">Complete My Profile</button>
-        </div>
-      </div>
+      <!-- Banner -->
+      <div id="vision-board-section" style="padding:0 24px 16px 24px;max-width:1400px;margin:0 auto;"></div>
       <style>
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
@@ -538,7 +512,7 @@
         <button class="modal-close" onclick="closeAddPodcastModal()">&#x2715;</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
-        <p style="font-size:14px;color:var(--text-secondary);margin:0;">Found a podcast you'd love to be on? Fill in what you know and we'll drop it into your New tab ready to pitch.</p>
+        <p style="font-size:14px;color:var(--text-secondary);margin:0;">Identify a show you want to appear on. Enter what you know and our system will enrich the profile, score the fit, and queue it in your pipeline ready to pitch.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
             <label class="field-label">Podcast Name</label>
@@ -572,6 +546,10 @@
             <label class="field-label">Apple Podcasts URL</label>
             <input type="url" id="add-podcast-apple" class="email-edit-field" placeholder="https://podcasts.apple.com/…" />
           </div>
+        </div>
+        <div>
+          <label class="field-label">Notes</label>
+          <textarea id="add-podcast-notes" class="email-edit-field" rows="3" placeholder="e.g. Met the host at a conference, great fit for my burnout episode, already has 50k listeners…" style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
         </div>
       </div>
       <div class="modal-footer">

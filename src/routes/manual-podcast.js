@@ -10,7 +10,7 @@ const router = express.Router();
 // Body: { clientId, podcastUrl, podcastName }
 // Operator pastes a podcast URL or name, system scrapes and adds to client pipeline
 router.post('/add-podcast', async (req, res) => {
-  const { clientId, podcastUrl, podcastName, contactEmail, instagramUrl, linkedinUrl, facebookUrl, spotifyUrl, appleUrl } = req.body;
+  const { clientId, podcastUrl, podcastName, contactEmail, instagramUrl, linkedinUrl, facebookUrl, spotifyUrl, appleUrl, notes } = req.body;
   if (!clientId || (!podcastUrl && !podcastName)) {
     return res.status(400).json({ success: false, error: 'clientId and podcastUrl or podcastName required.' });
   }
@@ -64,7 +64,7 @@ router.post('/add-podcast', async (req, res) => {
     // Create match with 'new' status
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .insert({ client_id: clientId, podcast_id: podcast.id, status: 'new', fit_score: 0, restored_at: new Date().toISOString() })
+      .insert({ client_id: clientId, podcast_id: podcast.id, status: 'new', fit_score: 0, restored_at: new Date().toISOString(), notes: notes || null })
       .select()
       .single();
 
