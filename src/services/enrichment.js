@@ -2,6 +2,18 @@
 
 const cheerio = require('cheerio');
 const logger = require('../lib/logger');
+const dns = require('dns').promises;
+
+async function hasMxRecord(email) {
+  try {
+    const domain = email.split('@')[1];
+    if (!domain) return false;
+    const records = await dns.resolveMx(domain);
+    return records && records.length > 0;
+  } catch {
+    return false; // domain has no MX record = email likely invalid
+  }
+}
 
 // Generic email prefixes to skip
 const GENERIC_EMAIL_PREFIXES = [
@@ -379,6 +391,15 @@ async function enrichPodcast(podcastData) {
         }
       } catch {
         // YouTube fetch failed, skip
+      }
+    }
+
+    // Validate contact email has a real MX record
+    if (enriched.contact_email) {
+      const valid = await hasMxRecord(enriched.contact_email);
+      if (!valid) {
+        logger.warn('Email failed MX validation, clearing', { email: enriched.contact_email, title: podcastData.title });
+        enriched.contact_email = null;
       }
     }
 

@@ -515,6 +515,65 @@ async function scrapeGoodpods(topics) {
   return results;
 }
 
+async function getSpotifyToken() {
+  const clientId     = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  try {
+    const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const res = await axios.post('https://accounts.spotify.com/api/token',
+      'grant_type=client_credentials',
+      { headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+    );
+    return res.data?.access_token || null;
+  } catch (err) {
+    logger.warn('Spotify token fetch failed', { error: err.message });
+    return null;
+  }
+}
+
+async function searchSpotifyPodcasts(query, token) {
+  if (!token) return [];
+  try {
+    const q = encodeURIComponent(query);
+    const res = await axios.get(`https://api.spotify.com/v1/search?q=${q}&type=show&market=US&limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 8000,
+    });
+    return res.data?.shows?.items || [];
+  } catch (err) {
+    logger.warn('Spotify search failed', { query, error: err.message });
+    return [];
+  }
+}
+
+function normaliseSpotify(item) {
+  if (!item?.name) return null;
+  return {
+    external_id: `spotify_${item.id}`,
+    title: item.name,
+    host_name: item.publisher || null,
+    description: item.description || null,
+    website: item.external_urls?.spotify || null,
+    spotify_url: item.external_urls?.spotify || null,
+    apple_url: null,
+    youtube_url: null,
+    rss_feed_url: null,
+    category: item.media_type || null,
+    niche_tags: item.languages || [],
+    total_episodes: item.total_episodes || null,
+    last_episode_date: null,
+    country: item.markets?.[0] || null,
+    language: item.languages?.[0] || 'English',
+    listen_score: null,
+    image: item.images?.[0]?.url || null,
+    thumbnail: item.images?.[2]?.url || item.images?.[0]?.url || null,
+    listennotes_url: null,
+    phone_number: null,
+    source: 'spotify',
+  };
+}
+
 /**
  * discoverPodcasts(client)
  * Main discovery pipeline for a single client.
@@ -624,9 +683,12 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   const TADDY_API_KEY = process.env.TADDY_API_KEY;
   const TADDY_USER_ID = process.env.TADDY_USER_ID;
 
+  // Get Spotify token before parallel block
+  const spotifyToken = await getSpotifyToken();
+
   // Run top 3 topic queries across all sources in parallel
   const newSourceQueries = queries.slice(0, 3);
-  const [itunesResults, podcastIndexResults, youtubeResults, taddyResults, feedspotResults, rglResults, goodpodsResults] = await Promise.allSettled([
+  const [itunesResults, podcastIndexResults, youtubeResults, taddyResults, feedspotResults, rglResults, goodpodsResults, spotifyPrimaryResults, spotifyAudienceResults] = await Promise.allSettled([
     Promise.all(newSourceQueries.map(q => searchItunes(q, language))),
     Promise.all(newSourceQueries.map(q => searchPodcastIndex(q))),
     Promise.all(client.topics?.slice(0, 2).map(t => searchYouTubePodcasts(t, GOOGLE_SEARCH_API_KEY)) || []),
@@ -634,6 +696,8 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     scrapeFeedspot(client.topics),
     scrapeRadioGuestList(),
     scrapeGoodpods(client.topics),
+    searchSpotifyPodcasts(primaryTopic, spotifyToken),
+    searchSpotifyPodcasts(audience, spotifyToken),
   ]);
 
   // Add iTunes results
@@ -706,6 +770,18 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     for (const pod of goodpodsResults.value) {
       if (!allCandidates.has(pod.external_id)) {
         allCandidates.set(pod.external_id, pod);
+      }
+    }
+  }
+
+  // Add Spotify results
+  for (const spotifyBatch of [spotifyPrimaryResults, spotifyAudienceResults]) {
+    if (spotifyBatch.status === 'fulfilled') {
+      for (const item of spotifyBatch.value) {
+        const normalised = normaliseSpotify(item);
+        if (normalised && !allCandidates.has(normalised.external_id)) {
+          allCandidates.set(normalised.external_id, normalised);
+        }
       }
     }
   }
