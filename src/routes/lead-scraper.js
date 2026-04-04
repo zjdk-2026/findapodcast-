@@ -314,14 +314,18 @@ async function contactExistsInGHL(email) {
 }
 
 async function addToGHL(firstName, lastName, email, podcast) {
+  const headers = {
+    Authorization: `Bearer ${GHL_API_KEY}`,
+    Version: '2021-07-28',
+    'Content-Type': 'application/json',
+  };
+
+  // 1. Create contact
+  let contactId;
   try {
-    const res = await fetchWithTimeout('https://services.leadconnectorhq.com/contacts/', {
+    const res  = await fetchWithTimeout('https://services.leadconnectorhq.com/contacts/', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${GHL_API_KEY}`,
-        Version: '2021-07-28',
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         firstName,
         lastName,
@@ -331,11 +335,39 @@ async function addToGHL(firstName, lastName, email, podcast) {
         source: `Podcast Guest Scraper - ${podcast}`,
       }),
     });
-    return res.ok;
+    const data = await res.json();
+    contactId  = data?.contact?.id || data?.id;
+    if (!res.ok || !contactId) {
+      logger.warn('lead-scraper: GHL contact creation failed', { email, status: res.status });
+      return false;
+    }
   } catch (err) {
     logger.warn('lead-scraper: GHL add failed', { email, error: err.message });
     return false;
   }
+
+  // 2. Create opportunity in Apollo Leads stage
+  const pipelineId = process.env.GHL_PIPELINE_ID;
+  if (!pipelineId) return true;
+
+  try {
+    await fetchWithTimeout('https://services.leadconnectorhq.com/opportunities/', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        locationId:      GHL_LOCATION_ID,
+        pipelineId,
+        pipelineStageId: 'ff5910f8-5da8-4a30-af1d-2adeca6cb8e6', // Apollo Leads stage
+        name:            `${firstName} ${lastName} — Apollo Lead`,
+        contactId,
+        status:          'open',
+      }),
+    });
+  } catch (err) {
+    logger.warn('lead-scraper: GHL opportunity creation failed', { email, error: err.message });
+  }
+
+  return true;
 }
 
 // ── Route ─────────────────────────────────────────────────────────────────────
