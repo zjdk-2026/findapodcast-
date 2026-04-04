@@ -449,7 +449,7 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
           ${isValidUrl(podcast.apple_url) ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
           ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
-          ${podcast.guest_application_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply</a>` : podcast.booking_page_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Book</a>` : ''}
+          ${podcast.guest_application_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply</a>` : (podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
         </div>
       </div>
       <div class="card-row-right">
