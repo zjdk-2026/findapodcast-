@@ -672,7 +672,7 @@ function renderDashboard(data) {
   const lastRunBadge = $('last-run-badge');
   if (lastRunBadge) {
     lastRunBadge.textContent = client.last_run_at
-      ? `Last updated ${new Date(client.last_run_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+      ? `Last updated ${new Date(client.last_run_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}`
       : '';
   }
 
