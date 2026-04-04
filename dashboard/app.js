@@ -661,11 +661,13 @@ function renderDashboard(data) {
   state.matches = matches || [];
   state.stats   = stats  || {};
 
-  // Show reply badge if there are already replied matches
-  const repliedCount = (matches || []).filter(m => m.status === 'replied').length;
+  // Show reply badge — only for replied matches not yet seen by user
+  const seenKey = `seen_replied_${state.token}`;
+  const seenIds = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
+  const unseenReplied = (matches || []).filter(m => m.status === 'replied' && !seenIds.has(m.id));
   const badge = document.getElementById('reply-badge');
   if (badge) {
-    if (repliedCount > 0) { badge.textContent = repliedCount; badge.style.display = 'inline-flex'; }
+    if (unseenReplied.length > 0) { badge.textContent = unseenReplied.length; badge.style.display = 'inline-flex'; }
     else { badge.style.display = 'none'; }
   }
 
@@ -1662,9 +1664,17 @@ function renderVisionBoard(client) {
         renderVisionBoard(state.client);
         showToast('🎨 Your vision board is ready!', 'success');
       } else if (data.cooldown) {
-        // Cooldown but no image — hide section
+        // Already generated within 24hrs — fetch existing image from status endpoint
         window._visionBoardGenerating = false;
-        section.style.display = 'none';
+        fetch('/api/vision-board/status', { headers: { 'x-dashboard-token': state.token } })
+          .then(r => r.json()).then(s => {
+            if (s.imageUrl) {
+              state.client.vision_board_url = s.imageUrl;
+              renderVisionBoard(state.client);
+            } else {
+              section.style.display = 'none';
+            }
+          }).catch(() => { section.style.display = 'none'; });
       } else {
         window._visionBoardGenerating = false;
         section.style.display = 'none';
@@ -1970,10 +1980,13 @@ function initFilterTabs() {
     tabs.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     state.filter = tab.dataset.status;
-    // Clear reply badge when Host Replied tab is clicked
+    // Clear reply badge when Host Replied tab is clicked — persist seen IDs
     if (tab.dataset.status === 'replied') {
       const badge = document.getElementById('reply-badge');
       if (badge) badge.style.display = 'none';
+      const seenKey = `seen_replied_${state.token}`;
+      const allRepliedIds = state.matches.filter(m => m.status === 'replied').map(m => m.id);
+      localStorage.setItem(seenKey, JSON.stringify(allRepliedIds));
     }
     renderGrid();
   });

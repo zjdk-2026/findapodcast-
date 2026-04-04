@@ -44,6 +44,9 @@ const PORT = process.env.PORT || 3000;
 // ── Stripe webhook (raw body — must be before express.json) ──────────
 app.use('/api/stripe/webhook', require('./routes/stripe'));
 
+// ── Photo upload (multipart — must be before express.json) ───────────
+app.use(require('./routes/upload'));
+
 // ── Middleware ───────────────────────────────────────────────────────
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
