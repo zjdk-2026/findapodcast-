@@ -20,6 +20,52 @@ const state = {
   contactModalId: null,
 };
 
+// ── Demo card (Zac's podcast — pinned at top for every client) ────────
+const DEMO_ID = 'zac-demo';
+const DEMO_MATCH = {
+  id: DEMO_ID,
+  status: 'new',
+  fit_score: 98,
+  booking_likelihood: 'high',
+  relevance_score: 98, audience_score: 95, recency_score: 100, reach_score: 90, contactability_score: 100,
+  why_this_client_fits: 'This is a live demo card. Use the buttons below to explore how the dashboard works — pitch, book, move, and manage — before reaching out to real shows.',
+  best_pitch_angle: 'Practice your pitch here first. When you\'re ready, hit Send Pitch to see exactly how the email flow works end-to-end.',
+  episode_to_reference: null,
+  red_flags: null,
+  email_subject: null,
+  email_body: null,
+  podcasts: {
+    title: 'The Breakthrough Moment Podcast',
+    host_name: 'Zac Deane',
+    total_episodes: 488,
+    last_episode_date: new Date(Date.now() - 2 * 86400000).toISOString(),
+    country: 'AU',
+    listen_score: 50,
+    contact_email: 'hi@zacdeane.com',
+    booking_page_url: 'https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute',
+    guest_application_url: null,
+    website: 'https://www.zacdeane.com',
+    spotify_url: 'https://open.spotify.com/show/7FBW99BOy9CavEse731bK5',
+    youtube_url: 'https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP',
+  },
+};
+
+function loadDemoMatch() {
+  const saved = localStorage.getItem('demo-match');
+  if (!saved) return { ...DEMO_MATCH };
+  try {
+    const s = JSON.parse(saved);
+    return { ...DEMO_MATCH, ...s };
+  } catch { return { ...DEMO_MATCH }; }
+}
+
+function saveDemoMatch(updates) {
+  const saved = loadDemoMatch();
+  const merged = { ...saved, ...updates };
+  const toStore = { status: merged.status, email_subject: merged.email_subject, email_body: merged.email_body };
+  localStorage.setItem('demo-match', JSON.stringify(toStore));
+}
+
 // ── DOM helpers ───────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 
@@ -609,74 +655,6 @@ function getFilteredSorted() {
 }
 
 // ── Render grid ───────────────────────────────────────────────────────
-function featuredPodcastCardHtml() {
-  const id = 'featured-demo';
-  return `
-  <article class="match-card score-tier-high status-new" id="card-${id}" data-status="new" data-score="98" data-expanded="false" draggable="true" ondragstart="handleCardDragStart(event,'${id}')" ondragend="handleCardDragEnd(event,'${id}')">
-
-    <div class="card-row" onclick="toggleCardExpand('${id}')">
-      <div class="card-row-left">
-        <div class="card-row-title">
-          The Breakthrough Moment Podcast
-          <span class="inline-pill">488 eps</span>
-          <span class="inline-pill">2d ago</span>
-          <span class="inline-pill">AU</span>
-          <span class="inline-pill inline-pill-accent">&#127909; Medium (50K+)</span>
-        </div>
-        <div class="card-row-host">Hosted by Zac Deane</div>
-      </div>
-      <div class="card-row-right">
-        <span class="score-pill high">98</span>
-        <span class="status-badge status-new">New</span>
-        <span class="card-chevron">&#9658;</span>
-      </div>
-    </div>
-
-    <div class="card-expanded" id="card-expanded-${id}">
-      <div class="card-expanded-inner">
-
-        <div class="fit-score-section">
-          <div class="fit-score-header">
-            <span class="fit-score-label">Compatibility Score</span>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span class="likelihood-badge likelihood-high">HIGH</span>
-              <span class="fit-score-value" style="color:var(--success)">98</span>
-            </div>
-          </div>
-          <div class="score-bar-wrap"><div class="score-bar-fill high" style="width:98%"></div></div>
-          <div class="score-breakdown">
-            <div class="score-row"><span class="score-row-label">Relevance</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:98%"></div></div><span class="score-row-val">98</span></div>
-            <div class="score-row"><span class="score-row-label">Audience</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:95%"></div></div><span class="score-row-val">95</span></div>
-            <div class="score-row"><span class="score-row-label">Recency</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:100%"></div></div><span class="score-row-val">100</span></div>
-            <div class="score-row"><span class="score-row-label">Reach</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:90%"></div></div><span class="score-row-val">90</span></div>
-            <div class="score-row"><span class="score-row-label">Contact</span><div class="score-bar-wrap"><div class="score-bar-fill high" style="width:100%"></div></div><span class="score-row-val">100</span></div>
-          </div>
-        </div>
-
-        <div class="why-fits-box">
-          <p class="why-fits-label">About the Show</p>
-          <p class="why-fits-text">For successful entrepreneurs and investors sharing the mindset, strategies, and breakthroughs behind building a life of impact and freedom.</p>
-        </div>
-
-        <div class="contact-chips">
-          <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5" target="_blank" class="contact-chip">Spotify</a>
-          <a href="https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP" target="_blank" class="contact-chip">YouTube</a>
-          <a href="#" class="contact-chip" onclick="copyEmail(event,'hi@zacdeane.com')">hi@zacdeane.com</a>
-          <a href="https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute" target="_blank" class="contact-chip">Book a Chat</a>
-        </div>
-
-        <div class="card-footer">
-          <button class="btn btn-action-send btn-xs btn-action-primary" onclick="approveMatch('${id}')">🚀 Send Pitch</button>
-          <button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>
-          <button class="btn btn-action-wish btn-xs" onclick="dreamMatch('${id}')">Save for Later</button>
-          <button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>
-        </div>
-
-      </div>
-    </div>
-  </article>`;
-}
-
 function renderGrid() {
   const grid      = $('cards-grid');
   const noResults = $('no-results');
@@ -684,16 +662,12 @@ function renderGrid() {
 
   const filtered = getFilteredSorted();
 
-  const FEATURED_TITLE = 'The Breakthrough Moment Podcast';
-  const deduped = filtered.filter((m) => (m.podcasts?.title || '').trim() !== FEATURED_TITLE);
-  const showFeatured = state.filter === 'all';
-
-  if (deduped.length === 0) {
-    grid.innerHTML = showFeatured ? featuredPodcastCardHtml() : '';
-    if (noResults) noResults.style.display = deduped.length === 0 && !showFeatured ? 'block' : 'none';
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    if (noResults) noResults.style.display = 'block';
   } else {
     if (noResults) noResults.style.display = 'none';
-    grid.innerHTML = (showFeatured ? featuredPodcastCardHtml() : '') + deduped.map(renderMatchCard).join('');
+    grid.innerHTML = filtered.map(renderMatchCard).join('');
   }
 }
 
@@ -703,6 +677,11 @@ function renderDashboard(data) {
   state.client  = client;
   state.matches = matches || [];
   state.stats   = stats  || {};
+
+  // Prepend demo card (always first, client-side only, state persisted in localStorage)
+  const demo = loadDemoMatch();
+  state.matches = state.matches.filter((m) => m.id !== DEMO_ID);
+  state.matches.unshift(demo);
 
   // Client header
   const clientNameEl = $('client-name');
@@ -843,6 +822,7 @@ async function loadDashboard() {
 function updateMatchInState(matchId, updates) {
   const idx = state.matches.findIndex((m) => m.id === matchId);
   if (idx !== -1) state.matches[idx] = { ...state.matches[idx], ...updates };
+  if (matchId === DEMO_ID) saveDemoMatch(updates);
 }
 
 // ── Update a card in-place ────────────────────────────────────────────
@@ -881,6 +861,12 @@ function setCardLoading(matchId, loading) {
 
 // ── Actions ───────────────────────────────────────────────────────────
 async function approveMatch(matchId) {
+  if (matchId === DEMO_ID) {
+    updateMatchInState(matchId, { status: 'approved' });
+    updateCard(matchId); updateStatBadges();
+    showToast('Demo: pitch approved — try Send Pitch next!', 'success');
+    return;
+  }
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/approve', { matchId });
@@ -915,6 +901,12 @@ async function approveMatch(matchId) {
 }
 
 async function dismissMatch(matchId) {
+  if (matchId === DEMO_ID) {
+    updateMatchInState(matchId, { status: 'dismissed' });
+    updateCard(matchId); updateStatBadges();
+    showToast('Demo: moved to Ignore.', 'info');
+    return;
+  }
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/dismiss', { matchId });
@@ -931,6 +923,12 @@ async function dismissMatch(matchId) {
 }
 
 async function dreamMatch(matchId) {
+  if (matchId === DEMO_ID) {
+    updateMatchInState(matchId, { status: 'dream' });
+    updateCard(matchId); updateStatBadges();
+    showToast('Demo: saved to Wish List.', 'success');
+    return;
+  }
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/dream', { matchId });
@@ -994,6 +992,14 @@ function closeConfirmModal() {
 async function bookMatch(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
+  if (matchId === DEMO_ID) {
+    const newStatus = match.status === 'booked' ? 'approved' : 'booked';
+    updateMatchInState(matchId, { status: newStatus });
+    updateCard(matchId); updateStatBadges();
+    if (newStatus === 'booked') { showToast('Demo: booked! See how the booked state looks.', 'success'); showContentBoostModal(); }
+    else showToast('Demo: booking undone.', 'info');
+    return;
+  }
   setCardLoading(matchId, true);
   try {
     if (match.status === 'booked') {
@@ -1026,6 +1032,12 @@ async function bookMatch(matchId) {
 }
 
 async function markAppeared(matchId) {
+  if (matchId === DEMO_ID) {
+    updateMatchInState(matchId, { status: 'appeared' });
+    updateCard(matchId); updateStatBadges();
+    showToast('Demo: marked as appeared!', 'success');
+    return;
+  }
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/appeared', { matchId });
@@ -2069,6 +2081,8 @@ async function refreshDashboard() {
     if (data.success) {
       state.matches = data.matches || [];
       state.client  = data.client  || state.client;
+      state.matches = state.matches.filter((m) => m.id !== DEMO_ID);
+      state.matches.unshift(loadDemoMatch());
       renderGrid();
       updateStatBadges();
       showToast('Dashboard refreshed.', 'success');
