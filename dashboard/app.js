@@ -228,22 +228,9 @@ function closeContentBoostModal() {
 }
 window.closeContentBoostModal = closeContentBoostModal;
 
-async function startContentBoostCheckout() {
-  const btn = document.querySelector('#content-boost-modal .btn-primary');
-  if (btn) { btn.textContent = '⏳ Loading…'; btn.disabled = true; }
-  try {
-    const data = await apiPost('/api/stripe/checkout', { token: state.token });
-    if (data.success && data.url) {
-      closeContentBoostModal();
-      window.location.href = data.url;
-    } else {
-      showToast(data.error || 'Could not start checkout.', 'error');
-      if (btn) { btn.textContent = '💳 Get Content Boost — $197'; btn.disabled = false; }
-    }
-  } catch {
-    showToast('Network error. Please try again.', 'error');
-    if (btn) { btn.textContent = '💳 Get Content Boost — $197'; btn.disabled = false; }
-  }
+function startContentBoostCheckout() {
+  closeContentBoostModal();
+  window.open('https://buy.stripe.com/00waEX7Dqekt8B70EL8IU0L', '_blank');
 }
 window.startContentBoostCheckout = startContentBoostCheckout;
 window.closeContentBoostModal = closeContentBoostModal;
