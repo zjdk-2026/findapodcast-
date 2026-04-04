@@ -158,8 +158,11 @@ router.post('/send', async (req, res) => {
           logger.warn('No draft to send — no contact email or no email body', { matchId });
         }
       } catch (gmailErr) {
-        logger.warn('Gmail send failed — marking as sent anyway', { matchId, error: gmailErr.message });
+        logger.warn('Gmail send failed', { matchId, error: gmailErr.message });
+        return res.status(500).json({ success: false, error: 'Gmail send failed. Make sure your Gmail is connected and try again.' });
       }
+    } else {
+      return res.status(400).json({ success: false, error: 'Gmail not connected. Connect your Gmail account first to send emails.' });
     }
 
     const { data: updated, error: updateError } = await supabase
@@ -340,6 +343,97 @@ router.post('/email/edit', async (req, res) => {
     return res.json({ success: true, match: data });
   } catch (err) {
     logger.error('Email edit route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/appeared
+ */
+router.post('/appeared', async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+  try {
+    const { data, error } = await supabase
+      .from('podcast_matches')
+      .update({ status: 'appeared' })
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ success: false, error: 'Failed to update status.' });
+    if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
+    logger.info('Match marked as appeared', { matchId });
+    return res.json({ success: true, match: data });
+  } catch (err) {
+    logger.error('Appeared route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/update-status
+ * Generic status update used by drag-and-drop.
+ */
+const VALID_STATUSES = ['new', 'approved', 'sent', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
+router.post('/update-status', async (req, res) => {
+  const { matchId, status } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+  if (!VALID_STATUSES.includes(status)) return res.status(400).json({ success: false, error: 'Invalid status.' });
+  try {
+    const { data, error } = await supabase
+      .from('podcast_matches')
+      .update({ status })
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ success: false, error: 'Failed to update status.' });
+    if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
+    logger.info('Match status updated via drag-drop', { matchId, status });
+    return res.json({ success: true, match: data });
+  } catch (err) {
+    logger.error('Update-status route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/send-followup
+ * Sends a manually composed follow-up email via Gmail.
+ */
+router.post('/send-followup', async (req, res) => {
+  const { matchId, subject, body } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+  if (!body)    return res.status(400).json({ success: false, error: 'Email body is required.' });
+  try {
+    const { data: match, error: fetchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(contact_email, title), clients(gmail_refresh_token)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+    if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    let gmailSent = false;
+    if (match.clients?.gmail_refresh_token) {
+      const contactEmail = match.podcasts?.contact_email || null;
+      if (contactEmail?.includes('@')) {
+        try {
+          const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject || `Following up — ${match.podcasts?.title || 'your show'}`, body);
+          await sendDraft(match.clients.gmail_refresh_token, draftId);
+          gmailSent = true;
+          logger.info('Follow-up email sent', { matchId });
+        } catch (gmailErr) {
+          logger.warn('Follow-up Gmail send failed', { matchId, error: gmailErr.message });
+        }
+      }
+    }
+
+    await supabase.from('podcast_matches').update({ follow_up_sent: true }).eq('id', matchId);
+    return res.json({ success: true, gmailSent });
+  } catch (err) {
+    logger.error('Send-followup route error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
   }
 });

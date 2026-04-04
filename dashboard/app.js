@@ -1207,9 +1207,10 @@ function showInterviewPrepModal(matchId) {
           <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid || '')}</p></div>`;
       } catch { contentEl.innerHTML = '<p>Loading prep…</p>'; }
     } else {
-      contentEl.innerHTML = '';
+      contentEl.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">Generating your prep briefing…</p>';
       apiPost('/api/interview-prep', { matchId }).then((data) => {
-        if (data.success && contentEl) {
+        if (!contentEl) return;
+        if (data.success) {
           const prep = data.prep;
           contentEl.innerHTML = `
             <div class="prep-section"><strong>About the host</strong><p>${esc(prep.host_background||'')}</p></div>
@@ -1219,7 +1220,11 @@ function showInterviewPrepModal(matchId) {
             <div class="prep-section"><strong>Your talking points</strong><ul>${(prep.talking_points||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
             <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid||'')}</p></div>`;
           updateMatchInState(matchId, { interview_prep: JSON.stringify(prep) });
+        } else {
+          contentEl.innerHTML = `<p style="color:var(--danger);font-size:14px;">Could not generate prep — ${esc(data.error || 'please try again')}.</p>`;
         }
+      }).catch(() => {
+        if (contentEl) contentEl.innerHTML = '<p style="color:var(--danger);font-size:14px;">Network error — please close and try again.</p>';
       });
     }
   }
@@ -1950,6 +1955,28 @@ function copyFollowUp() {
   navigator.clipboard.writeText(combined).then(() => showToast('Copied!', 'success'));
 }
 window.copyFollowUp = copyFollowUp;
+
+async function sendFollowUp() {
+  const modal   = $('followup-modal');
+  const matchId = modal?.dataset.matchId;
+  const subject = $('followup-subject')?.value.trim() || '';
+  const body    = $('followup-body')?.value.trim()    || '';
+  if (!matchId) return;
+  if (!body) { showToast('Please write a message before sending.', 'error'); return; }
+  const btn = $('followup-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const data = await apiPost('/api/send-followup', { matchId, subject, body });
+    if (data.success) {
+      showToast(data.gmailSent ? 'Follow-up sent!' : 'Follow-up saved (Gmail not connected).', 'success');
+      closeFollowUpModal();
+    } else {
+      showToast(data.error || 'Send failed.', 'error');
+    }
+  } catch { showToast('Network error. Please try again.', 'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '🚀 Send Follow Up'; } }
+}
+window.sendFollowUp = sendFollowUp;
 
 // ── Drag-and-drop handlers ────────────────────────────────────────────
 function handleCardDragStart(event, matchId) {
