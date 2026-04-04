@@ -369,7 +369,6 @@ function actionButtonsHtml(match) {
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Another Follow Up</button>`);
-    if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Thread</button>`);
   } else if (status === 'booked') {
     buttons.push(`<button class="btn btn-action-prep btn-xs btn-action-primary" onclick="showInterviewPrepModal('${id}')">🎙️ Prepare for Interview</button>`);
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
