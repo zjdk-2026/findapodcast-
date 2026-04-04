@@ -136,7 +136,7 @@ function statusBadgeHtml(status) {
     booked:    'Booked',
     dismissed: 'Not a Fit',
     dream:     'Wish List',
-    appeared:  'Appeared',
+    appeared:  'Aired',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
