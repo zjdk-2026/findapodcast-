@@ -569,6 +569,7 @@ function renderMatchCard(match) {
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
+          <button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Generate with AI</button>
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
