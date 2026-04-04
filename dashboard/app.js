@@ -1659,33 +1659,36 @@ function renderVisionBoard(client) {
     if (prompt)   prompt.style.display = 'none';
     window._visionBoardGenerating = true;
 
-    // Kick off generation in background
-    apiPost('/api/vision-board/generate', { token: state.token }).then((data) => {
-      if (data.success && data.imageUrl) {
+    // Kick off generation — server responds immediately, we poll for result
+    apiPost('/api/vision-board/generate', {}).then((data) => {
+      if (data.imageUrl) {
+        // cooldown path returned existing image
         window._visionBoardGenerating = false;
         state.client.vision_board_url = data.imageUrl;
         renderVisionBoard(state.client);
-        showToast('🎨 Your vision board is ready!', 'success');
-      } else if (data.cooldown) {
-        // Already generated within 24hrs — fetch existing image from status endpoint
-        window._visionBoardGenerating = false;
-        fetch('/api/vision-board/status', { headers: { 'x-dashboard-token': state.token } })
-          .then(r => r.json()).then(s => {
-            if (s.imageUrl) {
-              state.client.vision_board_url = s.imageUrl;
-              renderVisionBoard(state.client);
-            } else {
-              section.style.display = 'none';
-            }
-          }).catch(() => { section.style.display = 'none'; });
-      } else {
-        window._visionBoardGenerating = false;
-        section.style.display = 'none';
       }
-    }).catch(() => {
-      window._visionBoardGenerating = false;
-      section.style.display = 'none';
+      // if generating:true or any success, polling timer (set above) will pick it up
+    }).catch((err) => {
+      showToast('Vision board error: ' + (err?.message || 'unknown'), 'error');
     });
+
+    // Always start polling regardless
+    if (!window._visionBoardPollTimer) {
+      window._visionBoardPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch('/api/vision-board/status', { headers: { 'x-dashboard-token': state.token } });
+          const s = await res.json();
+          if (s.imageUrl) {
+            clearInterval(window._visionBoardPollTimer);
+            window._visionBoardPollTimer = null;
+            window._visionBoardGenerating = false;
+            state.client.vision_board_url = s.imageUrl;
+            renderVisionBoard(state.client);
+            showToast('🎨 Your vision board is ready!', 'success');
+          }
+        } catch { /* keep polling */ }
+      }, 8000);
+    }
 
   } else {
     // No profile data — show unlock prompt
