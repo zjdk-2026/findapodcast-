@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { getAuthUrl, verifyState, exchangeCode } = require('../services/gmailService');
+const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply } = require('../services/gmailService');
 const { google } = require('googleapis');
 
 const router = express.Router();
@@ -128,6 +128,46 @@ router.get('/auth/gmail/callback', async (req, res) => {
     logger.error('Gmail OAuth callback error', { clientId, error: err.message, stack: err.stack });
     return res.status(500).send('Gmail OAuth failed. Please try again.');
   }
+});
+
+/**
+ * POST /api/gmail/check-replies
+ * Called on dashboard load. Checks all sent matches for Gmail replies.
+ * Auto-moves any replied matches to 'replied' status.
+ */
+router.post('/api/gmail/check-replies', async (req, res) => {
+  const token = req.headers['x-dashboard-token'] || req.body.token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorised.' });
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('id, gmail_refresh_token')
+    .eq('dashboard_token', token)
+    .single();
+
+  if (!client?.gmail_refresh_token) return res.json({ success: true, updated: [] });
+
+  // Get all sent matches with a thread ID that haven't already moved on
+  const { data: matches } = await supabase
+    .from('podcast_matches')
+    .select('id, gmail_thread_id')
+    .eq('client_id', client.id)
+    .eq('status', 'sent')
+    .not('gmail_thread_id', 'is', null);
+
+  if (!matches?.length) return res.json({ success: true, updated: [] });
+
+  const updated = [];
+  await Promise.all(matches.map(async (m) => {
+    const hasReply = await checkThreadForReply(client.gmail_refresh_token, m.gmail_thread_id);
+    if (hasReply) {
+      await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
+      updated.push(m.id);
+      logger.info('Match auto-moved to replied', { matchId: m.id });
+    }
+  }));
+
+  return res.json({ success: true, updated });
 });
 
 module.exports = router;

@@ -40,6 +40,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/gmail.labels',
+  'https://www.googleapis.com/auth/gmail.readonly',
 ];
 
 /**
@@ -186,4 +187,22 @@ async function sendDraft(refreshToken, draftId) {
   }
 }
 
-module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft };
+/**
+ * checkThreadForReply(refreshToken, threadId)
+ * Returns true if the thread has more than 1 message (i.e. someone replied).
+ */
+async function checkThreadForReply(refreshToken, threadId) {
+  try {
+    const oauth2Client = buildOAuth2Client();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.threads.get({ userId: 'me', id: threadId, format: 'minimal' });
+    const messages = res.data.messages || [];
+    return messages.length > 1;
+  } catch (err) {
+    logger.warn('checkThreadForReply failed', { threadId, error: err.message });
+    return false;
+  }
+}
+
+module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft, checkThreadForReply };

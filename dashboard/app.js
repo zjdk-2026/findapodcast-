@@ -769,6 +769,8 @@ async function loadDashboard() {
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
     renderDashboard(data);
+    // Check for host replies in the background — auto-moves cards to Replied tab
+    checkForReplies();
   } catch (err) {
     $('loading-state').style.display = 'none';
     $('error-state').style.display   = 'flex';
@@ -1995,6 +1997,24 @@ async function joinReferralWaitlist() {
 }
 window.joinReferralWaitlist = joinReferralWaitlist;
 window.openTestimonialLink = openTestimonialLink;
+
+// ── Check for host replies ─────────────────────────────────────────────
+async function checkForReplies() {
+  if (!state.token) return;
+  try {
+    const data = await apiPost('/api/gmail/check-replies', { token: state.token });
+    if (data.success && data.updated?.length) {
+      // Update state and re-render any replied cards
+      data.updated.forEach((matchId) => {
+        updateMatchInState(matchId, { status: 'replied' });
+      });
+      renderGrid();
+      showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's' : ''} replied to your pitch!`, 'success');
+    }
+  } catch {
+    // Silently fail — not critical
+  }
+}
 
 async function refreshDashboard() {
   const btn  = $('refresh-btn');

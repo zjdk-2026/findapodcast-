@@ -152,8 +152,12 @@ router.post('/send', async (req, res) => {
           }
         }
         if (draftId) {
-          await sendDraft(match.clients.gmail_refresh_token, draftId);
+          const sentMsg = await sendDraft(match.clients.gmail_refresh_token, draftId);
           logger.info('Gmail draft sent', { matchId, draftId });
+          // Save thread ID so we can check for replies later
+          if (sentMsg?.threadId) {
+            await supabase.from('podcast_matches').update({ gmail_thread_id: sentMsg.threadId }).eq('id', matchId);
+          }
         } else {
           logger.warn('No draft to send — no contact email or no email body', { matchId });
         }
