@@ -735,10 +735,10 @@ function renderDashboard(data) {
   // Gmail connect is handled via the profile dropdown only
 
   // Set theme toggle label
-  const themeItem = $('theme-toggle-item');
-  if (themeItem) {
+  const themeLabel = $('theme-toggle-label');
+  if (themeLabel) {
     const isLight = document.documentElement.classList.contains('light-mode');
-    themeItem.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+    themeLabel.textContent = isLight ? 'Dark Mode' : 'Light Mode';
   }
 
   // Close dropdown when clicking outside (attach once only)
