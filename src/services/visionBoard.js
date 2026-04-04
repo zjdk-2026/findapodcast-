@@ -25,15 +25,8 @@ function buildPrompt(client) {
   const unlimitedVision = client.unlimited_resources ? client.unlimited_resources.slice(0, 80) : '';
   const niche = client.topics?.[0] || 'Entrepreneurship';
 
-  return `A stunning professional magazine cover for "${client.name}", ${client.title || 'entrepreneur and thought leader'}.
-Magazine masthead reads "FINDAPODCAST" in bold sans-serif at top.
-Cover line: "THE ${bestAt.toUpperCase()} ISSUE".
-Pull quote displayed prominently: ${purpose}.
-${unlimitedVision ? `Background scene inspired by: ${unlimitedVision}.` : ''}
-Style: ${vibe}.
-Color palette dominated by ${primaryColor}.
-Professional headshot placeholder in center. Ultra-realistic, editorial photography style, magazine quality, 8k resolution.
-NOT a real person's face - use abstract silhouette or placeholder.`;
+  const prompt = `Magazine cover for "${client.name}", ${(client.title || 'entrepreneur').slice(0, 50)}. Masthead: FINDAPODCAST. Cover line: "${bestAt.slice(0, 60)} ISSUE". ${purpose ? `Quote: ${purpose}.` : ''} ${unlimitedVision ? `Scene: ${unlimitedVision}.` : ''} Style: ${vibe}. Color: ${primaryColor}. Abstract silhouette, no real face. Editorial photography, 8k.`;
+  return prompt.slice(0, 1400);
 }
 
 /**
