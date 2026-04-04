@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply } = require('../services/gmailService');
+const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply, findThreadByContactEmail } = require('../services/gmailService');
 const { google } = require('googleapis');
 
 const router = express.Router();
@@ -147,19 +147,33 @@ router.post('/api/gmail/check-replies', async (req, res) => {
 
   if (!client?.gmail_refresh_token) return res.json({ success: true, updated: [] });
 
-  // Get all sent matches with a thread ID that haven't already moved on
+  // Get all sent matches (with or without thread ID)
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id')
+    .select('id, gmail_thread_id, podcasts(contact_email)')
     .eq('client_id', client.id)
-    .eq('status', 'sent')
-    .not('gmail_thread_id', 'is', null);
+    .eq('status', 'sent');
 
   if (!matches?.length) return res.json({ success: true, updated: [] });
 
   const updated = [];
   await Promise.all(matches.map(async (m) => {
-    const hasReply = await checkThreadForReply(client.gmail_refresh_token, m.gmail_thread_id);
+    let threadId = m.gmail_thread_id;
+
+    // Fallback: find thread by contact email for older matches missing thread ID
+    if (!threadId) {
+      const contactEmail = m.podcasts?.contact_email;
+      if (!contactEmail) return;
+      threadId = await findThreadByContactEmail(client.gmail_refresh_token, contactEmail);
+      if (threadId) {
+        await supabase.from('podcast_matches').update({ gmail_thread_id: threadId }).eq('id', m.id);
+        logger.info('Thread ID backfilled', { matchId: m.id, threadId });
+      }
+    }
+
+    if (!threadId) return;
+
+    const hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
     if (hasReply) {
       await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
       updated.push(m.id);

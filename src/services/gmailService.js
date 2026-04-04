@@ -190,6 +190,31 @@ async function sendDraft(refreshToken, draftId) {
 }
 
 /**
+ * findThreadByContactEmail(refreshToken, contactEmail)
+ * Searches Gmail sent mail for a message to contactEmail, returns threadId or null.
+ */
+async function findThreadByContactEmail(refreshToken, contactEmail) {
+  try {
+    const oauth2Client = buildOAuth2Client();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.messages.list({
+      userId: 'me',
+      q: `to:${contactEmail} in:sent`,
+      maxResults: 1,
+    });
+    const msg = res.data.messages?.[0];
+    if (!msg) return null;
+    // Get full message to extract threadId
+    const full = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'minimal' });
+    return full.data.threadId || null;
+  } catch (err) {
+    logger.warn('findThreadByContactEmail failed', { contactEmail, error: err.message });
+    return null;
+  }
+}
+
+/**
  * checkThreadForReply(refreshToken, threadId)
  * Returns true if the thread has more than 1 message (i.e. someone replied).
  */
@@ -207,4 +232,4 @@ async function checkThreadForReply(refreshToken, threadId) {
   }
 }
 
-module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft, checkThreadForReply };
+module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft, checkThreadForReply, findThreadByContactEmail };
