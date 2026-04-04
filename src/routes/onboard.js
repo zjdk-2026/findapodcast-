@@ -64,6 +64,83 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
 }
 
 /**
+ * Seed The Breakthrough Moment as a real, fully-functional match for every new client.
+ * Contact email = hi@zacdeane.com so pitches go to Zac for live demos.
+ */
+async function seedBreakthroughMatch(clientId) {
+  try {
+    // 1. Upsert podcast record
+    const podcastRecord = {
+      external_id:       'breakthrough-moment-zac-deane',
+      title:             'The Breakthrough Moment Podcast',
+      host_name:         'Zac Deane',
+      description:       'The Breakthrough Moment Podcast features conversations with entrepreneurs, leaders, and change-makers sharing the defining moments that transformed their business and life.',
+      website:           'https://www.zacdeane.com',
+      apple_url:         'https://podcasts.apple.com/au/podcast/the-breakthrough-moment/id1527264956',
+      spotify_url:       'https://open.spotify.com/show/7FBW99BOy9CavEse731bK5',
+      youtube_url:       'https://www.youtube.com/playlist?list=PLRHjY10LU557fNgJU32VrLGQQnAk8s_LP',
+      category:          'Entrepreneurship',
+      niche_tags:        ['entrepreneurship', 'business', 'mindset', 'leadership'],
+      total_episodes:    488,
+      last_episode_date: new Date(Date.now() - 2 * 86400000).toISOString(),
+      country:           'AU',
+      language:          'English',
+      listen_score:      50,
+      contact_email:     'hi@zacdeane.com',
+      booking_page_url:  'https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute',
+    };
+
+    const { data: podcast, error: podError } = await supabase
+      .from('podcasts')
+      .upsert(podcastRecord, { onConflict: 'external_id' })
+      .select('id')
+      .single();
+
+    if (podError || !podcast) {
+      logger.warn('seedBreakthroughMatch: podcast upsert failed', { error: podError?.message });
+      return;
+    }
+
+    // 2. Check if match already exists for this client
+    const { data: existing } = await supabase
+      .from('podcast_matches')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('podcast_id', podcast.id)
+      .single();
+
+    if (existing) return; // already seeded
+
+    // 3. Insert match
+    const { error: matchError } = await supabase
+      .from('podcast_matches')
+      .insert({
+        client_id:            clientId,
+        podcast_id:           podcast.id,
+        status:               'new',
+        fit_score:            98,
+        booking_likelihood:   'high',
+        relevance_score:      98,
+        audience_score:       95,
+        recency_score:        100,
+        reach_score:          90,
+        contactability_score: 100,
+        why_this_client_fits: 'This is a live demo match — use it during onboarding calls to show clients exactly how the pitch and booking flow works end-to-end.',
+        best_pitch_angle:     'Send a real pitch email to see the full flow. The email goes directly to Zac so you can demo the experience live with every new client.',
+        booking_likelihood:   'high',
+      });
+
+    if (matchError) {
+      logger.warn('seedBreakthroughMatch: match insert failed', { error: matchError.message });
+    } else {
+      logger.info('seedBreakthroughMatch: seeded successfully', { clientId });
+    }
+  } catch (err) {
+    logger.warn('seedBreakthroughMatch: unexpected error', { error: err.message });
+  }
+}
+
+/**
  * Add a newly onboarded client to GoHighLevel CRM.
  * Creates a contact then adds an opportunity in the Find A Podcast pipeline.
  */
@@ -257,6 +334,11 @@ router.post('/onboard', async (req, res) => {
     // Send welcome email (fire-and-forget — don't block the response)
     sendWelcomeEmail(data, dashboardUrl, gmailAuthUrl).catch((err) => {
       logger.warn('Welcome email failed', { clientId: data.id, error: err.message });
+    });
+
+    // Seed Breakthrough Moment demo match (fire-and-forget)
+    seedBreakthroughMatch(data.id).catch((err) => {
+      logger.warn('Breakthrough match seed failed', { clientId: data.id, error: err.message });
     });
 
     // Add to GHL CRM (fire-and-forget)
