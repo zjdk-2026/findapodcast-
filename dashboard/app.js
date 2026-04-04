@@ -441,10 +441,13 @@ function renderMatchCard(match) {
         ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
         <div class="card-row-links" onclick="event.stopPropagation()">
           ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>` : ''}
-          ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Web</a>` : ''}
-          ${podcast.spotify_url ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
-          ${podcast.apple_url ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
-          ${podcast.youtube_url ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
+          ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+          ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
+          ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
+          ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+          ${isValidUrl(podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
+          ${isValidUrl(podcast.apple_url) ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
+          ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
           ${podcast.guest_application_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply</a>` : podcast.booking_page_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Book</a>` : ''}
         </div>
       </div>
@@ -503,9 +506,6 @@ function renderMatchCard(match) {
     <!-- Meta tags -->
     ${metaTagsHtml(podcast)}
 
-    <!-- Contact chips -->
-    ${contactChipsHtml(podcast)}
-
     <!-- Social chips -->
     ${socialHtml}
 
@@ -513,7 +513,7 @@ function renderMatchCard(match) {
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
     <!-- Pitch section -->
-    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex:1;min-width:0;">
+    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;">
       <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.email_subject ? 'View / Edit Pitch Email' : 'Write My Pitch Email'}
