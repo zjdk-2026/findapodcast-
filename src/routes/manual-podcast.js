@@ -27,8 +27,6 @@ router.post('/add-podcast', async (req, res) => {
       total_episodes: null,
       last_episode_date: null,
       listen_score: null,
-      image: null,
-      thumbnail: null,
       country: null,
       language: 'English',
     };
