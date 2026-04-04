@@ -2015,6 +2015,52 @@ async function joinReferralWaitlist() {
 window.joinReferralWaitlist = joinReferralWaitlist;
 window.openTestimonialLink = openTestimonialLink;
 
+// ── Add Podcast Modal ─────────────────────────────────────────────────
+function openAddPodcastModal() {
+  const modal = document.getElementById('add-podcast-modal');
+  if (modal) { modal.style.display = 'flex'; document.getElementById('add-podcast-url').focus(); }
+}
+function closeAddPodcastModal() {
+  const modal = document.getElementById('add-podcast-modal');
+  if (modal) modal.style.display = 'none';
+  document.getElementById('add-podcast-url').value = '';
+  document.getElementById('add-podcast-name').value = '';
+  const btn = document.getElementById('add-podcast-btn');
+  if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
+}
+async function submitAddPodcast() {
+  const url  = document.getElementById('add-podcast-url').value.trim();
+  const name = document.getElementById('add-podcast-name').value.trim();
+  if (!url && !name) { showToast('Please enter a podcast URL or name.', 'error'); return; }
+  const btn = document.getElementById('add-podcast-btn');
+  if (btn) { btn.textContent = '⏳ Adding…'; btn.disabled = true; }
+  try {
+    const data = await apiPost('/api/operator/add-podcast', {
+      clientId: state.client?.id,
+      podcastUrl: url || null,
+      podcastName: name || null,
+    });
+    if (data.success) {
+      closeAddPodcastModal();
+      showToast('🎉 Podcast added to your New tab!', 'success');
+      // Add to state and re-render
+      if (data.match && data.podcast) {
+        state.matches.unshift({ ...data.match, podcasts: data.podcast });
+        switchToFilter('new');
+      }
+    } else {
+      showToast(data.error || 'Failed to add podcast.', 'error');
+      if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
+  }
+}
+window.openAddPodcastModal  = openAddPodcastModal;
+window.closeAddPodcastModal = closeAddPodcastModal;
+window.submitAddPodcast     = submitAddPodcast;
+
 // ── Check for host replies ─────────────────────────────────────────────
 async function checkForReplies() {
   if (!state.token) return;
