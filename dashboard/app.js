@@ -353,8 +353,10 @@ function actionButtonsHtml(match) {
   } else if (status === 'approved') {
     if (!hasEmail) {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch…</span>`);
+    } else {
+      buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
     }
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
     buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
