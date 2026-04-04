@@ -1672,9 +1672,18 @@ function renderVisionBoard(client) {
       showToast('Vision board error: ' + (err?.message || 'unknown'), 'error');
     });
 
-    // Always start polling regardless
+    // Always start polling regardless — timeout after 3 minutes
     if (!window._visionBoardPollTimer) {
+      const pollStart = Date.now();
       window._visionBoardPollTimer = setInterval(async () => {
+        if (Date.now() - pollStart > 180000) {
+          clearInterval(window._visionBoardPollTimer);
+          window._visionBoardPollTimer = null;
+          window._visionBoardGenerating = false;
+          if (section) section.style.display = 'none';
+          showToast('Vision board generation timed out — try regenerating from Settings.', 'error');
+          return;
+        }
         try {
           const res = await fetch('/api/vision-board/status', { headers: { 'x-dashboard-token': state.token } });
           const s = await res.json();

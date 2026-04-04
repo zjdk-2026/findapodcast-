@@ -76,8 +76,8 @@ async function generateVisionBoard(clientId) {
       height: 1152,
       num_images: 1,
       guidance_scale: 7,
-      ultra: true,
-      contrast: 3.5,
+      alchemy: true,
+      presetStyle: 'CINEMATIC',
     }, {
       headers: {
         Authorization: `Bearer ${LEONARDO_API_KEY}`,
