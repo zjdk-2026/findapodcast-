@@ -617,6 +617,22 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   font-weight: 600;
 }
 
+.reply-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 5px;
+  line-height: 1;
+}
+
 .tab-pill .booked-dot {
   width: 6px;
   height: 6px;

@@ -642,6 +642,14 @@ function renderDashboard(data) {
   state.matches = matches || [];
   state.stats   = stats  || {};
 
+  // Show reply badge if there are already replied matches
+  const repliedCount = (matches || []).filter(m => m.status === 'replied').length;
+  const badge = document.getElementById('reply-badge');
+  if (badge) {
+    if (repliedCount > 0) { badge.textContent = repliedCount; badge.style.display = 'inline-flex'; }
+    else { badge.style.display = 'none'; }
+  }
+
   // Client header
   const clientNameEl = $('client-name');
   const clientSubEl  = $('client-subtitle');
@@ -2004,12 +2012,17 @@ async function checkForReplies() {
   try {
     const data = await apiPost('/api/gmail/check-replies', { token: state.token });
     if (data.success && data.updated?.length) {
-      // Update state and re-render any replied cards
-      data.updated.forEach((matchId) => {
-        updateMatchInState(matchId, { status: 'replied' });
-      });
+      data.updated.forEach((matchId) => updateMatchInState(matchId, { status: 'replied' }));
       renderGrid();
-      showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's' : ''} replied to your pitch!`, 'success');
+      // Show red badge on Host Replied tab
+      const badge = document.getElementById('reply-badge');
+      if (badge) {
+        badge.textContent = data.updated.length;
+        badge.style.display = 'inline-flex';
+      }
+      // Flash toast and auto-switch to Host Replied tab
+      showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's have' : ' has'} replied to your pitch!`, 'success');
+      switchToFilter('replied');
     }
   } catch {
     // Silently fail — not critical
