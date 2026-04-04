@@ -425,9 +425,10 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
 .hero-chips {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+  margin-top: 10px;
 }
 
 .stat-chip {
