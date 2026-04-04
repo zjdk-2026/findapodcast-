@@ -141,6 +141,7 @@ function normaliseItunes(item) {
     image: item.artworkUrl600 || item.artworkUrl100 || null,
     thumbnail: item.artworkUrl100 || null,
     listennotes_url: null,
+    rss_feed_url: item.feedUrl || null,
     phone_number: null,
     source: 'itunes',
   };
@@ -325,6 +326,195 @@ async function scrapePodmatch(topics) {
   return results;
 }
 
+async function searchTaddy(query, apiKey, userId) {
+  if (!apiKey || !userId) return [];
+  try {
+    const gql = `{
+      searchForTerm(term: "${query.replace(/"/g,'')}") {
+        searchResults {
+          ... on Podcast {
+            uuid name description websiteUrl itunesId
+            taddyUrl imageUrl seriesType
+            episodes(page: 1, limitPerPage: 1) { datePublished }
+          }
+        }
+      }
+    }`;
+    const res = await axios.post('https://api.taddy.org', { query: gql }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-USER-ID': userId,
+        'X-API-KEY': apiKey,
+      },
+      timeout: 8000,
+    });
+    return res.data?.data?.searchForTerm?.searchResults || [];
+  } catch (err) {
+    logger.warn('Taddy search failed', { query, error: err.message });
+    return [];
+  }
+}
+
+function normaliseTaddy(item) {
+  if (!item.name) return null;
+  const itunesId = item.itunesId;
+  return {
+    external_id: `taddy_${item.uuid}`,
+    title: item.name,
+    host_name: null,
+    description: item.description || null,
+    website: item.websiteUrl || null,
+    apple_url: itunesId ? `https://podcasts.apple.com/podcast/id${itunesId}` : null,
+    spotify_url: null,
+    youtube_url: null,
+    rss_feed_url: null,
+    category: null,
+    niche_tags: [],
+    total_episodes: null,
+    last_episode_date: item.episodes?.[0]?.datePublished ? new Date(item.episodes[0].datePublished * 1000).toISOString().slice(0, 10) : null,
+    country: null,
+    language: 'English',
+    listen_score: null,
+    image: item.imageUrl || null,
+    thumbnail: item.imageUrl || null,
+    listennotes_url: null,
+    phone_number: null,
+    source: 'taddy',
+  };
+}
+
+async function scrapeFeedspot(topics) {
+  const results = [];
+  // Map common topics to feedspot category slugs
+  const topicMap = {
+    'entrepreneurship': 'entrepreneurship', 'entrepreneur': 'entrepreneurship',
+    'business': 'business', 'marketing': 'marketing', 'leadership': 'leadership',
+    'technology': 'technology', 'health': 'health-wellness', 'faith': 'religion-spirituality',
+    'christian': 'religion-spirituality', 'finance': 'personal-finance', 'investing': 'investing',
+    'real estate': 'real-estate', 'mindset': 'self-improvement', 'personal development': 'self-improvement',
+  };
+  const slugs = new Set();
+  for (const topic of (topics || []).slice(0, 3)) {
+    const tl = topic.toLowerCase();
+    for (const [key, slug] of Object.entries(topicMap)) {
+      if (tl.includes(key)) slugs.add(slug);
+    }
+  }
+  if (!slugs.size) slugs.add('business');
+
+  for (const slug of [...slugs].slice(0, 2)) {
+    try {
+      const url = `https://podcast.feedspot.com/${slug}_podcasts/`;
+      const res = await axios.get(url, {
+        timeout: 10000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PodcastBot/1.0)' },
+      });
+      const $ = cheerio.load(res.data);
+      $('.r-list-container .js-content-row, .feed-item, .col-item').each((_, el) => {
+        const title = $(el).find('h2, h3, .title, .feed-title').first().text().trim();
+        const website = $(el).find('a[href*="http"]:not([href*="feedspot"])').attr('href') || null;
+        const image = $(el).find('img').attr('src') || null;
+        const desc = $(el).find('p, .desc, .description').first().text().trim() || null;
+        if (title) {
+          results.push({
+            external_id: `feedspot_${Buffer.from(title).toString('base64').slice(0, 20)}`,
+            title, website, image, thumbnail: image, description: desc,
+            host_name: null, apple_url: null, spotify_url: null, youtube_url: null,
+            rss_feed_url: null, category: slug, niche_tags: [slug],
+            total_episodes: null, last_episode_date: null, country: null,
+            language: 'English', listen_score: null, listennotes_url: null,
+            phone_number: null, source: 'feedspot',
+          });
+        }
+      });
+    } catch (err) {
+      logger.warn('FeedSpot scrape failed', { slug, error: err.message });
+    }
+  }
+  return results;
+}
+
+async function scrapeRadioGuestList() {
+  try {
+    const res = await axios.get('https://radioguestlist.com/podcast-radio-shows/', {
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PodcastBot/1.0)' },
+    });
+    const $ = cheerio.load(res.data);
+    const results = [];
+    $('article, .show-item, .entry, .listing-item').each((_, el) => {
+      const title = $(el).find('h2, h3, .title').first().text().trim();
+      const website = $(el).find('a[href^="http"]').attr('href') || null;
+      const desc = $(el).find('p').first().text().trim() || null;
+      if (title && title.length > 3) {
+        results.push({
+          external_id: `rgl_${Buffer.from(title).toString('base64').slice(0, 20)}`,
+          title, website, description: desc,
+          host_name: null, apple_url: null, spotify_url: null, youtube_url: null,
+          rss_feed_url: null, image: null, thumbnail: null, category: null,
+          niche_tags: [], total_episodes: null, last_episode_date: null,
+          country: null, language: 'English', listen_score: null,
+          listennotes_url: null, phone_number: null,
+          source: 'radioguestlist', has_guest_history: true,
+        });
+      }
+    });
+    return results;
+  } catch (err) {
+    logger.warn('RadioGuestList scrape failed', { error: err.message });
+    return [];
+  }
+}
+
+async function scrapeGoodpods(topics) {
+  const topicMap = {
+    'business': 'business', 'entrepreneur': 'business', 'entrepreneurship': 'business',
+    'marketing': 'business', 'leadership': 'business',
+    'christian': 'religion-spirituality', 'faith': 'religion-spirituality',
+    'health': 'health-fitness', 'technology': 'technology', 'finance': 'investing',
+    'personal development': 'self-improvement', 'mindset': 'self-improvement',
+  };
+  const cats = new Set(['business']);
+  for (const topic of (topics || []).slice(0, 3)) {
+    const tl = topic.toLowerCase();
+    for (const [key, cat] of Object.entries(topicMap)) {
+      if (tl.includes(key)) cats.add(cat);
+    }
+  }
+  const results = [];
+  for (const cat of [...cats].slice(0, 2)) {
+    try {
+      const url = `https://goodpods.com/podcasts-by-category-list/${cat}`;
+      const res = await axios.get(url, {
+        timeout: 10000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      });
+      const $ = cheerio.load(res.data);
+      $('a[href*="/podcasts/"]').each((_, el) => {
+        const href = $(el).attr('href') || '';
+        if (!href.includes('/podcasts/') || href.split('/').length < 4) return;
+        const title = $(el).find('h3, h2, .title, [class*="title"]').first().text().trim() ||
+                      $(el).attr('aria-label') || '';
+        const appleLink = $(el).find('a[href*="apple"]').attr('href') || null;
+        if (title && title.length > 3) {
+          results.push({
+            external_id: `goodpods_${href.split('/podcasts/')[1]?.split('/')[0] || Buffer.from(title).toString('base64').slice(0, 15)}`,
+            title, website: null, apple_url: appleLink,
+            host_name: null, description: null, spotify_url: null, youtube_url: null,
+            rss_feed_url: null, image: null, thumbnail: null, category: cat,
+            niche_tags: [cat], total_episodes: null, last_episode_date: null,
+            country: null, language: 'English', listen_score: null,
+            listennotes_url: null, phone_number: null, source: 'goodpods',
+          });
+        }
+      });
+    } catch (err) {
+      logger.warn('Goodpods scrape failed', { cat, error: err.message });
+    }
+  }
+  return results;
+}
+
 /**
  * discoverPodcasts(client)
  * Main discovery pipeline for a single client.
@@ -431,13 +621,19 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // 2b. iTunes + Podcast Index + YouTube parallel searches
   // ─────────────────────────────────────────────────────────────
   const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+  const TADDY_API_KEY = process.env.TADDY_API_KEY;
+  const TADDY_USER_ID = process.env.TADDY_USER_ID;
 
-  // Run top 3 topic queries across all 3 new sources in parallel
+  // Run top 3 topic queries across all sources in parallel
   const newSourceQueries = queries.slice(0, 3);
-  const [itunesResults, podcastIndexResults, youtubeResults] = await Promise.allSettled([
+  const [itunesResults, podcastIndexResults, youtubeResults, taddyResults, feedspotResults, rglResults, goodpodsResults] = await Promise.allSettled([
     Promise.all(newSourceQueries.map(q => searchItunes(q, language))),
     Promise.all(newSourceQueries.map(q => searchPodcastIndex(q))),
     Promise.all(client.topics?.slice(0, 2).map(t => searchYouTubePodcasts(t, GOOGLE_SEARCH_API_KEY)) || []),
+    searchTaddy(primaryTopic, TADDY_API_KEY, TADDY_USER_ID),
+    scrapeFeedspot(client.topics),
+    scrapeRadioGuestList(),
+    scrapeGoodpods(client.topics),
   ]);
 
   // Add iTunes results
@@ -475,6 +671,43 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
         allCandidates.set(id, normaliseYouTube(item, details));
       }
     }));
+  }
+
+  // Add Taddy results
+  if (taddyResults.status === 'fulfilled') {
+    for (const item of taddyResults.value) {
+      const normalised = normaliseTaddy(item);
+      if (normalised && !allCandidates.has(normalised.external_id)) {
+        allCandidates.set(normalised.external_id, normalised);
+      }
+    }
+  }
+
+  // Add FeedSpot results
+  if (feedspotResults.status === 'fulfilled') {
+    for (const pod of feedspotResults.value) {
+      if (!allCandidates.has(pod.external_id)) {
+        allCandidates.set(pod.external_id, pod);
+      }
+    }
+  }
+
+  // Add RadioGuestList results
+  if (rglResults.status === 'fulfilled') {
+    for (const pod of rglResults.value) {
+      if (!allCandidates.has(pod.external_id)) {
+        allCandidates.set(pod.external_id, pod);
+      }
+    }
+  }
+
+  // Add Goodpods results
+  if (goodpodsResults.status === 'fulfilled') {
+    for (const pod of goodpodsResults.value) {
+      if (!allCandidates.has(pod.external_id)) {
+        allCandidates.set(pod.external_id, pod);
+      }
+    }
   }
 
   logger.info('Multi-source discovery complete', { candidatesSoFar: allCandidates.size });
