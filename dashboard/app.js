@@ -480,8 +480,6 @@ function renderMatchCard(match) {
               pills.push(`<span class="inline-pill">${days}d ago</span>`);
             }
             if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
-            const ll = listenersLabel(podcast.listen_score);
-            if (ll) pills.push(`<span class="inline-pill inline-pill-accent">&#127909; ${ll}</span>`);
             return pills.join('');
           })()}
         </div>
