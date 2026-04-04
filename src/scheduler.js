@@ -234,6 +234,30 @@ async function loadAndScheduleClients() {
   }
 }
 
+// Re-enrich podcasts missing contact email (runs daily)
+cron.schedule('0 3 * * *', async () => {
+  logger.info('Re-enrichment job starting');
+  try {
+    const { enrichPodcast } = require('./services/enrichment');
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: stale } = await supabase
+      .from('podcasts')
+      .select('*')
+      .is('contact_email', null)
+      .lt('enriched_at', sevenDaysAgo)
+      .limit(50);
+    if (!stale?.length) return;
+    logger.info('Re-enriching podcasts missing contact', { count: stale.length });
+    for (const podcast of stale) {
+      const enriched = await enrichPodcast(podcast);
+      await supabase.from('podcasts').update(enriched).eq('id', podcast.id);
+    }
+    logger.info('Re-enrichment job complete', { processed: stale.length });
+  } catch (err) {
+    logger.error('Re-enrichment job failed', { error: err.message });
+  }
+}, { timezone: 'UTC', scheduled: true });
+
 /**
  * initScheduler()
  * Called once on server start.

@@ -827,6 +827,31 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   }
   logger.info('Podmatch scraping complete', { candidatesSoFar: allCandidates.size });
 
+  // ── Cross-source deduplication by title ──────────────────────────────
+  // Merge shows that are the same podcast from different sources
+  const titleMap = new Map(); // normalised title -> external_id of canonical entry
+  for (const [extId, podcast] of allCandidates.entries()) {
+    const normTitle = (podcast.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40);
+    if (!normTitle) continue;
+    if (titleMap.has(normTitle)) {
+      // Merge: keep the richer record (the one with more data)
+      const canonical = allCandidates.get(titleMap.get(normTitle));
+      // Merge missing fields from duplicate into canonical
+      for (const key of ['contact_email','website','rss_feed_url','host_name','description','image','listen_score','apple_url','spotify_url','youtube_url','instagram_url','twitter_url','facebook_url','linkedin_page_url']) {
+        if (!canonical[key] && podcast[key]) canonical[key] = podcast[key];
+      }
+      // Keep higher listen_score source
+      if ((podcast.listen_score || 0) > (canonical.listen_score || 0)) {
+        canonical.listen_score = podcast.listen_score;
+        canonical.external_id = podcast.external_id; // use the richer source's ID
+      }
+      allCandidates.delete(extId); // remove duplicate
+    } else {
+      titleMap.set(normTitle, extId);
+    }
+  }
+  logger.info('After cross-source dedup', { candidates: allCandidates.size });
+
   // ─────────────────────────────────────────────────────────────
   // 4. Deduplicate (already done via Map) — fetch existing matches
   //    to avoid re-processing podcasts this client has already seen

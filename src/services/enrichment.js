@@ -8,6 +8,10 @@ const GENERIC_EMAIL_PREFIXES = [
   'info', 'hello', 'support', 'admin', 'noreply', 'no-reply',
   'contact', 'team', 'mail', 'help', 'sales', 'marketing',
   'press', 'media', 'feedback', 'office', 'careers', 'jobs',
+  'podcast', 'show', 'listen', 'guest', 'booking', 'bookings',
+  'hey', 'hi', 'enquiries', 'enquiry', 'inquiry', 'inquiries',
+  'general', 'business', 'partnerships', 'partner', 'advertise',
+  'advertising', 'sponsor', 'sponsors', 'pr', 'publicist',
 ];
 
 const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
@@ -50,6 +54,14 @@ function isGenericEmail(email) {
 }
 
 /**
+ * Validate that an email domain looks real (has a dot, reasonable length, not placeholder).
+ */
+function isValidEmailDomain(email) {
+  const domain = email.split('@')[1] || '';
+  return domain.includes('.') && domain.length > 3 && !domain.includes('example') && !domain.includes('test') && !domain.includes('placeholder');
+}
+
+/**
  * Extract emails from HTML string.
  * Returns the first non-generic email found, or null.
  */
@@ -66,14 +78,14 @@ function extractEmail(html) {
   });
 
   for (const email of mailtoEmails) {
-    if (!isGenericEmail(email)) return email;
+    if (!isGenericEmail(email) && isValidEmailDomain(email)) return email;
   }
 
   // 2. Regex scan full HTML
   const matches = html.match(EMAIL_REGEX) || [];
   for (const email of matches) {
     const lower = email.toLowerCase();
-    if (!isGenericEmail(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
+    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
       return lower;
     }
   }
@@ -133,6 +145,22 @@ function extractYoutubeSubscribers(html) {
   }
 
   return null;
+}
+
+/**
+ * Attempt to find an RSS feed URL for a podcast via iTunes search by title.
+ * Returns the feedUrl string or null.
+ */
+async function findRssViaItunes(title) {
+  if (!title) return null;
+  try {
+    const q = encodeURIComponent(title.slice(0, 50));
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=podcast&limit=3`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const match = data.results?.find(r => r.feedUrl && r.collectionName?.toLowerCase().includes(title.toLowerCase().slice(0,10)));
+    return match?.feedUrl || data.results?.[0]?.feedUrl || null;
+  } catch { return null; }
 }
 
 /**
@@ -228,6 +256,22 @@ async function enrichPodcast(podcastData) {
       logger.debug('RSS feed enriched', { title: podcastData.title, found: Object.keys(rssData) });
     } catch (err) {
       logger.warn('RSS enrichment failed', { title: podcastData.title, rssUrl, error: err.message });
+    }
+  }
+
+  // ──────────────────────────────────────────────────
+  // 0b. If still no RSS URL, try iTunes lookup by title
+  // ──────────────────────────────────────────────────
+  if (!enriched.rss_feed_url && !enriched.contact_email) {
+    const rssViaItunes = await findRssViaItunes(podcastData.title);
+    if (rssViaItunes) {
+      enriched.rss_feed_url = rssViaItunes;
+      const rssData = await fetchRssFeed(rssViaItunes);
+      if (rssData) {
+        for (const [k, v] of Object.entries(rssData)) {
+          if (!enriched[k] && v) enriched[k] = v;
+        }
+      }
     }
   }
 
@@ -346,6 +390,14 @@ async function enrichPodcast(podcastData) {
       error: err.message,
     });
   }
+
+  logger.info('Enrichment result', {
+    title: podcastData.title,
+    hasEmail: !!enriched.contact_email,
+    hasWebsite: !!enriched.website,
+    hasRss: !!enriched.rss_feed_url,
+    hasSocial: !!(enriched.instagram_url || enriched.twitter_url || enriched.linkedin_page_url),
+  });
 
   return enriched;
 }
