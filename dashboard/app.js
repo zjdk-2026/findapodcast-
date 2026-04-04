@@ -693,7 +693,7 @@ function renderDashboard(data) {
   if (navbarRight) {
     navbarRight.innerHTML = `
       <button class="profile-trigger" id="profile-trigger" onclick="toggleProfileDropdown()">
-        ${esc(client.name || 'Account')} <span style="opacity:0.5;font-size:11px;">▾</span>
+        Settings <span style="opacity:0.5;font-size:11px;">▾</span>
       </button>`;
   }
 
@@ -1865,7 +1865,7 @@ async function saveProfile() {
       closeProfileModal();
       // Update name in nav
       const trigger = $('profile-trigger');
-      if (trigger) trigger.innerHTML = `${esc(state.client.name)} <span style="opacity:0.5;font-size:11px;">▾</span>`;
+      if (trigger) trigger.innerHTML = `Settings <span style="opacity:0.5;font-size:11px;">▾</span>`;
       // If vision data was just added for the first time, trigger generation
       const nowHasVisionData = !!(state.client.life_purpose || state.client.best_in_world_at);
       if (nowHasVisionData && !state.client.vision_board_url) {
