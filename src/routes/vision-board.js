@@ -53,4 +53,14 @@ router.get('/vision-board/status', requireDashboardToken, async (req, res) => {
   return res.json({ success: true, imageUrl: client?.vision_board_url || null, hoursLeft: Math.round(hoursLeft * 10) / 10 });
 });
 
+// GET /api/vision-board/debug — synchronous test, returns full error
+router.get('/vision-board/debug', requireDashboardToken, async (req, res) => {
+  try {
+    const result = await generateVisionBoard(req.clientId);
+    return res.json({ success: true, result });
+  } catch (err) {
+    return res.json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

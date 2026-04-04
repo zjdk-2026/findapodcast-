@@ -69,25 +69,32 @@ async function generateVisionBoard(clientId) {
 
   try {
     // Step 1: Create generation
-    const genRes = await axios.post('https://cloud.leonardo.ai/api/rest/v1/generations', {
+    const payload = {
       prompt,
       modelId: MODEL_ID,
       width: 832,
       height: 1152,
       num_images: 1,
-      guidance_scale: 7,
-      alchemy: true,
-      presetStyle: 'CINEMATIC',
-    }, {
-      headers: {
-        Authorization: `Bearer ${LEONARDO_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
-    });
+    };
+    logger.info('Leonardo API request', { clientId, payload });
+    let genRes;
+    try {
+      genRes = await axios.post('https://cloud.leonardo.ai/api/rest/v1/generations', payload, {
+        headers: {
+          Authorization: `Bearer ${LEONARDO_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+    } catch (apiErr) {
+      const errDetail = apiErr.response?.data || apiErr.message;
+      logger.error('Leonardo API call failed', { clientId, status: apiErr.response?.status, detail: JSON.stringify(errDetail) });
+      throw new Error(`Leonardo API error ${apiErr.response?.status}: ${JSON.stringify(errDetail)}`);
+    }
+    logger.info('Leonardo API response', { clientId, data: JSON.stringify(genRes.data) });
 
     const generationId = genRes.data?.sdGenerationJob?.generationId;
-    if (!generationId) throw new Error('No generation ID returned');
+    if (!generationId) throw new Error(`No generation ID returned. Response: ${JSON.stringify(genRes.data)}`);
 
     // Step 2: Poll for completion (up to 60 seconds)
     let imageUrl = null;
