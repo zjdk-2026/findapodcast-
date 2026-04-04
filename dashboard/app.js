@@ -375,8 +375,7 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
   } else if (status === 'appeared') {
-    buttons.push(`<button class="btn btn-action-share btn-xs btn-action-primary" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
-    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
   }
