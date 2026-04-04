@@ -1709,6 +1709,11 @@ function initFilterTabs() {
     tabs.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     state.filter = tab.dataset.status;
+    // Clear reply badge when Host Replied tab is clicked
+    if (tab.dataset.status === 'replied') {
+      const badge = document.getElementById('reply-badge');
+      if (badge) badge.style.display = 'none';
+    }
     renderGrid();
   });
 }
