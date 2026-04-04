@@ -4,10 +4,54 @@ const express    = require('express');
 const Anthropic  = require('@anthropic-ai/sdk');
 const supabase   = require('../lib/supabase');
 const logger     = require('../lib/logger');
-const { writeEmail }            = require('../services/emailWriter');
-const requireDashboardToken     = require('../middleware/requireDashboardToken');
+const { writeEmail }        = require('../services/emailWriter');
+const { createDraft }       = require('../services/gmailService');
+const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
+
+/**
+ * POST /api/save-pitch
+ * Saves manually written subject + body, and creates/updates Gmail draft.
+ */
+router.post('/save-pitch', requireDashboardToken, async (req, res) => {
+  const { matchId, subject, body } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  try {
+    const { data: match, error: fetchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(contact_email), clients(gmail_refresh_token)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    // Try to create a Gmail draft so /api/send can use it
+    let gmailDraftId = match.gmail_draft_id || null;
+    if (match.clients?.gmail_refresh_token && body) {
+      const contactEmail = match.podcasts?.contact_email || null;
+      if (contactEmail?.includes('@')) {
+        gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject || '', body).catch(() => gmailDraftId);
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('podcast_matches')
+      .update({ email_subject: subject || '', email_body: body || '', gmail_draft_id: gmailDraftId })
+      .eq('id', matchId)
+      .eq('client_id', req.clientId);
+
+    if (updateError) return res.status(500).json({ success: false, error: 'Failed to save pitch.' });
+
+    logger.info('Pitch saved manually', { matchId });
+    return res.json({ success: true });
+  } catch (err) {
+    logger.error('save-pitch error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
 
 /**
  * POST /api/generate-pitch

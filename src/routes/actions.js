@@ -134,17 +134,29 @@ router.post('/send', async (req, res) => {
   try {
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .select('*, clients(gmail_refresh_token, name)')
+      .select('*, podcasts(contact_email), clients(gmail_refresh_token, name)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
 
     if (matchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
 
-    if (match.gmail_draft_id && match.clients?.gmail_refresh_token) {
+    if (match.clients?.gmail_refresh_token) {
       try {
-        await sendDraft(match.clients.gmail_refresh_token, match.gmail_draft_id);
-        logger.info('Gmail draft sent', { matchId, draftId: match.gmail_draft_id });
+        let draftId = match.gmail_draft_id;
+        // No draft yet but we have email content — create one now
+        if (!draftId && match.email_body) {
+          const contactEmail = match.podcasts?.contact_email || null;
+          if (contactEmail?.includes('@')) {
+            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, match.email_subject || '', match.email_body).catch(() => null);
+          }
+        }
+        if (draftId) {
+          await sendDraft(match.clients.gmail_refresh_token, draftId);
+          logger.info('Gmail draft sent', { matchId, draftId });
+        } else {
+          logger.warn('No draft to send — no contact email or no email body', { matchId });
+        }
       } catch (gmailErr) {
         logger.warn('Gmail send failed — marking as sent anyway', { matchId, error: gmailErr.message });
       }
