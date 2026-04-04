@@ -186,12 +186,14 @@ function renderHeroSection() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const bookedCount  = state.matches.filter((m) => m.status === 'booked').length;
-  const repliedCount = state.matches.filter((m) => m.status === 'replied').length;
   const newCount     = state.matches.filter((m) => m.status === 'new').length;
+  const seenKey = `seen_replied_${state.token}`;
+  const seenIds = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
+  const unseenRepliedCount = state.matches.filter((m) => m.status === 'replied' && !seenIds.has(m.id)).length;
 
   const chips = [];
-  if (repliedCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-blue">${repliedCount} new repl${repliedCount === 1 ? 'y' : 'ies'}</span>`);
+  if (unseenRepliedCount > 0) {
+    chips.push(`<span class="stat-chip stat-chip-blue" style="background:#FF3B30;color:#fff;">${unseenRepliedCount} new repl${unseenRepliedCount === 1 ? 'y' : 'ies'}</span>`);
   }
   if (bookedCount > 0) {
     chips.push(`<span class="stat-chip stat-chip-green">${bookedCount} booked</span>`);
@@ -512,7 +514,7 @@ function renderMatchCard(match) {
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
     <!-- Pitch section -->
-    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${match.status === 'replied' ? 'display:none;' : ''}">
+    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(match.status === 'replied' || match.status === 'dismissed') ? 'display:none;' : ''}">
       <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.status === 'appeared' ? (match.email_subject ? 'View / Edit Email' : '✉️ Write a Thank You Email') : (match.email_subject ? 'View / Edit Pitch Email' : 'Write My Pitch Email')}
@@ -549,7 +551,7 @@ function renderMatchCard(match) {
     ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${esc(match.id)}')">📩 Send Another Follow Up</button>` : ''}
 
     <!-- Notes -->
-    <div class="card-pitch-section" id="notes-area-${esc(match.id)}" style="flex-shrink:0;">
+    <div class="card-pitch-section" id="notes-area-${esc(match.id)}" style="flex-shrink:0;${match.status === 'dismissed' ? 'display:none;' : ''}">
       ${match.client_notes ? `<div class="note-display">${esc(match.client_notes)}</div>` : ''}
       <button class="pitch-toggle-btn" onclick="toggleNoteArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>

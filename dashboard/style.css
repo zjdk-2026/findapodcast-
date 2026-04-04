@@ -731,7 +731,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   border-color: var(--border-medium);
 }
 
-.match-card.status-dismissed { opacity: 0.48; }
+.match-card.status-dismissed { opacity: 0.75; }
 
 /* Booked card highlight */
 .match-card.status-booked,
