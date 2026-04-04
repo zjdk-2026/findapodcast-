@@ -368,6 +368,7 @@ function actionButtonsHtml(match) {
   } else if (status === 'sent') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-view btn-xs" onclick="markReplied('${id}')">💬 Host Replied</button>`);
     if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">View Pitch</button>`);
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
@@ -1083,6 +1084,23 @@ async function markAppeared(matchId) {
   finally { setCardLoading(matchId, false); }
 }
 window.markAppeared = markAppeared;
+
+async function markReplied(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/update-status', { matchId, status: 'replied' });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'replied' });
+      updateCard(matchId);
+      renderStatsStrip();
+      showToast('💬 Moved to Host Replied!', 'success');
+    } else {
+      showToast(data.error || 'Failed.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally { setCardLoading(matchId, false); }
+}
+window.markReplied = markReplied;
 
 // ── Subject preset picker ─────────────────────────────────────────────
 function applySubjectPreset(matchId) {
