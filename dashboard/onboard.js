@@ -6,7 +6,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 let currentStep = 1;
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
+let selectedVibe = 'bold-professional';
 
 // ── Toast ─────────────────────────────────────────────────────
 let toastTimer = null;
@@ -75,6 +76,11 @@ function validateStep(step) {
     check('f-topics', 'err-topics', (v) => v.length > 0);
   }
 
+  if (step === 4) {
+    check('f-best-in-world', 'err-best-in-world', (v) => v.length > 0);
+    check('f-life-purpose', 'err-life-purpose', (v) => v.length > 0);
+  }
+
   return valid;
 }
 
@@ -103,6 +109,12 @@ function collectFormData() {
     social_twitter:   val('f-twitter')     || undefined,
     preferred_tone:   val('f-tone')        || 'warm-professional',
     daily_target:     parseInt(val('f-daily-target') || '10', 10),
+    best_in_world_at:    val('f-best-in-world')      || undefined,
+    life_purpose:        val('f-life-purpose')        || undefined,
+    unlimited_resources: val('f-unlimited-resources') || undefined,
+    brand_color_primary:   val('f-color-primary-hex')   || '#6C3EFF',
+    brand_color_secondary: val('f-color-secondary-hex') || '#F59E0B',
+    visual_vibe:           selectedVibe || 'bold-professional',
   };
 }
 
@@ -122,7 +134,7 @@ function showFormError(msg) {
 }
 
 async function submitForm() {
-  if (!validateStep(3)) return;
+  if (!validateStep(4)) return;
 
   // Clear any previous error
   const errEl = document.getElementById('form-submit-error');
@@ -237,7 +249,7 @@ function showPaymentBanner() {
 // ── Clear errors on input ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
-  ['f-name','f-email','f-bio-short','f-topics'].forEach((id) => {
+  ['f-name','f-email','f-bio-short','f-topics','f-best-in-world','f-life-purpose'].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => {
@@ -247,6 +259,39 @@ document.addEventListener('DOMContentLoaded', () => {
       if (errEl) errEl.classList.remove('show');
     });
   });
+
+  // Vibe pill selection
+  document.querySelectorAll('.vibe-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.vibe-pill').forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedVibe = pill.dataset.vibe;
+      const hidden = document.getElementById('f-visual-vibe');
+      if (hidden) hidden.value = selectedVibe;
+    });
+  });
+  // Set first pill active by default
+  const firstPill = document.querySelector('.vibe-pill');
+  if (firstPill) firstPill.classList.add('active');
+
+  // Colour picker sync
+  const colorPrimary    = document.getElementById('f-color-primary');
+  const colorPrimaryHex = document.getElementById('f-color-primary-hex');
+  const colorSecondary    = document.getElementById('f-color-secondary');
+  const colorSecondaryHex = document.getElementById('f-color-secondary-hex');
+
+  if (colorPrimary && colorPrimaryHex) {
+    colorPrimary.addEventListener('input', () => { colorPrimaryHex.value = colorPrimary.value; });
+    colorPrimaryHex.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(colorPrimaryHex.value)) colorPrimary.value = colorPrimaryHex.value;
+    });
+  }
+  if (colorSecondary && colorSecondaryHex) {
+    colorSecondary.addEventListener('input', () => { colorSecondaryHex.value = colorSecondary.value; });
+    colorSecondaryHex.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(colorSecondaryHex.value)) colorSecondary.value = colorSecondaryHex.value;
+    });
+  }
 });
 
 // Expose to inline onclick handlers

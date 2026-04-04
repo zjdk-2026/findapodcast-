@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Find A Podcast — Get Started</title>
   <link rel="stylesheet" href="/dashboard/style.css" />
+  <style>
+    .vibe-selector { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+    .vibe-pill { padding:8px 16px; border:2px solid #e5e7eb; border-radius:999px; background:white; cursor:pointer; font-size:14px; font-weight:500; transition:all 0.15s; }
+    .vibe-pill.active { border-color:#6C3EFF; background:#6C3EFF; color:white; }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -44,6 +49,10 @@
         <div class="progress-step" id="step-indicator-3">
           <div class="step-dot">3</div>
           <span class="step-label">Prefs</span>
+        </div>
+        <div class="progress-step" id="step-indicator-4">
+          <div class="step-dot">4</div>
+          <span class="step-label">Vision</span>
         </div>
       </div>
     </div>
@@ -190,6 +199,73 @@
 
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStep(4)">Next: Your Vision →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Your Vision -->
+      <div class="step-panel" id="step-4">
+        <h2 class="step-title">Your Vision 🌟</h2>
+        <p class="step-desc">This powers your personalised vision board on your dashboard.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="f-best-in-world">What are you the best in the world at? <span class="req">*</span></label>
+          <input type="text" id="f-best-in-world" class="form-input" placeholder="e.g. Helping faith-driven entrepreneurs scale without burnout" />
+          <p class="field-error" id="err-best-in-world">Please answer this question.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-life-purpose">What is your life's purpose or endgame? <span class="req">*</span></label>
+          <textarea id="f-life-purpose" class="form-textarea" rows="3" placeholder="e.g. To awaken the next generation of leaders who build businesses with faith and impact..."></textarea>
+          <p class="field-error" id="err-life-purpose">Please answer this question.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-unlimited-resources">If you had unlimited resources, what would you be doing with your time?</label>
+          <textarea id="f-unlimited-resources" class="form-textarea" rows="3" placeholder="e.g. Building schools across Africa, running a global leadership movement..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Visual Vibe</label>
+          <div class="vibe-selector" id="vibe-selector">
+            <button type="button" class="vibe-pill" data-vibe="bold-professional">⚡ Bold &amp; Professional</button>
+            <button type="button" class="vibe-pill" data-vibe="warm-human">🌿 Warm &amp; Human</button>
+            <button type="button" class="vibe-pill" data-vibe="clean-minimal">✨ Clean &amp; Minimal</button>
+            <button type="button" class="vibe-pill" data-vibe="creative-bold">🎨 Creative &amp; Bold</button>
+          </div>
+          <input type="hidden" id="f-visual-vibe" value="bold-professional" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Brand Colours</label>
+          <div style="display:flex;gap:24px;align-items:flex-start;">
+            <div>
+              <label style="font-size:13px;color:#666;display:block;margin-bottom:6px;">Primary</label>
+              <input type="color" id="f-color-primary" value="#6C3EFF" style="width:56px;height:56px;border:none;border-radius:12px;cursor:pointer;padding:2px;" />
+              <input type="text" id="f-color-primary-hex" value="#6C3EFF" style="width:80px;margin-top:6px;font-size:12px;text-align:center;border:1px solid #ddd;border-radius:6px;padding:4px;" maxlength="7" />
+            </div>
+            <div>
+              <label style="font-size:13px;color:#666;display:block;margin-bottom:6px;">Secondary</label>
+              <input type="color" id="f-color-secondary" value="#F59E0B" style="width:56px;height:56px;border:none;border-radius:12px;cursor:pointer;padding:2px;" />
+              <input type="text" id="f-color-secondary-hex" value="#F59E0B" style="width:80px;margin-top:6px;font-size:12px;text-align:center;border:1px solid #ddd;border-radius:6px;padding:4px;" maxlength="7" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Profile Photo <span style="font-weight:400;color:#999;">(optional)</span></label>
+          <input type="file" id="f-photo" accept="image/*" class="form-input" style="padding:8px;" />
+          <p style="font-size:12px;color:#999;margin-top:4px;">Used in your dashboard profile. Max 5MB.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Logo <span style="font-weight:400;color:#999;">(optional)</span></label>
+          <input type="file" id="f-logo" accept="image/*" class="form-input" style="padding:8px;" />
+          <p style="font-size:12px;color:#999;margin-top:4px;">Your brand logo. Max 5MB.</p>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
           <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">
             <span id="submit-label">Launch My Pipeline →</span>
           </button>

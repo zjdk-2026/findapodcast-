@@ -759,6 +759,18 @@ function renderDashboard(data) {
     window.history.replaceState({}, '', window.location.pathname);
   }
 
+  // Profile photo
+  const headerAvatar   = document.getElementById('header-avatar');
+  const dropdownAvatar = document.getElementById('dropdown-avatar');
+  if (client.photo_url) {
+    if (headerAvatar)   { headerAvatar.src = client.photo_url;   headerAvatar.style.display = 'block'; }
+    if (dropdownAvatar) { dropdownAvatar.src = client.photo_url; dropdownAvatar.style.display = 'block'; }
+  } else {
+    if (headerAvatar)   headerAvatar.style.display = 'none';
+    if (dropdownAvatar) dropdownAvatar.style.display = 'none';
+  }
+
+  renderVisionBoard(client);
   renderGrid();
   renderStatsStrip();
 
@@ -1541,6 +1553,39 @@ function showUnlimitedUpsell() {
   if (content) content.prepend(banner);
 }
 
+// ── Vision Board ──────────────────────────────────────────────────────
+function renderVisionBoard(client) {
+  const section = document.getElementById('vision-board-section');
+  const img = document.getElementById('vision-board-img');
+  if (!section || !img) return;
+  if (client.vision_board_url) {
+    img.src = client.vision_board_url;
+    section.style.display = 'block';
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+async function triggerVisionBoardRegenerate() {
+  const btn = document.getElementById('regen-vision-btn');
+  if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
+  $('profile-dropdown').style.display = 'none';
+  try {
+    const data = await apiPost('/api/vision-board/generate', { token: state.token });
+    if (data.success) {
+      showToast('🎨 Vision board updated!', 'success');
+      if (state.client) state.client.vision_board_url = data.imageUrl;
+      renderVisionBoard(state.client);
+    } else if (data.cooldown) {
+      showToast(`⏳ Next generation available in ${data.hoursLeft}h`, 'info');
+    } else {
+      showToast(data.error || 'Generation failed.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  if (btn) { btn.textContent = '🎨 Regenerate Vision Board'; btn.disabled = false; }
+}
+window.triggerVisionBoardRegenerate = triggerVisionBoardRegenerate;
+
 // ── Profile modal ─────────────────────────────────────────────────────
 function openProfileModal() {
   const c = state.client;
@@ -1562,6 +1607,31 @@ function openProfileModal() {
   $('profile-audience').value  = c.target_audience  || '';
   $('profile-bio-short').value = c.bio_short        || '';
   $('profile-bio-long').value  = c.bio_long         || '';
+
+  // Vision board fields
+  const bestInWorld = document.getElementById('profile-best-in-world');
+  const lifePurpose = document.getElementById('profile-life-purpose');
+  const unlimitedRes = document.getElementById('profile-unlimited-resources');
+  const profileVisualVibe = document.getElementById('profile-visual-vibe');
+  const profileColorPrimary = document.getElementById('profile-color-primary');
+  const profileColorPrimaryHex = document.getElementById('profile-color-primary-hex');
+  const profileColorSecondary = document.getElementById('profile-color-secondary');
+  const profileColorSecondaryHex = document.getElementById('profile-color-secondary-hex');
+  if (bestInWorld)   bestInWorld.value   = c.best_in_world_at    || '';
+  if (lifePurpose)   lifePurpose.value   = c.life_purpose        || '';
+  if (unlimitedRes)  unlimitedRes.value  = c.unlimited_resources || '';
+  const currentVibe = c.visual_vibe || 'bold-professional';
+  if (profileVisualVibe) profileVisualVibe.value = currentVibe;
+  document.querySelectorAll('#profile-vibe-selector .vibe-pill').forEach((p) => {
+    p.classList.toggle('active', p.dataset.vibe === currentVibe);
+  });
+  const pPrimary = c.brand_color_primary || '#6C3EFF';
+  const pSecondary = c.brand_color_secondary || '#F59E0B';
+  if (profileColorPrimary)    profileColorPrimary.value    = pPrimary;
+  if (profileColorPrimaryHex) profileColorPrimaryHex.value = pPrimary;
+  if (profileColorSecondary)    profileColorSecondary.value    = pSecondary;
+  if (profileColorSecondaryHex) profileColorSecondaryHex.value = pSecondary;
+
   $('profile-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -1591,6 +1661,12 @@ async function saveProfile() {
     target_audience:  $('profile-audience').value.trim(),
     bio_short:        $('profile-bio-short').value.trim(),
     bio_long:         $('profile-bio-long').value.trim(),
+    best_in_world_at:    (document.getElementById('profile-best-in-world')?.value || '').trim() || null,
+    life_purpose:        (document.getElementById('profile-life-purpose')?.value   || '').trim() || null,
+    unlimited_resources: (document.getElementById('profile-unlimited-resources')?.value || '').trim() || null,
+    visual_vibe:         document.getElementById('profile-visual-vibe')?.value || 'bold-professional',
+    brand_color_primary:   document.getElementById('profile-color-primary-hex')?.value || '#6C3EFF',
+    brand_color_secondary: document.getElementById('profile-color-secondary-hex')?.value || '#F59E0B',
   };
   try {
     const data = await apiPatch(`/api/onboard/${state.client.id}`, updates);
@@ -2141,11 +2217,37 @@ window.closeSupportModal = closeSupportModal;
 window.sendSupportEmail  = sendSupportEmail;
 
 // ── Init ──────────────────────────────────────────────────────────────
+function initProfileVibePickers() {
+  // Profile modal vibe pill selection
+  document.querySelectorAll('#profile-vibe-selector .vibe-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#profile-vibe-selector .vibe-pill').forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      const hidden = document.getElementById('profile-visual-vibe');
+      if (hidden) hidden.value = pill.dataset.vibe;
+    });
+  });
+  // Profile modal colour picker sync
+  const cp = document.getElementById('profile-color-primary');
+  const cph = document.getElementById('profile-color-primary-hex');
+  const cs = document.getElementById('profile-color-secondary');
+  const csh = document.getElementById('profile-color-secondary-hex');
+  if (cp && cph) {
+    cp.addEventListener('input', () => { cph.value = cp.value; });
+    cph.addEventListener('input', () => { if (/^#[0-9a-fA-F]{6}$/.test(cph.value)) cp.value = cph.value; });
+  }
+  if (cs && csh) {
+    cs.addEventListener('input', () => { csh.value = cs.value; });
+    csh.addEventListener('input', () => { if (/^#[0-9a-fA-F]{6}$/.test(csh.value)) cs.value = csh.value; });
+  }
+}
+
 function init() {
   initFilterTabs();
   initSortSelect();
   initExtraFilters();
   initModals();
+  initProfileVibePickers();
   loadDashboard();
 
   // Handle Stripe redirect back to dashboard

@@ -23,14 +23,17 @@
       </span>
       <span class="brand-name">Find A Podcast</span>
     </div>
-    <div class="navbar-right" id="navbar-right">
+    <div class="navbar-right" id="navbar-right" style="display:flex;align-items:center;gap:10px;">
+      <img id="header-avatar" src="" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border-medium);display:none;flex-shrink:0;" />
       <!-- Injected by JS -->
     </div>
   </nav>
 
   <!-- Profile dropdown (injected into navbar-right by JS) -->
   <div id="profile-dropdown" class="profile-dropdown" style="display:none;">
-    <div class="dropdown-header" id="dropdown-client-info"></div>
+    <div class="dropdown-header" id="dropdown-client-info" style="display:flex;flex-direction:column;align-items:flex-start;">
+      <img id="dropdown-avatar" src="" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--border-light);margin-bottom:8px;display:none;" />
+    </div>
 
     <div class="dropdown-divider"></div>
     <p class="dropdown-section-label">Account</p>
@@ -47,6 +50,8 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       <span id="theme-toggle-label">Dark Mode</span>
     </button>
+
+    <button onclick="triggerVisionBoardRegenerate()" id="regen-vision-btn" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-primary);border-top:1px solid var(--border-light);">🎨 Regenerate Vision Board</button>
 
     <div class="dropdown-divider"></div>
     <p class="dropdown-section-label">Grow</p>
@@ -118,6 +123,14 @@
           </div>
         </div>
       </header>
+
+      <!-- Vision Board -->
+      <div id="vision-board-section" style="display:none;padding:0 24px 16px 24px;max-width:1400px;margin:0 auto;">
+        <div style="position:relative;border-radius:16px;overflow:hidden;max-height:320px;background:linear-gradient(135deg,#1a1a2e,#16213e);">
+          <img id="vision-board-img" src="" alt="Your Vision Board" style="width:100%;max-height:320px;object-fit:cover;object-position:center top;border-radius:16px;display:block;" />
+          <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.5));border-radius:0 0 16px 16px;"></div>
+        </div>
+      </div>
 
       <!-- Stats strip (this month) — now renders hero section -->
       <div id="stats-strip" class="stats-strip" style="display:none;"></div>
@@ -313,6 +326,35 @@
         <div><label class="field-label">Target Audience</label><input type="text" id="profile-audience" class="email-edit-field" placeholder="founders, coaches, authors" /></div>
         <div><label class="field-label">Short Bio (2-3 sentences)</label><textarea id="profile-bio-short" rows="3" class="email-edit-field"></textarea></div>
         <div><label class="field-label">Full Bio</label><textarea id="profile-bio-long" rows="5" class="email-edit-field"></textarea></div>
+
+        <div style="border-top:1px solid var(--border-light);padding-top:16px;margin-top:4px;">
+          <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-tertiary);margin:0 0 12px;">Vision Board Settings</p>
+          <div><label class="field-label">What are you the best in the world at?</label><input type="text" id="profile-best-in-world" class="email-edit-field" placeholder="e.g. Helping faith-driven entrepreneurs scale without burnout" /></div>
+          <div style="margin-top:12px;"><label class="field-label">Life's purpose or endgame</label><textarea id="profile-life-purpose" rows="3" class="email-edit-field" placeholder="e.g. To awaken the next generation of leaders..."></textarea></div>
+          <div style="margin-top:12px;"><label class="field-label">If you had unlimited resources, what would you be doing?</label><textarea id="profile-unlimited-resources" rows="2" class="email-edit-field"></textarea></div>
+          <div style="margin-top:12px;">
+            <label class="field-label">Visual Vibe</label>
+            <div class="vibe-selector" id="profile-vibe-selector" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+              <button type="button" class="vibe-pill" data-vibe="bold-professional">⚡ Bold &amp; Professional</button>
+              <button type="button" class="vibe-pill" data-vibe="warm-human">🌿 Warm &amp; Human</button>
+              <button type="button" class="vibe-pill" data-vibe="clean-minimal">✨ Clean &amp; Minimal</button>
+              <button type="button" class="vibe-pill" data-vibe="creative-bold">🎨 Creative &amp; Bold</button>
+            </div>
+            <input type="hidden" id="profile-visual-vibe" value="bold-professional" />
+          </div>
+          <div style="margin-top:12px;display:flex;gap:24px;align-items:flex-start;">
+            <div>
+              <label class="field-label">Primary Colour</label>
+              <input type="color" id="profile-color-primary" value="#6C3EFF" style="width:48px;height:48px;border:none;border-radius:10px;cursor:pointer;padding:2px;display:block;margin-top:4px;" />
+              <input type="text" id="profile-color-primary-hex" value="#6C3EFF" style="width:76px;margin-top:4px;font-size:12px;text-align:center;border:1px solid var(--border-medium);border-radius:6px;padding:4px;" maxlength="7" />
+            </div>
+            <div>
+              <label class="field-label">Secondary Colour</label>
+              <input type="color" id="profile-color-secondary" value="#F59E0B" style="width:48px;height:48px;border:none;border-radius:10px;cursor:pointer;padding:2px;display:block;margin-top:4px;" />
+              <input type="text" id="profile-color-secondary-hex" value="#F59E0B" style="width:76px;margin-top:4px;font-size:12px;text-align:center;border:1px solid var(--border-medium);border-radius:6px;padding:4px;" maxlength="7" />
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>

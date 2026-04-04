@@ -262,6 +262,14 @@ router.post('/onboard', async (req, res) => {
       languages,
       daily_target,
       timezone,
+      best_in_world_at,
+      life_purpose,
+      unlimited_resources,
+      brand_color_primary,
+      brand_color_secondary,
+      visual_vibe,
+      photo_url,
+      logo_url,
     } = req.body;
 
     // ── Validation ────────────────────────────────────────────
@@ -304,6 +312,14 @@ router.post('/onboard', async (req, res) => {
       daily_target:      daily_target      || 10,
       timezone:          timezone          || 'America/New_York',
       is_active:         true,
+      best_in_world_at:    best_in_world_at    || null,
+      life_purpose:        life_purpose        || null,
+      unlimited_resources: unlimited_resources || null,
+      brand_color_primary:   brand_color_primary   || '#6C3EFF',
+      brand_color_secondary: brand_color_secondary || '#F59E0B',
+      visual_vibe:           visual_vibe           || 'bold-professional',
+      photo_url:             photo_url             || null,
+      logo_url:              logo_url              || null,
     };
 
     // ── Insert into Supabase ──────────────────────────────────
@@ -340,6 +356,12 @@ router.post('/onboard', async (req, res) => {
     seedBreakthroughMatch(data.id).catch((err) => {
       logger.warn('Breakthrough match seed failed', { clientId: data.id, error: err.message });
     });
+
+    // Fire and forget vision board generation
+    if (data.best_in_world_at || data.life_purpose) {
+      const { generateVisionBoard } = require('../services/visionBoard');
+      generateVisionBoard(data.id).catch(err => logger.warn('Vision board generation failed', { error: err.message }));
+    }
 
     // Add to GHL CRM (fire-and-forget)
     addToGHL(data).catch((err) => {
@@ -408,6 +430,9 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'topics', 'speaking_angles', 'target_audience', 'website',
     'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
     'social_twitter', 'preferred_tone', 'daily_target',
+    'best_in_world_at', 'life_purpose', 'unlimited_resources',
+    'brand_color_primary', 'brand_color_secondary', 'visual_vibe',
+    'photo_url', 'logo_url',
   ];
 
   const updates = {};
