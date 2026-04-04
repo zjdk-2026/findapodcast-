@@ -968,11 +968,10 @@ async function bookMatch(matchId) {
       const data = await apiPost('/api/book', { matchId });
       if (data.success) {
         updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
-        updateCard(matchId);
+        switchToFilter('booked');
         updateStatBadges();
         renderStatsStrip();
-        showToast('Marked as booked!', 'success');
-        switchToFilter('booked');
+        showToast('🎉 Booked! Moved to your Booked tab.', 'success');
         showContentBoostModal();
       } else {
         showToast(data.error || 'Book failed.', 'error');
