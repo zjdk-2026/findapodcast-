@@ -1550,7 +1550,7 @@ async function runPipeline() {
       if (data.capReached) {
         showToast(data.message, 'info');
         showUnlimitedUpsell();
-        btn.textContent = 'Find Me Podcasts';
+        btn.textContent = 'Find a Podcast';
         btn.disabled = false;
         return;
       }
@@ -1560,7 +1560,7 @@ async function runPipeline() {
       showToast('Pipeline run failed.', 'error');
     }
   } catch { showToast('Network error running pipeline.', 'error'); }
-  finally { clearInterval(stepInterval); btn.textContent = 'Find Me Podcasts'; btn.disabled = false; }
+  finally { clearInterval(stepInterval); btn.textContent = 'Find a Podcast'; btn.disabled = false; }
 }
 
 function pollForNewMatches() {
