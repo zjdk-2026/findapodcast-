@@ -3,6 +3,7 @@ const express = require('express');
 const supabase = require('../lib/supabase');
 const logger = require('../lib/logger');
 const { enrichPodcast } = require('../services/enrichment');
+const { scorePodcast } = require('../services/scoring');
 const router = express.Router();
 
 // POST /api/operator/add-podcast
@@ -63,6 +64,19 @@ router.post('/add-podcast', async (req, res) => {
       .single();
 
     if (matchError) throw matchError;
+
+    // Fetch client for scoring context
+    const { data: client } = await supabase.from('clients').select('*').eq('id', clientId).single();
+
+    // Score the match in background (don't block response)
+    if (client) {
+      scorePodcast(podcast, client, match.id).then((scored) => {
+        if (scored) {
+          supabase.from('podcast_matches').update(scored).eq('id', match.id)
+            .then(() => logger.info('Manual podcast scored', { matchId: match.id, fit_score: scored.fit_score }));
+        }
+      }).catch((err) => logger.warn('Manual podcast scoring failed', { error: err.message }));
+    }
 
     logger.info('Manual podcast added', { clientId, podcastId: podcast.id, title: enriched.title });
     return res.json({ success: true, match, podcast: enriched });
