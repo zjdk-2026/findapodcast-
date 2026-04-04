@@ -1075,7 +1075,7 @@ async function markAppeared(matchId) {
       updateMatchInState(matchId, { status: 'appeared' });
       updateCard(matchId);
       updateStatBadges();
-      showToast('🌟 Marked as appeared!', 'success');
+      showToast('🌟 Marked as aired!', 'success');
     } else {
       showToast(data.error || 'Failed.', 'error');
     }
