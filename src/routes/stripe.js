@@ -80,8 +80,6 @@ router.post('/stripe/checkout', async (req, res) => {
       mode:           'payment',
       line_items: [{ price: PRICE_ID, quantity: 1 }],
       customer_email: client.email,
-      // Stripe sends automatic receipt email — enable in Stripe Dashboard > Settings > Emails
-      receipt_email:  client.email,
       metadata: {
         client_id: client.id,
         match_id:  matchId || '',
