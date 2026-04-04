@@ -134,7 +134,7 @@ function statusBadgeHtml(status) {
     sent:      'Sent',
     replied:   'Replied',
     booked:    'Booked',
-    dismissed: 'Ignored',
+    dismissed: 'Not a Fit',
     dream:     'Wish List',
     appeared:  'Appeared',
   };
@@ -348,8 +348,6 @@ function actionButtonsHtml(match) {
   const buttons  = [];
 
   if (status === 'new') {
-    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
-    if (hasEmail) buttons.push(`<button class="btn btn-action-view btn-xs" onclick="openEmailModal('${id}')">Preview Email</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'approved') {
@@ -382,7 +380,7 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-share btn-xs btn-action-primary" onclick="showShareModal('${id}')">🏆 Share My Win</button>`);
     buttons.push(`<button class="btn btn-action-send btn-xs" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
   } else if (status === 'dismissed') {
-    buttons.push(`<button class="btn btn-action-pitched btn-xs" onclick="approveMatch('${id}')">↩ Restore</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
   }
 
   return buttons.join('');
@@ -514,8 +512,11 @@ function renderMatchCard(match) {
     <!-- Social chips -->
     ${socialHtml}
 
+    <!-- Pitch + Notes buttons row -->
+    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+
     <!-- Pitch section -->
-    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}">
+    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex:1;min-width:0;">
       <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.email_subject ? 'View / Edit Pitch Email' : 'Write My Pitch Email'}
@@ -523,7 +524,7 @@ function renderMatchCard(match) {
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
         <label class="pitch-field-label">Subject Line</label>
-        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:10px;">
+        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
           <option value="">— Choose a subject line —</option>
           <option value="Guest inquiry — ${esc(podcast.title || 'your show')}">Guest inquiry — ${esc(podcast.title || 'your show')}</option>
           <option value="Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}">Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}</option>
@@ -531,7 +532,9 @@ function renderMatchCard(match) {
           <option value="I'd love to be a guest on ${esc(podcast.title || 'your show')}">I'd love to be a guest on ${esc(podcast.title || 'your show')}</option>
           <option value="Guest feature request — ${esc(podcast.title || 'your show')}">Guest feature request — ${esc(podcast.title || 'your show')}</option>
           <option value="Collaboration enquiry: ${esc(podcast.title || 'your show')}">Collaboration enquiry: ${esc(podcast.title || 'your show')}</option>
+          <option value="__custom__">✏️ Write my own…</option>
         </select>
+        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
         <label class="pitch-field-label">Pitch Email Body</label>
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
@@ -545,7 +548,7 @@ function renderMatchCard(match) {
     </div>
 
     <!-- Notes -->
-    <div class="card-pitch-section" id="notes-area-${esc(match.id)}">
+    <div class="card-pitch-section" id="notes-area-${esc(match.id)}" style="flex-shrink:0;">
       ${match.client_notes ? `<div class="note-display">${esc(match.client_notes)}</div>` : ''}
       <button class="pitch-toggle-btn" onclick="toggleNoteArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -559,6 +562,8 @@ function renderMatchCard(match) {
         </div>
       </div>
     </div>
+
+    </div><!-- /.pitch-notes-row -->
 
         <!-- Footer: action buttons -->
         <div class="card-footer">
@@ -617,6 +622,16 @@ function getFilteredSorted() {
   } else if (state.sortBy === 'booking_likelihood') {
     const order = { high: 3, medium: 2, low: 1 };
     matches.sort((a, b) => (order[b.booking_likelihood] || 0) - (order[a.booking_likelihood] || 0));
+  }
+
+  // Restored cards always float to the top of New tab
+  if (state.filter === 'new') {
+    matches.sort((a, b) => {
+      if (a.restored_at && !b.restored_at) return -1;
+      if (!a.restored_at && b.restored_at) return 1;
+      if (a.restored_at && b.restored_at) return new Date(b.restored_at) - new Date(a.restored_at);
+      return 0;
+    });
   }
 
   return matches;
@@ -905,6 +920,22 @@ async function dismissMatch(matchId) {
   finally  { setCardLoading(matchId, false); }
 }
 
+async function restoreMatch(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/restore', { matchId });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'new', restored_at: new Date().toISOString() });
+      updateCard(matchId);
+      updateStatBadges();
+      showToast('↩ Restored to New!', 'success');
+    } else {
+      showToast(data.error || 'Restore failed.', 'error');
+    }
+  } catch { showToast('Network error. Please try again.', 'error'); }
+  finally  { setCardLoading(matchId, false); }
+}
+
 async function dreamMatch(matchId) {
   setCardLoading(matchId, true);
   try {
@@ -930,10 +961,10 @@ async function doSendMatch(matchId) {
     try {
       await apiPost('/api/save-pitch', {
         matchId,
-        subject: subjectEl?.value.trim() || '',
+        subject: getSubjectValue(matchId),
         body:    bodyEl.value.trim(),
       });
-      updateMatchInState(matchId, { email_subject: subjectEl?.value.trim() || '', email_body: bodyEl.value.trim() });
+      updateMatchInState(matchId, { email_subject: getSubjectValue(matchId), email_body: bodyEl.value.trim() });
     } catch { /* non-fatal — proceed to send anyway */ }
   }
   setCardLoading(matchId, true);
@@ -1063,9 +1094,26 @@ window.markAppeared = markAppeared;
 
 // ── Subject preset picker ─────────────────────────────────────────────
 function applySubjectPreset(matchId) {
-  // subject is stored directly in the select value — nothing extra needed
+  const sel    = $(`pitch-subject-select-${matchId}`);
+  const custom = $(`pitch-subject-custom-${matchId}`);
+  if (!sel || !custom) return;
+  if (sel.value === '__custom__') {
+    custom.style.display = 'block';
+    custom.focus();
+  } else {
+    custom.style.display = 'none';
+  }
 }
 window.applySubjectPreset = applySubjectPreset;
+
+// Helper: get the resolved subject value for a match editor
+function getSubjectValue(matchId) {
+  const sel    = $(`pitch-subject-select-${matchId}`);
+  const custom = $(`pitch-subject-custom-${matchId}`);
+  if (!sel) return '';
+  if (sel.value === '__custom__') return custom?.value.trim() || '';
+  return sel.value;
+}
 
 // ── Pitch generator ───────────────────────────────────────────────────
 function togglePitchArea(matchId) {
@@ -1138,7 +1186,7 @@ async function savePitch(matchId) {
   const subjectEl = $(`pitch-subject-select-${matchId}`);
   if (!bodyEl) return;
   const body    = bodyEl.value.trim();
-  const subject = subjectEl?.value.trim() || '';
+  const subject = getSubjectValue(matchId);
   try {
     const data = await apiPost('/api/save-pitch', { matchId, subject, body });
     if (data.success) {
@@ -1154,7 +1202,7 @@ window.savePitch = savePitch;
 function copyPitch(matchId) {
   const bodyEl    = $(`pitch-body-${matchId}`);
   const subjectEl = $(`pitch-subject-select-${matchId}`);
-  const text = `Subject: ${subjectEl?.value || ''}\n\n${bodyEl?.value || ''}`;
+  const text = `Subject: ${getSubjectValue(matchId)}\n\n${bodyEl?.value || ''}`;
   navigator.clipboard.writeText(text).then(() => showToast('Pitch copied!', 'success'));
 }
 window.copyPitch = copyPitch;
@@ -1585,6 +1633,47 @@ async function triggerVisionBoardRegenerate() {
   if (btn) { btn.textContent = '🎨 Regenerate Vision Board'; btn.disabled = false; }
 }
 window.triggerVisionBoardRegenerate = triggerVisionBoardRegenerate;
+
+// ── Photo upload ──────────────────────────────────────────────────────
+async function handlePhotoUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  // 5MB limit
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Photo must be under 5MB.', 'error');
+    return;
+  }
+
+  showToast('Uploading photo…', 'info');
+
+  try {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('token', state.token);
+
+    const res = await fetch('/api/upload-photo', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.success && data.photo_url) {
+      state.client.photo_url = data.photo_url;
+      // Update avatars immediately
+      const headerAvatar   = document.getElementById('header-avatar');
+      const dropdownAvatar = document.getElementById('dropdown-avatar');
+      if (headerAvatar)   { headerAvatar.src = data.photo_url;   headerAvatar.style.display = 'block'; }
+      if (dropdownAvatar) { dropdownAvatar.src = data.photo_url; dropdownAvatar.style.display = 'block'; }
+      showToast('Photo updated!', 'success');
+    } else {
+      showToast(data.error || 'Upload failed.', 'error');
+    }
+  } catch {
+    showToast('Upload failed. Please try again.', 'error');
+  }
+
+  // Reset input so same file can be re-selected
+  event.target.value = '';
+}
+window.handlePhotoUpload = handlePhotoUpload;
 
 // ── Profile modal ─────────────────────────────────────────────────────
 function openProfileModal() {
@@ -2026,6 +2115,7 @@ window.sendFollowUp = sendFollowUp;
 
 // ── Expose globals for inline onclick handlers ────────────────────────
 window.approveMatch      = approveMatch;
+window.restoreMatch      = restoreMatch;
 window.dismissMatch      = dismissMatch;
 window.sendMatch         = sendMatch;
 window.bookMatch         = bookMatch;

@@ -341,6 +341,9 @@ html:not(.light-mode) .navbar {
 .btn-action-pitched:hover { background: #1e293b; }
 html.light-mode .btn-action-pitched { background: #475569; color: #fff; }
 
+.btn-restore { background: #6366f1; color: #fff; border-color: transparent; font-weight: 700; box-shadow: 0 2px 8px rgba(99,102,241,0.35); }
+.btn-restore:hover { background: #4f46e5; box-shadow: 0 4px 12px rgba(99,102,241,0.45); }
+
 .btn-action-view     { background: #334155; color: #fff; border-color: transparent; }
 .btn-action-view:hover { background: #1e293b; }
 html.light-mode .btn-action-view { background: #475569; color: #fff; }
@@ -1053,18 +1056,20 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 }
 
 .why-fits-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin-bottom: 6px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 6px;
 }
 
 .why-fits-text {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 /* Analysis section */

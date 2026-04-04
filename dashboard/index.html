@@ -41,6 +41,11 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       Edit My Profile
     </button>
+    <label class="dropdown-item" style="cursor:pointer;" title="Upload profile photo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Profile Photo
+      <input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)" />
+    </label>
     <button class="dropdown-item" onclick="openTemplateModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Customize Email Template
@@ -126,11 +131,25 @@
 
       <!-- Vision Board -->
       <div id="vision-board-section" style="display:none;padding:0 24px 16px 24px;max-width:1400px;margin:0 auto;">
-        <div style="position:relative;border-radius:16px;overflow:hidden;max-height:320px;background:linear-gradient(135deg,#1a1a2e,#16213e);">
+        <!-- Skeleton loader -->
+        <div id="vision-board-skeleton" style="display:none;border-radius:16px;overflow:hidden;height:280px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+          <div style="font-size:28px;animation:pulse 1.5s ease-in-out infinite;">✨</div>
+          <p style="color:rgba(255,255,255,0.8);font-size:15px;font-weight:600;margin:0;">Your vision board is being created…</p>
+          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">This takes about 30 seconds</p>
+          <div style="width:200px;height:4px;background:rgba(255,255,255,0.15);border-radius:999px;margin-top:8px;overflow:hidden;">
+            <div style="height:100%;width:40%;background:linear-gradient(90deg,#6C3EFF,#a78bfa);border-radius:999px;animation:shimmer 1.5s ease-in-out infinite;"></div>
+          </div>
+        </div>
+        <!-- Actual image -->
+        <div id="vision-board-img-wrap" style="position:relative;border-radius:16px;overflow:hidden;max-height:320px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:none;">
           <img id="vision-board-img" src="" alt="Your Vision Board" style="width:100%;max-height:320px;object-fit:cover;object-position:center top;border-radius:16px;display:block;" />
           <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.5));border-radius:0 0 16px 16px;"></div>
         </div>
       </div>
+      <style>
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
+      </style>
 
       <!-- Stats strip (this month) — now renders hero section -->
       <div id="stats-strip" class="stats-strip" style="display:none;"></div>

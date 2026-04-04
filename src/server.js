@@ -102,6 +102,7 @@ app.use('/api', require('./routes/pitch'));
 app.use('/api', require('./routes/stripe'));
 app.use('/api', actionsRouter);
 app.use('/api', require('./routes/vision-board'));
+app.use(require('./routes/upload'));
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);
