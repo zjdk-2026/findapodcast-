@@ -957,6 +957,19 @@ async function dreamMatch(matchId) {
 window.dreamMatch = dreamMatch;
 
 async function doSendMatch(matchId) {
+  // Auto-save whatever is in the pitch editor before sending
+  const bodyEl    = $(`pitch-body-${matchId}`);
+  const subjectEl = $(`pitch-subject-select-${matchId}`);
+  if (bodyEl?.value.trim()) {
+    try {
+      await apiPost('/api/save-pitch', {
+        matchId,
+        subject: subjectEl?.value.trim() || '',
+        body:    bodyEl.value.trim(),
+      });
+      updateMatchInState(matchId, { email_subject: subjectEl?.value.trim() || '', email_body: bodyEl.value.trim() });
+    } catch { /* non-fatal — proceed to send anyway */ }
+  }
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/send', { matchId });
