@@ -434,6 +434,14 @@ function renderMatchCard(match) {
           })()}
         </div>
         ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
+        <div class="card-row-links" onclick="event.stopPropagation()">
+          ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>` : ''}
+          ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Web</a>` : ''}
+          ${podcast.spotify_url ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
+          ${podcast.apple_url ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
+          ${podcast.youtube_url ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
+          ${podcast.guest_application_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply</a>` : podcast.booking_page_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Book</a>` : ''}
+        </div>
       </div>
       <div class="card-row-right">
         <span class="score-pill ${tier}">${fitScore}</span>
