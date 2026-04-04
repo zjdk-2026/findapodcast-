@@ -11,7 +11,7 @@ const state = {
   client:         null,
   matches:        [],
   stats:          {},
-  filter:         'all',
+  filter:         'new',
   sortBy:         'fit_score',
   modalMatchId:   null,
   minScore:       0,
