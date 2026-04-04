@@ -95,6 +95,7 @@ app.use('/api/operator', operatorRouter);
 app.use('/api', followupRouter);
 app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));
+app.use('/api', require('./routes/stripe'));
 app.use('/api', actionsRouter);
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────

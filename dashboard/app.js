@@ -228,6 +228,26 @@ function closeContentBoostModal() {
 }
 window.closeContentBoostModal = closeContentBoostModal;
 
+async function startContentBoostCheckout() {
+  const btn = document.querySelector('#content-boost-modal .btn-primary');
+  if (btn) { btn.textContent = '⏳ Loading…'; btn.disabled = true; }
+  try {
+    const data = await apiPost('/api/stripe/checkout', { token: state.token });
+    if (data.success && data.url) {
+      closeContentBoostModal();
+      window.location.href = data.url;
+    } else {
+      showToast(data.error || 'Could not start checkout.', 'error');
+      if (btn) { btn.textContent = '💳 Get Content Boost — $197'; btn.disabled = false; }
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) { btn.textContent = '💳 Get Content Boost — $197'; btn.disabled = false; }
+  }
+}
+window.startContentBoostCheckout = startContentBoostCheckout;
+window.closeContentBoostModal = closeContentBoostModal;
+
 // ── Render stats ──────────────────────────────────────────────────────
 function renderStats(stats) {
   const set = (id, val) => { const el = $(id); if (el) el.textContent = val ?? '0'; };
@@ -2051,6 +2071,17 @@ function init() {
   initExtraFilters();
   initModals();
   loadDashboard();
+
+  // Handle Stripe redirect back to dashboard
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('boost') === 'success') {
+    showToast('🎉 Content Boost purchased! Our team will be in touch shortly.', 'success');
+    // Clean URL without reload
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (params.get('boost') === 'cancelled') {
+    showToast('No worries — you can upgrade anytime from your Booked tab.', 'info');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 if (document.readyState === 'loading') {
