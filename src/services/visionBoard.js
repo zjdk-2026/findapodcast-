@@ -25,7 +25,8 @@ function buildPrompt(client) {
   const unlimitedVision = client.unlimited_resources ? client.unlimited_resources.slice(0, 80) : '';
   const niche = client.topics?.[0] || 'Entrepreneurship';
 
-  const prompt = `Magazine cover for "${client.name}", ${(client.title || 'entrepreneur').slice(0, 50)}. Masthead: FINDAPODCAST. Cover line: "${bestAt.slice(0, 60)} ISSUE". ${purpose ? `Quote: ${purpose}.` : ''} ${unlimitedVision ? `Scene: ${unlimitedVision}.` : ''} Style: ${vibe}. Color: ${primaryColor}. Abstract silhouette, no real face. Editorial photography, 8k.`;
+  const topics = (client.topics || []).slice(0, 3).join(', ') || 'entrepreneurship, leadership';
+  const prompt = `Cinematic aspirational wide-angle photo collage, NO TEXT, NO WORDS, NO LETTERS anywhere in the image. ${unlimitedVision ? `Scene: ${unlimitedVision}.` : `Scenes: packed stadium crowd cheering, speaker on a grand stage with dramatic spotlight, professional podcast microphone closeup, golden sunrise over mountains, aerial city skyline at dusk.`} Themes of ${topics}. ${vibe}. Rich dramatic lighting, ${primaryColor} color tones woven throughout. Photorealistic, ultra-detailed, cinematic 8k, widescreen 16:9, deeply inspiring and motivational mood. Absolutely no text, no typography, no words, no letters, no numbers.`;
   return prompt.slice(0, 1400);
 }
 
