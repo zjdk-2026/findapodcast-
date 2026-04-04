@@ -107,15 +107,17 @@ function toBase64Url(str) {
  * Build an RFC 2822 MIME message string.
  */
 function buildRfc2822Message({ to, subject, body, from }) {
+  // RFC 2047 encode subject so Unicode chars (em dash etc.) survive email headers
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
   const headers = [
     `From: ${from || 'me'}`,
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodedSubject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: 7bit',
+    'Content-Transfer-Encoding: base64',
     '',
-    body,
+    Buffer.from(body, 'utf8').toString('base64'),
   ];
   return headers.join('\r\n');
 }
