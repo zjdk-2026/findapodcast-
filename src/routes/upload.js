@@ -38,12 +38,15 @@ router.post('/api/upload-photo', async (req, res) => {
     const tokenPart = parts.find((p) => p.name === 'token');
     const photoPart = parts.find((p) => p.name === 'photo');
 
-    if (!tokenPart || !photoPart) {
-      logger.warn('Upload missing parts', { parts: parts.map(p => p.name), hasToken: !!tokenPart, hasPhoto: !!photoPart });
-      return res.status(400).json({ success: false, error: `Missing ${!tokenPart ? 'token' : 'photo'}.` });
+    if (!photoPart) {
+      logger.warn('Upload missing photo part', { parts: parts.map(p => p.name) });
+      return res.status(400).json({ success: false, error: 'Missing photo.' });
     }
 
-    const token = tokenPart.data.toString('utf8').trim();
+    const token = (tokenPart ? tokenPart.data.toString('utf8').trim() : null)
+      || req.headers['x-dashboard-token']
+      || '';
+    if (!token) return res.status(400).json({ success: false, error: 'Missing token.' });
 
     // Look up client
     const { data: client } = await supabase

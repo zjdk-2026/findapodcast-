@@ -666,7 +666,7 @@ function renderDashboard(data) {
   const lastRunBadge = $('last-run-badge');
   if (lastRunBadge) {
     lastRunBadge.textContent = client.last_run_at
-      ? (() => { const d = new Date(client.last_run_at.endsWith('Z') ? client.last_run_at : client.last_run_at + 'Z'); return `Last updated ${d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`; })()
+      ? (() => { const d = new Date(client.last_run_at.endsWith('Z') ? client.last_run_at : client.last_run_at + 'Z'); return isNaN(d) ? '' : `Last updated ${d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`; })()
       : '';
   }
 
@@ -1666,7 +1666,7 @@ async function handlePhotoUpload(event) {
     formData.append('photo', file);
     formData.append('token', state.token);
 
-    const res = await fetch('/api/upload-photo', { method: 'POST', body: formData });
+    const res = await fetch('/api/upload-photo', { method: 'POST', body: formData, headers: { 'x-dashboard-token': state.token || '' } });
     const data = await res.json();
 
     if (data.success && data.photo_url) {
@@ -2337,6 +2337,11 @@ function sendSupportEmail() {
 window.openSupportModal  = openSupportModal;
 window.closeSupportModal = closeSupportModal;
 window.sendSupportEmail  = sendSupportEmail;
+window.openProfileModal  = openProfileModal;
+window.closeProfileModal = closeProfileModal;
+window.saveProfile       = saveProfile;
+window.toggleTheme       = toggleTheme;
+window.runPipeline       = runPipeline;
 
 // ── Init ──────────────────────────────────────────────────────────────
 function initProfileVibePickers() {
