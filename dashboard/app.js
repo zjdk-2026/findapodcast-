@@ -363,7 +363,6 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send a Follow Up</button>`);
   } else if (status === 'booked') {
     buttons.push(`<button class="btn btn-action-prep btn-xs btn-action-primary" onclick="showInterviewPrepModal('${id}')">🎙️ Prepare for Interview</button>`);
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
@@ -542,7 +541,7 @@ function renderMatchCard(match) {
       </div>
     </div>
 
-    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${esc(match.id)}')">📩 Send a Follow Up</button>` : ''}
+    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')">✉️ Email</button>` : ''}
 
 
     </div><!-- /.pitch-notes-row -->
