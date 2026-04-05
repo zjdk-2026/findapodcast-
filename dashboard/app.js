@@ -195,12 +195,6 @@ function renderHeroSection() {
   if (unseenRepliedCount > 0) {
     chips.push(`<span class="stat-chip stat-chip-blue" style="background:#FF3B30;color:#fff;">${unseenRepliedCount} new repl${unseenRepliedCount === 1 ? 'y' : 'ies'}</span>`);
   }
-  if (bookedCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-green">${bookedCount} booked</span>`);
-  }
-  if (newCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-purple">${newCount} new match${newCount === 1 ? '' : 'es'}</span>`);
-  }
 
   heroEl.innerHTML = `
     <div class="hero-greeting">
