@@ -1610,106 +1610,86 @@ function showUnlimitedUpsell() {
   if (content) content.prepend(banner);
 }
 
-// ── Vision Board ──────────────────────────────────────────────────────
+// ── Cover Image Banner ────────────────────────────────────────────────
 function renderVisionBoard(client) {
-  const section  = document.getElementById('vision-board-section');
-  const skeleton = document.getElementById('vision-board-skeleton');
-  const imgWrap  = document.getElementById('vision-board-img-wrap');
-  const img      = document.getElementById('vision-board-img');
-  const prompt   = document.getElementById('vision-board-prompt');
+  const section = document.getElementById('vision-board-section');
   if (!section) return;
 
-  const hasProfileData = client.life_purpose || client.best_in_world_at;
+  section.innerHTML = `
+    <div style="position:relative;width:100%;height:220px;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,#f8f6ff 0%,#ede9fe 40%,#fdf2f8 70%,#fff7ed 100%);box-shadow:0 2px 20px rgba(108,62,255,0.10);">
 
-  if (client.vision_board_url) {
-    // Image ready — show it
-    section.style.display = 'block';
-    if (skeleton) skeleton.style.display = 'none';
-    if (imgWrap)  { imgWrap.style.display = 'block'; }
-    if (img)      img.src = client.vision_board_url;
-    if (prompt)   prompt.style.display = 'none';
+      <!-- Spotlight rays -->
+      <svg style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:100%;opacity:0.18;" viewBox="0 0 800 220" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id="rayGlow" cx="50%" cy="0%" r="80%">
+            <stop offset="0%" stop-color="#6C3EFF" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#6C3EFF" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <polygon points="400,0 260,220 540,220" fill="url(#rayGlow)"/>
+        <polygon points="400,0 180,220 320,220" fill="#6C3EFF" opacity="0.12"/>
+        <polygon points="400,0 480,220 620,220" fill="#6C3EFF" opacity="0.12"/>
+        <polygon points="400,0 80,220 200,220"  fill="#6C3EFF" opacity="0.06"/>
+        <polygon points="400,0 600,220 720,220" fill="#6C3EFF" opacity="0.06"/>
+      </svg>
 
-  } else if (window._visionBoardGenerating) {
-    // Currently generating — show skeleton, start polling
-    section.style.display = 'block';
-    if (skeleton) skeleton.style.display = 'flex';
-    if (imgWrap)  imgWrap.style.display = 'none';
-    if (prompt)   prompt.style.display = 'none';
+      <!-- Stage warm glow -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:80px;opacity:0.35;" viewBox="0 0 800 80" preserveAspectRatio="none">
+        <defs>
+          <radialGradient id="stageGlow" cx="50%" cy="100%" r="70%">
+            <stop offset="0%" stop-color="#F59E0B" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="400" cy="80" rx="420" ry="60" fill="url(#stageGlow)"/>
+      </svg>
 
-    if (!window._visionBoardPollTimer) {
-      window._visionBoardPollTimer = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/vision-board/status`, {
-            headers: { 'x-dashboard-token': state.token }
-          });
-          const data = await res.json();
-          if (data.imageUrl) {
-            clearInterval(window._visionBoardPollTimer);
-            window._visionBoardPollTimer = null;
-            window._visionBoardGenerating = false;
-            state.client.vision_board_url = data.imageUrl;
-            renderVisionBoard(state.client);
-            showToast('🎨 Your vision board is ready!', 'success');
-          }
-        } catch { /* keep polling */ }
-      }, 8000);
+      <!-- Crowd silhouettes -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:110px;" viewBox="0 0 800 110" preserveAspectRatio="xMidYMax slice">
+        <!-- Back row -->
+        <g fill="#c4b5fd" opacity="0.5">
+          ${_crowdRow(800, 110, 28, 18, 40)}
+        </g>
+        <!-- Mid row -->
+        <g fill="#a78bfa" opacity="0.65">
+          ${_crowdRow(800, 110, 34, 22, 24)}
+        </g>
+        <!-- Front row -->
+        <g fill="#7c3aed" opacity="0.55">
+          ${_crowdRow(800, 110, 42, 28, 8)}
+        </g>
+      </svg>
+
+      <!-- Centre text -->
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 24px;text-align:center;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.18em;color:#6C3EFF;text-transform:uppercase;opacity:0.8;">Find A Podcast</div>
+        <div style="font-size:clamp(20px,3.5vw,32px);font-weight:800;color:#1e1040;letter-spacing:-0.03em;line-height:1.1;">Get Booked. Get Heard.<br>Get New Clients.</div>
+        <div style="font-size:12px;font-weight:500;color:#7c3aed;margin-top:4px;letter-spacing:0.04em;opacity:0.85;">Authenticity &nbsp;·&nbsp; Success &nbsp;·&nbsp; Impact &nbsp;·&nbsp; Legacy &nbsp;·&nbsp; Joy</div>
+      </div>
+
+      <!-- Watermark -->
+      <div style="position:absolute;bottom:10px;right:16px;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#6C3EFF;opacity:0.35;text-transform:uppercase;">Find A Podcast</div>
+    </div>`;
+}
+
+function _crowdRow(w, h, figH, figW, baseY) {
+  const count = Math.ceil(w / (figW * 1.4));
+  const gap   = w / count;
+  let svg = '';
+  for (let i = 0; i < count; i++) {
+    const cx  = i * gap + gap / 2;
+    const top = h - baseY - figH;
+    const arm = i % 3 === 1; // every 3rd raises an arm
+    // body
+    svg += `<rect x="${cx - figW/2}" y="${top + figH*0.35}" width="${figW}" height="${figH*0.65}" rx="${figW*0.15}"/>`;
+    // head
+    svg += `<circle cx="${cx}" cy="${top + figH*0.18}" r="${figW*0.28}"/>`;
+    if (arm) {
+      // raised arm
+      svg += `<line x1="${cx}" y1="${top + figH*0.42}" x2="${cx + figW*0.7}" y2="${top + figH*0.05}" stroke="currentColor" stroke-width="${figW*0.18}" stroke-linecap="round"/>`;
     }
-
-  } else if (hasProfileData) {
-    // Has profile data but no image — auto-trigger generation
-    section.style.display = 'block';
-    if (skeleton) skeleton.style.display = 'flex';
-    if (imgWrap)  imgWrap.style.display = 'none';
-    if (prompt)   prompt.style.display = 'none';
-    window._visionBoardGenerating = true;
-
-    // Kick off generation — server responds immediately, we poll for result
-    apiPost('/api/vision-board/generate', {}).then((data) => {
-      if (data.imageUrl) {
-        // cooldown path returned existing image
-        window._visionBoardGenerating = false;
-        state.client.vision_board_url = data.imageUrl;
-        renderVisionBoard(state.client);
-      }
-      // if generating:true or any success, polling timer (set above) will pick it up
-    }).catch((err) => {
-      showToast('Vision board error: ' + (err?.message || 'unknown'), 'error');
-    });
-
-    // Always start polling regardless — timeout after 3 minutes
-    if (!window._visionBoardPollTimer) {
-      const pollStart = Date.now();
-      window._visionBoardPollTimer = setInterval(async () => {
-        if (Date.now() - pollStart > 180000) {
-          clearInterval(window._visionBoardPollTimer);
-          window._visionBoardPollTimer = null;
-          window._visionBoardGenerating = false;
-          if (section) section.style.display = 'none';
-          showToast('Vision board generation timed out — try regenerating from Settings.', 'error');
-          return;
-        }
-        try {
-          const res = await fetch('/api/vision-board/status', { headers: { 'x-dashboard-token': state.token } });
-          const s = await res.json();
-          if (s.imageUrl) {
-            clearInterval(window._visionBoardPollTimer);
-            window._visionBoardPollTimer = null;
-            window._visionBoardGenerating = false;
-            state.client.vision_board_url = s.imageUrl;
-            renderVisionBoard(state.client);
-            showToast('🎨 Your vision board is ready!', 'success');
-          }
-        } catch { /* keep polling */ }
-      }, 8000);
-    }
-
-  } else {
-    // No profile data — show unlock prompt
-    section.style.display = 'block';
-    if (skeleton) skeleton.style.display = 'none';
-    if (imgWrap)  imgWrap.style.display = 'none';
-    if (prompt)   prompt.style.display = 'flex';
   }
+  return svg;
 }
 
 async function triggerVisionBoardRegenerate() {
