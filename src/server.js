@@ -155,6 +155,10 @@ app.get('/demo-confirmed', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'demo-confirmed.html'));
 });
 
+app.get('/welcome', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'welcome.html'));
+});
+
 // ── 404 Handler ──────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Not found.' });
