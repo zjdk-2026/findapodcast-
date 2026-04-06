@@ -442,7 +442,7 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
           ${isValidUrl(podcast.apple_url) ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
           ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
-          ${podcast.guest_application_url ? `<a class="card-link-chip card-link-chip-primary" href="${esc(podcast.guest_application_url)}" target="_blank" rel="noopener">Apply</a>` : (podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
+          ${(podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
         </div>
       </div>
       <div class="card-row-right">
@@ -1322,7 +1322,6 @@ function openEmailModal(matchId) {
     if (podcast.contact_email)       chips.push(`<a class="contact-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')">${esc(podcast.contact_email)}</a>`);
     if (podcast.website)             chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank">Website</a>`);
     if (podcast.booking_page_url)    chips.push(`<a class="contact-chip" href="${esc(podcast.booking_page_url)}" target="_blank">Booking Page</a>`);
-    if (podcast.guest_application_url) chips.push(`<a class="contact-chip" href="${esc(podcast.guest_application_url)}" target="_blank">Apply as Guest</a>`);
     if (chips.length > 0) {
       contactRow.innerHTML = chips.join('');
       contactRow.style.display = 'flex';
@@ -1431,7 +1430,6 @@ function openContactModal(matchId) {
           ${p.contact_email ? `<div class="contact-row"><span class="contact-row-label"> Email</span><span class="contact-row-value" title="${esc(p.contact_email)}">${esc(p.contact_email)}</span><div class="contact-row-actions"><button class="btn btn-ghost btn-xs" onclick="copyEmail(event,'${esc(p.contact_email)}')">Copy</button></div></div>` : ''}
           ${contactRowHtml('', 'Website', p.website, p.website, true)}
           ${contactRowHtml('', 'Booking', p.booking_page_url, p.booking_page_url, true)}
-          ${contactRowHtml('', 'Apply', p.guest_application_url, p.guest_application_url, true)}
           ${!p.contact_email && !p.website && !p.booking_page_url && !p.guest_application_url
             ? '<p style="color:var(--text-tertiary);font-size:13px;">No contact info found</p>' : ''}
         </div>
