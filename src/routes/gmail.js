@@ -132,8 +132,12 @@ router.get('/auth/gmail/callback', async (req, res) => {
 
 /**
  * POST /api/gmail/check-replies
- * Called on dashboard load. Checks all sent matches for Gmail replies.
- * Auto-moves any replied matches to 'replied' status.
+ * Called on dashboard load and polled every 5 minutes. Checks all sent/followed_up
+ * matches for Gmail replies. Auto-moves any replied matches to 'replied' status.
+ *
+ * Detection uses two strategies:
+ *  1. Thread message count > 1 (reply came in the same Gmail thread)
+ *  2. Inbox search for a message from: the contact email (handles out-of-thread replies)
  */
 router.post('/api/gmail/check-replies', async (req, res) => {
   const token = req.headers['x-dashboard-token'] || req.body.token;
@@ -147,22 +151,22 @@ router.post('/api/gmail/check-replies', async (req, res) => {
 
   if (!client?.gmail_refresh_token) return res.json({ success: true, updated: [] });
 
-  // Get all sent matches (with or without thread ID)
+  // Scan both 'sent' AND 'followed_up' matches — a reply can arrive after either
   const { data: matches } = await supabase
     .from('podcast_matches')
     .select('id, gmail_thread_id, podcasts(contact_email)')
     .eq('client_id', client.id)
-    .eq('status', 'sent');
+    .in('status', ['sent', 'followed_up']);
 
   if (!matches?.length) return res.json({ success: true, updated: [] });
 
   const updated = [];
   await Promise.all(matches.map(async (m) => {
     let threadId = m.gmail_thread_id;
+    const contactEmail = m.podcasts?.contact_email;
 
     // Fallback: find thread by contact email for older matches missing thread ID
     if (!threadId) {
-      const contactEmail = m.podcasts?.contact_email;
       if (!contactEmail) return;
       threadId = await findThreadByContactEmail(client.gmail_refresh_token, contactEmail);
       if (threadId) {
@@ -171,17 +175,53 @@ router.post('/api/gmail/check-replies', async (req, res) => {
       }
     }
 
-    if (!threadId) return;
+    // Strategy 1: check if the known Gmail thread has > 1 message
+    let hasReply = false;
+    if (threadId) {
+      hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
+    }
 
-    const hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
+    // Strategy 2: if still no reply detected and we have a contact email,
+    // search the inbox for any inbound message from that address.
+    // This catches replies that arrive as a fresh email rather than an in-thread reply.
+    if (!hasReply && contactEmail) {
+      hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail);
+    }
+
     if (hasReply) {
       await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
       updated.push(m.id);
-      logger.info('Match auto-moved to replied', { matchId: m.id });
+      logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
     }
   }));
 
   return res.json({ success: true, updated });
 });
+
+/**
+ * checkInboxForReplyFromEmail(refreshToken, fromEmail)
+ * Searches Gmail inbox for any message received from fromEmail.
+ * Returns true if at least one such message exists.
+ */
+async function checkInboxForReplyFromEmail(refreshToken, fromEmail) {
+  try {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.messages.list({
+      userId: 'me',
+      q: `from:${fromEmail} in:inbox`,
+      maxResults: 1,
+    });
+    return (res.data.messages?.length || 0) > 0;
+  } catch (err) {
+    logger.warn('checkInboxForReplyFromEmail failed', { fromEmail, error: err.message });
+    return false;
+  }
+}
 
 module.exports = router;

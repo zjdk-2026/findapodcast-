@@ -299,12 +299,8 @@ router.post('/onboard', async (req, res) => {
       languages,
       daily_target,
       timezone,
-      best_in_world_at,
-      life_purpose,
-      unlimited_resources,
-      brand_color_primary,
-      brand_color_secondary,
-      visual_vibe,
+      pitch_style,
+      extra_links,
       photo_url,
       logo_url,
     } = req.body;
@@ -348,15 +344,11 @@ router.post('/onboard', async (req, res) => {
       languages:         languages         || ['English'],
       daily_target:      daily_target      || 10,
       timezone:          timezone          || 'America/New_York',
+      pitch_style:       pitch_style       || null,
+      extra_links:       extra_links       || null,
       is_active:         true,
-      best_in_world_at:    best_in_world_at    || null,
-      life_purpose:        life_purpose        || null,
-      unlimited_resources: unlimited_resources || null,
-      brand_color_primary:   brand_color_primary   || '#6C3EFF',
-      brand_color_secondary: brand_color_secondary || '#F59E0B',
-      visual_vibe:           visual_vibe           || 'bold-professional',
-      photo_url:             photo_url             || null,
-      logo_url:              logo_url              || null,
+      photo_url:         photo_url         || null,
+      logo_url:          logo_url          || null,
     };
 
     // ── Insert into Supabase ──────────────────────────────────
@@ -463,12 +455,11 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   const clientId = req.clientId; // verified token owner — ignore URL param to prevent IDOR
 
   const allowed = [
-    'name', 'title', 'business_name', 'bio_short', 'bio_long',
+    'name', 'title', 'business_name', 'bio_short',
     'topics', 'speaking_angles', 'target_audience', 'website',
-    'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
+    'booking_link', 'social_instagram', 'social_linkedin',
     'social_twitter', 'preferred_tone', 'daily_target',
-    'best_in_world_at', 'life_purpose', 'unlimited_resources',
-    'brand_color_primary', 'brand_color_secondary', 'visual_vibe',
+    'pitch_style', 'extra_links',
     'photo_url', 'logo_url',
   ];
 

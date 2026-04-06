@@ -62,7 +62,7 @@
     <p class="dropdown-section-label">Grow</p>
     <button class="dropdown-item dropdown-item-highlight" onclick="openReferralModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Refer a Friend — Earn 40% Per Month <span style="font-size:10px;font-weight:700;background:rgba(99,102,241,0.15);color:var(--accent);border-radius:20px;padding:2px 7px;margin-left:4px;">Coming Soon</span>
+      Refer a Friend. Earn 40% Per Month. <span style="font-size:10px;font-weight:700;background:rgba(99,102,241,0.15);color:var(--accent);border-radius:20px;padding:2px 7px;margin-left:4px;">Coming Soon</span>
     </button>
     <button class="dropdown-item" onclick="openTestimonialLink()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -289,6 +289,8 @@
         <button class="modal-close" onclick="closeProfileModal()">&#x2715;</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Photo -->
         <div>
           <label class="field-label">Profile Photo</label>
           <label style="display:inline-flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;background:none;border:1.5px solid var(--border-medium);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--text-secondary);">
@@ -297,32 +299,56 @@
             <input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)" />
           </label>
         </div>
+
+        <!-- Identity -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div><label class="field-label">Name</label><input type="text" id="profile-name" class="email-edit-field" /></div>
-          <div><label class="field-label">Title</label><input type="text" id="profile-title" class="email-edit-field" placeholder="e.g. CEO & Author" /></div>
-          <div><label class="field-label">Business Name</label><input type="text" id="profile-business" class="email-edit-field" /></div>
-          <div><label class="field-label">Website</label><input type="text" id="profile-website" class="email-edit-field" /></div>
-          <div><label class="field-label">Booking Link</label><input type="text" id="profile-booking" class="email-edit-field" /></div>
-          <div><label class="field-label">Lead Magnet / Free Offer</label><input type="text" id="profile-leadmagnet" class="email-edit-field" /></div>
-          <div><label class="field-label">Instagram</label><input type="text" id="profile-instagram" class="email-edit-field" /></div>
-          <div><label class="field-label">LinkedIn</label><input type="text" id="profile-linkedin" class="email-edit-field" /></div>
-          <div><label class="field-label">Twitter/X</label><input type="text" id="profile-twitter" class="email-edit-field" /></div>
+          <div><label class="field-label">How do you introduce yourself?</label><input type="text" id="profile-title" class="email-edit-field" placeholder="e.g. CEO & Speaker, Anxiety Coach & Author" /></div>
+          <div><label class="field-label">Business / Brand Name</label><input type="text" id="profile-business" class="email-edit-field" /></div>
+        </div>
+
+        <!-- Pitch Bio -->
+        <div><label class="field-label">LinkedIn Bio</label><textarea id="profile-bio-short" rows="3" class="email-edit-field" placeholder="Paste your LinkedIn About section here. This is what podcast hosts see when we pitch you."></textarea></div>
+
+        <!-- Expertise -->
+        <div><label class="field-label">Topics (comma-separated)</label><input type="text" id="profile-topics" class="email-edit-field" placeholder="faith-based entrepreneurship, leadership, mindset" /></div>
+        <div><label class="field-label">Ideal Listener</label><input type="text" id="profile-audience" class="email-edit-field" placeholder="Faith-driven entrepreneurs aged 30-50, high-achievers dealing with burnout" /></div>
+        <div><label class="field-label">Most Powerful Talking Point or Controversial Take</label><textarea id="profile-angles" rows="3" class="email-edit-field" placeholder="What do you talk about that makes people lean in? Your best story, hook, or hot take."></textarea></div>
+
+        <!-- Pitch style -->
+        <div><label class="field-label">What does your ideal pitch to a podcast host sound like?</label><textarea id="profile-pitch-style" rows="3" class="email-edit-field" placeholder="Tell us the angle, stories, or credentials you always want included. We use this to craft every pitch in your voice."></textarea></div>
+
+        <!-- Pitch settings -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div>
-            <label class="field-label">Preferred Tone</label>
+            <label class="field-label">How fast do you want to grow?</label>
+            <select id="profile-daily-select" class="sort-select" style="width:100%;">
+              <option value="5">Steady (4-6 bookings/mo)</option>
+              <option value="10">Active (8-12 bookings/mo)</option>
+              <option value="20">All-in (15+ bookings/mo)</option>
+            </select>
+            <input type="hidden" id="profile-daily" />
+          </div>
+          <div>
+            <label class="field-label">Pitch Email Tone</label>
             <select id="profile-tone" class="sort-select" style="width:100%;">
-              <option value="warm-professional">Warm Professional</option>
-              <option value="direct">Direct</option>
-              <option value="casual">Casual</option>
-              <option value="formal">Formal</option>
+              <option value="warm-professional">Warm &amp; Professional</option>
+              <option value="direct">Direct &amp; Confident</option>
+              <option value="casual">Casual &amp; Friendly</option>
+              <option value="formal">Formal &amp; Polished</option>
             </select>
           </div>
-          <div><label class="field-label">Monthly Booking Goal (realistically)</label><input type="number" id="profile-daily" class="email-edit-field" min="1" max="50" /></div>
         </div>
-        <div><label class="field-label">Topics (comma-separated)</label><input type="text" id="profile-topics" class="email-edit-field" placeholder="entrepreneurship, leadership, AI" /></div>
-        <div><label class="field-label">Speaking Angles (comma-separated)</label><input type="text" id="profile-angles" class="email-edit-field" placeholder="From burnout to $1M, Hiring your first team" /></div>
-        <div><label class="field-label">Target Audience</label><input type="text" id="profile-audience" class="email-edit-field" placeholder="founders, coaches, authors" /></div>
-        <div><label class="field-label">Short Bio (2-3 sentences)</label><textarea id="profile-bio-short" rows="3" class="email-edit-field"></textarea></div>
-        <div><label class="field-label">Full Bio</label><textarea id="profile-bio-long" rows="5" class="email-edit-field"></textarea></div>
+
+        <!-- Links -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><label class="field-label">Website</label><input type="text" id="profile-website" class="email-edit-field" /></div>
+          <div><label class="field-label">15-Min Pre-Show Booking Link</label><input type="text" id="profile-booking" class="email-edit-field" placeholder="https://cal.com/you" /></div>
+          <div><label class="field-label">Instagram</label><input type="text" id="profile-instagram" class="email-edit-field" /></div>
+          <div><label class="field-label">LinkedIn</label><input type="text" id="profile-linkedin" class="email-edit-field" /></div>
+          <div><label class="field-label">Twitter / X</label><input type="text" id="profile-twitter" class="email-edit-field" /></div>
+        </div>
+        <div><label class="field-label">Any Other Links</label><input type="text" id="profile-extra-links" class="email-edit-field" placeholder="Podcast, YouTube, press features, media kit. Separate with commas." /></div>
 
       </div>
       <div class="modal-footer">
@@ -339,14 +365,14 @@
         <h3 style="margin:0;font-size:22px;font-weight:800;color:var(--text-primary);">🚀 Content Boost</h3>
         <button class="modal-close" onclick="closeContentBoostModal()">&#x2715;</button>
       </div>
-      <p style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;line-height:1.7;">You showed up — now make it work for you long after the episode drops. We take your raw episode and turn it into a full month of content.</p>
+      <p style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;line-height:1.7;">You showed up. Now make it work for you long after the episode drops. We take your raw episode and turn it into a full month of content.</p>
       <ul style="margin:0 0 24px;padding:0 0 0 18px;font-size:14px;color:var(--text-secondary);line-height:2.1;">
-        <li>5–10 short-form reels ready to post</li>
-        <li>4–8 YouTube edits with titles and thumbnails</li>
+        <li>5 to 10 short-form reels ready to post</li>
+        <li>4 to 8 YouTube edits with titles and thumbnails</li>
         <li>LinkedIn posts, newsletter copy, and quote graphics</li>
         <li>Builds your authority across every platform in one go</li>
       </ul>
-      <button class="btn btn-primary" style="display:block;width:100%;text-align:center;font-size:15px;padding:14px;" onclick="startContentBoostCheckout()">💳 Get Content Boost — $197</button>
+      <button class="btn btn-primary" style="display:block;width:100%;text-align:center;font-size:15px;padding:14px;" onclick="startContentBoostCheckout()">💳 Get Content Boost for $197</button>
       <div style="text-align:center;margin-top:12px;">
         <button class="btn btn-ghost btn-sm" onclick="closeContentBoostModal()">Maybe later</button>
       </div>
@@ -400,10 +426,10 @@
       <div class="modal-body">
         <label class="field-label" style="margin-bottom:6px;">Sequence Step</label>
         <select id="followup-sequence-select" class="email-edit-field" style="margin-bottom:16px;cursor:pointer;" onchange="applyFollowUpSequence()">
-          <option value="custom">— Custom / Saved Template —</option>
-          <option value="followup1">Follow-up #1 — Friendly check-in (3–5 days after pitch)</option>
-          <option value="followup2">Follow-up #2 — Adding value (7–10 days after pitch)</option>
-          <option value="followup3">Follow-up #3 — Final touch (14+ days after pitch)</option>
+          <option value="custom">Custom or Saved Template</option>
+          <option value="followup1">Follow-up 1: Friendly check-in (3 to 5 days after pitch)</option>
+          <option value="followup2">Follow-up 2: Adding value (7 to 10 days after pitch)</option>
+          <option value="followup3">Follow-up 3: Final touch (14+ days after pitch)</option>
         </select>
         <label class="field-label">Subject</label>
         <input id="followup-subject" class="email-edit-field" style="margin-bottom:12px;" />
@@ -424,7 +450,7 @@
   <div id="referral-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
     <div class="modal-box" style="max-width:480px;">
       <div class="modal-header">
-        <h3 class="modal-title">Refer a Friend — Earn 40% Per Month</h3>
+        <h3 class="modal-title">Refer a Friend. Earn 40% Per Month.</h3>
         <button class="modal-close" onclick="closeReferralModal()" aria-label="Close">✕</button>
       </div>
       <div class="modal-body" style="padding:32px 28px 28px;text-align:center;">
@@ -432,7 +458,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <h4 style="margin:0 0 8px;font-size:18px;font-weight:800;color:var(--text-primary);">Earn 40% every month.</h4>
-        <p style="font-size:14px;color:var(--text-secondary);line-height:1.75;margin:0 0 24px;">For every client you refer, you earn 40% recurring commission — every single month they stay. Join the waitlist and we'll let you know the moment it launches.</p>
+        <p style="font-size:14px;color:var(--text-secondary);line-height:1.75;margin:0 0 24px;">For every client you refer, you earn 40% recurring commission every single month they stay. Join the waitlist and we'll let you know the moment it launches.</p>
         <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:14px;" id="referral-waitlist-btn" onclick="joinReferralWaitlist()">Join the Waitlist</button>
         <p style="font-size:12px;color:var(--text-tertiary);margin:12px 0 0;">We'll email you when it goes live. No spam.</p>
       </div>

@@ -297,8 +297,6 @@ function contactChipsHtml(podcast) {
   if (isValidUrl(podcast.facebook_url))      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
   if (isValidUrl(podcast.tiktok_url))        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
   if (isValidUrl(podcast.youtube_url) && podcast.website) chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
-  if (isValidUrl(podcast.spotify_url))       chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
-  if (isValidUrl(podcast.apple_url))         chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>`);
 
   return chips.length > 0
     ? `<div class="contact-section"><div class="contact-chips">${chips.join('')}</div></div>`
@@ -369,6 +367,7 @@ function actionButtonsHtml(match) {
   } else if (status === 'booked') {
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
   } else if (status === 'appeared') {
     buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
@@ -441,8 +440,6 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
           ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
           ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
-          ${isValidUrl(podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
-          ${isValidUrl(podcast.apple_url) ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>` : ''}
           ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
           ${(podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
         </div>
@@ -520,13 +517,13 @@ function renderMatchCard(match) {
         ${match.status === 'appeared'
           ? `<input type="text" class="note-textarea" id="pitch-subject-select-${esc(match.id)}" placeholder="e.g. Thank you — ${esc(podcast.title || 'your show')}" style="margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />`
           : `<select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
-          <option value="">— Choose a subject line —</option>
-          <option value="Guest inquiry — ${esc(podcast.title || 'your show')}">Guest inquiry — ${esc(podcast.title || 'your show')}</option>
-          <option value="Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}">Enquiry: Guest appearance on ${esc(podcast.title || 'your show')}</option>
-          <option value="Speaker/guest pitch — ${esc(podcast.title || 'your show')}">Speaker/guest pitch — ${esc(podcast.title || 'your show')}</option>
+          <option value="">Choose a subject line</option>
+          <option value="Guest inquiry for ${esc(podcast.title || 'your show')}">Guest inquiry for ${esc(podcast.title || 'your show')}</option>
           <option value="I'd love to be a guest on ${esc(podcast.title || 'your show')}">I'd love to be a guest on ${esc(podcast.title || 'your show')}</option>
-          <option value="Guest feature request — ${esc(podcast.title || 'your show')}">Guest feature request — ${esc(podcast.title || 'your show')}</option>
-          <option value="Collaboration enquiry: ${esc(podcast.title || 'your show')}">Collaboration enquiry: ${esc(podcast.title || 'your show')}</option>
+          <option value="Quick guest pitch for ${esc(podcast.title || 'your show')}">Quick guest pitch for ${esc(podcast.title || 'your show')}</option>
+          <option value="Would love to join you on ${esc(podcast.title || 'your show')}">Would love to join you on ${esc(podcast.title || 'your show')}</option>
+          <option value="Guest feature idea for ${esc(podcast.title || 'your show')}">Guest feature idea for ${esc(podcast.title || 'your show')}</option>
+          <option value="Reaching out about a guest spot on ${esc(podcast.title || 'your show')}">Reaching out about a guest spot on ${esc(podcast.title || 'your show')}</option>
           <option value="__custom__">✏️ Write my own…</option>
         </select>
         <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />`
@@ -534,8 +531,8 @@ function renderMatchCard(match) {
         <label class="pitch-field-label">${match.status === 'appeared' ? 'Email Body' : 'Pitch Email Body'}</label>
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="${match.status === 'appeared' ? 'Write your thank you email…' : 'Your pitch email…'}">${match.status === 'appeared' ? '' : esc(match.email_body || '')}</textarea>
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
+          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Rewrite Pitch</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
@@ -1694,46 +1691,26 @@ function openProfileModal() {
   const c = state.client;
   if (!c) return;
   $('profile-dropdown').style.display = 'none';
-  $('profile-name').value      = c.name        || '';
-  $('profile-title').value     = c.title       || '';
-  $('profile-business').value  = c.business_name || '';
-  $('profile-website').value   = c.website     || '';
-  $('profile-booking').value   = c.booking_link || '';
-  $('profile-leadmagnet').value = c.lead_magnet || '';
-  $('profile-instagram').value = c.social_instagram || '';
-  $('profile-linkedin').value  = c.social_linkedin  || '';
-  $('profile-twitter').value   = c.social_twitter   || '';
-  $('profile-tone').value      = c.preferred_tone   || 'warm-professional';
-  $('profile-daily').value     = c.daily_target      || 10;
-  $('profile-topics').value    = (c.topics         || []).join(', ');
-  $('profile-angles').value    = (c.speaking_angles || []).join(', ');
-  $('profile-audience').value  = c.target_audience  || '';
-  $('profile-bio-short').value = c.bio_short        || '';
-  $('profile-bio-long').value  = c.bio_long         || '';
-
-  // Vision board fields
-  const bestInWorld = document.getElementById('profile-best-in-world');
-  const lifePurpose = document.getElementById('profile-life-purpose');
-  const unlimitedRes = document.getElementById('profile-unlimited-resources');
-  const profileVisualVibe = document.getElementById('profile-visual-vibe');
-  const profileColorPrimary = document.getElementById('profile-color-primary');
-  const profileColorPrimaryHex = document.getElementById('profile-color-primary-hex');
-  const profileColorSecondary = document.getElementById('profile-color-secondary');
-  const profileColorSecondaryHex = document.getElementById('profile-color-secondary-hex');
-  if (bestInWorld)   bestInWorld.value   = c.best_in_world_at    || '';
-  if (lifePurpose)   lifePurpose.value   = c.life_purpose        || '';
-  if (unlimitedRes)  unlimitedRes.value  = c.unlimited_resources || '';
-  const currentVibe = c.visual_vibe || 'bold-professional';
-  if (profileVisualVibe) profileVisualVibe.value = currentVibe;
-  document.querySelectorAll('#profile-vibe-selector .vibe-pill').forEach((p) => {
-    p.classList.toggle('active', p.dataset.vibe === currentVibe);
-  });
-  const pPrimary = c.brand_color_primary || '#6C3EFF';
-  const pSecondary = c.brand_color_secondary || '#F59E0B';
-  if (profileColorPrimary)    profileColorPrimary.value    = pPrimary;
-  if (profileColorPrimaryHex) profileColorPrimaryHex.value = pPrimary;
-  if (profileColorSecondary)    profileColorSecondary.value    = pSecondary;
-  if (profileColorSecondaryHex) profileColorSecondaryHex.value = pSecondary;
+  $('profile-name').value         = c.name               || '';
+  $('profile-title').value        = c.title              || '';
+  $('profile-business').value     = c.business_name      || '';
+  $('profile-website').value      = c.website            || '';
+  $('profile-booking').value      = c.booking_link       || '';
+  $('profile-instagram').value    = c.social_instagram   || '';
+  $('profile-linkedin').value     = c.social_linkedin    || '';
+  $('profile-twitter').value      = c.social_twitter     || '';
+  $('profile-extra-links').value  = c.extra_links        || '';
+  $('profile-tone').value         = c.preferred_tone     || 'warm-professional';
+  $('profile-topics').value       = (c.topics            || []).join(', ');
+  $('profile-angles').value       = (c.speaking_angles   || []).join(', ');
+  $('profile-audience').value     = c.target_audience    || '';
+  $('profile-bio-short').value    = c.bio_short          || '';
+  $('profile-pitch-style').value  = c.pitch_style        || '';
+  // Pace selector
+  const dailyTarget = c.daily_target || 10;
+  $('profile-daily').value = dailyTarget;
+  const paceSelect = $('profile-daily-select');
+  if (paceSelect) paceSelect.value = dailyTarget <= 5 ? '5' : dailyTarget >= 20 ? '20' : '10';
 
   $('profile-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -1753,23 +1730,17 @@ async function saveProfile() {
     business_name:    $('profile-business').value.trim(),
     website:          $('profile-website').value.trim(),
     booking_link:     $('profile-booking').value.trim(),
-    lead_magnet:      $('profile-leadmagnet').value.trim(),
     social_instagram: $('profile-instagram').value.trim(),
     social_linkedin:  $('profile-linkedin').value.trim(),
     social_twitter:   $('profile-twitter').value.trim(),
+    extra_links:      $('profile-extra-links').value.trim(),
     preferred_tone:   $('profile-tone').value,
-    daily_target:     parseInt($('profile-daily').value, 10) || 10,
+    daily_target:     parseInt($('profile-daily-select')?.value || $('profile-daily').value, 10) || 10,
     topics:           splitTrim($('profile-topics').value),
     speaking_angles:  splitTrim($('profile-angles').value),
     target_audience:  $('profile-audience').value.trim(),
     bio_short:        $('profile-bio-short').value.trim(),
-    bio_long:         $('profile-bio-long').value.trim(),
-    best_in_world_at:    (document.getElementById('profile-best-in-world')?.value || '').trim() || null,
-    life_purpose:        (document.getElementById('profile-life-purpose')?.value   || '').trim() || null,
-    unlimited_resources: (document.getElementById('profile-unlimited-resources')?.value || '').trim() || null,
-    visual_vibe:         document.getElementById('profile-visual-vibe')?.value || 'bold-professional',
-    brand_color_primary:   document.getElementById('profile-color-primary-hex')?.value || '#6C3EFF',
-    brand_color_secondary: document.getElementById('profile-color-secondary-hex')?.value || '#F59E0B',
+    pitch_style:      $('profile-pitch-style').value.trim(),
   };
   try {
     const data = await apiPatch(`/api/onboard/${state.client.id}`, updates);
@@ -2282,6 +2253,14 @@ async function checkForReplies() {
   }
 }
 
+// Poll for replies every 5 minutes while the dashboard is open
+function startReplyPolling() {
+  // Run once immediately on load (already called in loadDashboard), then every 5 min
+  setInterval(() => {
+    checkForReplies();
+  }, 5 * 60 * 1000);
+}
+
 async function refreshDashboard() {
   const btn  = $('refresh-btn');
   const icon = $('refresh-icon');
@@ -2376,6 +2355,7 @@ function init() {
   initModals();
   initProfileVibePickers();
   loadDashboard();
+  startReplyPolling();
 
   // Handle Stripe redirect back to dashboard
   const params = new URLSearchParams(window.location.search);
