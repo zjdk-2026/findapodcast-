@@ -172,6 +172,8 @@ function collectFormData() {
     social_instagram: val('f-instagram')    || undefined,
     social_linkedin:  val('f-linkedin')     || undefined,
     social_twitter:   val('f-twitter')      || undefined,
+    extra_links:      val('f-extra-links')  || undefined,
+    pitch_style:      val('f-pitch-style')  || undefined,
     preferred_tone:   val('f-tone')         || 'warm-professional',
     daily_target:     selectedPace || 10,
   };

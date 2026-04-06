@@ -213,6 +213,12 @@
         <p class="step-desc">We embed these into every pitch. A complete profile gets significantly higher reply rates.</p>
 
         <div class="form-group">
+          <label class="form-label" for="f-pitch-style">What does your ideal pitch to a podcast host sound like? <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">(optional)</span></label>
+          <textarea id="f-pitch-style" class="form-textarea" rows="4" placeholder="Tell us what you want the host to read. What angle do you want us to lead with? What makes you the perfect guest for their show? Any specific stories, credentials, or talking points you always want included? We use this to craft every pitch in your voice."></textarea>
+          <p class="form-hint">The more direction you give us here, the more your pitches sound like you wrote them yourself.</p>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">How fast do you want to grow?</label>
           <div class="pace-options" id="pace-options">
             <div class="pace-option" data-value="5" onclick="selectPace(this)">
@@ -250,13 +256,11 @@
             <p class="form-hint">Hosts will check this before replying.</p>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-booking">15-Minute Pre-Show Booking Link</label>
+            <label class="form-label" for="f-booking">15-Min Pre-Show Booking Link</label>
             <input type="url" id="f-booking" class="form-input" placeholder="https://cal.com/you" />
-            <p class="form-hint">We include this in every pitch so interested hosts can book a quick 15-min call with you before the show. This alone significantly increases your booking rate.</p>
+            <p class="form-hint">Goes in every pitch so hosts can book a quick call with you. Significantly increases your booking rate.</p>
           </div>
         </div>
-
-        <p class="form-section-label" style="margin-top:8px;">SOCIAL <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">— Hosts check these to gauge your audience &amp; credibility</span></p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-instagram">Instagram</label>
@@ -273,6 +277,11 @@
             <input type="text" id="f-twitter" class="form-input" placeholder="@yourhandle" />
           </div>
           <div class="form-group"><!-- spacer --></div>
+        </div>
+
+        <p class="form-section-label" style="margin-top:8px;">ANY OTHER LINKS <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">— podcast, YouTube, press features, media kit, anything you want hosts to see</span></p>
+        <div class="form-group">
+          <input type="text" id="f-extra-links" class="form-input" placeholder="Paste any extra links here, separated by commas" />
         </div>
 
         <div class="form-nav">
