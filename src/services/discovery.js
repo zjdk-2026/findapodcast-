@@ -675,11 +675,12 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   const language = client.languages?.[0] || 'English';
 
   // Derive run number from existing match count (each run adds ~50 matches)
-  const { data: existingMatchCount } = await supabase
+  // Must destructure `count` not `data` — head:true returns count, not rows
+  const { count: existingMatchCount } = await supabase
     .from('podcast_matches')
     .select('id', { count: 'exact', head: true })
     .eq('client_id', client.id);
-  const runNumber = Math.max(1, Math.floor(((existingMatchCount?.count || existingMatchCount) ?? 0) / 50) + 1);
+  const runNumber = Math.max(1, Math.floor((existingMatchCount ?? 0) / 50) + 1);
   // Paginate ListenNotes: fetch a fresh page per run so repeat runs get new inventory
   const lnPage = runNumber; // page 1 on first run, page 2 on second, etc.
 

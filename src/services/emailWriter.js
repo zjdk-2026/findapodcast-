@@ -18,7 +18,35 @@ async function writeEmail(client, match, podcast) {
     podcastTitle: podcast.title,
   });
 
-  const userMessage = JSON.stringify({ client, podcast, scoring: match });
+  // Send trimmed objects with only what Claude needs for a great pitch
+  const clientForEmail = {
+    name:            client.name,
+    title:           client.title,
+    business_name:   client.business_name,
+    bio_short:       client.bio_short,
+    topics:          client.topics,
+    speaking_angles: client.speaking_angles,
+    target_audience: client.target_audience,
+    website:         client.website,
+    booking_link:    client.booking_link,
+    pitch_style:     client.pitch_style,
+    preferred_tone:  client.preferred_tone,
+  };
+
+  const podcastForEmail = {
+    title:                podcast.title,
+    host_name:            podcast.host_name,
+    description:          podcast.description,
+    website:              podcast.website,
+    contact_email:        podcast.contact_email,
+    // Scoring insights — these make pitches far more targeted
+    best_pitch_angle:     match.best_pitch_angle     || null,
+    why_this_client_fits: match.why_this_client_fits || null,
+    episode_to_reference: match.episode_to_reference || null,
+    show_summary:         match.show_summary         || null,
+  };
+
+  const userMessage = JSON.stringify({ client: clientForEmail, podcast: podcastForEmail });
 
   try {
     const message = await getClient().messages.create({
@@ -51,8 +79,8 @@ async function writeEmail(client, match, podcast) {
     if (!result.subject || !result.body) {
       logger.warn('Email writer returned incomplete fields', { podcastTitle: podcast.title });
       return {
-        subject: result.subject || `Guest pitch — ${client.name}`,
-        body:    result.body    || 'Email generation returned incomplete data.',
+        subject: result.subject || `Guest idea for ${podcast.title}`,
+        body:    result.body    || '',
       };
     }
 

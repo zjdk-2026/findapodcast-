@@ -15,14 +15,14 @@ async function hasMxRecord(email) {
   }
 }
 
-// Generic email prefixes to skip
+// Generic email prefixes to skip — keep podcast-specific ones like guest@, booking@, contact@
+// because those ARE the right contacts for pitch outreach
 const GENERIC_EMAIL_PREFIXES = [
   'info', 'hello', 'support', 'admin', 'noreply', 'no-reply',
-  'contact', 'team', 'mail', 'help', 'sales', 'marketing',
+  'mail', 'help', 'sales', 'marketing',
   'press', 'media', 'feedback', 'office', 'careers', 'jobs',
-  'podcast', 'show', 'listen', 'guest', 'booking', 'bookings',
-  'hey', 'hi', 'enquiries', 'enquiry', 'inquiry', 'inquiries',
-  'general', 'business', 'partnerships', 'partner', 'advertise',
+  'hey', 'hi',
+  'general', 'partnerships', 'partner', 'advertise',
   'advertising', 'sponsor', 'sponsors', 'pr', 'publicist',
 ];
 
@@ -31,7 +31,7 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const GUEST_PATH_KEYWORDS = ['guest', 'apply', 'pitch', 'appear', 'be-a-guest', 'be_a_guest', 'submit', 'speaker'];
 const BOOKING_PATH_KEYWORDS = ['book', 'schedule', 'calendly', 'typeform', 'acuity', 'cal.com', 'doodle'];
 
-const FETCH_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = 12000;
 
 /**
  * Fetch HTML from a URL with timeout. Returns null on failure.
@@ -347,36 +347,32 @@ async function enrichPodcast(podcastData) {
     }
 
     // ──────────────────────────────────────────────────
-    // 2. Check supplementary pages if email not found
-    //    (skipped if RSS already provided contact_email)
+    // 2. Check supplementary pages in PARALLEL if email not found
     // ──────────────────────────────────────────────────
     if (!enriched.contact_email) {
-      const supplementaryPaths = ['/contact', '/about', '/work-with-us', '/guest'];
+      const supplementaryPaths = ['/contact', '/about', '/work-with-us', '/guest', '/be-a-guest', '/podcast-guest'];
 
-      for (const path of supplementaryPaths) {
-        try {
-          const pageUrl = new URL(path, siteUrl).href;
-          const pageHtml = await fetchHtml(pageUrl);
-          if (pageHtml) {
-            enriched.contact_email = extractEmail(pageHtml);
+      const pageResults = await Promise.allSettled(
+        supplementaryPaths.map(async (path) => {
+          try {
+            const pageUrl = new URL(path, siteUrl).href;
+            const html = await fetchHtml(pageUrl);
+            if (!html) return null;
+            return {
+              email:   extractEmail(html),
+              guest:   extractLinkByKeywords(html, siteUrl, GUEST_PATH_KEYWORDS),
+              booking: extractLinkByKeywords(html, siteUrl, BOOKING_PATH_KEYWORDS),
+            };
+          } catch { return null; }
+        })
+      );
 
-            if (!enriched.guest_application_url) {
-              enriched.guest_application_url = extractLinkByKeywords(
-                pageHtml, siteUrl, GUEST_PATH_KEYWORDS
-              );
-            }
-
-            if (!enriched.booking_page_url) {
-              enriched.booking_page_url = extractLinkByKeywords(
-                pageHtml, siteUrl, BOOKING_PATH_KEYWORDS
-              );
-            }
-
-            if (enriched.contact_email) break;
-          }
-        } catch {
-          // Path construction failed, continue
-        }
+      for (const result of pageResults) {
+        if (result.status !== 'fulfilled' || !result.value) continue;
+        const { email, guest, booking } = result.value;
+        if (!enriched.contact_email && email)               enriched.contact_email        = email;
+        if (!enriched.guest_application_url && guest)       enriched.guest_application_url = guest;
+        if (!enriched.booking_page_url && booking)          enriched.booking_page_url      = booking;
       }
     }
 
@@ -395,7 +391,9 @@ async function enrichPodcast(podcastData) {
     }
 
     // Validate contact email has a real MX record
-    if (enriched.contact_email) {
+    // Skip MX check if email came from RSS feed — iTunes emails are always real
+    const emailFromRss = podcastData.rss_feed_url && enriched.contact_email === podcastData.contact_email;
+    if (enriched.contact_email && !emailFromRss) {
       const valid = await hasMxRecord(enriched.contact_email);
       if (!valid) {
         logger.warn('Email failed MX validation, clearing', { email: enriched.contact_email, title: podcastData.title });
