@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to Find A Podcast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: #0F0B2A;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Glow orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(108,62,255,0.18) 0%, transparent 70%); top: -150px; left: 50%; transform: translateX(-50%); }
+    .orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%); bottom: -100px; right: -100px; }
+    .orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%); bottom: 0; left: -80px; }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      max-width: 620px;
+      width: 100%;
+    }
+
+    /* Checkmark */
+    .check-wrap {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6C3EFF, #9333EA);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow: 0 0 40px rgba(108,62,255,0.4);
+      animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .check-wrap svg { animation: draw 0.4s 0.3s ease both; }
+    @keyframes draw { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+    /* Brand */
+    .brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #A78BFA;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 48px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+    h1 em { color: #A78BFA; font-style: normal; }
+
+    .sub {
+      font-size: 17px;
+      color: #C4B5FD;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      animation: fadeUp 0.5s 0.4s ease both;
+    }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.5s 0.5s ease both;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: rgba(108,62,255,0.12);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 14px;
+      padding: 16px 20px;
+      text-align: left;
+    }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #6C3EFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-text strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+    .step-text span {
+      font-size: 13px;
+      color: #A78BFA;
+      line-height: 1.5;
+    }
+
+    /* CTA */
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #6C3EFF;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 16px 36px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(108,62,255,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: fadeUp 0.5s 0.6s ease both;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,62,255,0.5); }
+
+    /* Values */
+    .values {
+      margin-top: 36px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: rgba(167,139,250,0.5);
+      text-transform: uppercase;
+      animation: fadeUp 0.5s 0.7s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Confetti dots */
+    .confetti-dot {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      pointer-events: none;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="content">
+
+    <div class="check-wrap">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+
+    <p class="brand">Find A Podcast</p>
+
+    <h1>You're in.<br><em>Let's get you booked.</em></h1>
+
+    <p class="sub">
+      Welcome to the team. Your podcast speaking pipeline is being set up right now.
+      Here's exactly what happens next.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Check your inbox</strong>
+          <span>You'll receive a confirmation email with your dashboard link and onboarding instructions within the next few minutes.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Complete your 5-minute onboarding</strong>
+          <span>Tell us about your business, your ideal client, and your story. The more we know, the better your podcast matches.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Connect your Gmail</strong>
+          <span>So we can send pitches from your inbox in your voice — and detect when hosts reply automatically.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">
+          <strong>Watch your pipeline fill</strong>
+          <span>Within 24 hours your first podcast matches will appear — scored, ranked, and ready to pitch. You just approve and close.</span>
+        </div>
+      </div>
+    </div>
+
+    <a href="/onboard" class="cta-btn">
+      Start Your Onboarding Now
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <p class="values">Authenticity &nbsp;·&nbsp; Success &nbsp;·&nbsp; Impact &nbsp;·&nbsp; Legacy &nbsp;·&nbsp; Joy</p>
+
+  </div>
+
+  <script>
+    // Confetti dots
+    const colors = ['6C3EFF','A78BFA','F59E0B','FCD34D','C4B5FD','ffffff'];
+    for (let i = 0; i < 18; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'confetti-dot';
+      const size = Math.random() * 8 + 4;
+      dot.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random() * 100}%;
+        background:#${colors[Math.floor(Math.random() * colors.length)]};
+        opacity:${Math.random() * 0.6 + 0.2};
+        animation-duration:${Math.random() * 8 + 6}s;
+        animation-delay:${Math.random() * 4}s;
+      `;
+      document.body.appendChild(dot);
+    }
+  </script>
+</body>
+</html>
