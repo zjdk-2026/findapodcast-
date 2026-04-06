@@ -64,7 +64,7 @@ router.post('/add-podcast', async (req, res) => {
     // Create match with 'new' status
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .insert({ client_id: clientId, podcast_id: podcast.id, status: 'new', fit_score: 0, restored_at: new Date().toISOString(), notes: notes || null })
+      .insert({ client_id: clientId, podcast_id: podcast.id, status: 'new', fit_score: 0, restored_at: new Date().toISOString() })
       .select()
       .single();
 
