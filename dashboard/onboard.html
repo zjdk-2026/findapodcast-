@@ -6,9 +6,56 @@
   <title>Find A Podcast — Get Started</title>
   <link rel="stylesheet" href="/dashboard/style.css" />
   <style>
-    .vibe-selector { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
-    .vibe-pill { padding:8px 16px; border:2px solid #e5e7eb; border-radius:999px; background:white; cursor:pointer; font-size:14px; font-weight:500; transition:all 0.15s; }
-    .vibe-pill.active { border-color:#6C3EFF; background:#6C3EFF; color:white; }
+    /* ── Topic tag chips ─────────────────────────────── */
+    .topic-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .topic-chip {
+      padding:6px 14px; border:2px solid var(--border-medium);
+      border-radius:999px; background:var(--surface-card);
+      cursor:pointer; font-size:13px; font-weight:500;
+      color:var(--text-secondary); transition:all 0.15s;
+      user-select:none;
+    }
+    .topic-chip:hover { border-color:var(--accent); color:var(--accent); }
+    .topic-chip.selected { border-color:var(--accent); background:var(--accent); color:#fff; }
+
+    /* ── Pace selector ───────────────────────────────── */
+    .pace-options { display:flex; gap:12px; margin-top:6px; }
+    .pace-option {
+      flex:1; padding:14px 10px; border:2px solid var(--border-medium);
+      border-radius:14px; background:var(--surface-card);
+      cursor:pointer; text-align:center; transition:all 0.15s;
+    }
+    .pace-option:hover { border-color:var(--accent); }
+    .pace-option.selected { border-color:var(--accent); background:rgba(108,62,255,0.06); }
+    .pace-option .pace-label { font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+    .pace-option .pace-sub { font-size:11px; color:var(--text-tertiary); }
+    .pace-option.selected .pace-label { color:var(--accent); }
+
+    /* ── Bio generator ───────────────────────────────── */
+    .bio-generate-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .bio-generate-row label { margin:0; }
+    .btn-generate-bio {
+      margin-left:auto; font-size:12px; font-weight:600;
+      padding:5px 12px; border-radius:999px;
+      border:1.5px solid var(--accent); background:transparent;
+      color:var(--accent); cursor:pointer; transition:all 0.15s;
+      white-space:nowrap;
+    }
+    .btn-generate-bio:hover { background:var(--accent); color:#fff; }
+    .btn-generate-bio:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* ── Success screen ──────────────────────────────── */
+    .success-steps { display:flex; flex-direction:column; gap:14px; margin:24px 0; }
+    .success-step { display:flex; align-items:flex-start; gap:14px; }
+    .success-step-num {
+      width:32px; height:32px; border-radius:50%;
+      background:var(--accent); color:#fff;
+      font-size:14px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .success-step-text strong { display:block; font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:2px; }
+    .success-step-text span { font-size:13px; color:var(--text-secondary); }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -44,11 +91,11 @@
         </div>
         <div class="progress-step" id="step-indicator-2">
           <div class="step-dot">2</div>
-          <span class="step-label">Topics</span>
+          <span class="step-label">Expertise</span>
         </div>
         <div class="progress-step" id="step-indicator-3">
           <div class="step-dot">3</div>
-          <span class="step-label">Preferences</span>
+          <span class="step-label">Pitch</span>
         </div>
         <div class="progress-step" id="step-indicator-4">
           <div class="step-dot">4</div>
@@ -60,10 +107,10 @@
     <!-- Form card -->
     <div class="form-card">
 
-      <!-- Step 1: About You -->
+      <!-- ─── Step 1: About You ─────────────────────────────── -->
       <div class="step-panel active" id="step-1">
         <h2 class="step-title">Let's build your profile</h2>
-        <p class="step-desc">This goes directly into your pitch emails — take 2 minutes to make it shine and you'll get far better responses.</p>
+        <p class="step-desc">This goes directly into every pitch email — a strong profile gets 3× more replies from hosts.</p>
 
         <div class="form-row">
           <div class="form-group">
@@ -82,19 +129,22 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-title">How do you introduce yourself?</label>
-            <input type="text" id="f-title" class="form-input" placeholder="e.g. Anxiety Coach &amp; Author, CEO &amp; Speaker, Mindset Coach" />
+            <input type="text" id="f-title" class="form-input" placeholder="e.g. Anxiety Coach &amp; Author, CEO &amp; Speaker" />
             <p class="form-hint">Used as your title in pitch emails — keep it clear and credible.</p>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-business">Business / Brand Name</label>
-            <input type="text" id="f-business" class="form-input" placeholder="e.g. The Anxiety Reset, Zac Deane Coaching" />
+            <input type="text" id="f-business" class="form-input" placeholder="e.g. The Anxiety Reset" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-bio-short">Your pitch bio <span class="req">*</span></label>
+          <div class="bio-generate-row">
+            <label class="form-label" for="f-bio-short">Your pitch bio <span class="req">*</span></label>
+            <button type="button" class="btn-generate-bio" id="btn-gen-bio" onclick="generateBio()">✨ Generate for me</button>
+          </div>
           <textarea id="f-bio-short" class="form-textarea" rows="4" placeholder="e.g. Jane Smith is an anxiety coach and bestselling author who has helped over 3,000 high-achievers break free from chronic stress and burnout. Her CBT-based approach has been featured in Forbes, and she's the host of the top-rated podcast The Calm Mind."></textarea>
-          <p class="form-hint">2–4 sentences written in third person. This is the bio that goes inside every pitch — the better this is, the higher your open and reply rates. Include credentials, results, and any notable features or media.</p>
+          <p class="form-hint">2–4 sentences in third person. Include credentials, results, and any media mentions. Click "Generate for me" after filling your name and role above.</p>
           <p class="field-error" id="err-bio-short">Please enter a short bio (at least 10 characters).</p>
         </div>
 
@@ -104,62 +154,114 @@
         </div>
       </div>
 
-      <!-- Step 2: Your Expertise -->
+      <!-- ─── Step 2: Your Expertise ────────────────────────── -->
       <div class="step-panel" id="step-2">
         <h2 class="step-title">Your Expertise</h2>
-        <p class="step-desc">The more detail you give us, the more shows we can match you with — and the stronger your pitches will be.</p>
+        <p class="step-desc">The more specific you are here, the more shows we can match you with — and the stronger every pitch will be.</p>
 
         <div class="form-group">
-          <label class="form-label" for="f-topics">What topics do you speak about? <span class="req">*</span></label>
-          <textarea id="f-topics" class="form-textarea" rows="3" placeholder="e.g. anxiety recovery, CBT tools, mindset shifts, burnout, self-worth, resilience, mental fitness, stress management, high performance…"></textarea>
-          <p class="form-hint">List everything — the more topics you include, the more podcast categories we can pitch you into. Separate with commas.</p>
-          <p class="field-error" id="err-topics">Please enter at least one topic.</p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="f-angles">What are your best interview stories or talking points?</label>
-          <textarea id="f-angles" class="form-textarea" rows="3" placeholder="e.g. How I went from burnout to a thriving practice, Why most anxiety advice actually makes it worse, The 3-step CBT method my clients use to stop panic attacks, My rock-bottom moment that changed everything…"></textarea>
-          <p class="form-hint">These become your pitch hooks — the more specific and story-driven, the better. Think: what do hosts always want you to talk about?</p>
+          <label class="form-label">What topics do you speak about? <span class="req">*</span></label>
+          <p class="form-hint" style="margin-top:0;margin-bottom:10px;">Click any that apply — then add your own niche keywords below.</p>
+          <div class="topic-chips" id="topic-chips-container">
+            <div class="topic-chip" data-topic="entrepreneurship">Entrepreneurship</div>
+            <div class="topic-chip" data-topic="leadership">Leadership</div>
+            <div class="topic-chip" data-topic="mindset">Mindset</div>
+            <div class="topic-chip" data-topic="business growth">Business Growth</div>
+            <div class="topic-chip" data-topic="sales">Sales</div>
+            <div class="topic-chip" data-topic="marketing">Marketing</div>
+            <div class="topic-chip" data-topic="personal development">Personal Development</div>
+            <div class="topic-chip" data-topic="productivity">Productivity</div>
+            <div class="topic-chip" data-topic="health & wellness">Health &amp; Wellness</div>
+            <div class="topic-chip" data-topic="mental health">Mental Health</div>
+            <div class="topic-chip" data-topic="faith">Faith</div>
+            <div class="topic-chip" data-topic="finance">Finance</div>
+            <div class="topic-chip" data-topic="real estate">Real Estate</div>
+            <div class="topic-chip" data-topic="parenting">Parenting</div>
+            <div class="topic-chip" data-topic="relationships">Relationships</div>
+            <div class="topic-chip" data-topic="technology">Technology</div>
+            <div class="topic-chip" data-topic="investing">Investing</div>
+            <div class="topic-chip" data-topic="coaching">Coaching</div>
+            <div class="topic-chip" data-topic="content creation">Content Creation</div>
+            <div class="topic-chip" data-topic="women in business">Women in Business</div>
+          </div>
+          <textarea id="f-topics" class="form-textarea" rows="2" placeholder="Add your niche keywords here (e.g. faith-based entrepreneurship, burnout recovery, legacy building)…"></textarea>
+          <p class="field-error" id="err-topics">Please select at least one topic or add your own.</p>
         </div>
 
         <div class="form-group">
           <label class="form-label" for="f-audience">Who is your ideal listener?</label>
-          <input type="text" id="f-audience" class="form-input" placeholder="e.g. Women 30–50 dealing with anxiety, high-achievers burning out, entrepreneurs with impostor syndrome" />
-          <p class="form-hint">We match you with shows whose audiences would genuinely benefit from — and buy from — you.</p>
+          <input type="text" id="f-audience" class="form-input" placeholder="e.g. Faith-driven entrepreneurs aged 30–50, high-achievers dealing with burnout" />
+          <p class="form-hint">We use this to match you with shows whose audiences would genuinely buy from you.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-lead-magnet">What do you want listeners to do after the interview?</label>
-          <input type="text" id="f-lead-magnet" class="form-input" placeholder="e.g. Download my free anxiety toolkit at yoursite.com/free, Book a free discovery call at…" />
-          <p class="form-hint">Your listener call-to-action. We include this in pitches so hosts know you'll actively drive their audience to take action.</p>
+          <label class="form-label" for="f-angles">What's your most powerful talking point or controversial take?</label>
+          <textarea id="f-angles" class="form-textarea" rows="3" placeholder="e.g. Most business advice keeps people small — my framework helps faith-driven founders scale without losing themselves. I also talk about why hustle culture is destroying marriages, and how I went from $0 to 7 figures by working less…"></textarea>
+          <p class="form-hint">This becomes your pitch hook. The more specific and story-driven, the higher your reply rate. Think: what do hosts always want you to talk about?</p>
         </div>
 
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(1)">← Back</button>
-          <button class="btn btn-primary" onclick="goToStep(3)">Next: Links &amp; Style →</button>
+          <button class="btn btn-primary" onclick="goToStep(3)">Next: Pitch Setup →</button>
         </div>
       </div>
 
-      <!-- Step 3: Links & Pitch Style -->
+      <!-- ─── Step 3: Pitch Setup ───────────────────────────── -->
       <div class="step-panel" id="step-3">
-        <h2 class="step-title">Links &amp; Pitch Style</h2>
-        <p class="step-desc">We embed these into every pitch email — a complete profile gets significantly higher reply rates from hosts.</p>
+        <h2 class="step-title">Pitch Setup</h2>
+        <p class="step-desc">We embed these into every pitch — a complete profile gets significantly higher reply rates.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="f-lead-magnet">What do you want listeners to do after the interview?</label>
+          <input type="text" id="f-lead-magnet" class="form-input" placeholder="e.g. Download my free guide at yoursite.com/free, Book a free call at…" />
+          <p class="form-hint">Your listener CTA. We include this in pitches so hosts know you'll drive their audience to take action.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">How fast do you want to grow?</label>
+          <div class="pace-options" id="pace-options">
+            <div class="pace-option" data-value="5" onclick="selectPace(this)">
+              <div class="pace-label">Steady</div>
+              <div class="pace-sub">4–6 bookings/mo</div>
+            </div>
+            <div class="pace-option selected" data-value="10" onclick="selectPace(this)">
+              <div class="pace-label">Active</div>
+              <div class="pace-sub">8–12 bookings/mo</div>
+            </div>
+            <div class="pace-option" data-value="20" onclick="selectPace(this)">
+              <div class="pace-label">All-in</div>
+              <div class="pace-sub">15+ bookings/mo</div>
+            </div>
+          </div>
+          <input type="hidden" id="f-daily-target" value="10" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-tone">Pitch email tone</label>
+          <select id="f-tone" class="form-select">
+            <option value="warm-professional">Warm &amp; Professional</option>
+            <option value="direct">Direct &amp; Confident</option>
+            <option value="casual">Casual &amp; Friendly</option>
+            <option value="formal">Formal &amp; Polished</option>
+          </select>
+          <p class="form-hint">How should your pitches sound? You can change this any time in your dashboard.</p>
+        </div>
 
         <p class="form-section-label">YOUR KEY LINKS</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-website">Website</label>
             <input type="url" id="f-website" class="form-input" placeholder="https://yoursite.com" />
-            <p class="form-hint">Hosts will check this before replying. Make sure it's current.</p>
+            <p class="form-hint">Hosts will check this before replying.</p>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-booking">Booking / Calendar Link</label>
             <input type="url" id="f-booking" class="form-input" placeholder="https://cal.com/you" />
-            <p class="form-hint">Goes in every pitch so interested hosts can book you with one click.</p>
+            <p class="form-hint">Interested hosts can book you with one click.</p>
           </div>
         </div>
 
-        <p class="form-section-label" style="margin-top:8px;">SOCIAL PROFILES <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">— Hosts check these to gauge your audience &amp; credibility</span></p>
+        <p class="form-section-label" style="margin-top:8px;">SOCIAL <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">— Hosts check these to gauge your audience &amp; credibility</span></p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="f-instagram">Instagram</label>
@@ -178,35 +280,16 @@
           <div class="form-group"><!-- spacer --></div>
         </div>
 
-        <p class="form-section-label" style="margin-top:8px;">PITCH SETTINGS</p>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="f-daily-target">How many podcast bookings do you want in the next 30 days?</label>
-            <input type="number" id="f-daily-target" class="form-input" value="10" min="1" max="50" />
-            <p class="form-hint">This sets how aggressively we pitch. Most members aim for 4–8 per month to start.</p>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-tone">Pitch Email Tone</label>
-            <select id="f-tone" class="form-select">
-              <option value="warm-professional">Warm &amp; Professional</option>
-              <option value="direct">Direct &amp; Confident</option>
-              <option value="casual">Casual &amp; Friendly</option>
-              <option value="formal">Formal &amp; Polished</option>
-            </select>
-            <p class="form-hint">How should your pitches sound? You can change this any time in your dashboard.</p>
-          </div>
-        </div>
-
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
           <button class="btn btn-primary" onclick="goToStep(4)">Next: Add Photos →</button>
         </div>
       </div>
 
-      <!-- Step 4: Photos -->
+      <!-- ─── Step 4: Photos ───────────────────────────────── -->
       <div class="step-panel" id="step-4">
-        <h2 class="step-title">Add Your Photos 📸</h2>
-        <p class="step-desc">Add a profile photo and logo to personalise your dashboard.</p>
+        <h2 class="step-title">Almost there 🚀</h2>
+        <p class="step-desc">Add a profile photo and logo to personalise your dashboard. Both are optional — you can add them later.</p>
 
         <div class="form-group">
           <label class="form-label">Profile Photo <span style="font-weight:400;color:#999;">(optional)</span></label>
@@ -223,20 +306,46 @@
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
           <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">
-            <span id="submit-label">Launch My Pipeline →</span>
+            <span id="submit-label">Launch My Pipeline 🚀</span>
           </button>
         </div>
       </div>
 
-      <!-- Success screen -->
+      <!-- ─── Success screen ───────────────────────────────── -->
       <div class="step-panel" id="step-success">
         <div class="success-screen">
-          <div style="font-size:48px;margin-bottom:12px;">🎉</div>
-          <h2 class="success-title">You're in — let's find your podcasts!</h2>
-          <p class="success-desc">Your pipeline is live and we're already scanning for shows that match your profile. Bookmark your dashboard — your first matches will be ready within 24 hours.</p>
+          <div style="font-size:52px;margin-bottom:8px;">🎉</div>
+          <h2 class="success-title">You're live — let's get you booked!</h2>
+          <p class="success-desc">Your pipeline is active. Here's exactly what happens next:</p>
+
+          <div class="success-steps">
+            <div class="success-step">
+              <div class="success-step-num">1</div>
+              <div class="success-step-text">
+                <strong>Connect your Gmail</strong>
+                <span>So we can send pitch emails directly from your inbox — hosts see your real address, not a robot.</span>
+              </div>
+            </div>
+            <div class="success-step">
+              <div class="success-step-num">2</div>
+              <div class="success-step-text">
+                <strong>Click "Find a Podcast" in your dashboard</strong>
+                <span>We'll scan every major podcast directory and surface your best-fit shows in minutes.</span>
+              </div>
+            </div>
+            <div class="success-step">
+              <div class="success-step-num">3</div>
+              <div class="success-step-text">
+                <strong>Review your matches &amp; approve pitches</strong>
+                <span>We write every pitch for you. You just approve, tweak if needed, and we send. Replies land in your inbox.</span>
+              </div>
+            </div>
+          </div>
+
           <p class="form-label" style="text-align:left;margin-bottom:8px;">Your Dashboard Link</p>
           <div class="success-url-box" id="success-dashboard-url">Loading…</div>
           <a id="success-dashboard-link" href="#" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px;">Open My Dashboard →</a>
+          <a id="success-gmail-link" href="#" class="btn btn-outline" style="width:100%;justify-content:center;">Connect Gmail First →</a>
         </div>
       </div>
 

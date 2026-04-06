@@ -3,8 +3,45 @@
 const express = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
+const { getClient: getAnthropicClient } = require('../lib/anthropic');
 
 const router = express.Router();
+
+/**
+ * POST /api/onboard/generate-bio
+ * Generates a 3rd-person pitch bio from name, title, and business fields.
+ */
+router.post('/generate-bio', async (req, res) => {
+  const { name, title, business } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name required' });
+
+  try {
+    const anthropic = getAnthropicClient();
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Write a 2–3 sentence third-person podcast guest pitch bio for:
+Name: ${name}
+Role/Title: ${title || 'Expert'}
+Business: ${business || ''}
+
+Rules:
+- Write in third person (use their name)
+- Sound credible, warm, and impressive without being braggy
+- Leave placeholders like [X clients] or [mention a result] where specific numbers/achievements would go
+- Do NOT mention podcasts in the bio itself
+- Return ONLY the bio text, no quotes, no labels`,
+      }],
+    });
+    const bio = msg.content[0]?.text?.trim() || '';
+    return res.json({ bio });
+  } catch (err) {
+    logger.warn('Bio generation failed', { error: err.message });
+    return res.status(500).json({ error: 'Generation failed' });
+  }
+});
 
 /**
  * Send a welcome email to a newly onboarded client.

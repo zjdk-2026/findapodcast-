@@ -7,7 +7,7 @@
 
 let currentStep = 1;
 const TOTAL_STEPS = 4;
-let selectedVibe = 'bold-professional';
+let selectedPace = 10;
 
 // ── Toast ─────────────────────────────────────────────────────
 let toastTimer = null;
@@ -31,26 +31,92 @@ function showToast(message, type = 'info') {
 // ── Step navigation ───────────────────────────────────────────
 function goToStep(n) {
   if (n > currentStep) {
-    // Validate before advancing
     if (!validateStep(currentStep)) return;
   }
 
-  // Update panels
   document.querySelectorAll('.step-panel').forEach((p) => p.classList.remove('active'));
   const panel = document.getElementById(`step-${n}`);
   if (panel) panel.classList.add('active');
 
-  // Update progress indicators
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     const ind = document.getElementById(`step-indicator-${i}`);
     if (!ind) continue;
     ind.classList.remove('active', 'done');
-    if (i < n)      ind.classList.add('done');
+    if (i < n)       ind.classList.add('done');
     else if (i === n) ind.classList.add('active');
   }
 
   currentStep = n;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Pace selector ─────────────────────────────────────────────
+function selectPace(el) {
+  document.querySelectorAll('.pace-option').forEach((o) => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPace = parseInt(el.dataset.value, 10);
+  const hidden = document.getElementById('f-daily-target');
+  if (hidden) hidden.value = selectedPace;
+}
+
+// ── Topic chips ───────────────────────────────────────────────
+function getSelectedTopics() {
+  const selected = [];
+  document.querySelectorAll('.topic-chip.selected').forEach((c) => {
+    selected.push(c.dataset.topic);
+  });
+  return selected;
+}
+
+function buildTopicsValue() {
+  const chips = getSelectedTopics();
+  const typed = (document.getElementById('f-topics')?.value || '').trim();
+  const all = [...chips];
+  if (typed) {
+    typed.split(',').map((s) => s.trim()).filter(Boolean).forEach((t) => {
+      if (!all.includes(t)) all.push(t);
+    });
+  }
+  return all.join(', ');
+}
+
+// ── Bio generator ─────────────────────────────────────────────
+async function generateBio() {
+  const name    = (document.getElementById('f-name')?.value || '').trim();
+  const title   = (document.getElementById('f-title')?.value || '').trim();
+  const business= (document.getElementById('f-business')?.value || '').trim();
+
+  if (!name) {
+    showToast('Enter your name first so we can generate your bio.', 'error');
+    document.getElementById('f-name')?.focus();
+    return;
+  }
+
+  const btn = document.getElementById('btn-gen-bio');
+  btn.disabled = true;
+  btn.textContent = '✨ Generating…';
+
+  try {
+    const res = await fetch('/api/generate-bio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, title, business }),
+    });
+    const data = await res.json();
+    if (data.bio) {
+      document.getElementById('f-bio-short').value = data.bio;
+      document.getElementById('f-bio-short').classList.remove('error');
+      document.getElementById('err-bio-short')?.classList.remove('show');
+      showToast('Bio generated — feel free to edit it!', 'success');
+    } else {
+      showToast('Could not generate bio. Try filling in your role first.', 'error');
+    }
+  } catch (_) {
+    showToast('Bio generation failed. Please write one manually.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Generate for me';
+  }
 }
 
 // ── Validation ────────────────────────────────────────────────
@@ -73,12 +139,12 @@ function validateStep(step) {
   }
 
   if (step === 2) {
-    check('f-topics', 'err-topics', (v) => v.length > 0);
-  }
-
-  if (step === 4) {
-    check('f-best-in-world', 'err-best-in-world', (v) => v.length > 0);
-    check('f-life-purpose', 'err-life-purpose', (v) => v.length > 0);
+    // Valid if any chip selected OR text typed
+    const hasTopics = getSelectedTopics().length > 0
+      || (document.getElementById('f-topics')?.value || '').trim().length > 0;
+    const errEl = document.getElementById('err-topics');
+    if (errEl) errEl.classList.toggle('show', !hasTopics);
+    if (!hasTopics) valid = false;
   }
 
   return valid;
@@ -88,33 +154,26 @@ function validateStep(step) {
 function collectFormData() {
   const val = (id) => (document.getElementById(id)?.value || '').trim();
 
-  const topicsRaw  = val('f-topics');
+  const topicsStr  = buildTopicsValue();
   const anglesRaw  = val('f-angles');
 
   return {
     name:             val('f-name'),
     email:            val('f-email'),
-    business_name:    val('f-business')  || undefined,
-    title:            val('f-title')     || undefined,
+    business_name:    val('f-business')     || undefined,
+    title:            val('f-title')        || undefined,
     bio_short:        val('f-bio-short'),
-    bio_long:         val('f-bio-long')  || undefined,
-    topics:           topicsRaw  ? topicsRaw.split(',').map((s) => s.trim()).filter(Boolean)  : [],
-    speaking_angles:  anglesRaw  ? anglesRaw.split(',').map((s) => s.trim()).filter(Boolean)  : [],
-    target_audience:  val('f-audience')    || undefined,
-    website:          val('f-website')     || undefined,
-    booking_link:     val('f-booking')     || undefined,
-    lead_magnet:      val('f-lead-magnet') || undefined,
-    social_instagram: val('f-instagram')   || undefined,
-    social_linkedin:  val('f-linkedin')    || undefined,
-    social_twitter:   val('f-twitter')     || undefined,
-    preferred_tone:   val('f-tone')        || 'warm-professional',
-    daily_target:     parseInt(val('f-daily-target') || '10', 10),
-    best_in_world_at:    val('f-best-in-world')      || undefined,
-    life_purpose:        val('f-life-purpose')        || undefined,
-    unlimited_resources: val('f-unlimited-resources') || undefined,
-    brand_color_primary:   val('f-color-primary-hex')   || '#6C3EFF',
-    brand_color_secondary: val('f-color-secondary-hex') || '#F59E0B',
-    visual_vibe:           selectedVibe || 'bold-professional',
+    topics:           topicsStr ? topicsStr.split(',').map((s) => s.trim()).filter(Boolean) : [],
+    speaking_angles:  anglesRaw ? anglesRaw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean) : [],
+    target_audience:  val('f-audience')     || undefined,
+    website:          val('f-website')      || undefined,
+    booking_link:     val('f-booking')      || undefined,
+    lead_magnet:      val('f-lead-magnet')  || undefined,
+    social_instagram: val('f-instagram')    || undefined,
+    social_linkedin:  val('f-linkedin')     || undefined,
+    social_twitter:   val('f-twitter')      || undefined,
+    preferred_tone:   val('f-tone')         || 'warm-professional',
+    daily_target:     selectedPace || 10,
   };
 }
 
@@ -125,7 +184,7 @@ function showFormError(msg) {
     el = document.createElement('div');
     el.id = 'form-submit-error';
     el.style.cssText = 'background:#fff1f0;border:1.5px solid #ff4d4f;color:#cf1322;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500;margin-top:14px;';
-    const nav = document.querySelector('#step-3 .form-nav');
+    const nav = document.querySelector('#step-4 .form-nav');
     if (nav) nav.insertAdjacentElement('beforebegin', el);
   }
   el.textContent = msg;
@@ -134,49 +193,46 @@ function showFormError(msg) {
 }
 
 async function submitForm() {
-  if (!validateStep(4)) return;
-
-  // Clear any previous error
   const errEl = document.getElementById('form-submit-error');
   if (errEl) errEl.style.display = 'none';
 
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
   btn.disabled  = true;
-  label.textContent = 'Submitting…';
+  label.textContent = 'Launching…';
 
   try {
     const payload = collectFormData();
 
-    // Sanity check: make sure required fields are present before sending
     if (!payload.name || !payload.email || !payload.topics || payload.topics.length === 0) {
       const missing = [];
-      if (!payload.name)   missing.push('Full Name (Step 1)');
-      if (!payload.email)  missing.push('Email (Step 1)');
+      if (!payload.name)  missing.push('Full Name (Step 1)');
+      if (!payload.email) missing.push('Email (Step 1)');
       if (!payload.topics || payload.topics.length === 0) missing.push('Topics (Step 2)');
       throw new Error('Missing required fields: ' + missing.join(', ') + '. Please go back and fill them in.');
     }
 
-    const res  = await fetch('/api/onboard', {
+    const res = await fetch('/api/onboard', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
     });
 
     let data;
-    try {
-      data = await res.json();
-    } catch (_) {
+    try { data = await res.json(); } catch (_) {
       throw new Error(`Server returned an unexpected response (${res.status}). Please try again.`);
     }
 
     if (!res.ok || !data.success) {
-      // Handle both `error` (string) and `errors` (array) from server
       const msg = data.error
         || (Array.isArray(data.errors) ? data.errors.join('. ') : null)
         || `Something went wrong (${res.status}). Please try again.`;
       throw new Error(msg);
     }
+
+    // Upload photos if provided
+    const token = data.dashboardToken || data.dashboard_token || data.client?.dashboard_token || '';
+    await uploadPhotos(token);
 
     showSuccess(data);
   } catch (err) {
@@ -184,7 +240,30 @@ async function submitForm() {
     showFormError(msg);
     showToast(msg, 'error');
     btn.disabled  = false;
-    label.textContent = 'Launch My Pipeline →';
+    label.textContent = 'Launch My Pipeline 🚀';
+  }
+}
+
+// ── Photo upload ──────────────────────────────────────────────
+async function uploadPhotos(token) {
+  if (!token) return;
+  const photoInput = document.getElementById('f-photo');
+  const logoInput  = document.getElementById('f-logo');
+
+  const uploads = [];
+  if (photoInput?.files?.[0]) uploads.push({ file: photoInput.files[0], type: 'photo' });
+  if (logoInput?.files?.[0])  uploads.push({ file: logoInput.files[0],  type: 'logo'  });
+
+  for (const { file, type } of uploads) {
+    try {
+      const fd = new FormData();
+      fd.append(type, file);
+      await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'x-dashboard-token': token },
+        body: fd,
+      });
+    } catch (_) { /* non-blocking */ }
   }
 }
 
@@ -195,26 +274,20 @@ function showSuccess(data) {
   const dashboardUrl = `${base}/dashboard/${token}`;
   const gmailUrl     = `${base}/auth/gmail?token=${token}`;
 
-  // Update success elements
-  const urlBox  = document.getElementById('success-dashboard-url');
-  const dashLink= document.getElementById('success-dashboard-link');
+  const urlBox   = document.getElementById('success-dashboard-url');
+  const dashLink = document.getElementById('success-dashboard-link');
   const gmailLink= document.getElementById('success-gmail-link');
 
-  if (urlBox)   urlBox.textContent  = dashboardUrl;
-  if (dashLink) dashLink.href       = dashboardUrl;
-  if (gmailLink)gmailLink.href      = gmailUrl;
+  if (urlBox)    urlBox.textContent = dashboardUrl;
+  if (dashLink)  dashLink.href      = dashboardUrl;
+  if (gmailLink) gmailLink.href     = gmailUrl;
 
-  // Switch all step panels off, show success
   document.querySelectorAll('.step-panel').forEach((p) => p.classList.remove('active'));
   document.getElementById('step-success').classList.add('active');
 
-  // Mark all progress steps done
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     const ind = document.getElementById(`step-indicator-${i}`);
-    if (ind) {
-      ind.classList.remove('active');
-      ind.classList.add('done');
-    }
+    if (ind) { ind.classList.remove('active'); ind.classList.add('done'); }
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -226,74 +299,55 @@ function showPaymentBanner() {
   if (params.get('paid') !== 'true') return;
   const banner = document.createElement('div');
   banner.style.cssText = [
-    'background:#f0fdf4',
-    'border:2px solid #22c55e',
-    'color:#14532d',
-    'padding:20px 28px',
-    'border-radius:16px',
-    'margin-bottom:28px',
-    'font-size:15px',
-    'font-weight:500',
-    'display:flex',
-    'align-items:center',
-    'gap:14px',
-    'box-shadow:0 2px 12px rgba(34,197,94,0.15)',
+    'background:#f0fdf4','border:2px solid #22c55e','color:#14532d',
+    'padding:20px 28px','border-radius:16px','margin-bottom:28px',
+    'font-size:15px','font-weight:500','display:flex','align-items:center',
+    'gap:14px','box-shadow:0 2px 12px rgba(34,197,94,0.15)',
   ].join(';');
   banner.innerHTML = '<div><div style="font-size:17px;font-weight:700;margin-bottom:4px;">Payment confirmed — welcome aboard!</div><div style="font-size:14px;opacity:0.8;">Complete your profile below and your pipeline will be live within minutes.</div></div>';
-  const wrap = document.querySelector('.onboard-wrap');
   const header = document.querySelector('.onboard-header');
   if (header) header.insertAdjacentElement('beforebegin', banner);
-  else if (wrap) wrap.prepend(banner);
 }
 
-// ── Clear errors on input ──────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
-  ['f-name','f-email','f-bio-short','f-topics','f-best-in-world','f-life-purpose'].forEach((id) => {
+
+  // Clear errors on input
+  ['f-name','f-email','f-bio-short'].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => {
       el.classList.remove('error');
-      const errId = `err-${id.replace('f-', '')}`;
-      const errEl = document.getElementById(errId);
+      const errEl = document.getElementById(`err-${id.replace('f-', '')}`);
       if (errEl) errEl.classList.remove('show');
     });
   });
 
-  // Vibe pill selection
-  document.querySelectorAll('.vibe-pill').forEach((pill) => {
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.vibe-pill').forEach((p) => p.classList.remove('active'));
-      pill.classList.add('active');
-      selectedVibe = pill.dataset.vibe;
-      const hidden = document.getElementById('f-visual-vibe');
-      if (hidden) hidden.value = selectedVibe;
+  // Topic chips
+  document.querySelectorAll('.topic-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      // Clear topic error if any chip is now selected
+      const hasAny = getSelectedTopics().length > 0
+        || (document.getElementById('f-topics')?.value || '').trim().length > 0;
+      if (hasAny) document.getElementById('err-topics')?.classList.remove('show');
     });
   });
-  // Set first pill active by default
-  const firstPill = document.querySelector('.vibe-pill');
-  if (firstPill) firstPill.classList.add('active');
 
-  // Colour picker sync
-  const colorPrimary    = document.getElementById('f-color-primary');
-  const colorPrimaryHex = document.getElementById('f-color-primary-hex');
-  const colorSecondary    = document.getElementById('f-color-secondary');
-  const colorSecondaryHex = document.getElementById('f-color-secondary-hex');
-
-  if (colorPrimary && colorPrimaryHex) {
-    colorPrimary.addEventListener('input', () => { colorPrimaryHex.value = colorPrimary.value; });
-    colorPrimaryHex.addEventListener('input', () => {
-      if (/^#[0-9a-fA-F]{6}$/.test(colorPrimaryHex.value)) colorPrimary.value = colorPrimaryHex.value;
-    });
-  }
-  if (colorSecondary && colorSecondaryHex) {
-    colorSecondary.addEventListener('input', () => { colorSecondaryHex.value = colorSecondary.value; });
-    colorSecondaryHex.addEventListener('input', () => {
-      if (/^#[0-9a-fA-F]{6}$/.test(colorSecondaryHex.value)) colorSecondary.value = colorSecondaryHex.value;
+  // Also clear topic error when typing in the free-type box
+  const topicsInput = document.getElementById('f-topics');
+  if (topicsInput) {
+    topicsInput.addEventListener('input', () => {
+      if (topicsInput.value.trim().length > 0) {
+        document.getElementById('err-topics')?.classList.remove('show');
+      }
     });
   }
 });
 
 // Expose to inline onclick handlers
-window.goToStep   = goToStep;
-window.submitForm = submitForm;
+window.goToStep    = goToStep;
+window.submitForm  = submitForm;
+window.selectPace  = selectPace;
+window.generateBio = generateBio;
