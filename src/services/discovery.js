@@ -54,27 +54,29 @@ const currentYear = new Date().getFullYear();
  * Use Claude to generate 5 niche podcast search query variations from the client's profile.
  * Returns an array of search strings to pass to ListenNotes/iTunes/etc.
  */
-async function generateNicheQueries(client) {
+async function generateNicheQueries(client, runNumber = 1) {
   try {
     const anthropic = getAnthropicClient();
     const primaryTopic = client.topics?.[0] || 'business';
     const audience = client.target_audience || '';
     const angles = (client.speaking_angles || []).slice(0, 3).join(', ');
+    const allTopics = (client.topics || []).join(', ');
 
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 200,
       messages: [{
         role: 'user',
-        content: `Generate exactly 5 specific podcast search queries for finding interview shows that would book this guest.
+        content: `Generate exactly 5 specific podcast search queries for finding interview shows that would book this guest. This is search run #${runNumber} — generate DIFFERENT queries than previous runs by exploring different sub-angles, adjacent niches, or alternative framings.
 
-Guest topic: ${primaryTopic}
+Guest topics: ${allTopics}
 Target audience: ${audience}
 Talking points: ${angles}
 
 Rules:
 - Each query should be 3–6 words
 - Target niche sub-angles, not broad categories
+- Vary the angle based on run number ${runNumber} (higher = more niche/adjacent)
 - Do NOT include the word "podcast" (it will be appended)
 - Return ONLY a JSON array of 5 strings, nothing else
 
@@ -672,21 +674,36 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   const ninetyDaysAgo = Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000);
   const language = client.languages?.[0] || 'English';
 
-  for (const query of queries) {
-    logger.debug('Running Listen Notes search', { query });
-    const result = await listennotes.searchPodcasts(query, {
-      type:           'podcast',
-      language,
-      len_min:        15,
-      published_after: ninetyDaysAgo,
-      sort_by_date:   0,
-      safe_mode:      1,
-    });
+  // Derive run number from existing match count (each run adds ~50 matches)
+  const { data: existingMatchCount } = await supabase
+    .from('podcast_matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', client.id);
+  const runNumber = Math.max(1, Math.floor(((existingMatchCount?.count || existingMatchCount) ?? 0) / 50) + 1);
+  // Paginate ListenNotes: fetch a fresh page per run so repeat runs get new inventory
+  const lnPage = runNumber; // page 1 on first run, page 2 on second, etc.
 
-    const podcasts = result?.results || [];
-    for (const item of podcasts) {
-      if (item.id && !allCandidates.has(item.id)) {
-        allCandidates.set(item.id, normalisePodcast(item));
+  logger.info('Discovery run metadata', { clientId: client.id, runNumber, lnPage });
+
+  for (const query of queries) {
+    logger.debug('Running Listen Notes search', { query, page: lnPage });
+    // Always fetch page 1 for fresh inventory, plus the run-specific page for pagination
+    const pages = lnPage > 1 ? [1, lnPage] : [1];
+    for (const page of pages) {
+      const result = await listennotes.searchPodcasts(query, {
+        type:           'podcast',
+        language,
+        len_min:        15,
+        published_after: ninetyDaysAgo,
+        sort_by_date:   0,
+        safe_mode:      1,
+        offset:         (page - 1) * 10,
+      });
+      const podcasts = result?.results || [];
+      for (const item of podcasts) {
+        if (item.id && !allCandidates.has(item.id)) {
+          allCandidates.set(item.id, normalisePodcast(item));
+        }
       }
     }
   }
@@ -695,8 +712,9 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
 
   // ─────────────────────────────────────────────────────────────
   // 1b. Claude-generated niche query expansion (5 variations)
+  //     Run-number seeded so each run gets different angles
   // ─────────────────────────────────────────────────────────────
-  const nicheQueries = await generateNicheQueries(client);
+  const nicheQueries = await generateNicheQueries(client, runNumber);
   logger.info('Niche query expansion', { count: nicheQueries.length, queries: nicheQueries });
 
   for (const query of nicheQueries) {
@@ -1020,13 +1038,11 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   const minEps    = client.min_show_episodes || 20;
 
   const filtered = [];
+  const backfill = []; // shows that pass all filters except episode count
 
   for (const podcast of allCandidates.values()) {
     // Filter: already matched
     if (alreadyMatchedExternalIds.has(podcast.external_id)) continue;
-
-    // Filter: episode count below minimum
-    if (podcast.total_episodes !== null && podcast.total_episodes < minEps) continue;
 
     // Filter: last episode too old
     if (podcast.last_episode_date) {
@@ -1034,9 +1050,28 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
       if (now - lastEpMs > maxAgeMs) continue;
     }
 
-    filtered.push(podcast);
+    const eps = podcast.total_episodes;
+    const meetsEpisodeMin = eps === null || eps >= minEps; // null = unknown, let through
+    const meetsLaxMin     = eps === null || eps >= 10;
+
+    if (meetsEpisodeMin) {
+      filtered.push(podcast);
+    } else if (meetsLaxMin) {
+      backfill.push(podcast); // hold for gap-filling
+    }
 
     if (filtered.length >= 50) break;
+  }
+
+  // Fix 3: backfill with lax-episode shows if we're still under 50
+  if (filtered.length < 50) {
+    for (const podcast of backfill) {
+      filtered.push(podcast);
+      if (filtered.length >= 50) break;
+    }
+    if (backfill.length > 0) {
+      logger.info('Backfilled with lax-episode shows', { added: Math.min(backfill.length, 50 - filtered.length + backfill.length) });
+    }
   }
 
   // Sort: email first → listen_score descending → rest
