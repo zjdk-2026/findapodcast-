@@ -100,7 +100,8 @@ Return ONLY valid JSON — no markdown, no prose, no code fences. Your entire re
 IMPORTANT RULES
 ═══════════════════════════════════════════════════════════════
 
-- Never fabricate information. If a field is unknown, reflect that in the score and notes.
+- Use your world knowledge to fill gaps. If the podcast title or URL identifies a well-known show (e.g. "The Joe Rogan Experience", "How I Built This", "The Tim Ferriss Show"), score it using what you know — do not treat it as unknown just because scraped metadata is sparse. World-famous shows (global top 10) should have reach_score 95-100, recency reflecting their known cadence, and guest_quality reflecting their known guests.
+- Never fabricate information. If a field is genuinely unknown AND no world knowledge applies, reflect that in the score.
 - Be specific in text fields — vague generalities are not useful to the client.
 - Avoid industries or topics listed in client.avoid_industries and client.avoid_topics — these should heavily penalise the relevance and brand scores.
 - The best_pitch_angle must be genuinely compelling — not a platitude.
