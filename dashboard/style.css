@@ -972,10 +972,10 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
 .fit-score-label {
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .fit-score-value {
@@ -986,7 +986,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 }
 
 .fit-score-bar-track {
-  height: 3px;
+  height: 5px;
   background: var(--border-subtle);
   border-radius: var(--radius-pill);
   overflow: hidden;
@@ -1002,7 +1002,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 .score-bars {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .score-row {
@@ -1013,17 +1013,17 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
 .score-row-label {
   font-size: 11px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   width: 78px;
   flex-shrink: 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .score-bar-track {
   flex: 1;
-  height: 3px;
+  height: 5px;
   background: var(--border-subtle);
   border-radius: var(--radius-pill);
   overflow: hidden;

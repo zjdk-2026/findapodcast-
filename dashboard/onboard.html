@@ -52,7 +52,7 @@
         </div>
         <div class="progress-step" id="step-indicator-4">
           <div class="step-dot">4</div>
-          <span class="step-label">Vision</span>
+          <span class="step-label">Photos</span>
         </div>
       </div>
     </div>
@@ -199,43 +199,14 @@
 
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
-          <button class="btn btn-primary" onclick="goToStep(4)">Next: Your Vision →</button>
+          <button class="btn btn-primary" onclick="goToStep(4)">Next: Add Photos →</button>
         </div>
       </div>
 
-      <!-- Step 4: Your Vision -->
+      <!-- Step 4: Photos -->
       <div class="step-panel" id="step-4">
-        <h2 class="step-title">Your Vision 🌟</h2>
-        <p class="step-desc">This powers your personalised vision board on your dashboard.</p>
-
-        <div class="form-group">
-          <label class="form-label" for="f-best-in-world">What are you the best in the world at? <span class="req">*</span></label>
-          <input type="text" id="f-best-in-world" class="form-input" placeholder="e.g. Helping faith-driven entrepreneurs scale without burnout" />
-          <p class="field-error" id="err-best-in-world">Please answer this question.</p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="f-life-purpose">What is your life's purpose or endgame? <span class="req">*</span></label>
-          <textarea id="f-life-purpose" class="form-textarea" rows="3" placeholder="e.g. To awaken the next generation of leaders who build businesses with faith and impact..."></textarea>
-          <p class="field-error" id="err-life-purpose">Please answer this question.</p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="f-unlimited-resources">If you had unlimited resources, what would you be doing with your time?</label>
-          <textarea id="f-unlimited-resources" class="form-textarea" rows="3" placeholder="e.g. Building schools across Africa, running a global leadership movement..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Your Visual Vibe</label>
-          <div class="vibe-selector" id="vibe-selector">
-            <button type="button" class="vibe-pill" data-vibe="bold-professional">⚡ Bold &amp; Professional</button>
-            <button type="button" class="vibe-pill" data-vibe="warm-human">🌿 Warm &amp; Human</button>
-            <button type="button" class="vibe-pill" data-vibe="clean-minimal">✨ Clean &amp; Minimal</button>
-            <button type="button" class="vibe-pill" data-vibe="creative-bold">🎨 Creative &amp; Bold</button>
-          </div>
-          <input type="hidden" id="f-visual-vibe" value="bold-professional" />
-        </div>
-
+        <h2 class="step-title">Add Your Photos 📸</h2>
+        <p class="step-desc">Add a profile photo and logo to personalise your dashboard.</p>
 
         <div class="form-group">
           <label class="form-label">Profile Photo <span style="font-weight:400;color:#999;">(optional)</span></label>

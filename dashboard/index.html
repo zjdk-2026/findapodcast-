@@ -129,6 +129,7 @@
         <button id="header-run-pipeline" onclick="runPipeline()" class="stat-card" style="background:var(--accent);border-color:var(--accent);cursor:pointer;align-items:center;justify-content:center;text-align:center;border:none;">
           <span style="font-size:15px;font-weight:700;color:#fff;">Find a Podcast</span>
           <span id="last-run-badge" style="font-size:11px;color:rgba(255,255,255,0.7);white-space:nowrap;margin-top:2px;"></span>
+          <span id="start-here-label" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:0.08em;background:rgba(255,255,255,0.18);border-radius:999px;padding:2px 8px;margin-top:4px;">START HERE</span>
         </button>
         <div class="stat-card">
           <span class="stat-value" id="stat-total">—</span>
@@ -323,22 +324,6 @@
         <div><label class="field-label">Short Bio (2-3 sentences)</label><textarea id="profile-bio-short" rows="3" class="email-edit-field"></textarea></div>
         <div><label class="field-label">Full Bio</label><textarea id="profile-bio-long" rows="5" class="email-edit-field"></textarea></div>
 
-        <div style="border-top:1px solid var(--border-light);padding-top:16px;margin-top:4px;">
-          <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-tertiary);margin:0 0 12px;">Vision Board Settings</p>
-          <div><label class="field-label">What are you the best in the world at?</label><input type="text" id="profile-best-in-world" class="email-edit-field" placeholder="e.g. Helping faith-driven entrepreneurs scale without burnout" /></div>
-          <div style="margin-top:12px;"><label class="field-label">Life's purpose or endgame</label><textarea id="profile-life-purpose" rows="3" class="email-edit-field" placeholder="e.g. To awaken the next generation of leaders..."></textarea></div>
-          <div style="margin-top:12px;"><label class="field-label">If you had unlimited resources, what would you be doing?</label><textarea id="profile-unlimited-resources" rows="2" class="email-edit-field"></textarea></div>
-          <div style="margin-top:12px;">
-            <label class="field-label">Visual Vibe</label>
-            <div class="vibe-selector" id="profile-vibe-selector" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
-              <button type="button" class="vibe-pill" data-vibe="bold-professional">⚡ Bold &amp; Professional</button>
-              <button type="button" class="vibe-pill" data-vibe="warm-human">🌿 Warm &amp; Human</button>
-              <button type="button" class="vibe-pill" data-vibe="clean-minimal">✨ Clean &amp; Minimal</button>
-              <button type="button" class="vibe-pill" data-vibe="creative-bold">🎨 Creative &amp; Bold</button>
-            </div>
-            <input type="hidden" id="profile-visual-vibe" value="bold-professional" />
-          </div>
-        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>
