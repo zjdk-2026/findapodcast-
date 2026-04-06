@@ -6,6 +6,7 @@ const cheerio = require('cheerio');
 const listennotes = require('../lib/listennotes');
 const supabase = require('../lib/supabase');
 const logger = require('../lib/logger');
+const { getClient: getAnthropicClient } = require('../lib/anthropic');
 
 /**
  * Hardcoded map of common topics to Listen Notes genre IDs.
@@ -48,6 +49,47 @@ const TOPIC_TO_GENRE = {
 
 const GOOGLE_SEARCH_BASE = 'https://www.googleapis.com/customsearch/v1';
 const currentYear = new Date().getFullYear();
+
+/**
+ * Use Claude to generate 5 niche podcast search query variations from the client's profile.
+ * Returns an array of search strings to pass to ListenNotes/iTunes/etc.
+ */
+async function generateNicheQueries(client) {
+  try {
+    const anthropic = getAnthropicClient();
+    const primaryTopic = client.topics?.[0] || 'business';
+    const audience = client.target_audience || '';
+    const angles = (client.speaking_angles || []).slice(0, 3).join(', ');
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Generate exactly 5 specific podcast search queries for finding interview shows that would book this guest.
+
+Guest topic: ${primaryTopic}
+Target audience: ${audience}
+Talking points: ${angles}
+
+Rules:
+- Each query should be 3–6 words
+- Target niche sub-angles, not broad categories
+- Do NOT include the word "podcast" (it will be appended)
+- Return ONLY a JSON array of 5 strings, nothing else
+
+Example output: ["faith-based entrepreneur interview","Christian business leadership","leadership legacy building","faith driven founder stories","entrepreneurship spiritual mindset"]`,
+      }],
+    });
+
+    const text = msg.content[0]?.text?.trim() || '[]';
+    const parsed = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]');
+    return Array.isArray(parsed) ? parsed.slice(0, 5).map(q => `${q} podcast`) : [];
+  } catch (err) {
+    logger.warn('Niche query generation failed, skipping', { error: err.message });
+    return [];
+  }
+}
 
 /**
  * Run Google Custom Search queries to supplement discovery.
@@ -652,6 +694,30 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   logger.info('Listen Notes search complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
+  // 1b. Claude-generated niche query expansion (5 variations)
+  // ─────────────────────────────────────────────────────────────
+  const nicheQueries = await generateNicheQueries(client);
+  logger.info('Niche query expansion', { count: nicheQueries.length, queries: nicheQueries });
+
+  for (const query of nicheQueries) {
+    const result = await listennotes.searchPodcasts(query, {
+      type: 'podcast',
+      language,
+      len_min: 15,
+      published_after: ninetyDaysAgo,
+      sort_by_date: 0,
+      safe_mode: 1,
+    });
+    const podcasts = result?.results || [];
+    for (const item of podcasts) {
+      if (item.id && !allCandidates.has(item.id)) {
+        allCandidates.set(item.id, normalisePodcast(item));
+      }
+    }
+  }
+  logger.info('Niche query search complete', { candidatesSoFar: allCandidates.size });
+
+  // ─────────────────────────────────────────────────────────────
   // 2. getBestPodcasts for each client topic mapped to genre ID
   // ─────────────────────────────────────────────────────────────
   const topicsToSearch = (client.topics || []).slice(0, 4);
@@ -828,12 +894,9 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   logger.info('Google supplementary search complete', { candidatesSoFar: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
-  // 3b. Similar podcasts chaining — skipped on manual runs for speed
+  // 3b. Similar podcasts chaining — runs on all run types
   // ─────────────────────────────────────────────────────────────
-  if (isManual) {
-    logger.info('Manual run — skipping similar podcast chaining');
-  }
-  const top3 = isManual ? [] : Array.from(allCandidates.values())
+  const top3 = Array.from(allCandidates.values())
     .filter((p) => p.listen_score != null)
     .sort((a, b) => (b.listen_score || 0) - (a.listen_score || 0))
     .slice(0, 3);
@@ -854,7 +917,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // ─────────────────────────────────────────────────────────────
   // 3c. Listen Notes /recommendations for top 5 by listen_score
   // ─────────────────────────────────────────────────────────────
-  if (!isManual) {
+  if (true) {
     const LISTENNOTES_API_KEY = process.env.LISTENNOTES_API_KEY;
     const top5ForRecs = Array.from(allCandidates.values())
       .filter((p) => p.listennotes_url && p.listen_score != null)
