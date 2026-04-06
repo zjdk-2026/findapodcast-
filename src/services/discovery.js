@@ -1010,25 +1010,35 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   logger.info('After cross-source dedup', { candidates: allCandidates.size });
 
   // ─────────────────────────────────────────────────────────────
-  // 4. Deduplicate (already done via Map) — fetch existing matches
-  //    to avoid re-processing podcasts this client has already seen
+  // 4. Build already-matched set — two queries, no FK JOIN needed
+  //    (Supabase relationship JOIN only works if FK is configured;
+  //     two-query approach is always reliable)
   // ─────────────────────────────────────────────────────────────
-  const { data: existingMatches, error: matchError } = await supabase
+  const { data: existingMatchRows, error: matchError } = await supabase
     .from('podcast_matches')
-    .select('podcast_id, podcasts(external_id)')
+    .select('podcast_id')
     .eq('client_id', client.id);
 
   if (matchError) {
     logger.error('Failed to fetch existing matches', { clientId: client.id, error: matchError.message });
   }
 
-  const alreadyMatchedExternalIds = new Set(
-    (existingMatches || [])
-      .map((m) => m.podcasts?.external_id)
-      .filter(Boolean)
-  );
+  const matchedPodcastIds = (existingMatchRows || [])
+    .map((m) => m.podcast_id)
+    .filter(Boolean);
 
-  logger.info('Existing matches loaded', { count: alreadyMatchedExternalIds.size });
+  let alreadyMatchedExternalIds = new Set();
+  if (matchedPodcastIds.length > 0) {
+    const { data: matchedPodcasts } = await supabase
+      .from('podcasts')
+      .select('external_id')
+      .in('id', matchedPodcastIds);
+    alreadyMatchedExternalIds = new Set(
+      (matchedPodcasts || []).map((p) => p.external_id).filter(Boolean)
+    );
+  }
+
+  logger.info('Existing matches loaded', { matchCount: matchedPodcastIds.length, externalIdCount: alreadyMatchedExternalIds.size });
 
   // ─────────────────────────────────────────────────────────────
   // 5. Filter pipeline

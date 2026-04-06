@@ -142,7 +142,7 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
 
         const { data: savedMatch, error: matchError } = await supabase
           .from('podcast_matches')
-          .insert(matchRecord)
+          .upsert(matchRecord, { onConflict: 'client_id,podcast_id', ignoreDuplicates: true })
           .select()
           .single();
 
