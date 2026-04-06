@@ -1037,7 +1037,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // ─────────────────────────────────────────────────────────────
   const now = Date.now();
   const maxAgeMs = (client.max_show_age_days || 180) * 24 * 60 * 60 * 1000;
-  const minEps   = client.min_show_episodes || 20;
+  const minEps   = Math.max(client.min_show_episodes || 10, 10); // hard floor: 10 episodes minimum
 
   // Track what's in filtered for fast dedup in guardrail layers
   const filteredIds = new Set();
@@ -1055,8 +1055,8 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     const tooOld = lastEpMs !== null && (now - lastEpMs > maxAgeMs);
 
     const eps = podcast.total_episodes;
-    const meetsEpisodeMin = eps === null || eps >= minEps;
-    const meetsLaxMin     = eps === null || eps >= 10;
+    const meetsEpisodeMin = eps === null || eps >= minEps; // 10+ episodes
+    const meetsLaxMin     = eps === null || eps >= 5;     // guardrail backfill only
 
     if (!tooOld && meetsEpisodeMin) {
       filtered.push(podcast);
