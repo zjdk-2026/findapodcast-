@@ -367,7 +367,6 @@ function actionButtonsHtml(match) {
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-prep btn-xs btn-action-primary" onclick="showInterviewPrepModal('${id}')">🎙️ Prepare for Interview</button>`);
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
@@ -514,7 +513,7 @@ function renderMatchCard(match) {
       <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.status === 'appeared' ? (match.email_subject ? 'View / Edit Email' : '✉️ Write a Thank You Email') : (match.status === 'sent' ? (match.email_subject ? 'View Email' : '✉️ Email') : (match.email_subject ? '✉️ Email' : '✉️ Email'))}
-        ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">AI</span>') : ''}
+        ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
         <label class="pitch-field-label">Subject Line</label>
@@ -538,7 +537,7 @@ function renderMatchCard(match) {
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
-          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Generate with AI</button>` : ''}
+          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Rewrite Pitch</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
@@ -757,7 +756,7 @@ function renderDashboard(data) {
   if (urlParams.get('gmailConnected') === 'true') {
     const banner = $('notification-banner');
     if (banner) {
-      banner.textContent = 'Gmail connected successfully! Draft emails will now be created automatically.';
+      banner.textContent = 'Gmail connected successfully! Pitch drafts will now be created directly in your inbox.';
       banner.style.display = 'block';
       setTimeout(() => { banner.style.display = 'none'; }, 6000);
     }
@@ -1534,7 +1533,7 @@ async function runPipeline() {
   btn.style.color = '#fff';
   $('profile-dropdown').style.display = 'none';
   const steps = [
-    'Activating AI matching engine…',
+    'Scanning global podcast network…',
     'Scanning global podcast network…',
     'Filtering by audience alignment…',
     'Scoring shows by buyer intent…',
@@ -1844,7 +1843,7 @@ async function saveTemplate() {
 function resetTemplate() {
   const ta = $('template-textarea');
   if (ta) ta.value = '';
-  showToast('Template cleared — will use default AI template.', 'info');
+  showToast('Template cleared — your default pitch template will be used.', 'info');
 }
 
 // ── Save as Template ──────────────────────────────────────────────────
