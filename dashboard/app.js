@@ -793,7 +793,7 @@ function renderDashboard(data) {
 
   renderVisionBoard(client);
   renderGrid();
-  renderStatsStrip();
+  updateStatBadges(); // renders hero section + tab counts + stat numbers
 
   $('loading-state').style.display   = 'none';
   $('dashboard-content').style.display = 'block';
