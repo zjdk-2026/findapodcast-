@@ -256,13 +256,16 @@ const SCORE_TOOLTIPS = {
 function scoreBarHtml(label, value) {
   const v   = Math.round(value || 0);
   const tip = SCORE_TOOLTIPS[label] || '';
+  const cls = v >= 70 ? 'high' : v >= 40 ? 'mid' : 'low';
   return `
-    <div class="score-row">
-      <span class="score-row-label" title="${esc(tip)}" style="cursor:help;">${esc(label)}${tip ? ' <span style="font-size:10px;opacity:0.5;border:1px solid currentColor;border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;margin-left:3px;">?</span>' : ''}</span>
-      <div class="score-bar-track">
-        <div class="score-bar-fill ${v >= 70 ? 'high' : v >= 40 ? 'mid' : 'low'}" style="width:${v}%"></div>
+    <div class="score-row"${tip ? ` title="${esc(tip)}" style="cursor:help;"` : ''}>
+      <div class="score-row-header">
+        <span class="score-row-label">${esc(label)}</span>
+        <span class="score-row-value" style="color:${v >= 70 ? 'var(--success)' : v >= 40 ? 'var(--warning)' : 'var(--danger)'}">${v}</span>
       </div>
-      <span class="score-row-value">${v}</span>
+      <div class="score-bar-track">
+        <div class="score-bar-fill ${cls}" style="width:${v}%"></div>
+      </div>
     </div>`;
 }
 
