@@ -505,18 +505,29 @@ function renderMatchCard(match) {
     <!-- Pitch + Notes buttons row -->
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
-    <!-- Pitch section -->
+    <!-- Pitch / Thank You section -->
     <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(match.status === 'replied' || match.status === 'dismissed') ? 'display:none;' : ''}">
-      <button class="pitch-toggle-btn ${match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
+      <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ${match.status === 'appeared' ? (match.email_subject ? 'View / Edit Email' : '✉️ Write a Thank You Email') : (match.status === 'sent' ? (match.email_subject ? 'View Email' : '✉️ Email') : (match.email_subject ? '✉️ Email' : '✉️ Email'))}
+        ${match.status === 'appeared' ? '✉️ Send a Thank You' : (match.email_subject ? '✉️ Email' : '✉️ Email')}
         ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
+        ${match.status === 'appeared' ? `
         <label class="pitch-field-label">Subject Line</label>
-        ${match.status === 'appeared'
-          ? `<input type="text" class="note-textarea" id="pitch-subject-select-${esc(match.id)}" placeholder="e.g. Thank you — ${esc(podcast.title || 'your show')}" style="margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />`
-          : `<select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
+        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
+          <option value="">Choose a subject line</option>
+          <option value="Thank you for having me on ${esc(podcast.title || 'your show')}">Thank you for having me on ${esc(podcast.title || 'your show')}</option>
+          <option value="Really enjoyed our conversation">Really enjoyed our conversation</option>
+          <option value="Thanks for the episode">Thanks for the episode</option>
+          <option value="__custom__">✏️ Write my own…</option>
+        </select>
+        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="" />
+        <label class="pitch-field-label">Thank You Email</label>
+        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Write a short thank you to the host. Mention something specific from the episode, share that you are promoting it to your audience, and leave the door open for a future connection."></textarea>
+        ` : `
+        <label class="pitch-field-label">Subject Line</label>
+        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
           <option value="">Choose a subject line</option>
           <option value="Guest inquiry for ${esc(podcast.title || 'your show')}">Guest inquiry for ${esc(podcast.title || 'your show')}</option>
           <option value="I'd love to be a guest on ${esc(podcast.title || 'your show')}">I'd love to be a guest on ${esc(podcast.title || 'your show')}</option>
@@ -526,10 +537,10 @@ function renderMatchCard(match) {
           <option value="Reaching out about a guest spot on ${esc(podcast.title || 'your show')}">Reaching out about a guest spot on ${esc(podcast.title || 'your show')}</option>
           <option value="__custom__">✏️ Write my own…</option>
         </select>
-        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />`
-        }
-        <label class="pitch-field-label">${match.status === 'appeared' ? 'Email Body' : 'Pitch Email Body'}</label>
-        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="${match.status === 'appeared' ? 'Write your thank you email…' : 'Your pitch email…'}">${match.status === 'appeared' ? '' : esc(match.email_body || '')}</textarea>
+        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
+        <label class="pitch-field-label">Pitch Email Body</label>
+        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
+        `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
           ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
@@ -2097,7 +2108,10 @@ async function sendFollowUp() {
     const data = await apiPost('/api/send-followup', { matchId, subject, body });
     if (data.success) {
       showToast(data.gmailSent ? 'Follow-up sent!' : 'Follow-up saved (Gmail not connected).', 'success');
+      updateMatchInState(matchId, { status: 'followed_up' });
+      updateStatBadges();
       closeFollowUpModal();
+      switchToFilter('followed_up');
     } else {
       showToast(data.error || 'Send failed.', 'error');
     }

@@ -152,9 +152,10 @@ router.post('/api/gmail/check-replies', async (req, res) => {
   if (!client?.gmail_refresh_token) return res.json({ success: true, updated: [] });
 
   // Scan both 'sent' AND 'followed_up' matches — a reply can arrive after either
+  // Include sent_at so we can scope Gmail search to after the pitch was sent
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, podcasts(contact_email)')
+    .select('id, gmail_thread_id, sent_at, podcasts(contact_email)')
     .eq('client_id', client.id)
     .in('status', ['sent', 'followed_up']);
 
@@ -182,10 +183,11 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     }
 
     // Strategy 2: if still no reply detected and we have a contact email,
-    // search the inbox for any inbound message from that address.
-    // This catches replies that arrive as a fresh email rather than an in-thread reply.
+    // search the inbox for any inbound message from that address AFTER the pitch was sent.
+    // The after: filter is critical — without it, any historic email from that address
+    // would falsely trigger a reply (e.g. your own email address in a test match).
     if (!hasReply && contactEmail) {
-      hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail);
+      hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at);
     }
 
     if (hasReply) {
@@ -203,7 +205,7 @@ router.post('/api/gmail/check-replies', async (req, res) => {
  * Searches Gmail inbox for any message received from fromEmail.
  * Returns true if at least one such message exists.
  */
-async function checkInboxForReplyFromEmail(refreshToken, fromEmail) {
+async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt) {
   try {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -212,9 +214,18 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail) {
     );
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    // Build after: filter from sent_at so we only match replies AFTER the pitch was sent.
+    // This prevents false positives from historic emails or self-addressed test matches.
+    let afterClause = '';
+    if (sentAt) {
+      const epochSeconds = Math.floor(new Date(sentAt).getTime() / 1000);
+      afterClause = ` after:${epochSeconds}`;
+    }
+
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: `from:${fromEmail} in:inbox`,
+      q: `from:${fromEmail} in:inbox${afterClause}`,
       maxResults: 1,
     });
     return (res.data.messages?.length || 0) > 0;

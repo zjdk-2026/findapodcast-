@@ -462,7 +462,7 @@ router.post('/send-followup', async (req, res) => {
       }
     }
 
-    await supabase.from('podcast_matches').update({ follow_up_sent: true }).eq('id', matchId);
+    await supabase.from('podcast_matches').update({ follow_up_sent: true, status: 'followed_up' }).eq('id', matchId);
     return res.json({ success: true, gmailSent });
   } catch (err) {
     logger.error('Send-followup route error', { matchId, error: err.message });
