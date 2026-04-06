@@ -187,9 +187,17 @@ function renderHeroSection() {
 
   const bookedCount  = state.matches.filter((m) => m.status === 'booked').length;
   const newCount     = state.matches.filter((m) => m.status === 'new').length;
+  const pitchedCount = state.matches.filter((m) => ['sent','followed_up'].includes(m.status)).length;
   const seenKey = `seen_replied_${state.token}`;
   const seenIds = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
   const unseenRepliedCount = state.matches.filter((m) => m.status === 'replied' && !seenIds.has(m.id)).length;
+
+  // Motivational subtitle based on what's happening in pipeline
+  let subtitle = 'Your podcast booking pipeline is ready.';
+  if (bookedCount > 0) subtitle = `${bookedCount} booking${bookedCount > 1 ? 's' : ''} confirmed. Keep the momentum going.`;
+  else if (unseenRepliedCount > 0) subtitle = `${unseenRepliedCount} host${unseenRepliedCount > 1 ? 's' : ''} replied. Time to lock in a recording.`;
+  else if (pitchedCount > 0) subtitle = `${pitchedCount} pitch${pitchedCount > 1 ? 'es' : ''} out in the world. Check back for replies.`;
+  else if (newCount > 0) subtitle = `${newCount} new show${newCount > 1 ? 's' : ''} ready to review. Start pitching today.`;
 
   const chips = [];
   if (unseenRepliedCount > 0) {
@@ -199,6 +207,7 @@ function renderHeroSection() {
   heroEl.innerHTML = `
     <div class="hero-greeting">
       <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
+      <div class="hero-greeting-sub">${subtitle}</div>
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -857,6 +866,28 @@ function updateStatBadges() {
     sent:     m.filter((x) => x.status === 'sent').length,
     booked:   m.filter((x) => x.status === 'booked').length,
   });
+
+  // Refresh hero subtitle (booking/reply counts may have changed)
+  renderHeroSection();
+
+  // Update tab count badges
+  const tabCounts = {};
+  m.forEach((x) => { tabCounts[x.status] = (tabCounts[x.status] || 0) + 1; });
+  const tabs = $('filter-tabs');
+  if (tabs) {
+    tabs.querySelectorAll('.filter-tab').forEach((t) => {
+      const st = t.dataset.status;
+      // Remove old count badge (not the reply badge)
+      t.querySelectorAll('.tab-count').forEach((el) => el.remove());
+      const cnt = tabCounts[st] || 0;
+      if (cnt > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'tab-count';
+        badge.textContent = cnt;
+        t.appendChild(badge);
+      }
+    });
+  }
 }
 
 // ── Card loading state helper ─────────────────────────────────────────

@@ -409,18 +409,26 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
 /* ── Hero Greeting Section ─────────────────────────────────── */
 .hero-greeting {
-  padding: 28px 24px 0;
+  padding: 32px 24px 0;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .hero-greeting-name {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 40px;
+  font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1.2;
-  margin-bottom: 12px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.hero-greeting-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
 }
 
 .hero-chips {
@@ -454,7 +462,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 /* ── Stats Bar ─────────────────────────────────────────────── */
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 0.8fr;
   gap: 12px;
   padding: 16px 24px 0;
   max-width: 1400px;
@@ -465,7 +473,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -478,19 +486,45 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 }
 
 .stat-value {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 32px;
+  font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
 }
 
 .stat-label {
   font-size: 11px;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+/* Find a Podcast — hero CTA card */
+#header-run-pipeline {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.35) !important;
+}
+#header-run-pipeline:hover {
+  box-shadow: 0 6px 28px rgba(99,102,241,0.50) !important;
+  transform: translateY(-1px);
+}
+#header-run-pipeline:active { transform: translateY(0); }
+#header-run-pipeline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 60%);
+  pointer-events: none;
+}
+
+/* Booked card gets a gold accent */
+.stat-card-booked {
+  border-left: 3px solid var(--gold) !important;
 }
 
 .stat-green   { color: var(--success); }
@@ -638,6 +672,43 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   line-height: 1;
 }
 
+/* Tab count badge */
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 5px;
+  line-height: 1;
+  background: rgba(0,0,0,0.08);
+  color: var(--text-secondary);
+}
+.tab-pill.active .tab-count,
+.filter-tab.active .tab-count {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+.filter-tab .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 5px;
+  line-height: 1;
+  background: rgba(0,0,0,0.08);
+  color: var(--text-secondary);
+}
+
 .tab-pill .booked-dot {
   width: 6px;
   height: 6px;
@@ -739,19 +810,32 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 .match-card.status-booked,
 .card-booked-highlight {
   border-left: 3px solid var(--success);
-  background: var(--success-bg);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 40%);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(48,209,88,0.12);
+}
+html:not(.light-mode) .match-card.status-booked,
+html:not(.light-mode) .card-booked-highlight {
+  background: linear-gradient(135deg, rgba(48,209,88,0.06) 0%, var(--bg-card) 40%);
 }
 
-/* Score tier accent line (subtle top border) */
+/* Score tier accent line */
 .match-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
+  height: 3px;
 }
-.match-card.score-tier-high::before { background: var(--success); }
-.match-card.score-tier-mid::before  { background: var(--warning); }
-.match-card.score-tier-low::before  { background: var(--danger); }
+.match-card.score-tier-high::before { background: linear-gradient(90deg, #30D158, #22c55e 60%, transparent); }
+.match-card.score-tier-mid::before  { background: linear-gradient(90deg, #FF9F0A, #f59e0b 60%, transparent); }
+.match-card.score-tier-low::before  { background: linear-gradient(90deg, #FF453A, #ef4444 60%, transparent); }
+
+/* High-score cards get a subtle green glow */
+.match-card.score-tier-high {
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(48,209,88,0.08);
+}
+.match-card.score-tier-high:hover {
+  box-shadow: var(--shadow-hover), 0 0 0 1px rgba(48,209,88,0.14);
+}
 
 /* ── Collapsed card row ──────────────────────────────────────── */
 .card-row {
