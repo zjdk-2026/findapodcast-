@@ -1114,12 +1114,13 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     const needed = 50 - filtered.length;
     const clientTopics = (client.topics || []).map(t => t.toLowerCase());
 
+    // No topic filter — fetch top podcasts by listen_score and filter in JS.
+    // Topic overlap was unreliable when client topics are phrases vs single-word tags.
     const { data: cachedPodcasts, error: cacheErr } = await supabase
       .from('podcasts')
       .select('*')
-      .overlaps('niche_tags', clientTopics)
-      .order('listen_score', { ascending: false })
-      .limit(needed * 4); // fetch extra to account for already-matched filtering
+      .order('listen_score', { ascending: false, nullsFirst: false })
+      .limit(needed * 5); // fetch generously — filter in JS against already-matched
 
     if (cacheErr) {
       logger.warn('Cache pull failed', { error: cacheErr.message });
