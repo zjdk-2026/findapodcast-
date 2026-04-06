@@ -72,6 +72,15 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
     const rawPodcasts = await discoverPodcasts(client, { isManual });
     logger.info('Discovery complete', { clientId, count: rawPodcasts.length });
 
+    // Guardrail: log any run that falls short of the 50-podcast target
+    if (rawPodcasts.length < 50) {
+      logger.warn('GUARDRAIL: Discovery returned fewer than 50 podcasts', {
+        clientId,
+        found: rawPodcasts.length,
+        target: 50,
+      });
+    }
+
     if (rawPodcasts.length === 0) {
       logger.warn('No podcasts discovered', { clientId });
       await updateLastRun(clientId);
@@ -211,6 +220,34 @@ async function updateLastRun(clientId) {
 }
 
 /**
+ * Build niche_tags array from all available topic signals.
+ * Used by the global cache pull in discovery guardrail Layer 4.
+ */
+function buildNicheTags(enriched) {
+  const tags = new Set();
+  // From explicit niche_tags already on the record
+  for (const t of (enriched.niche_tags || [])) {
+    if (t) tags.add(t.toLowerCase().trim());
+  }
+  // From category field
+  if (enriched.category) tags.add(enriched.category.toLowerCase().trim());
+  // From description keyword extraction (simple heuristic)
+  const TOPIC_KEYWORDS = [
+    'entrepreneurship','entrepreneur','business','technology','tech','health','wellness',
+    'marketing','leadership','finance','money','investing','real estate','mindset',
+    'productivity','parenting','relationships','personal development','education',
+    'science','sports','comedy','news','politics','travel','food','fitness',
+    'mental health','sales','startup','ecommerce','coaching','consulting',
+    'branding','social media','content','podcasting','speaking','author',
+  ];
+  const desc = (enriched.description || '').toLowerCase();
+  for (const kw of TOPIC_KEYWORDS) {
+    if (desc.includes(kw)) tags.add(kw);
+  }
+  return Array.from(tags).slice(0, 20); // cap at 20 tags
+}
+
+/**
  * Build a podcast record suitable for upsert from enriched data.
  */
 function toInt(val) {
@@ -236,7 +273,7 @@ function buildPodcastRecord(enriched) {
     instagram_followers:     toInt(enriched.instagram_followers),
     linkedin_url:            enriched.linkedin_url    || null,
     category:                enriched.category        || null,
-    niche_tags:              enriched.niche_tags      || [],
+    niche_tags:              buildNicheTags(enriched),
     total_episodes:          toInt(enriched.total_episodes),
     last_episode_date:       enriched.last_episode_date || null,
     publish_frequency:       enriched.publish_frequency || null,

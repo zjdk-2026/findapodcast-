@@ -1033,62 +1033,180 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
   // ─────────────────────────────────────────────────────────────
   // 5. Filter pipeline
   // ─────────────────────────────────────────────────────────────
+  // 5. Filter pipeline — strict pass first
+  // ─────────────────────────────────────────────────────────────
   const now = Date.now();
-  const maxAgeMs  = (client.max_show_age_days || 180) * 24 * 60 * 60 * 1000;
-  const minEps    = client.min_show_episodes || 20;
+  const maxAgeMs = (client.max_show_age_days || 180) * 24 * 60 * 60 * 1000;
+  const minEps   = client.min_show_episodes || 20;
+
+  // Track what's in filtered for fast dedup in guardrail layers
+  const filteredIds = new Set();
 
   const filtered = [];
-  const backfill = []; // shows that pass all filters except episode count
+  const backfillEpisode = []; // passes age filter, fails episode count
+  const backfillAge     = []; // fails age filter
 
   for (const podcast of allCandidates.values()) {
-    // Filter: already matched
     if (alreadyMatchedExternalIds.has(podcast.external_id)) continue;
 
-    // Filter: last episode too old
-    if (podcast.last_episode_date) {
-      const lastEpMs = new Date(podcast.last_episode_date).getTime();
-      if (now - lastEpMs > maxAgeMs) continue;
-    }
+    const lastEpMs = podcast.last_episode_date
+      ? new Date(podcast.last_episode_date).getTime()
+      : null;
+    const tooOld = lastEpMs !== null && (now - lastEpMs > maxAgeMs);
 
     const eps = podcast.total_episodes;
-    const meetsEpisodeMin = eps === null || eps >= minEps; // null = unknown, let through
+    const meetsEpisodeMin = eps === null || eps >= minEps;
     const meetsLaxMin     = eps === null || eps >= 10;
 
-    if (meetsEpisodeMin) {
+    if (!tooOld && meetsEpisodeMin) {
       filtered.push(podcast);
-    } else if (meetsLaxMin) {
-      backfill.push(podcast); // hold for gap-filling
+      filteredIds.add(podcast.external_id);
+    } else if (!tooOld && meetsLaxMin) {
+      backfillEpisode.push(podcast);
+    } else if (tooOld) {
+      backfillAge.push(podcast);
     }
 
     if (filtered.length >= 50) break;
   }
 
-  // Fix 3: backfill with lax-episode shows if we're still under 50
+  // ── Guardrail Layer 1: relax episode count (10+ → any) ──────
   if (filtered.length < 50) {
-    for (const podcast of backfill) {
-      filtered.push(podcast);
+    for (const podcast of backfillEpisode) {
       if (filtered.length >= 50) break;
+      filtered.push(podcast);
+      filteredIds.add(podcast.external_id);
     }
-    if (backfill.length > 0) {
-      logger.info('Backfilled with lax-episode shows', { added: Math.min(backfill.length, 50 - filtered.length + backfill.length) });
+    logger.info('Guardrail L1 (episode relax)', { total: filtered.length });
+  }
+
+  // ── Guardrail Layer 2: relax age filter (180d → 365d) ───────
+  if (filtered.length < 50) {
+    const relaxedAgeMs = 365 * 24 * 60 * 60 * 1000;
+    for (const podcast of backfillAge) {
+      if (filtered.length >= 50) break;
+      if (filteredIds.has(podcast.external_id)) continue;
+      const lastEpMs = podcast.last_episode_date
+        ? new Date(podcast.last_episode_date).getTime()
+        : null;
+      if (lastEpMs !== null && (now - lastEpMs > relaxedAgeMs)) continue;
+      filtered.push(podcast);
+      filteredIds.add(podcast.external_id);
     }
+    logger.info('Guardrail L2 (age relax 365d)', { total: filtered.length });
+  }
+
+  // ── Guardrail Layer 3: any age, any episode count ────────────
+  if (filtered.length < 50) {
+    for (const podcast of allCandidates.values()) {
+      if (filtered.length >= 50) break;
+      if (alreadyMatchedExternalIds.has(podcast.external_id)) continue;
+      if (filteredIds.has(podcast.external_id)) continue;
+      filtered.push(podcast);
+      filteredIds.add(podcast.external_id);
+    }
+    logger.info('Guardrail L3 (no filters)', { total: filtered.length });
+  }
+
+  // ── Guardrail Layer 4: pull from global podcasts cache ───────
+  // Podcasts discovered for ANY client, enriched, not yet seen by this client
+  if (filtered.length < 50) {
+    const needed = 50 - filtered.length;
+    const clientTopics = (client.topics || []).map(t => t.toLowerCase());
+
+    const { data: cachedPodcasts, error: cacheErr } = await supabase
+      .from('podcasts')
+      .select('*')
+      .overlaps('niche_tags', clientTopics)
+      .order('listen_score', { ascending: false })
+      .limit(needed * 4); // fetch extra to account for already-matched filtering
+
+    if (cacheErr) {
+      logger.warn('Cache pull failed', { error: cacheErr.message });
+    } else {
+      for (const pod of (cachedPodcasts || [])) {
+        if (filtered.length >= 50) break;
+        if (alreadyMatchedExternalIds.has(pod.external_id)) continue;
+        if (filteredIds.has(pod.external_id)) continue;
+        // Normalise cache record to match discovery shape
+        filtered.push({
+          external_id:      pod.external_id,
+          title:            pod.title,
+          host_name:        pod.host_name,
+          description:      pod.description,
+          website:          pod.website,
+          contact_email:    pod.contact_email,
+          listen_score:     pod.listen_score,
+          total_episodes:   pod.total_episodes,
+          last_episode_date: pod.last_episode_date,
+          apple_url:        pod.apple_url,
+          spotify_url:      pod.spotify_url,
+          youtube_url:      pod.youtube_url,
+          instagram_url:    pod.instagram_url,
+          twitter_url:      pod.twitter_url,
+          facebook_url:     pod.facebook_url,
+          linkedin_page_url: pod.linkedin_url,
+          image:            pod.image,
+          _fromCache:       true,
+        });
+        filteredIds.add(pod.external_id);
+      }
+      logger.info('Guardrail L4 (global cache pull)', { total: filtered.length });
+    }
+  }
+
+  // ── Guardrail Layer 5: extra LN pagination if still short ────
+  if (filtered.length < 50) {
+    const extraPage = runNumber + 2; // go further ahead in LN pagination
+    const topQuery  = `${primaryTopic} podcast interview`;
+    logger.info('Guardrail L5: extra LN pagination', { page: extraPage, query: topQuery });
+
+    try {
+      const extraResult = await listennotes.searchPodcasts(topQuery, {
+        type:    'podcast',
+        language,
+        len_min: 5,
+        safe_mode: 1,
+        offset:  (extraPage - 1) * 10,
+      });
+      for (const item of (extraResult?.results || [])) {
+        if (filtered.length >= 50) break;
+        if (!item.id) continue;
+        if (alreadyMatchedExternalIds.has(item.id)) continue;
+        if (filteredIds.has(item.id)) continue;
+        filtered.push(normalisePodcast(item));
+        filteredIds.add(item.id);
+      }
+      logger.info('Guardrail L5 complete', { total: filtered.length });
+    } catch (err) {
+      logger.warn('Guardrail L5 LN pagination failed', { error: err.message });
+    }
+  }
+
+  // ── Final guardrail log ───────────────────────────────────────
+  if (filtered.length < 50) {
+    logger.warn('GUARDRAIL: Could not reach 50 podcasts', {
+      clientId: client.id,
+      found: filtered.length,
+      candidatesAvailable: allCandidates.size,
+    });
   }
 
   // Sort: email first → listen_score descending → rest
   filtered.sort((a, b) => {
-    const aHasEmail = a.email_contact ? 1 : 0;
-    const bHasEmail = b.email_contact ? 1 : 0;
+    const aHasEmail = (a.contact_email || a.email_contact) ? 1 : 0;
+    const bHasEmail = (b.contact_email || b.email_contact) ? 1 : 0;
     if (bHasEmail !== aHasEmail) return bHasEmail - aHasEmail;
     return (b.listen_score || 0) - (a.listen_score || 0);
   });
 
   logger.info('Discovery complete', {
     clientId: client.id,
-    totalFound: allCandidates.size,
-    afterFiltering: filtered.length,
+    totalCandidates: allCandidates.size,
+    returning: filtered.length,
   });
 
-  return filtered;
+  return filtered.slice(0, 50);
 }
 
 module.exports = { discoverPodcasts };
