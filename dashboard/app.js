@@ -823,6 +823,12 @@ function renderDashboard(data) {
   if (clientSubEl) {
     clientSubEl.style.display = 'none';
   }
+  // Hide START HERE if already clicked before
+  const startHereEl = $('start-here-label');
+  if (startHereEl && localStorage.getItem(`pp-start-here-gone-${state.token}`)) {
+    startHereEl.style.display = 'none';
+  }
+
   const lastRunBadge = $('last-run-badge');
   if (lastRunBadge) {
     lastRunBadge.textContent = client.last_run_at
@@ -1780,6 +1786,14 @@ async function runPipeline() {
       window.location.href = `/auth/gmail?clientId=${esc(state.client.id)}`;
     }
     return;
+  }
+
+  // Hide START HERE permanently after first click
+  const startHereKey = `pp-start-here-gone-${state.token}`;
+  if (!localStorage.getItem(startHereKey)) {
+    localStorage.setItem(startHereKey, '1');
+    const startHereEl = $('start-here-label');
+    if (startHereEl) startHereEl.style.display = 'none';
   }
 
   btn.disabled = true;
