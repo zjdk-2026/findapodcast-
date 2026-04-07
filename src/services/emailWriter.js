@@ -94,7 +94,7 @@ async function writeEmail(client, match, podcast) {
 
     return {
       subject: `Guest pitch — ${client.name}`,
-      body:    `Email generation failed: ${err.message}. Please write this email manually.`,
+      body:    `Hi [Host Name],\n\nI'd love to be a guest on your show.\n\n[Write your pitch here — tell them who you are, why your topic fits their audience, and what value you'll bring to their listeners.]\n\nLooking forward to connecting.\n\n${client.name}`,
     };
   }
 }
