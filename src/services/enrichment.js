@@ -235,6 +235,24 @@ async function fetchRssFeed(rssUrl) {
       }
     }
 
+    // Total episode count from <itunes:episodeCount> or by counting <item> elements
+    const episodeCountEl = $('itunes\\:episodeCount').first().text().trim();
+    if (episodeCountEl && !isNaN(Number(episodeCountEl))) {
+      result.total_episodes = Number(episodeCountEl);
+    } else {
+      const itemCount = $('item').length;
+      if (itemCount > 0 && !result.total_episodes) result.total_episodes = itemCount;
+    }
+
+    // Most recent episode date from first <item> <pubDate>
+    const firstPubDate = $('item').first().find('pubDate').text().trim();
+    if (firstPubDate) {
+      const parsed = new Date(firstPubDate);
+      if (!isNaN(parsed.getTime())) {
+        result.last_episode_date = parsed.toISOString().split('T')[0];
+      }
+    }
+
     // Always store the feed URL itself
     result.rss_feed_url = rssUrl;
 
@@ -287,12 +305,40 @@ async function enrichPodcast(podcastData) {
     }
   }
 
+  // ──────────────────────────────────────────────────
+  // 0c. Handle link-in-bio URLs (Linktree, bio.link, etc.)
+  //     Pull social links + try to find the real podcast website
+  // ──────────────────────────────────────────────────
+  const linkInBioUrl = enriched.linkinbio_url || (website && /linktr\.ee|linktree\.com|bio\.link|beacons\.ai|campsite\.bio/i.test(website) ? website : null);
+  if (linkInBioUrl) {
+    const ltHtml = await fetchHtml(linkInBioUrl);
+    if (ltHtml) {
+      const $lt = cheerio.load(ltHtml);
+      $lt('a[href]').each((_, el) => {
+        const raw  = $lt(el).attr('href') || '';
+        const href = raw.toLowerCase();
+        if (!enriched.instagram_url && href.includes('instagram.com'))                        enriched.instagram_url    = raw;
+        if (!enriched.facebook_url  && href.includes('facebook.com'))                         enriched.facebook_url     = raw;
+        if (!enriched.twitter_url   && (href.includes('twitter.com') || href.includes('x.com'))) enriched.twitter_url  = raw;
+        if (!enriched.spotify_url   && href.includes('spotify.com/show'))                     enriched.spotify_url      = raw;
+        if (!enriched.apple_url     && href.includes('podcasts.apple.com'))                   enriched.apple_url        = raw;
+        if (!enriched.youtube_url   && href.includes('youtube.com'))                          enriched.youtube_url      = raw;
+        // First non-social, non-linktree HTTP link = real website
+        const SOCIAL_DOMAINS = ['instagram', 'facebook', 'twitter', 'x.com', 'youtube', 'tiktok', 'spotify', 'apple', 'linktr', 'linktree'];
+        if (!enriched.website && raw.startsWith('http') && !SOCIAL_DOMAINS.some(s => href.includes(s))) {
+          enriched.website = raw;
+        }
+      });
+      logger.debug('Link-in-bio enriched', { url: linkInBioUrl, foundWebsite: !!enriched.website });
+    }
+  }
+
   if (!website && !enriched.website) {
     logger.debug('No website for podcast, skipping enrichment', { title: podcastData.title });
     return enriched;
   }
 
-  // Use enriched website if it was found via RSS
+  // Use enriched website if it was found via RSS or link-in-bio
   const siteUrl = enriched.website || website;
 
   logger.debug('Enriching podcast', { title: podcastData.title, website: siteUrl });

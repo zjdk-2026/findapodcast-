@@ -149,55 +149,62 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     .eq('dashboard_token', token)
     .single();
 
-  if (!client?.gmail_refresh_token) return res.json({ success: true, updated: [] });
+  // Return gmailConnected flag so the dashboard can show a warning
+  if (!client?.gmail_refresh_token) {
+    return res.json({ success: true, updated: [], gmailConnected: false });
+  }
 
   // Scan both 'sent' AND 'followed_up' matches — a reply can arrive after either
-  // Include sent_at so we can scope Gmail search to after the pitch was sent
+  // Include email_subject + sent_at so we can scope Gmail search more precisely
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, sent_at, podcasts(contact_email)')
+    .select('id, gmail_thread_id, email_subject, sent_at, podcasts(contact_email, title)')
     .eq('client_id', client.id)
     .in('status', ['sent', 'followed_up']);
 
-  if (!matches?.length) return res.json({ success: true, updated: [] });
+  if (!matches?.length) return res.json({ success: true, updated: [], gmailConnected: true, checked: 0 });
 
   const updated = [];
-  await Promise.all(matches.map(async (m) => {
-    let threadId = m.gmail_thread_id;
-    const contactEmail = m.podcasts?.contact_email;
 
-    // Fallback: find thread by contact email for older matches missing thread ID
-    if (!threadId) {
-      if (!contactEmail) return;
-      threadId = await findThreadByContactEmail(client.gmail_refresh_token, contactEmail);
-      if (threadId) {
-        await supabase.from('podcast_matches').update({ gmail_thread_id: threadId }).eq('id', m.id);
-        logger.info('Thread ID backfilled', { matchId: m.id, threadId });
+  // Process matches serially to avoid Gmail rate limits (not Promise.all)
+  for (const m of matches) {
+    try {
+      let threadId = m.gmail_thread_id;
+      const contactEmail = m.podcasts?.contact_email;
+
+      // Fallback: find thread by contact email for older matches missing thread ID
+      if (!threadId && contactEmail) {
+        threadId = await findThreadByContactEmail(client.gmail_refresh_token, contactEmail, m.email_subject);
+        if (threadId) {
+          await supabase.from('podcast_matches').update({ gmail_thread_id: threadId }).eq('id', m.id);
+          logger.info('Thread ID backfilled', { matchId: m.id, threadId });
+        }
       }
-    }
 
-    // Strategy 1: check if the known Gmail thread has > 1 message
-    let hasReply = false;
-    if (threadId) {
-      hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
-    }
+      // Strategy 1: check if the known Gmail thread has > 1 message (host replied in-thread)
+      let hasReply = false;
+      if (threadId) {
+        hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
+      }
 
-    // Strategy 2: if still no reply detected and we have a contact email,
-    // search the inbox for any inbound message from that address AFTER the pitch was sent.
-    // The after: filter is critical — without it, any historic email from that address
-    // would falsely trigger a reply (e.g. your own email address in a test match).
-    if (!hasReply && contactEmail) {
-      hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at);
-    }
+      // Strategy 2: search inbox for any inbound message from that address AFTER the pitch was sent.
+      // The after: filter prevents false positives from historic emails.
+      if (!hasReply && contactEmail) {
+        hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at);
+      }
 
-    if (hasReply) {
-      await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
-      updated.push(m.id);
-      logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
+      if (hasReply) {
+        await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
+        updated.push(m.id);
+        logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
+      }
+    } catch (matchErr) {
+      logger.warn('Reply check failed for match', { matchId: m.id, error: matchErr.message });
+      // Continue checking other matches
     }
-  }));
+  }
 
-  return res.json({ success: true, updated });
+  return res.json({ success: true, updated, gmailConnected: true, checked: matches.length });
 });
 
 /**

@@ -2632,18 +2632,27 @@ window.submitAddPodcast     = submitAddPodcast;
 // ── Check for host replies ─────────────────────────────────────────────
 async function checkForReplies() {
   if (!state.token) return;
+  // Skip if tab is hidden (save Gmail API quota)
+  if (document.visibilityState === 'hidden') return;
   try {
     const data = await apiPost('/api/gmail/check-replies', { token: state.token });
+
+    // Warn once in console if Gmail not connected — don't show toast (too noisy)
+    if (data.gmailConnected === false) {
+      console.info('[Reply Check] Gmail not connected — host replies cannot be auto-detected.');
+      return;
+    }
+
     if (data.success && data.updated?.length) {
       data.updated.forEach((matchId) => updateMatchInState(matchId, { status: 'replied' }));
       renderGrid();
+      updateStatBadges();
       // Show red badge on Host Replied tab
       const badge = document.getElementById('reply-badge');
       if (badge) {
         badge.textContent = data.updated.length;
         badge.style.display = 'inline-flex';
       }
-      // Flash toast and auto-switch to Host Replied tab
       showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's have' : ' has'} replied to your pitch!`, 'success');
       switchToFilter('replied');
     }
