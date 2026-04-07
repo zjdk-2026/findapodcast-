@@ -320,8 +320,314 @@
     .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1d1d1f; }
     .step p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
 
+    /* ── TIMELINE ── */
+    .timeline-section { background: #ffffff; }
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 52px;
+      max-width: 720px;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 28px;
+      position: relative;
+    }
+    .timeline-item:not(:last-child) .timeline-dot::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 40px;
+      width: 2px;
+      height: calc(100% - 8px);
+      background: rgba(99,102,241,0.15);
+    }
+    .timeline-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      width: 40px;
+      position: relative;
+    }
+    .timeline-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.1);
+      border: 2px solid rgba(99,102,241,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .timeline-content {
+      padding-bottom: 36px;
+      flex: 1;
+    }
+    .timeline-day {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6366f1;
+      margin-bottom: 4px;
+    }
+    .timeline-content h3 { font-size: 17px; font-weight: 700; color: #1d1d1f; margin-bottom: 6px; }
+    .timeline-content p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
+
+    /* ── PIPELINE VISUAL ── */
+    .pipeline-section { background: #0f172a; padding: 96px 24px; }
+    .pipeline-section .section-label { color: #a78bfa; }
+    .pipeline-section .section-title { color: #f1f5f9; }
+    .pipeline-section .section-sub { color: #94a3b8; }
+    .pipeline-stages {
+      display: flex;
+      gap: 8px;
+      margin-top: 52px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pipeline-stages::-webkit-scrollbar { height: 4px; }
+    .pipeline-stages::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+    .pipeline-stages::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 2px; }
+    .pipeline-col {
+      flex: 0 0 168px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pipeline-col-header {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-align: center;
+      background: rgba(255,255,255,0.07);
+      color: #94a3b8;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .pipeline-col-header.active-col { background: rgba(99,102,241,0.18); color: #a5b4fc; border-color: rgba(99,102,241,0.35); }
+    .pipeline-card {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .pipeline-card-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.3; }
+    .pipeline-card-host { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+    .pipeline-score {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pipeline-score-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .pipeline-score-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+    }
+    .pipeline-score-val { font-size: 11px; font-weight: 700; color: #6366f1; }
+    .pipeline-card-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-top: 8px;
+    }
+    .status-new { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .status-sent { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .status-replied { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+    .status-booked { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    .status-aired { background: rgba(168,85,247,0.15); color: #d8b4fe; }
+
+    /* ── 50 PODCASTS FEATURE ── */
+    .fifty { background: #f5f5f7; }
+    .fifty-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 52px;
+      align-items: start;
+    }
+    .fifty-features {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .fifty-feature {
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .fifty-feature-icon {
+      width: 42px;
+      height: 42px;
+      background: rgba(99,102,241,0.09);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .fifty-feature h3 { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 4px; }
+    .fifty-feature p { font-size: 13px; color: #6e6e73; line-height: 1.6; }
+
+    /* ── SCORE CARD MOCKUP ── */
+    .score-card-mockup {
+      background: #0f172a;
+      border-radius: 20px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .score-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .score-card-title { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 3px; }
+    .score-card-host { font-size: 12px; color: #64748b; }
+    .score-card-fit {
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 14px;
+      border-radius: 12px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+    .score-card-fit small { display: block; font-size: 10px; font-weight: 500; opacity: 0.8; }
+    .score-bars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .score-bar-item {}
+    .score-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .score-bar-label span:last-child { color: #a5b4fc; }
+    .score-bar-track {
+      height: 5px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+    }
+    .score-card-insight {
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .score-card-insight-label { font-size: 10px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .score-card-insight-text { font-size: 12px; color: #94a3b8; line-height: 1.55; }
+    .score-card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .score-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: #64748b;
+    }
+
+    /* ── COMPARISON ── */
+    .compare { background: #ffffff; }
+    .compare-table {
+      margin-top: 52px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .compare-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: #f5f5f7;
+    }
+    .compare-header-cell {
+      padding: 18px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #6e6e73;
+      border-right: 1px solid rgba(0,0,0,0.07);
+      text-align: center;
+    }
+    .compare-header-cell:last-child { border-right: none; }
+    .compare-header-cell.highlight {
+      background: #0f172a;
+      color: #a5b4fc;
+      font-weight: 800;
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .compare-row:nth-child(even) { background: #fafafa; }
+    .compare-cell {
+      padding: 16px 24px;
+      font-size: 14px;
+      color: #6e6e73;
+      border-right: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.45;
+    }
+    .compare-cell:last-child { border-right: none; }
+    .compare-cell.situation { font-weight: 500; color: #1d1d1f; }
+    .compare-cell.bad { color: #94a3b8; }
+    .compare-cell.good {
+      background: rgba(99,102,241,0.03);
+      color: #1d1d1f;
+      font-weight: 600;
+    }
+    .compare-cell.good::before { content: '✓'; color: #6366f1; font-weight: 900; flex-shrink: 0; }
+    .compare-cell.bad::before { content: '✗'; color: #e2e8f0; font-weight: 900; flex-shrink: 0; }
+
     /* ── PLANS ── */
-    .plans { background: #ffffff; text-align: center; }
+    .plans { background: #f5f5f7; text-align: center; }
     .plans-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -330,7 +636,7 @@
       margin: 52px auto 0;
     }
     .plan-card {
-      background: #f5f5f7;
+      background: #ffffff;
       border: 1.5px solid rgba(0,0,0,0.09);
       border-radius: 24px;
       padding: 40px 32px;
@@ -398,6 +704,121 @@
     .plan-card.featured .btn-plan { background: #6366f1; }
     .plan-card.featured .btn-plan:hover { background: #4f46e5; }
 
+    /* ── CONTENT BOOST ── */
+    .boost-section { background: #0f172a; padding: 80px 24px; }
+    .boost-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .boost-label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #a78bfa; margin-bottom: 14px; }
+    .boost-title { font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 18px; }
+    .boost-body { font-size: 17px; color: #94a3b8; line-height: 1.8; margin-bottom: 28px; }
+    .boost-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .boost-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .boost-item-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .boost-card-visual {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .boost-card-visual::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .boost-card-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
+    .boost-card-sub { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+    .boost-deliverables {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .boost-deliverable {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .boost-deliverable-icon { font-size: 16px; }
+    .boost-deliverable-text { font-size: 13px; color: #e2e8f0; font-weight: 600; }
+    .boost-deliverable-count { margin-left: auto; font-size: 12px; color: #a78bfa; font-weight: 700; }
+
+    /* ── LEADERBOARD TEASER ── */
+    .leaderboard-teaser { background: #ffffff; padding: 64px 24px; text-align: center; }
+    .leaderboard-teaser-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #f8f7ff 0%, #fdf4ff 100%);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 24px;
+      padding: 48px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .leaderboard-teaser-inner::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .soon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: #6366f1;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .leaderboard-medals {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .leaderboard-medal {
+      text-align: center;
+    }
+    .leaderboard-medal-icon { font-size: 28px; margin-bottom: 6px; }
+    .leaderboard-medal-name { font-size: 13px; font-weight: 700; color: #1d1d1f; }
+    .leaderboard-medal-stat { font-size: 11px; color: #6e6e73; }
+
     /* ── OBJECTIONS ── */
     .objections { background: #f5f5f7; }
     .obj-grid {
@@ -455,6 +876,14 @@
       background: #f5f5f7;
     }
 
+    @media (max-width: 768px) {
+      .fifty-grid { grid-template-columns: 1fr; }
+      .boost-inner { grid-template-columns: 1fr; gap: 40px; }
+      .compare-header, .compare-row { grid-template-columns: 1fr; }
+      .compare-header-cell, .compare-cell { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
+      .compare-header-cell:last-child, .compare-cell:last-child { border-bottom: none; }
+      .compare-cell.situation { background: #f8f8f8; font-weight: 700; }
+    }
     @media (max-width: 640px) {
       nav { padding: 0 16px; }
       .wave-stats { flex-direction: column; }
@@ -462,6 +891,8 @@
       .wave-stat:last-child { border-bottom: none; }
       .hero-stats { gap: 32px; }
       .plans-grid { grid-template-columns: 1fr; }
+      .score-bars { grid-template-columns: 1fr; }
+      .leaderboard-teaser-inner { padding: 32px 24px; }
     }
   </style>
 </head>
@@ -500,15 +931,16 @@
       Book a 15 Minute Demo
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
+    <p class="hero-note">Free 15-minute call &nbsp;·&nbsp; No pitch, no pressure</p>
 
     <div class="hero-stats">
       <div class="hero-stat">
-        <div class="hero-stat-value">&lt;1min</div>
-        <div class="hero-stat-label">To find your ideal podcasts<br>and apply instantly</div>
+        <div class="hero-stat-value">50</div>
+        <div class="hero-stat-label">Fresh matched podcasts<br>delivered every run</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-value">Unlimited</div>
-        <div class="hero-stat-label">Targeted podcasts to<br>apply to every month</div>
+        <div class="hero-stat-value">7 days</div>
+        <div class="hero-stat-label">Automatic follow-up<br>if no reply from host</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-value">$0</div>
@@ -572,15 +1004,15 @@
             <div class="story-zac-name">Zac Deane, Founder of Find A Podcast</div>
             <div class="story-zac-creds">10 years podcasting · Host of The Breakthrough Moment · 15,000+ YouTube subscribers · 488 episodes · TV & acting background</div>
             <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-              <a href="https://www.youtube.com/channel/UCOar0ZRVi-4QttXMm2LYQDw" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;text-decoration:none;">
+              <a href="https://www.youtube.com/channel/UCOar0ZRVi-4QttXMm2LYQDw" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 YouTube
               </a>
-              <a href="https://www.instagram.com/zacdeane/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;text-decoration:none;">
+              <a href="https://www.instagram.com/zacdeane/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                 Instagram
               </a>
-              <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5?si=55a5fe0aa55e4433" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#1db954;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;text-decoration:none;">
+              <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5?si=55a5fe0aa55e4433" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#1db954;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
                 Podcast
               </a>
@@ -640,17 +1072,359 @@
         <div class="step">
           <div class="step-num">2</div>
           <h3>We find shows with your buyers in the audience</h3>
-          <p>Our system scans thousands of active podcasts and scores each one against your business. We only surface shows where your ideal clients are actually listening.</p>
+          <p>Our system scans thousands of active podcasts and scores each one across 7 dimensions. We only surface shows where your ideal clients are actually listening.</p>
         </div>
         <div class="step">
           <div class="step-num">3</div>
           <h3>Pitches go out in your voice, from your inbox</h3>
-          <p>Every pitch is written for that specific host and show. Not a template blast. A real, personalised pitch sent from your own email account that reads like you wrote it.</p>
+          <p>Every pitch is written for that specific host and show. Not a template blast. A real, personalised pitch sent from your own email account.</p>
         </div>
         <div class="step">
           <div class="step-num">4</div>
+          <h3>Follow-ups go out automatically</h3>
+          <p>Hosts are busy. If there's no reply in 7 days, a personalised follow-up goes out automatically — written in your voice, referencing your original pitch.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <h3>Replies are detected instantly</h3>
+          <p>When a host replies, your dashboard updates automatically. No checking inboxes. No missed opportunities. You see it the moment it lands.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
           <h3>You speak, they trust you, deals close</h3>
           <p>Show up, tell your story, make your offer. Listeners arrive pre-sold. Sales cycles shorten. Revenue grows. We'll have the next round ready before you wrap up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="timeline-section">
+    <div class="container">
+      <p class="section-label">What to expect</p>
+      <h2 class="section-title">From sign-up<br>to <em>your first booking.</em></h2>
+      <p class="section-sub">Here's what the first month looks like for a typical client.</p>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">🚀</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Day 0</div>
+            <h3>You onboard in 5 minutes</h3>
+            <p>Tell us your offer, your audience, and your best stories. Our team reviews your profile and sharpens your pitch angles before anything goes out.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">🎯</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Day 1</div>
+            <h3>50 matched podcasts land in your dashboard</h3>
+            <p>Each scored across 7 dimensions — relevance, audience fit, recency, contact ability, reach, guest history, and brand alignment. Every match comes with a full brief on why it fits.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">✉️</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Day 1–2</div>
+            <h3>Personalised pitches are ready to review</h3>
+            <p>Every email references a specific episode, leads with the right angle for that audience, and reads like you wrote it. You approve. We send. From your own inbox.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">🔄</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Day 8–9</div>
+            <h3>Automatic follow-ups go out</h3>
+            <p>No chasing needed. If a host hasn't replied in 7 days, a warm follow-up goes out in your voice. Most bookings happen on the second touch.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">🔔</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Week 2–3</div>
+            <h3>Replies detected, pipeline updated</h3>
+            <p>When a host replies, it moves automatically. You get a notification. You reply. We've already drafted what to say next if you need it.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot">🎙️</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-day">Month 1</div>
+            <h3>First recording confirmed</h3>
+            <p>Most clients book their first show in the first month. The pipeline keeps running. The next 50 matches are already in queue. This doesn't stop.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE VISUAL -->
+  <section class="pipeline-section">
+    <div class="container">
+      <p class="section-label">Your speaking pipeline</p>
+      <h2 class="section-title">See every opportunity.<br>At a glance.</h2>
+      <p class="section-sub" style="color:#94a3b8;">A live dashboard that shows you exactly where every pitch stands — from first contact to booked recording to aired episode. No spreadsheets. No guessing.</p>
+
+      <div class="pipeline-stages">
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header active-col">New</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">The Entrepreneur Experiment</div>
+            <div class="pipeline-card-host">Ryan Daniel Moran</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:94%"></div></div>
+              <div class="pipeline-score-val">94</div>
+            </div>
+            <div class="pipeline-card-status status-new">New Match</div>
+          </div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">The Growth Playbook</div>
+            <div class="pipeline-card-host">Sam Parr</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:88%"></div></div>
+              <div class="pipeline-score-val">88</div>
+            </div>
+            <div class="pipeline-card-status status-new">New Match</div>
+          </div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">Founders Only</div>
+            <div class="pipeline-card-host">Alex Garcia</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:81%"></div></div>
+              <div class="pipeline-score-val">81</div>
+            </div>
+            <div class="pipeline-card-status status-new">New Match</div>
+          </div>
+        </div>
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header">Pitched</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">Scale or Die</div>
+            <div class="pipeline-card-host">Nick Haschka</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:91%"></div></div>
+              <div class="pipeline-score-val">91</div>
+            </div>
+            <div class="pipeline-card-status status-sent">Pitch Sent</div>
+          </div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">Millionaire Mindset</div>
+            <div class="pipeline-card-host">Dean Graziosi</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:78%"></div></div>
+              <div class="pipeline-score-val">78</div>
+            </div>
+            <div class="pipeline-card-status status-sent">Pitch Sent</div>
+          </div>
+        </div>
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header">Followed Up</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">Build to Sell</div>
+            <div class="pipeline-card-host">John Warrillow</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:86%"></div></div>
+              <div class="pipeline-score-val">86</div>
+            </div>
+            <div class="pipeline-card-status status-sent">Auto Follow-Up Sent</div>
+          </div>
+        </div>
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header">Host Replied</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">The $100M Leads Show</div>
+            <div class="pipeline-card-host">Alex Hormozi</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:97%"></div></div>
+              <div class="pipeline-score-val">97</div>
+            </div>
+            <div class="pipeline-card-status status-replied">🔔 Host Replied</div>
+          </div>
+        </div>
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header">Booked</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">The Breakthrough Moment</div>
+            <div class="pipeline-card-host">Zac Deane</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:98%"></div></div>
+              <div class="pipeline-score-val">98</div>
+            </div>
+            <div class="pipeline-card-status status-booked">🎉 Booked</div>
+          </div>
+        </div>
+
+        <div class="pipeline-col">
+          <div class="pipeline-col-header">Aired</div>
+          <div class="pipeline-card">
+            <div class="pipeline-card-title">7 Figure Advisor</div>
+            <div class="pipeline-card-host">Michael Kitces</div>
+            <div class="pipeline-score">
+              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:83%"></div></div>
+              <div class="pipeline-score-val">83</div>
+            </div>
+            <div class="pipeline-card-status status-aired">Episode Live</div>
+          </div>
+        </div>
+
+      </div>
+
+      <p style="font-size:14px;color:#475569;margin-top:24px;text-align:center;">Every card updates automatically. Pitches sent, replies detected, bookings confirmed — all in real time.</p>
+    </div>
+  </section>
+
+  <!-- 50 PODCASTS + SCORE CARD -->
+  <section class="fifty">
+    <div class="container">
+      <p class="section-label">The matching engine</p>
+      <h2 class="section-title">50 fresh podcasts.<br><em>Every single time you click.</em></h2>
+      <p class="section-sub">Not a generic list. A ranked, deduplicated, scored shortlist of shows where your ideal clients are actually listening — and a full brief on each one.</p>
+
+      <div class="fifty-grid">
+        <div class="fifty-features">
+          <div class="fifty-feature">
+            <div class="fifty-feature-icon">🎯</div>
+            <div>
+              <h3>Scored across 7 dimensions</h3>
+              <p>Relevance, audience fit, recency, contact ability, reach, guest history, and brand alignment. Every match gets a score. You see why it ranked.</p>
+            </div>
+          </div>
+          <div class="fifty-feature">
+            <div class="fifty-feature-icon">🚫</div>
+            <div>
+              <h3>Never the same show twice</h3>
+              <p>Every podcast you've already seen — regardless of status — is filtered out. Each run surfaces genuinely new opportunities from a pool of thousands.</p>
+            </div>
+          </div>
+          <div class="fifty-feature">
+            <div class="fifty-feature-icon">📋</div>
+            <div>
+              <h3>A full brief on every match</h3>
+              <p>Why this show fits your audience. The best angle to pitch. Which episode to reference. Red flags to know about. You show up informed, not improvising.</p>
+            </div>
+          </div>
+          <div class="fifty-feature">
+            <div class="fifty-feature-icon">✅</div>
+            <div>
+              <h3>You approve before anything sends</h3>
+              <p>Review every pitch before it goes out. Edit it to sound exactly like you. Or approve as-is. Your call, every time. We never send without your sign-off.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="score-card-mockup">
+          <div class="score-card-header">
+            <div>
+              <div class="score-card-title">The Entrepreneur Experiment</div>
+              <div class="score-card-host">Hosted by Ryan Daniel Moran · 312 episodes</div>
+            </div>
+            <div class="score-card-fit">
+              94
+              <small>Fit Score</small>
+            </div>
+          </div>
+          <div class="score-bars">
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Relevance</span><span>97</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:97%"></div></div>
+            </div>
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Audience Fit</span><span>95</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Recency</span><span>100</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:100%"></div></div>
+            </div>
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Contact Ability</span><span>90</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Guest History</span><span>88</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:88%"></div></div>
+            </div>
+            <div class="score-bar-item">
+              <div class="score-bar-label"><span>Reach</span><span>82</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:82%"></div></div>
+            </div>
+          </div>
+          <div class="score-card-insight">
+            <div class="score-card-insight-label">Why you fit</div>
+            <div class="score-card-insight-text">Ryan's audience are 6-7 figure entrepreneurs actively looking for scalable growth frameworks — exactly the transformation you teach. High crossover with your ideal client profile.</div>
+          </div>
+          <div class="score-card-insight">
+            <div class="score-card-insight-label">Best pitch angle</div>
+            <div class="score-card-insight-text">Lead with the "revenue without hustle" framework. Reference ep. 287 "The Anti-Grind Business" — your message is the natural next chapter.</div>
+          </div>
+          <div class="score-card-tags">
+            <span class="score-tag">entrepreneurship</span>
+            <span class="score-tag">business growth</span>
+            <span class="score-tag">guest-friendly</span>
+            <span class="score-tag">active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- US vs THEM COMPARISON -->
+  <section class="compare">
+    <div class="container">
+      <p class="section-label">The difference</p>
+      <h2 class="section-title">What most people do.<br>What you'll <em>actually do.</em></h2>
+      <p class="section-sub">Podcast guesting works. What kills it is doing it manually, inconsistently, or without a system.</p>
+      <div class="compare-table">
+        <div class="compare-header">
+          <div class="compare-header-cell">The situation</div>
+          <div class="compare-header-cell">Without Find A Podcast</div>
+          <div class="compare-header-cell highlight">With Find A Podcast</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Finding shows to pitch</div>
+          <div class="compare-cell bad">Google "business podcasts", end up with the same 10 big names, give up after 2 hours</div>
+          <div class="compare-cell good">50 scored, matched shows in your dashboard — filtered to your exact niche and audience</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Writing the pitch</div>
+          <div class="compare-cell bad">Generic template sent to everyone. Hosts can smell it. Open rate: low. Reply rate: lower.</div>
+          <div class="compare-cell good">Personalised to each host. References their actual episodes. Written in your voice.</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Following up</div>
+          <div class="compare-cell bad">Forget to follow up. Miss the booking. Or follow up with "Just checking in" — instantly ignored.</div>
+          <div class="compare-cell good">Automatic 7-day follow-up in your voice. Most bookings happen on the second touch.</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Tracking replies</div>
+          <div class="compare-cell bad">Check email manually. Miss a reply buried in your inbox. Lose the booking.</div>
+          <div class="compare-cell good">Replies detected automatically. Dashboard updates. You get notified instantly.</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Managing the pipeline</div>
+          <div class="compare-cell bad">Spreadsheet of 30+ outreaches. Status unknown. No idea who to chase.</div>
+          <div class="compare-cell good">Live visual pipeline from New to Pitched to Replied to Booked to Aired.</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell situation">Consistency</div>
+          <div class="compare-cell bad">Sprint for 2 weeks, get busy, stop. 3 months later — back to zero momentum.</div>
+          <div class="compare-cell good">Daily pipeline runs automatically. Fresh matches every session. Never loses momentum.</div>
         </div>
       </div>
     </div>
@@ -669,13 +1443,14 @@
         <div class="plan-card">
           <p class="plan-label">Starter</p>
           <p class="plan-name">Done With You</p>
-          <p class="plan-desc">We build your full podcast speaking system together. You approve every pitch and manage your own outreach, powered by our AI, our database, and our proven playbook.</p>
+          <p class="plan-desc">We build your full podcast speaking system together. You approve every pitch and manage your own outreach, powered by our matching engine, our database, and our proven playbook.</p>
           <ul class="plan-features">
-            <li>AI-matched podcasts where your buyers listen</li>
-            <li>Auto-generated pitches written in your voice</li>
-            <li>Live dashboard to approve, track and book</li>
-            <li>Follow-up sequences built in</li>
-            <li>1x Private strategy call with our team per month</li>
+            <li>50 scored podcast matches per session</li>
+            <li>Personalised pitches written in your voice</li>
+            <li>Live dashboard — approve, track, and book</li>
+            <li>Automatic 7-day follow-up sequences</li>
+            <li>Reply detection across all your outreach</li>
+            <li>1x private strategy call with our team per month</li>
             <li>Personal onboarding call with our team</li>
           </ul>
           <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a 15 Min Demo →</a>
@@ -688,9 +1463,9 @@
           <p class="plan-name" style="color:#ffffff;">Done For You</p>
           <p class="plan-desc">We run your entire speaking pipeline end-to-end. You focus on your business. We handle all discovery, pitch writing, sending, follow-up, and booking every month.</p>
           <ul class="plan-features">
-            <li>Everything in Starter</li>
+            <li>Everything in Done With You</li>
             <li>Our team writes and sends every pitch</li>
-            <li>Full pipeline management, completely hands free</li>
+            <li>Full pipeline management — completely hands free</li>
             <li>Unlimited monthly 1:1 growth strategy calls</li>
             <li>Priority access to top-tier shows</li>
           </ul>
@@ -699,7 +1474,128 @@
 
       </div>
 
-      <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which is right? The 15-minute call makes it obvious. No pressure. We just need to understand your business and where you want to take it.</p>
+      <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which is right? The 15-minute call makes it obvious. No pressure, no pitch — we just need to understand your business.</p>
+    </div>
+  </section>
+
+  <!-- CONTENT BOOST -->
+  <section class="boost-section">
+    <div class="boost-inner">
+      <div>
+        <div class="boost-label">After you appear</div>
+        <div class="boost-title">One episode.<br>30 days of content.</div>
+        <div class="boost-body">You recorded the episode. Now make it work everywhere. Our team turns your appearance into a full month of content — clips, posts, threads, email copy — so the episode keeps generating leads long after it airs.</div>
+        <div class="boost-items">
+          <div class="boost-item">
+            <div class="boost-item-icon">🎬</div>
+            <div>Short-form video clips edited for Reels, TikTok, and YouTube Shorts</div>
+          </div>
+          <div class="boost-item">
+            <div class="boost-item-icon">💬</div>
+            <div>LinkedIn posts, tweets, and captions from your best moments</div>
+          </div>
+          <div class="boost-item">
+            <div class="boost-item-icon">✉️</div>
+            <div>Email newsletter copy your list can read the week the episode drops</div>
+          </div>
+          <div class="boost-item">
+            <div class="boost-item-icon">📣</div>
+            <div>Audiograms and quote cards for story posts and community sharing</div>
+          </div>
+        </div>
+      </div>
+      <div class="boost-card-visual">
+        <div class="boost-card-title">Content Boost</div>
+        <div class="boost-card-sub">What gets delivered after your episode airs</div>
+        <div class="boost-deliverables">
+          <div class="boost-deliverable">
+            <div class="boost-deliverable-icon">🎬</div>
+            <div class="boost-deliverable-text">Short-form video clips</div>
+            <div class="boost-deliverable-count">6 clips</div>
+          </div>
+          <div class="boost-deliverable">
+            <div class="boost-deliverable-icon">📝</div>
+            <div class="boost-deliverable-text">LinkedIn posts</div>
+            <div class="boost-deliverable-count">8 posts</div>
+          </div>
+          <div class="boost-deliverable">
+            <div class="boost-deliverable-icon">🐦</div>
+            <div class="boost-deliverable-text">Tweets and threads</div>
+            <div class="boost-deliverable-count">10 posts</div>
+          </div>
+          <div class="boost-deliverable">
+            <div class="boost-deliverable-icon">✉️</div>
+            <div class="boost-deliverable-text">Email newsletter copy</div>
+            <div class="boost-deliverable-count">1 edition</div>
+          </div>
+          <div class="boost-deliverable">
+            <div class="boost-deliverable-icon">🖼️</div>
+            <div class="boost-deliverable-text">Quote cards and audiograms</div>
+            <div class="boost-deliverable-count">5 assets</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD TEASER -->
+  <section class="leaderboard-teaser">
+    <div class="leaderboard-teaser-inner">
+      <div class="soon-badge">🏆 Coming Soon</div>
+      <h2 class="section-title" style="font-size:clamp(22px,3vw,34px);margin-bottom:14px;">The Find A Podcast<br>Community Leaderboard</h2>
+      <p style="font-size:16px;color:#6e6e73;line-height:1.75;margin-bottom:8px;">Top speakers on Find A Podcast are booking 2-4 shows a month. Soon you'll be able to see how you stack up — and compete for the top spot in your niche.</p>
+      <div class="leaderboard-medals">
+        <div class="leaderboard-medal">
+          <div class="leaderboard-medal-icon">🥇</div>
+          <div class="leaderboard-medal-name">Sarah M.</div>
+          <div class="leaderboard-medal-stat">14 episodes aired</div>
+        </div>
+        <div class="leaderboard-medal">
+          <div class="leaderboard-medal-icon">🥈</div>
+          <div class="leaderboard-medal-name">James R.</div>
+          <div class="leaderboard-medal-stat">11 episodes aired</div>
+        </div>
+        <div class="leaderboard-medal">
+          <div class="leaderboard-medal-icon">🥉</div>
+          <div class="leaderboard-medal-name">Priya K.</div>
+          <div class="leaderboard-medal-stat">9 episodes aired</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#aeaeb2;">Where will you rank? Book a demo and find out.</p>
+    </div>
+  </section>
+
+  <!-- OBJECTIONS -->
+  <section class="objections">
+    <div class="container">
+      <p class="section-label">Honest answers</p>
+      <h2 class="section-title">Questions people ask<br>before they book the call.</h2>
+      <div class="obj-grid">
+        <div class="obj-card">
+          <p class="obj-q">"Will it actually bring in clients?"</p>
+          <p class="obj-a">It depends on your offer and how you show up. Podcast listeners are warm and pre-sold on you before they ever reach out. But if your offer isn't clear or you're not ready to make an ask, no channel fixes that. If you've got something worth selling and you can speak to it well, this works.</p>
+        </div>
+        <div class="obj-card">
+          <p class="obj-q">"Will the pitches sound like me?"</p>
+          <p class="obj-a">Yes. Every pitch is written from your profile, in your voice, for that specific host. You review it before it goes anywhere. Edit it, rewrite it, or approve it as-is. Nothing sends without your say-so. Most clients say they'd have written it the same way.</p>
+        </div>
+        <div class="obj-card">
+          <p class="obj-q">"I don't have time to do podcasts."</p>
+          <p class="obj-a">Honestly, this works best for people who see growing their business as a priority worth protecting time for. We handle all the logistics. But if speaking to new audiences isn't something you'd carve out time for right now, this probably isn't the right moment. No hard sell here.</p>
+        </div>
+        <div class="obj-card">
+          <p class="obj-q">"How is this better than paid ads?"</p>
+          <p class="obj-a">It's not a replacement, it's a different game. Ads buy attention. Podcasts build trust. If you're already running ads, this adds a channel that warms the same audience in a way paid traffic never does. Most clients run both — and find the podcast listeners close faster.</p>
+        </div>
+        <div class="obj-card">
+          <p class="obj-q">"Why now? My business is already growing."</p>
+          <p class="obj-a">Great. This is designed for businesses that are already moving and want to add a compounding channel on top of what's working. If growth feels comfortable where it is and you're not looking to accelerate, that's completely fine. This is for the ones who want more and are ready to act on it.</p>
+        </div>
+        <div class="obj-card">
+          <p class="obj-q">"What if hosts don't reply?"</p>
+          <p class="obj-a">They often don't on the first email — that's normal. That's why automatic follow-ups go out at day 7. Most bookings happen on the second touch. And the pipeline keeps running regardless — new shows added every session so momentum never stops.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -721,38 +1617,12 @@
     </div>
   </section>
 
-  <!-- OBJECTIONS -->
-  <section class="objections">
-    <div class="container">
-      <p class="section-label">Honest answers</p>
-      <h2 class="section-title">Questions people ask<br>before they book the call.</h2>
-      <div class="obj-grid">
-        <div class="obj-card">
-          <p class="obj-q">"Will it actually bring in clients?"</p>
-          <p class="obj-a">It depends on your offer and how you show up. Podcast listeners are warm and pre-sold on you before they ever reach out. But if your offer isn't clear or you're not ready to make an ask, no channel fixes that. If you've got something worth selling and you can speak to it well, this works.</p>
-        </div>
-        <div class="obj-card">
-          <p class="obj-q">"I don't have time to do podcasts."</p>
-          <p class="obj-a">Honestly, this works best for people who see growing their business as a priority worth protecting time for. We handle all the logistics. But if speaking to new audiences isn't something you'd carve out time for right now, this probably isn't the right moment. No hard sell here.</p>
-        </div>
-        <div class="obj-card">
-          <p class="obj-q">"How is this better than paid ads?"</p>
-          <p class="obj-a">It's not a replacement, it's a different game. Ads buy attention. Podcasts build trust. If you're already running ads, this adds a channel that warms the same audience in a way paid traffic never does. If you want a straight swap, this probably isn't the right frame for you.</p>
-        </div>
-        <div class="obj-card">
-          <p class="obj-q">"Why now? My business is already growing."</p>
-          <p class="obj-a">Great. This is designed for businesses that are already moving and want to add a compounding channel on top of what's working. If growth feels comfortable where it is and you're not looking to accelerate, that's completely fine. This is for the ones who want more and are ready to act on it.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- FINAL CTA -->
   <section class="final-cta">
     <div class="container">
       <p class="section-label" style="display:block;text-align:center;">Your move</p>
       <h2>Your next client<br>is listening to a podcast<br><em style="font-style:normal;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">right now.</em></h2>
-      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. The 15-minute call is free, book now!</p>
+      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. The 15-minute call is free.</p>
       <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;">
         Book a 15 Minute Demo
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
