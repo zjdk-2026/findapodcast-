@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Find A Podcast — Grow Your Business Through Podcast Speaking</title>
-  <meta name="description" content="Business owners who speak on podcasts close more deals, generate inbound leads, and scale without paid ads. We build your full podcast speaking pipeline — done for you." />
+  <title>Find A Podcast: Grow Your Business Through Podcast Speaking</title>
+  <meta name="description" content="Business owners who speak on podcasts close more deals, generate inbound leads, and scale without paid ads. We build your full podcast speaking pipeline, done for you." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap" rel="stylesheet" />
@@ -397,52 +397,89 @@
     .pipeline-section .section-label { color: #a78bfa; }
     .pipeline-section .section-title { color: #f1f5f9; }
     .pipeline-section .section-sub { color: #94a3b8; }
-    .pipeline-stages {
-      display: flex;
-      gap: 8px;
+
+    /* App frame wrapper */
+    .dash-frame {
       margin-top: 52px;
-      overflow-x: auto;
-      padding-bottom: 12px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .pipeline-stages::-webkit-scrollbar { height: 4px; }
-    .pipeline-stages::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
-    .pipeline-stages::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 2px; }
-    .pipeline-col {
-      flex: 0 0 168px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .pipeline-col-header {
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-align: center;
-      background: rgba(255,255,255,0.07);
-      color: #94a3b8;
+      background: #0d1117;
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.12);
     }
-    .pipeline-col-header.active-col { background: rgba(99,102,241,0.18); color: #a5b4fc; border-color: rgba(99,102,241,0.35); }
+    .dash-frame-bar {
+      background: #161b22;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dash-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dash-dot-r { background: #ff5f57; }
+    .dash-dot-y { background: #febc2e; }
+    .dash-dot-g { background: #28c840; }
+    .dash-frame-url {
+      margin-left: 14px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: #475569;
+      font-family: monospace;
+    }
+    .dash-inner { padding: 20px 20px 24px; }
+
+    /* Filter tabs */
+    .dash-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .dash-tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #64748b;
+      cursor: default;
+      user-select: none;
+    }
+    .dash-tab.active {
+      background: #6366f1;
+      color: #fff;
+      border-color: #6366f1;
+    }
+
+    /* Card grid */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 640px) { .dash-grid { grid-template-columns: 1fr 1fr; } }
+
     .pipeline-card {
-      background: #1e293b;
+      background: #161b22;
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 12px;
       padding: 14px;
     }
-    .pipeline-card-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.3; }
-    .pipeline-card-host { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+    .pipeline-card-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 3px; line-height: 1.35; }
+    .pipeline-card-host { font-size: 11px; color: #475569; margin-bottom: 10px; }
     .pipeline-score {
       display: flex;
       align-items: center;
       gap: 6px;
+      margin-bottom: 2px;
     }
     .pipeline-score-bar {
       flex: 1;
       height: 4px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.07);
       border-radius: 2px;
       overflow: hidden;
     }
@@ -451,22 +488,24 @@
       border-radius: 2px;
       background: linear-gradient(90deg, #6366f1, #a78bfa);
     }
-    .pipeline-score-val { font-size: 11px; font-weight: 700; color: #6366f1; }
+    .pipeline-score-val { font-size: 11px; font-weight: 800; color: #818cf8; min-width: 20px; text-align: right; }
     .pipeline-card-status {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-size: 10px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       margin-top: 8px;
+      letter-spacing: 0.02em;
     }
-    .status-new { background: rgba(99,102,241,0.15); color: #a5b4fc; }
-    .status-sent { background: rgba(59,130,246,0.15); color: #93c5fd; }
-    .status-replied { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-    .status-booked { background: rgba(245,158,11,0.15); color: #fcd34d; }
-    .status-aired { background: rgba(168,85,247,0.15); color: #d8b4fe; }
+    .status-new { background: rgba(99,102,241,0.13); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+    .status-sent { background: rgba(59,130,246,0.13); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+    .status-followup { background: rgba(14,165,233,0.12); color: #7dd3fc; border: 1px solid rgba(14,165,233,0.2); }
+    .status-replied { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+    .status-booked { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.22); }
+    .status-aired { background: rgba(168,85,247,0.12); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.2); }
 
     /* ── 50 PODCASTS FEATURE ── */
     .fifty { background: #f5f5f7; }
@@ -978,11 +1017,11 @@
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hero-stat-value">Unlimited</div>
-        <div class="hero-stat-label">Bookings per month.<br>Book as many as you can handle.</div>
+        <div class="hero-stat-label">Niche-targeted podcasts.<br>As many as you can handle.</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-value">7 days</div>
-        <div class="hero-stat-label">Automatic follow-up<br>if no reply from host</div>
+        <div class="hero-stat-value">Days</div>
+        <div class="hero-stat-label">To your first booking.<br>The fastest system in the world.</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-value">$0</div>
@@ -1031,7 +1070,7 @@
           <strong>Speaking on podcasts is one of the highest-ROI growth strategies for business owners. And almost nobody is doing it systematically.</strong> When you appear on a podcast, you're not interrupting someone's feed. You're a guest in their ears for 30 to 60 minutes. That's not an ad. That's a relationship.
         </p>
         <p>
-          The biggest names figured this out. Tony Robbins went on a podcast tour before launching his online challenges — not to promote, but to build the kind of trust that made people ready to buy before they even hit his page. Matthew McConaughey went on every major show when his book dropped and outsold everyone in his category. Mel Robbins built a podcast that now beats Diary of a CEO in downloads — because people don't just listen to her, they feel like they know her. That's what podcast appearances do. They collapse the trust timeline.
+          The biggest names figured this out. Tony Robbins went on a podcast tour before launching his online challenges, not to promote, but to build the kind of trust that made people ready to buy before they even hit his page. Matthew McConaughey went on every major show when his book dropped and outsold everyone in his category. Mel Robbins built a podcast that now beats Diary of a CEO in downloads, because people don't just listen to her, they feel like they know her. That's what podcast appearances do. They collapse the trust timeline.
         </p>
         <p>
           Podcast listeners are buyers. <em>They're engaged, high-income, and they take action on recommendations from hosts they trust.</em> When a host introduces you as the expert, their audience inherits that trust instantly. You walk in pre-sold. Deals close faster. Objections melt. Your close rate goes up.
@@ -1233,116 +1272,87 @@
       <h2 class="section-title">See every opportunity.<br>At a glance.</h2>
       <p class="section-sub" style="color:#94a3b8;">A live dashboard that shows you exactly where every pitch stands — from first contact to booked recording to aired episode. No spreadsheets. No guessing.</p>
 
-      <div class="pipeline-stages">
-
-        <div class="pipeline-col">
-          <div class="pipeline-col-header active-col">New</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">The Entrepreneur Experiment</div>
-            <div class="pipeline-card-host">Ryan Daniel Moran</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:94%"></div></div>
-              <div class="pipeline-score-val">94</div>
-            </div>
-            <div class="pipeline-card-status status-new">New Match</div>
-          </div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">The Growth Playbook</div>
-            <div class="pipeline-card-host">Sam Parr</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:88%"></div></div>
-              <div class="pipeline-score-val">88</div>
-            </div>
-            <div class="pipeline-card-status status-new">New Match</div>
-          </div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">Founders Only</div>
-            <div class="pipeline-card-host">Alex Garcia</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:81%"></div></div>
-              <div class="pipeline-score-val">81</div>
-            </div>
-            <div class="pipeline-card-status status-new">New Match</div>
-          </div>
+      <div class="dash-frame">
+        <!-- Browser chrome -->
+        <div class="dash-frame-bar">
+          <div class="dash-dot dash-dot-r"></div>
+          <div class="dash-dot dash-dot-y"></div>
+          <div class="dash-dot dash-dot-g"></div>
+          <div class="dash-frame-url">app.findapodcast.club/dashboard</div>
         </div>
 
-        <div class="pipeline-col">
-          <div class="pipeline-col-header">Pitched</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">Scale or Die</div>
-            <div class="pipeline-card-host">Nick Haschka</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:91%"></div></div>
-              <div class="pipeline-score-val">91</div>
-            </div>
-            <div class="pipeline-card-status status-sent">Pitch Sent</div>
+        <div class="dash-inner">
+          <!-- Filter tabs -->
+          <div class="dash-tabs">
+            <div class="dash-tab active">New</div>
+            <div class="dash-tab">Pitched</div>
+            <div class="dash-tab">Followed Up</div>
+            <div class="dash-tab">Host Replied</div>
+            <div class="dash-tab">Booked</div>
+            <div class="dash-tab">Aired</div>
           </div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">Millionaire Mindset</div>
-            <div class="pipeline-card-host">Dean Graziosi</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:78%"></div></div>
-              <div class="pipeline-score-val">78</div>
+
+          <!-- Card grid -->
+          <div class="dash-grid">
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">The Entrepreneur Experiment</div>
+              <div class="pipeline-card-host">Ryan Daniel Moran</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:94%"></div></div>
+                <div class="pipeline-score-val">94</div>
+              </div>
+              <div class="pipeline-card-status status-new">New Match</div>
             </div>
-            <div class="pipeline-card-status status-sent">Pitch Sent</div>
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">Scale or Die</div>
+              <div class="pipeline-card-host">Nick Haschka</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:91%"></div></div>
+                <div class="pipeline-score-val">91</div>
+              </div>
+              <div class="pipeline-card-status status-sent">Pitch Sent</div>
+            </div>
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">Build to Sell</div>
+              <div class="pipeline-card-host">John Warrillow</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:86%"></div></div>
+                <div class="pipeline-score-val">86</div>
+              </div>
+              <div class="pipeline-card-status status-followup">Auto Follow-Up Sent</div>
+            </div>
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">The $100M Leads Show</div>
+              <div class="pipeline-card-host">Alex Hormozi</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:97%"></div></div>
+                <div class="pipeline-score-val">97</div>
+              </div>
+              <div class="pipeline-card-status status-replied"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:3px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Host Replied</div>
+            </div>
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">The Breakthrough Moment</div>
+              <div class="pipeline-card-host">Zac Deane</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:98%"></div></div>
+                <div class="pipeline-score-val">98</div>
+              </div>
+              <div class="pipeline-card-status status-booked"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg>Booked</div>
+            </div>
+            <div class="pipeline-card">
+              <div class="pipeline-card-title">7 Figure Advisor</div>
+              <div class="pipeline-card-host">Michael Kitces</div>
+              <div class="pipeline-score">
+                <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:83%"></div></div>
+                <div class="pipeline-score-val">83</div>
+              </div>
+              <div class="pipeline-card-status status-aired">Episode Live</div>
+            </div>
           </div>
         </div>
-
-        <div class="pipeline-col">
-          <div class="pipeline-col-header">Followed Up</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">Build to Sell</div>
-            <div class="pipeline-card-host">John Warrillow</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:86%"></div></div>
-              <div class="pipeline-score-val">86</div>
-            </div>
-            <div class="pipeline-card-status status-sent">Auto Follow-Up Sent</div>
-          </div>
-        </div>
-
-        <div class="pipeline-col">
-          <div class="pipeline-col-header">Host Replied</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">The $100M Leads Show</div>
-            <div class="pipeline-card-host">Alex Hormozi</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:97%"></div></div>
-              <div class="pipeline-score-val">97</div>
-            </div>
-            <div class="pipeline-card-status status-replied"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Host Replied</div>
-          </div>
-        </div>
-
-        <div class="pipeline-col">
-          <div class="pipeline-col-header">Booked</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">The Breakthrough Moment</div>
-            <div class="pipeline-card-host">Zac Deane</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:98%"></div></div>
-              <div class="pipeline-score-val">98</div>
-            </div>
-            <div class="pipeline-card-status status-booked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>Booked</div>
-          </div>
-        </div>
-
-        <div class="pipeline-col">
-          <div class="pipeline-col-header">Aired</div>
-          <div class="pipeline-card">
-            <div class="pipeline-card-title">7 Figure Advisor</div>
-            <div class="pipeline-card-host">Michael Kitces</div>
-            <div class="pipeline-score">
-              <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:83%"></div></div>
-              <div class="pipeline-score-val">83</div>
-            </div>
-            <div class="pipeline-card-status status-aired">Episode Live</div>
-          </div>
-        </div>
-
       </div>
 
-      <p style="font-size:14px;color:#475569;margin-top:24px;text-align:center;">Every card updates automatically. Pitches sent, replies detected, bookings confirmed — all in real time.</p>
+      <p style="font-size:13px;color:#334155;margin-top:20px;text-align:center;">Every card updates automatically. Pitches sent, replies detected, bookings confirmed in real time.</p>
     </div>
   </section>
 
@@ -1541,7 +1551,7 @@
       <div>
         <div class="boost-label">After you appear</div>
         <div class="boost-title">One episode.<br>30 days of content.</div>
-        <div class="boost-body">You recorded the episode. Now make it work everywhere. Our team turns your appearance into a full month of content — clips, posts, threads, email copy — so the episode keeps generating leads long after it airs.</div>
+        <div class="boost-body">You recorded the episode. Now make it work everywhere. Our team turns your appearance into a full month of content: clips, posts, threads, and email copy, so the episode keeps generating leads long after it airs.</div>
         <div class="boost-items">
           <div class="boost-item">
             <div class="boost-item-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></div>
@@ -1651,49 +1661,6 @@
         <div class="obj-card">
           <p class="obj-q">"What if hosts don't reply?"</p>
           <p class="obj-a">They often don't on the first email. That's normal. That's why automatic follow-ups go out at day 7. Most bookings happen on the second touch. And the pipeline keeps running, with new shows added every session so momentum never stops.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- TRIAL -->
-  <section class="trial-section">
-    <div class="container">
-      <p class="section-label">Your free trial</p>
-      <h2 class="section-title">Here's exactly what<br>happens in <em>your first 7 days.</em></h2>
-      <p class="section-sub">No guessing. No figuring it out alone. Here's the week.</p>
-      <div class="trial-steps">
-        <div class="trial-step">
-          <div class="trial-step-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div class="trial-day">Day 1</div>
-          <h3>Onboarding call with our team</h3>
-          <p>We review your offer, your audience, and your best stories. We sharpen your pitch angles before anything goes out.</p>
-        </div>
-        <div class="trial-step">
-          <div class="trial-step-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </div>
-          <div class="trial-day">Day 1–2</div>
-          <h3>50 matched podcasts in your dashboard</h3>
-          <p>Scored across 7 dimensions. Every match comes with a full brief — why it fits, who listens, and the best angle to pitch.</p>
-        </div>
-        <div class="trial-step">
-          <div class="trial-step-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          </div>
-          <div class="trial-day">Day 2–3</div>
-          <h3>Your first pitches written and ready</h3>
-          <p>Personalised to each host. Written in your voice. You review, edit, or approve. Nothing goes out without your say-so.</p>
-        </div>
-        <div class="trial-step">
-          <div class="trial-step-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="trial-day">Day 7</div>
-          <h3>Your pipeline is live and running</h3>
-          <p>Pitches sent. Follow-ups scheduled. Replies being tracked. You've done nothing except show up for one call.</p>
         </div>
       </div>
     </div>
