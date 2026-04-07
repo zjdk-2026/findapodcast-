@@ -1986,6 +1986,7 @@ html:not(.light-mode) .card-booked-highlight {
   border-radius: var(--radius-xl);
   padding: 32px 36px;
   box-shadow: var(--shadow-card);
+  overflow: visible;
 }
 
 .step-panel { display: none; }

@@ -20,11 +20,12 @@
     .topic-dropdown-trigger.open svg { transform:rotate(180deg); }
     .topic-dropdown-list {
       display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
-      background:var(--surface-card); border:2px solid var(--accent);
-      border-radius:10px; max-height:220px; overflow-y:auto;
-      z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.12);
+      background:#fff; border:2px solid var(--accent);
+      border-radius:10px; max-height:260px; overflow-y:auto;
+      z-index:9999; box-shadow:0 12px 40px rgba(0,0,0,0.18);
       scrollbar-width:thin;
     }
+    .topic-dropdown-wrap { position:relative; margin-bottom:12px; z-index:9999; }
     .topic-dropdown-list.open { display:block; }
     .topic-option {
       display:flex; align-items:center; gap:10px;
@@ -199,25 +200,71 @@
             </div>
             <div class="topic-dropdown-list" id="topic-dropdown-list">
               <label class="topic-option"><input type="checkbox" value="entrepreneurship"> Entrepreneurship</label>
-              <label class="topic-option"><input type="checkbox" value="leadership"> Leadership</label>
-              <label class="topic-option"><input type="checkbox" value="mindset"> Mindset</label>
+              <label class="topic-option"><input type="checkbox" value="startup"> Startup</label>
+              <label class="topic-option"><input type="checkbox" value="small business"> Small Business</label>
               <label class="topic-option"><input type="checkbox" value="business growth"> Business Growth</label>
-              <label class="topic-option"><input type="checkbox" value="sales"> Sales</label>
-              <label class="topic-option"><input type="checkbox" value="marketing"> Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="leadership"> Leadership</label>
+              <label class="topic-option"><input type="checkbox" value="management"> Management</label>
+              <label class="topic-option"><input type="checkbox" value="mindset"> Mindset</label>
               <label class="topic-option"><input type="checkbox" value="personal development"> Personal Development</label>
               <label class="topic-option"><input type="checkbox" value="productivity"> Productivity</label>
+              <label class="topic-option"><input type="checkbox" value="habits"> Habits</label>
+              <label class="topic-option"><input type="checkbox" value="sales"> Sales</label>
+              <label class="topic-option"><input type="checkbox" value="sales strategy"> Sales Strategy</label>
+              <label class="topic-option"><input type="checkbox" value="closing deals"> Closing Deals</label>
+              <label class="topic-option"><input type="checkbox" value="marketing"> Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="digital marketing"> Digital Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="social media marketing"> Social Media Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="content marketing"> Content Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="personal branding"> Personal Branding</label>
+              <label class="topic-option"><input type="checkbox" value="public speaking"> Public Speaking</label>
+              <label class="topic-option"><input type="checkbox" value="storytelling"> Storytelling</label>
               <label class="topic-option"><input type="checkbox" value="health & wellness"> Health &amp; Wellness</label>
+              <label class="topic-option"><input type="checkbox" value="fitness"> Fitness</label>
+              <label class="topic-option"><input type="checkbox" value="nutrition"> Nutrition</label>
               <label class="topic-option"><input type="checkbox" value="mental health"> Mental Health</label>
+              <label class="topic-option"><input type="checkbox" value="anxiety"> Anxiety</label>
+              <label class="topic-option"><input type="checkbox" value="burnout recovery"> Burnout Recovery</label>
               <label class="topic-option"><input type="checkbox" value="faith"> Faith</label>
+              <label class="topic-option"><input type="checkbox" value="christian living"> Christian Living</label>
+              <label class="topic-option"><input type="checkbox" value="faith-based business"> Faith-Based Business</label>
               <label class="topic-option"><input type="checkbox" value="finance"> Finance</label>
+              <label class="topic-option"><input type="checkbox" value="investing"> Investing</label>
+              <label class="topic-option"><input type="checkbox" value="wealth building"> Wealth Building</label>
+              <label class="topic-option"><input type="checkbox" value="financial freedom"> Financial Freedom</label>
               <label class="topic-option"><input type="checkbox" value="real estate"> Real Estate</label>
+              <label class="topic-option"><input type="checkbox" value="real estate investing"> Real Estate Investing</label>
+              <label class="topic-option"><input type="checkbox" value="coaching"> Coaching</label>
+              <label class="topic-option"><input type="checkbox" value="life coaching"> Life Coaching</label>
+              <label class="topic-option"><input type="checkbox" value="business coaching"> Business Coaching</label>
+              <label class="topic-option"><input type="checkbox" value="executive coaching"> Executive Coaching</label>
               <label class="topic-option"><input type="checkbox" value="parenting"> Parenting</label>
               <label class="topic-option"><input type="checkbox" value="relationships"> Relationships</label>
+              <label class="topic-option"><input type="checkbox" value="marriage"> Marriage</label>
+              <label class="topic-option"><input type="checkbox" value="family"> Family</label>
               <label class="topic-option"><input type="checkbox" value="technology"> Technology</label>
-              <label class="topic-option"><input type="checkbox" value="investing"> Investing</label>
-              <label class="topic-option"><input type="checkbox" value="coaching"> Coaching</label>
+              <label class="topic-option"><input type="checkbox" value="ai & automation"> AI &amp; Automation</label>
+              <label class="topic-option"><input type="checkbox" value="software"> Software</label>
               <label class="topic-option"><input type="checkbox" value="content creation"> Content Creation</label>
+              <label class="topic-option"><input type="checkbox" value="podcasting"> Podcasting</label>
+              <label class="topic-option"><input type="checkbox" value="youtube"> YouTube</label>
               <label class="topic-option"><input type="checkbox" value="women in business"> Women in Business</label>
+              <label class="topic-option"><input type="checkbox" value="diversity & inclusion"> Diversity &amp; Inclusion</label>
+              <label class="topic-option"><input type="checkbox" value="ecommerce"> Ecommerce</label>
+              <label class="topic-option"><input type="checkbox" value="amazon fba"> Amazon FBA</label>
+              <label class="topic-option"><input type="checkbox" value="dropshipping"> Dropshipping</label>
+              <label class="topic-option"><input type="checkbox" value="consulting"> Consulting</label>
+              <label class="topic-option"><input type="checkbox" value="freelancing"> Freelancing</label>
+              <label class="topic-option"><input type="checkbox" value="remote work"> Remote Work</label>
+              <label class="topic-option"><input type="checkbox" value="work-life balance"> Work-Life Balance</label>
+              <label class="topic-option"><input type="checkbox" value="legacy building"> Legacy Building</label>
+              <label class="topic-option"><input type="checkbox" value="purpose & meaning"> Purpose &amp; Meaning</label>
+              <label class="topic-option"><input type="checkbox" value="spirituality"> Spirituality</label>
+              <label class="topic-option"><input type="checkbox" value="law"> Law</label>
+              <label class="topic-option"><input type="checkbox" value="healthcare"> Healthcare</label>
+              <label class="topic-option"><input type="checkbox" value="education"> Education</label>
+              <label class="topic-option"><input type="checkbox" value="non-profit"> Non-Profit</label>
+              <label class="topic-option"><input type="checkbox" value="sustainability"> Sustainability</label>
             </div>
             <div class="topic-selected-pills" id="topic-selected-pills"></div>
           </div>
