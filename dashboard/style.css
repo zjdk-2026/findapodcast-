@@ -882,9 +882,9 @@ html:not(.light-mode) .onboarding-inner {
 .filter-tabs::-webkit-scrollbar { display: none; }
 
 .filter-tab {
-  padding: 7px 16px;
+  padding: 10px 20px;
   border-radius: var(--radius-pill);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--text-secondary);
   background: transparent;
