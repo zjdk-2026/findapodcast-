@@ -204,10 +204,18 @@ function renderHeroSection() {
     chips.push(`<span class="stat-chip stat-chip-blue" style="background:#FF3B30;color:#fff;">${unseenRepliedCount} new repl${unseenRepliedCount === 1 ? 'y' : 'ies'}</span>`);
   }
 
+  const airedMatches   = state.matches.filter((m) => m.status === 'appeared');
+  const lifetimeTotal  = airedMatches.reduce((t, m) => t + (estimateAudience(m.podcasts?.listen_score).low), 0);
+
   heroEl.innerHTML = `
     <div class="hero-greeting">
       <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
       <div class="hero-greeting-sub">${subtitle}</div>
+      ${lifetimeTotal > 0 ? `
+        <div class="hero-lifetime-reach">
+          <span class="hero-lifetime-icon">🎙️</span>
+          Your voice has reached an estimated <strong>${formatNumber(lifetimeTotal)} people</strong> across ${airedMatches.length} episode${airedMatches.length !== 1 ? 's' : ''}
+        </div>` : ''}
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -1242,7 +1250,7 @@ async function markAppeared(matchId) {
       updateMatchInState(matchId, { status: 'appeared' });
       updateCard(matchId);
       updateStatBadges();
-      showToast('🌟 Marked as aired!', 'success');
+      showAiredCelebration(matchId);
     } else {
       showToast(data.error || 'Failed.', 'error');
     }
@@ -1250,6 +1258,80 @@ async function markAppeared(matchId) {
   finally { setCardLoading(matchId, false); }
 }
 window.markAppeared = markAppeared;
+
+// ── Aired celebration modal ───────────────────────────────────────────
+function estimateAudience(listenScore) {
+  const ls = listenScore || 0;
+  if      (ls >= 80) return { low: 500000,  label: '500,000+' };
+  else if (ls >= 65) return { low: 100000,  label: '100,000+' };
+  else if (ls >= 50) return { low: 20000,   label: '20,000+'  };
+  else if (ls >= 35) return { low: 5000,    label: '5,000+'   };
+  else if (ls >= 20) return { low: 1000,    label: '1,000+'   };
+  else               return { low: 500,     label: 'hundreds of' };
+}
+
+function getLifetimeAudience() {
+  return state.matches
+    .filter((m) => m.status === 'appeared')
+    .reduce((total, m) => total + (estimateAudience(m.podcasts?.listen_score).low), 0);
+}
+
+function formatNumber(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(0) + 'K';
+  return n.toLocaleString();
+}
+
+function showAiredCelebration(matchId) {
+  const modal = $('aired-celebration-modal');
+  const body  = $('aired-celebration-body');
+  if (!modal || !body) return;
+
+  const match    = state.matches.find((m) => m.id === matchId);
+  const podcast  = match?.podcasts || match;
+  const title    = podcast?.title || 'the show';
+  const audience = estimateAudience(podcast?.listen_score);
+  const lifetime = getLifetimeAudience();
+  const airedCount = state.matches.filter((m) => m.status === 'appeared').length;
+
+  body.innerHTML = `
+    <div style="font-size:52px;margin-bottom:12px;line-height:1;">🌟</div>
+    <h2 style="font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin-bottom:6px;">You just went live.</h2>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">${esc(title)}</p>
+
+    <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid rgba(99,102,241,0.15);border-radius:14px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">This episode</div>
+      <div style="font-size:32px;font-weight:800;color:var(--text-primary);letter-spacing:-0.04em;line-height:1;">${audience.label}</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">estimated listeners reached</div>
+    </div>
+
+    ${airedCount > 1 ? `
+    <div style="background:rgba(48,209,88,0.07);border:1px solid rgba(48,209,88,0.18);border-radius:14px;padding:16px 20px;margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--success);margin-bottom:4px;">Your lifetime reach</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text-primary);letter-spacing:-0.04em;line-height:1;">${formatNumber(lifetime)} ears</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">across ${airedCount} episodes</div>
+    </div>` : ''}
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary" onclick="closeAiredCelebration();showContentBoostModal();" style="width:100%;">
+        Turn this into 30 days of content
+      </button>
+      <button class="btn btn-secondary" onclick="closeAiredCelebration();" style="width:100%;">
+        Back to dashboard
+      </button>
+    </div>`;
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAiredCelebration() {
+  const modal = $('aired-celebration-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeAiredCelebration = closeAiredCelebration;
 
 async function markReplied(matchId) {
   setCardLoading(matchId, true);
