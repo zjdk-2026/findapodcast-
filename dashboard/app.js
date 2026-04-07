@@ -798,117 +798,101 @@ function renderMatchCard(match) {
   const fitScore   = match.fit_score || 0;
   const tier       = scoreTier(fitScore);
   const tierClass  = `score-tier-${tier}`;
-  const likeCls    = likelihoodClass(match.booking_likelihood);
   const isBooked   = match.status === 'booked';
   const bookedClass = isBooked ? 'card-booked-highlight' : '';
 
   const redFlagsClean = match.red_flags && match.red_flags !== 'none' && !match.red_flags.startsWith('API error') && !match.red_flags.startsWith('Scoring');
   const redFlagsHtml = redFlagsClean
-    ? `<div class="why-fits-box">
-        <p class="why-fits-label">Red Flags</p>
-        <p class="red-flags-text">${esc(match.red_flags)}</p>
+    ? `<div class="card-insight-box card-redflag-box">
+        <p class="card-insight-label">Red Flags</p>
+        <p class="card-insight-text">${esc(match.red_flags)}</p>
        </div>`
     : '';
 
   const episodeHtml = (match.episode_to_reference && match.episode_to_reference !== 'none identified')
-    ? `<div class="why-fits-box">
-        <p class="why-fits-label">Reference Episode</p>
-        <p class="analysis-text">"${esc(match.episode_to_reference)}"</p>
+    ? `<div class="card-insight-box">
+        <p class="card-insight-label">Reference Episode</p>
+        <p class="card-insight-text">"${esc(match.episode_to_reference)}"</p>
        </div>`
     : '';
 
-  const socialHtml = '';
+  // Sub-score row helper
+  function miniScoreRow(label, val) {
+    if (!val && val !== 0) return '';
+    const pct = Math.min(100, Math.max(0, val));
+    return `<div class="card-score-row">
+      <span class="card-score-label">${label}</span>
+      <div class="card-score-bar-wrap"><div class="card-score-bar-fill" style="width:${pct}%"></div></div>
+      <span class="card-score-num">${val}</span>
+    </div>`;
+  }
+
+  const scoresHtml = `
+    <div class="card-scores-grid">
+      <div class="card-scores-col">
+        ${miniScoreRow('Relevance', match.relevance_score)}
+        ${miniScoreRow('Recency', match.recency_score)}
+        ${miniScoreRow('Guest History', match.has_guest_history ? 90 : (match.guest_history_score || null))}
+      </div>
+      <div class="card-scores-col">
+        ${miniScoreRow('Audience Fit', match.audience_score)}
+        ${miniScoreRow('Contact Ability', match.contactability_score)}
+        ${miniScoreRow('Reach', match.reach_score)}
+      </div>
+    </div>`;
+
+  const episodeCount = podcast.total_episodes ? `· ${podcast.total_episodes} episodes` : '';
+  const hostLine = [podcast.host_name ? `Hosted by ${esc(podcast.host_name)}` : '', episodeCount].filter(Boolean).join(' ');
+
+  const linksHtml = `<div class="card-links" onclick="event.stopPropagation()">
+    ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
+    ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+    ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
+    ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
+    ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+  </div>`;
 
   return `
-  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
+  <article class="match-card match-card-v2 status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}">
 
-    <!-- Collapsed row — click to expand -->
-    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
-      <div class="card-row-left">
-        <div class="card-row-title">
-          ${isBooked ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> ' : ''}${esc(podcast.title) || 'Unknown Show'}
-          ${(() => {
-            const pills = [];
-            if (podcast.total_episodes) pills.push(`<span class="inline-pill">${podcast.total_episodes} eps</span>`);
-            if (podcast.last_episode_date) {
-              const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
-              pills.push(`<span class="inline-pill">${days}d ago</span>`);
-            }
-            if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
-            return pills.join('');
-          })()}
-        </div>
-        ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
-        <div class="card-row-links" onclick="event.stopPropagation()">
-          ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
-          ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
-          ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
-          ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
-          ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
-          ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
-          ${(podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
-        </div>
+    <!-- Card header -->
+    <div class="card-v2-header">
+      <div class="card-v2-header-left">
+        <div class="card-v2-title">${esc(podcast.title) || 'Unknown Show'}</div>
+        ${hostLine ? `<div class="card-v2-host">${hostLine}</div>` : ''}
+        ${linksHtml}
       </div>
-      <div class="card-row-right">
-        <span class="score-pill ${tier}">${fitScore}</span>
-        ${statusBadgeHtml(match.status)}
-        <span class="card-chevron">▸</span>
+      <div class="card-v2-score-badge">
+        <span class="card-v2-score-num">${fitScore}</span>
+        <span class="card-v2-score-label">Fit Score</span>
       </div>
     </div>
 
-    <!-- Expanded content -->
-    <div class="card-expanded">
-      <div class="card-expanded-inner">
+    <!-- Score grid -->
+    ${scoresHtml}
 
-        <!-- Compatibility score + bar -->
-        <div class="fit-score-section">
-          <div class="fit-score-header">
-            <span class="fit-score-label">Compatibility Score</span>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
-              <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
-            </div>
-          </div>
-          <div class="fit-score-bar-track">
-            <div class="fit-score-bar-fill score-bar-fill ${fitScore >= 70 ? 'high' : fitScore >= 40 ? 'mid' : 'low'}" style="width:${fitScore}%"></div>
-          </div>
-        </div>
+    <!-- Insights -->
+    ${match.why_this_client_fits ? `<div class="card-insight-box">
+      <p class="card-insight-label">Why You Fit</p>
+      <p class="card-insight-text">${esc(match.why_this_client_fits)}</p>
+    </div>` : ''}
+    ${match.best_pitch_angle ? `<div class="card-insight-box">
+      <p class="card-insight-label">Best Pitch Angle</p>
+      <p class="card-insight-text">${esc(match.best_pitch_angle)}</p>
+    </div>` : ''}
+    ${episodeHtml}
+    ${redFlagsHtml}
 
-        <!-- Sub-scores -->
-        <div class="score-bars">
-          ${scoreBarHtml('Relevance',  match.relevance_score)}
-          ${scoreBarHtml('Audience',   match.audience_score)}
-          ${scoreBarHtml('Recency',    match.recency_score)}
-          ${scoreBarHtml('Reach',      match.reach_score)}
-          ${scoreBarHtml('Contact',    match.contactability_score)}
-        </div>
-
-        <!-- Why fits -->
-        ${match.why_this_client_fits ? `
-        <div class="why-fits-box">
-          <p class="why-fits-label">Why You Fit</p>
-          <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
-        </div>` : ''}
-
-        <!-- Analysis -->
-        <div class="card-analysis">
-          ${match.best_pitch_angle ? `
-          <div class="why-fits-box">
-            <p class="why-fits-label">Best Pitch Angle</p>
-            <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
-          </div>` : ''}
-      ${episodeHtml}
-      ${redFlagsHtml}
-    </div>
-
-    <!-- Meta tags -->
+    <!-- Tags -->
     ${metaTagsHtml(podcast)}
 
-    <!-- Social chips -->
-    ${socialHtml}
+    <!-- Status badge -->
+    <div class="card-v2-status-row">
+      ${statusBadgeHtml(match.status)}
+    </div>
 
     <!-- Pitch + Notes buttons row -->
-    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;padding:0 16px 8px;">
 
     <!-- Pitch / Thank You section -->
     <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(['replied','dismissed','booked'].includes(match.status)) ? 'display:none;' : ''}">
@@ -962,13 +946,10 @@ function renderMatchCard(match) {
 
     </div><!-- /.pitch-notes-row -->
 
-        <!-- Footer: action buttons -->
-        <div class="card-footer">
-          ${actionButtonsHtml(match)}
-        </div>
-
-      </div><!-- /.card-expanded-inner -->
-    </div><!-- /.card-expanded -->
+    <!-- Footer: action buttons -->
+    <div class="card-footer" style="padding:0 16px 16px;">
+      ${actionButtonsHtml(match)}
+    </div>
 
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `
