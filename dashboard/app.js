@@ -220,7 +220,7 @@ function renderOnboardingChecklist() {
   const key = `pp-onboarding-done-${state.token}`;
   if (localStorage.getItem(key)) { el.style.display = 'none'; return; }
 
-  const hasProfile  = !!(state.client?.bio && state.client.bio.trim().length > 20);
+  const hasProfile  = !!(state.client?.bio_short && state.client.bio_short.trim().length > 20);
   const hasMatches  = state.matches.length > 0;
   const hasActed    = state.matches.some((m) => !['new', 'dismissed', 'dream'].includes(m.status));
   const allDone     = hasProfile && hasMatches && hasActed;
