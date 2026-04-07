@@ -693,6 +693,83 @@ async function triggerReEnrich(matchId) {
 }
 window.triggerReEnrich = triggerReEnrich;
 
+// ── Leaderboard ───────────────────────────────────────────────────────
+let _leaderboardVisible = true;
+
+async function loadLeaderboard() {
+  const card = $('leaderboard-card');
+  const body = $('leaderboard-body');
+  if (!card || !body) return;
+
+  try {
+    const res  = await apiFetch(`/api/leaderboard`);
+    if (!res?.success || !res.rows?.length) return;
+
+    const rows = res.rows;
+    const myRank = rows.find(r => r.is_me)?.rank;
+
+    // Only show top 10, but always include the user's own row if outside top 10
+    const top10  = rows.slice(0, 10);
+    const hasMe  = top10.some(r => r.is_me);
+    const meRow  = !hasMe ? rows.find(r => r.is_me) : null;
+
+    const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+    const renderRow = (r, divider = false) => {
+      const isMe   = r.is_me;
+      const medal  = MEDALS[r.rank] || '';
+      const rankDisp = medal || `#${r.rank}`;
+      return `
+        ${divider ? `<div style="border-top:1px dashed var(--border-subtle,#eee);margin:4px 20px;"></div>` : ''}
+        <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:9px 20px;gap:4px;
+          ${isMe ? 'background:linear-gradient(90deg,#f5f3ff,#ede9fe);border-left:3px solid #6366f1;' : 'border-left:3px solid transparent;'}
+          transition:background 0.15s;">
+          <div style="font-size:${medal ? '18px' : '13px'};font-weight:700;color:${isMe ? '#6366f1' : 'var(--text-secondary,#888)'};">${rankDisp}</div>
+          <div style="font-size:13px;font-weight:${isMe ? '700' : '500'};color:${isMe ? '#6366f1' : 'var(--text-primary,#1a1a1a)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${esc(r.display_name)}${isMe ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
+          </div>
+          <div style="text-align:center;">
+            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">🎉 ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+          </div>
+          <div style="text-align:center;">
+            ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+          </div>
+          <div style="text-align:center;">
+            ${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+          </div>
+        </div>`;
+    };
+
+    // Header row
+    const headerHtml = `
+      <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:6px 20px;gap:4px;margin-top:2px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Rank</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
+        <div style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Booked</div>
+        <div style="font-size:10px;font-weight:700;color:#6366f1;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Pitched</div>
+        <div style="font-size:10px;font-weight:700;color:#22c55e;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Aired</div>
+      </div>`;
+
+    body.innerHTML = headerHtml
+      + top10.map(r => renderRow(r)).join('')
+      + (meRow ? renderRow(meRow, true) : '');
+
+    card.style.display = '';
+  } catch {
+    // Silently fail — leaderboard is non-critical
+  }
+}
+
+function toggleLeaderboard() {
+  const body   = $('leaderboard-body');
+  const toggle = $('leaderboard-toggle');
+  if (!body) return;
+  _leaderboardVisible = !_leaderboardVisible;
+  body.style.display   = _leaderboardVisible ? '' : 'none';
+  if (toggle) toggle.textContent = _leaderboardVisible ? 'Hide ▴' : 'Show ▾';
+}
+window.toggleLeaderboard = toggleLeaderboard;
+
 // ── Render a single match card ────────────────────────────────────────
 function renderMatchCard(match) {
   const podcast    = match.podcasts || {};
@@ -2834,6 +2911,7 @@ function init() {
   initProfileVibePickers();
   loadDashboard();
   startReplyPolling();
+  loadLeaderboard();
 
   // Handle Stripe redirect back to dashboard
   const params = new URLSearchParams(window.location.search);

@@ -153,6 +153,22 @@
         </button>
       </section>
 
+      <!-- Leaderboard -->
+      <div id="leaderboard-card" style="background:var(--card-bg,#fff);border:1px solid var(--border-subtle,#f0f0f0);border-radius:16px;padding:0;margin-bottom:18px;overflow:hidden;display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--border-subtle,#f0f0f0);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🏆</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text-primary,#1a1a1a);letter-spacing:-0.01em;">Community Leaderboard</div>
+              <div style="font-size:11px;color:var(--text-secondary,#888);margin-top:1px;">Live rankings across the platform</div>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:#22c55e;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:2px 8px;letter-spacing:0.04em;">LIVE</span>
+          </div>
+          <button onclick="toggleLeaderboard()" id="leaderboard-toggle" style="font-size:12px;color:var(--text-secondary,#888);background:none;border:none;cursor:pointer;padding:4px 8px;">Hide ▴</button>
+        </div>
+        <div id="leaderboard-body" style="padding:0 0 4px;"></div>
+      </div>
+
       <!-- Filter bar -->
       <section class="filter-bar">
         <div class="tab-pills filter-tabs" id="filter-tabs">

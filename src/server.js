@@ -114,6 +114,7 @@ app.use('/api', require('./routes/contentBoost'));
 app.use('/api/operator', require('./routes/contentBoost'));
 app.use('/api', actionsRouter);
 app.use('/api', require('./routes/vision-board'));
+app.use('/api', require('./routes/leaderboard'));
 app.use(require('./routes/upload'));
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
