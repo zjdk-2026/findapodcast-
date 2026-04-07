@@ -272,9 +272,10 @@ async function uploadPhotos(token) {
 // ── Show success screen ───────────────────────────────────────
 function showSuccess(data) {
   const token        = data.dashboardToken || data.dashboard_token || data.client?.dashboard_token || '';
+  const clientId     = data.clientId || data.client_id || data.client?.id || '';
   const base         = window.location.origin;
   const dashboardUrl = `${base}/dashboard/${token}`;
-  const gmailUrl     = `${base}/auth/gmail?token=${token}`;
+  const gmailUrl     = `${base}/auth/gmail?clientId=${clientId}`;
 
   const urlBox   = document.getElementById('success-dashboard-url');
   const dashLink = document.getElementById('success-dashboard-link');

@@ -164,7 +164,6 @@ async function seedBreakthroughMatch(clientId) {
         contactability_score: 100,
         why_this_client_fits: 'This is a live demo match — use it during onboarding calls to show clients exactly how the pitch and booking flow works end-to-end.',
         best_pitch_angle:     'Send a real pitch email to see the full flow. The email goes directly to Zac so you can demo the experience live with every new client.',
-        booking_likelihood:   'high',
       });
 
     if (matchError) {

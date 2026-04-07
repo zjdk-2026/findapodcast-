@@ -140,14 +140,44 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
           status:               'new',
         };
 
-        const { data: savedMatch, error: matchError } = await supabase
+        // Check if a match already exists for this client+podcast
+        const { data: existingMatch } = await supabase
           .from('podcast_matches')
-          .upsert(matchRecord, { onConflict: 'client_id,podcast_id', ignoreDuplicates: true })
-          .select()
-          .single();
+          .select('id, status')
+          .eq('client_id', client.id)
+          .eq('podcast_id', savedPodcast.id)
+          .maybeSingle();
+
+        let savedMatch, matchError;
+
+        if (existingMatch && existingMatch.status !== 'archived') {
+          // Already exists and is active — skip (don't overwrite user's progress)
+          logger.debug('Match already exists, skipping', { podcastId: savedPodcast.id, status: existingMatch.status });
+          return null;
+        } else if (existingMatch && existingMatch.status === 'archived') {
+          // Previously archived — revive it as new with fresh scores
+          const { data: updated, error: updateError } = await supabase
+            .from('podcast_matches')
+            .update({ ...matchRecord, status: 'new' })
+            .eq('id', existingMatch.id)
+            .select()
+            .single();
+          savedMatch = updated;
+          matchError = updateError;
+          if (savedMatch) logger.info('Archived match revived as new', { matchId: existingMatch.id, podcastId: savedPodcast.id });
+        } else {
+          // Brand new match — insert
+          const { data: inserted, error: insertError } = await supabase
+            .from('podcast_matches')
+            .insert(matchRecord)
+            .select()
+            .single();
+          savedMatch = inserted;
+          matchError = insertError;
+        }
 
         if (matchError || !savedMatch) {
-          logger.error('Failed to insert match', { podcastId: savedPodcast.id, error: matchError?.message });
+          logger.error('Failed to save match', { podcastId: savedPodcast.id, error: matchError?.message });
           return null;
         }
 
