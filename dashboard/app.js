@@ -214,9 +214,17 @@ function renderHeroSection() {
   const airedMatches   = state.matches.filter((m) => m.status === 'appeared');
   const lifetimeTotal  = airedMatches.reduce((t, m) => t + (estimateAudience(m.podcasts?.listen_score).low), 0);
 
+  const photoUrl = state.client?.photo_url || '';
+  const avatarHtml = photoUrl
+    ? `<img src="${esc(photoUrl)}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0;" />`
+    : '';
+
   heroEl.innerHTML = `
     <div class="hero-greeting">
-      <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${avatarHtml}
+        <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
+      </div>
       <div class="hero-greeting-sub">${subtitle}</div>
       ${lifetimeTotal > 0 ? `
         <div class="hero-lifetime-reach">
