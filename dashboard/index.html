@@ -154,32 +154,12 @@
       </section>
 
 
-      <!-- Filter bar -->
-      <section class="filter-bar">
-        <div class="tab-pills filter-tabs" id="filter-tabs">
-          <button class="tab-pill filter-tab active" data-status="new">New</button>
-<button class="tab-pill filter-tab" data-status="sent">Pitched</button>
-          <button class="tab-pill filter-tab" data-status="followed_up">Followed Up</button>
-          <button class="tab-pill filter-tab" data-status="replied">Host Replied <span class="reply-badge" id="reply-badge" style="display:none"></span></button>
-          <button class="tab-pill filter-tab" data-status="booked">Booked</button>
-          <button class="tab-pill filter-tab" data-status="appeared">Aired</button>
-          <button class="tab-pill" disabled style="opacity:0.55;cursor:default;font-size:11px;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard <span style="font-size:9px;font-weight:700;background:#6366f1;color:#fff;border-radius:999px;padding:1px 6px;margin-left:3px;letter-spacing:0.04em;">SOON</span></button>
-          <button class="tab-pill filter-tab" data-status="dream">Wish List</button>
-          <button class="tab-pill filter-tab" data-status="dismissed">Not a Fit</button>
-          <button class="tab-pill filter-tab" data-status="content_boost" id="content-boost-tab" style="display:none;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Content Boost</button>
-        </div>
-        <div class="filter-right">
-          <label class="filter-label">
-            Score ≥
-            <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
-            <span id="min-score-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
-          </label>
-          <label class="filter-label" style="cursor:pointer;" title="Only show podcasts where we have a direct email address for the host or producer">
-            <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
-            Has Email
-          </label>
-        </div>
-      </section>
+      <!-- Hidden reply-badge anchor for JS compatibility -->
+      <span id="reply-badge" style="display:none;"></span>
+      <!-- Hidden filter-tabs anchor for JS compatibility -->
+      <div id="filter-tabs" style="display:none;"></div>
+      <!-- Hidden content-boost-tab for JS compatibility -->
+      <button id="content-boost-tab" style="display:none;"></button>
 
       <!-- Onboarding checklist (first-time users only) -->
       <div id="onboarding-checklist" style="display:none;"></div>
@@ -187,15 +167,111 @@
       <!-- Notification banner -->
       <div id="notification-banner" class="notification-banner" style="display:none;margin:12px 24px 0;max-width:1400px;margin-left:auto;margin-right:auto;"></div>
 
-      <!-- Cards grid -->
-      <main class="matches-grid" id="cards-grid">
-        <!-- Injected by JS -->
-      </main>
-
-      <!-- No results -->
-      <div id="no-results" class="no-results" style="display:none;">
-        <p>No matches found for this filter.</p>
+      <!-- Kanban board -->
+      <div class="kanban-board" id="cards-grid">
+        <div class="kanban-col" data-status="new">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">New</span>
+            <span class="kanban-col-count" id="col-count-new">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-new"></div>
+        </div>
+        <div class="kanban-col" data-status="pitched">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Pitched</span>
+            <span class="kanban-col-count" id="col-count-pitched">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-pitched"></div>
+        </div>
+        <div class="kanban-col" data-status="followed_up">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Followed Up</span>
+            <span class="kanban-col-count" id="col-count-followed_up">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-followed_up"></div>
+        </div>
+        <div class="kanban-col" data-status="replied">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Host Replied</span>
+            <span class="kanban-col-count" id="col-count-replied">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-replied"></div>
+        </div>
+        <div class="kanban-col" data-status="booked">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Booked</span>
+            <span class="kanban-col-count" id="col-count-booked">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-booked"></div>
+        </div>
+        <div class="kanban-col" data-status="aired">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Aired</span>
+            <span class="kanban-col-count" id="col-count-aired">0</span>
+          </div>
+          <div class="kanban-col-body" id="col-aired"></div>
+        </div>
       </div>
+
+      <!-- No results (hidden in kanban mode) -->
+      <div id="no-results" class="no-results" style="display:none;">
+        <p>No matches found.</p>
+      </div>
+
+      <style>
+        .kanban-board {
+          display: flex;
+          gap: 12px;
+          padding: 16px 24px 32px;
+          overflow-x: auto;
+          align-items: flex-start;
+          min-height: calc(100vh - 200px);
+        }
+        .kanban-col {
+          flex: 0 0 260px;
+          min-width: 260px;
+          background: #f0f0f5;
+          border-radius: 14px;
+          display: flex;
+          flex-direction: column;
+          max-height: calc(100vh - 220px);
+        }
+        .kanban-col-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 16px 10px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #1d1d1f;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+          flex-shrink: 0;
+        }
+        .kanban-col-title {
+          letter-spacing: -0.01em;
+        }
+        .kanban-col-count {
+          background: rgba(99,102,241,0.12);
+          color: #6366f1;
+          font-size: 11px;
+          font-weight: 700;
+          border-radius: 999px;
+          padding: 2px 8px;
+        }
+        .kanban-col-body {
+          padding: 10px;
+          overflow-y: auto;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        /* Make existing match cards work in kanban */
+        .kanban-col-body .match-card {
+          width: 100% !important;
+          margin: 0 !important;
+        }
+      </style>
 
     </div>
   </div>

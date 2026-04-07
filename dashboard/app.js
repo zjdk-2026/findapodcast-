@@ -1057,21 +1057,93 @@ function getFilteredSorted() {
   return matches;
 }
 
-// ── Render grid ───────────────────────────────────────────────────────
-function renderGrid() {
-  const grid      = $('cards-grid');
-  const noResults = $('no-results');
-  if (!grid) return;
+// ── Status → kanban column mapping ───────────────────────────────────
+function statusToColId(status) {
+  if (status === 'new' || status === 'approved') return 'col-new';
+  if (status === 'sent') return 'col-pitched';
+  if (status === 'followed_up') return 'col-followed_up';
+  if (status === 'replied') return 'col-replied';
+  if (status === 'booked') return 'col-booked';
+  if (status === 'appeared') return 'col-aired';
+  return null; // dismissed, dream, content_boost — hidden
+}
 
-  const filtered = getFilteredSorted();
+// ── Update kanban column counts ───────────────────────────────────────
+function updateKanbanCounts() {
+  const colIds = ['new', 'pitched', 'followed_up', 'replied', 'booked', 'aired'];
+  colIds.forEach((id) => {
+    const el = $(`col-count-${id}`);
+    if (el) el.textContent = ($(`col-${id}`)?.children.length || 0);
+  });
+}
 
-  if (filtered.length === 0) {
-    grid.innerHTML = '';
-    if (noResults) noResults.style.display = 'block';
-  } else {
-    if (noResults) noResults.style.display = 'none';
-    grid.innerHTML = filtered.map(renderMatchCard).join('');
+// ── Render kanban board ───────────────────────────────────────────────
+function renderKanban() {
+  // Clear all columns
+  ['col-new', 'col-pitched', 'col-followed_up', 'col-replied', 'col-booked', 'col-aired'].forEach((id) => {
+    const el = $(id);
+    if (el) el.innerHTML = '';
+  });
+
+  // Deduplicate same as getFilteredSorted
+  const byTitle = new Map();
+  for (const m of state.matches) {
+    const title = (m.podcasts?.title || '').toLowerCase().trim();
+    const key   = title || m.podcast_id || m.id;
+    const existing = byTitle.get(key);
+    if (!existing) {
+      byTitle.set(key, m);
+    } else {
+      const mScore = m.fit_score || 0;
+      const eScore = existing.fit_score || 0;
+      const mHasData = !!(m.podcasts?.total_episodes || m.podcasts?.contact_email);
+      const eHasData = !!(existing.podcasts?.total_episodes || existing.podcasts?.contact_email);
+      const mBooked = m.status === 'booked';
+      const eBooked = existing.status === 'booked';
+      if (mBooked && !eBooked) {
+        byTitle.set(key, m);
+      } else if (!eBooked && (mScore > eScore || (mScore === eScore && mHasData && !eHasData))) {
+        byTitle.set(key, m);
+      }
+    }
   }
+
+  let matches = [...byTitle.values()];
+
+  // Apply score / email filters
+  if (state.minScore > 0) {
+    matches = matches.filter((m) => (m.fit_score || 0) >= state.minScore);
+  }
+  if (state.hasEmailOnly) {
+    matches = matches.filter((m) => m.podcasts?.contact_email);
+  }
+  if (state.hasContactOnly) {
+    matches = matches.filter((m) => {
+      const p = m.podcasts || {};
+      return p.contact_email || p.booking_page_url || p.guest_application_url;
+    });
+  }
+
+  // Sort by fit_score descending within each column
+  matches.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
+
+  // Distribute into columns
+  matches.forEach((m) => {
+    const colId = statusToColId(m.status);
+    if (!colId) return;
+    const col = $(colId);
+    if (!col) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderMatchCard(m);
+    col.appendChild(tmp.firstElementChild);
+  });
+
+  updateKanbanCounts();
+}
+
+// ── Render grid (calls kanban) ────────────────────────────────────────
+function renderGrid() {
+  renderKanban();
 }
 
 // ── Render full dashboard ─────────────────────────────────────────────
@@ -1258,23 +1330,32 @@ function updateMatchInState(matchId, updates) {
 function updateCard(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
-  const card = $(`card-${matchId}`);
-  if (!card) { renderGrid(); return; }
-  if (state.filter !== 'all' && match.status !== state.filter) { renderGrid(); return; }
+
+  // Remove the card from wherever it currently lives
+  const existing = $(`card-${matchId}`);
+  if (existing) existing.remove();
+
+  // Find the correct column for the new status
+  const colId = statusToColId(match.status);
+  if (!colId) {
+    // Status is dismissed/dream/etc — card is intentionally hidden, just update counts
+    updateKanbanCounts();
+    return;
+  }
+  const col = $(colId);
+  if (!col) { renderGrid(); return; }
+
+  // Render fresh card and prepend to column
   const tmp = document.createElement('div');
   tmp.innerHTML = renderMatchCard(match);
-  card.replaceWith(tmp.firstElementChild);
+  col.prepend(tmp.firstElementChild);
+  updateKanbanCounts();
 }
 
 // ── Switch active filter tab programmatically ─────────────────────────
+// In kanban mode this is a no-op — all columns are always visible.
 function switchToFilter(status) {
-  const tabs = $('filter-tabs');
-  if (!tabs) return;
-  tabs.querySelectorAll('.filter-tab').forEach((t) => {
-    t.classList.toggle('active', t.dataset.status === status);
-  });
-  state.filter = status;
-  renderGrid();
+  state.filter = status; // keep state in sync in case anything reads it
 }
 
 // ── Update stat badges live ───────────────────────────────────────────
@@ -1296,24 +1377,8 @@ function updateStatBadges() {
   renderOnboardingChecklist();
   updateContentBoostTab();
 
-  // Update tab count badges
-  const tabCounts = {};
-  m.forEach((x) => { tabCounts[x.status] = (tabCounts[x.status] || 0) + 1; });
-  const tabs = $('filter-tabs');
-  if (tabs) {
-    tabs.querySelectorAll('.filter-tab').forEach((t) => {
-      const st = t.dataset.status;
-      // Remove old count badge (not the reply badge)
-      t.querySelectorAll('.tab-count').forEach((el) => el.remove());
-      const cnt = tabCounts[st] || 0;
-      if (cnt > 0) {
-        const badge = document.createElement('span');
-        badge.className = 'tab-count';
-        badge.textContent = cnt;
-        t.appendChild(badge);
-      }
-    });
-  }
+  // Update kanban column counts
+  updateKanbanCounts();
 }
 
 // ── Card loading state helper ─────────────────────────────────────────
@@ -2416,26 +2481,8 @@ function loadTemplate(templateId) {
 window.loadTemplate = loadTemplate;
 
 // ── Filter tabs ───────────────────────────────────────────────────────
-function initFilterTabs() {
-  const tabs = $('filter-tabs');
-  if (!tabs) return;
-  tabs.addEventListener('click', (e) => {
-    const tab = e.target.closest('.filter-tab');
-    if (!tab) return;
-    tabs.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
-    tab.classList.add('active');
-    state.filter = tab.dataset.status;
-    // Clear reply badge when Host Replied tab is clicked — persist seen IDs
-    if (tab.dataset.status === 'replied') {
-      const badge = document.getElementById('reply-badge');
-      if (badge) badge.style.display = 'none';
-      const seenKey = `seen_replied_${state.token}`;
-      const allRepliedIds = state.matches.filter(m => m.status === 'replied').map(m => m.id);
-      localStorage.setItem(seenKey, JSON.stringify(allRepliedIds));
-    }
-    renderGrid();
-  });
-}
+// initFilterTabs is a no-op in kanban mode — all columns are always visible.
+function initFilterTabs() {}
 
 // ── Sort select ───────────────────────────────────────────────────────
 function initSortSelect() {
