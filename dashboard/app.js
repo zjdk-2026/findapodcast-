@@ -942,6 +942,20 @@ function renderMatchCard(match) {
 
     ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Email</button>` : ''}
 
+    <!-- Notes toggle -->
+    <div style="flex-shrink:0;">
+      <button class="pitch-toggle-btn ${match.client_notes ? 'pitch-toggle-btn-saved' : ''}" onclick="toggleNoteArea('${esc(match.id)}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Notes${match.client_notes ? ' <span class="pitch-saved-badge">Saved</span>' : ''}
+      </button>
+      <div id="note-editor-${esc(match.id)}" style="display:none;flex-direction:column;gap:6px;margin-top:8px;width:300px;">
+        <textarea id="note-text-${esc(match.id)}" class="note-textarea" rows="4" placeholder="Private notes about this podcast…">${esc(match.client_notes || '')}</textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-xs" onclick="saveNote('${esc(match.id)}')">Save Note</button>
+          <button class="btn btn-ghost btn-xs" onclick="toggleNoteArea('${esc(match.id)}')">Close</button>
+        </div>
+      </div>
+    </div>
 
     </div><!-- /.pitch-notes-row -->
 
