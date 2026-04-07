@@ -88,8 +88,19 @@ Example output: ["faith-based entrepreneur interview","Christian business leader
     const parsed = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]');
     return Array.isArray(parsed) ? parsed.slice(0, 5).map(q => `${q} podcast`) : [];
   } catch (err) {
-    logger.warn('Niche query generation failed, skipping', { error: err.message });
-    return [];
+    logger.warn('Niche query generation failed — using topic fallback queries', { error: err.message });
+    // Build fallback queries from client topics so discovery still runs even when AI is unavailable
+    const t = client.topics || ['business'];
+    const a = client.speaking_angles?.[0] || t[0];
+    const aud = client.target_audience || 'entrepreneurs';
+    const angle = runNumber % 2 === 0 ? 'mindset' : 'strategy';
+    return [
+      `${t[0]} podcast interview`,
+      `${t[1] || t[0]} guest expert podcast`,
+      `${aud} success podcast`,
+      `${a} podcast`,
+      `${t[0]} ${angle} podcast`,
+    ].map(q => `${q}`);
   }
 }
 
@@ -670,8 +681,13 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     `${primaryTopic} entrepreneurs podcast guest interview`,
   ];
 
-  // 180-day published_after timestamp
-  const ninetyDaysAgo = Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000);
+  // Date filter: loosen on repeat runs to widen the candidate pool
+  // Run 1: 180 days, Run 2: 365 days, Run 3+: no date filter (null = no filter)
+  const ninetyDaysAgo = runNumber === 1
+    ? Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000)
+    : runNumber === 2
+      ? Math.floor((Date.now() - 365 * 24 * 60 * 60 * 1000) / 1000)
+      : null;
   const language = client.languages?.[0] || 'English';
 
   // Derive run number from existing match count (each run adds ~50 matches)
@@ -695,7 +711,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
         type:           'podcast',
         language,
         len_min:        15,
-        published_after: ninetyDaysAgo,
+        ...(ninetyDaysAgo ? { published_after: ninetyDaysAgo } : {}),
         sort_by_date:   0,
         safe_mode:      1,
         offset:         (page - 1) * 10,
@@ -723,7 +739,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
       type: 'podcast',
       language,
       len_min: 15,
-      published_after: ninetyDaysAgo,
+      ...(ninetyDaysAgo ? { published_after: ninetyDaysAgo } : {}),
       sort_by_date: 0,
       safe_mode: 1,
     });
@@ -1125,13 +1141,14 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     const needed = 50 - filtered.length;
     const clientTopics = (client.topics || []).map(t => t.toLowerCase());
 
-    // No topic filter — fetch top podcasts by listen_score and filter in JS.
-    // Topic overlap was unreliable when client topics are phrases vs single-word tags.
+    // No topic filter — fetch podcasts by listen_score and filter in JS.
+    // Offset by run number so repeat runs get a fresh slice of the cache, not the same top podcasts.
+    const cacheOffset = (runNumber - 1) * needed * 5;
     const { data: cachedPodcasts, error: cacheErr } = await supabase
       .from('podcasts')
       .select('*')
       .order('listen_score', { ascending: false, nullsFirst: false })
-      .limit(needed * 5); // fetch generously — filter in JS against already-matched
+      .range(cacheOffset, cacheOffset + (needed * 10) - 1); // fetch 10x generously to account for already-matched
 
     if (cacheErr) {
       logger.warn('Cache pull failed', { error: cacheErr.message });
