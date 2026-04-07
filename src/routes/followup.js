@@ -67,8 +67,21 @@ router.post('/followup-check', async (req, res) => {
       const clientName   = client.name       || '';
       const firstName    = clientName.split(' ')[0] || clientName;
 
-      const subject = `Following up`;
-      const body    = `Hi ${hostName},\n\nJust wanted to follow up on my note from a few days ago.\n\n${firstName} would love to be a guest on ${podcastTitle}. Happy to send over topics, a bio, or anything else that helps.\n\nThanks,\n${clientName}`;
+      const subject = `Quick note — ${podcastTitle}`;
+      const body    = [
+        `Hi ${hostName},`,
+        ``,
+        `Circling back on my last email — I know inboxes move fast.`,
+        ``,
+        `I genuinely think there's a strong fit here. My angle for your audience would be around ${match.best_pitch_angle || 'the topics we discussed'} — based on the conversations you've been having on ${podcastTitle}, I think it lands right in your sweet spot.`,
+        ``,
+        `Even a 15-minute chat to see if it's worth exploring. Happy to work around your schedule.`,
+        ``,
+        `Thanks,`,
+        `${clientName}`,
+        ``,
+        `P.S. Happy to send a one-pager or sample talking points if that makes the decision easier.`,
+      ].join('\n');
 
       let sent = false;
 

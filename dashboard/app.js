@@ -917,7 +917,7 @@ function renderMatchCard(match) {
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
     <!-- Pitch / Thank You section -->
-    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(match.status === 'replied' || match.status === 'dismissed') ? 'display:none;' : ''}">
+    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(['replied','dismissed','booked'].includes(match.status)) ? 'display:none;' : ''}">
       <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.status === 'appeared' ? '✉️ Send a Thank You' : (match.email_subject ? '✉️ Send Pitch Email' : '✉️ Write Pitch Email')}

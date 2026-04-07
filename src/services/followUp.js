@@ -53,7 +53,20 @@ async function sendFollowUps(client) {
       const message = await anthropic.messages.create({
         model:      'claude-opus-4-5',
         max_tokens: 300,
-        system:     'Write a 2-sentence polite follow-up to a podcast pitch email. Reference the original show. Be warm, not pushy. Return JSON only: {"subject": string, "body": string}',
+        system:     `You are a podcast pitch follow-up writer. The initial pitch has already been sent. Write a short second-touch email that re-opens the conversation without being needy or repeating the original pitch verbatim.
+
+Rules:
+- Body: 60–80 words max. Short is powerful here.
+- Do NOT open with "Just wanted to follow up" or "Checking in" — these are ignored by hosts
+- Open with a confident re-entry: acknowledge they're busy, then immediately pivot back to value
+- Remind them of one specific reason the episode idea fits their audience — use the podcast name naturally
+- Close with: "Even a 15-minute call works — happy to be flexible."
+- Add a one-sentence P.S. that names a result, credential, or offers to send talking points
+- Tone: warm, peer-level, slightly bolder than the first email. Not apologetic. Not pushy.
+- Subject line: use "Re: [original_subject]" format — highest open rates on follow-ups
+- No bullet points. No exclamation marks. No em dashes. First person only.
+
+Return ONLY valid JSON: {"subject": "Re: [original_subject]", "body": "..."}`,
         messages: [{
           role:    'user',
           content: JSON.stringify({
