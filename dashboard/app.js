@@ -688,7 +688,8 @@ function renderMatchCard(match) {
         </select>
         <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
         <label class="pitch-field-label">Pitch Email Body</label>
-        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body || '')}</textarea>
+        ${match.email_body && match.email_body.includes('[Write your pitch here') ? `<div style="background:#FFF7ED;border:1px solid rgba(255,159,10,0.25);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;color:#C2710C;font-weight:500;">Our team is finalising your personalised pitch. In the meantime, feel free to write your own below or click Rewrite Pitch to generate it now.</div>` : ''}
+        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
         `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
           ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
