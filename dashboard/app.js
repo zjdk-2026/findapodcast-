@@ -278,6 +278,77 @@ function renderStatsStrip() {
   renderHeroSection();
 }
 
+// ── Booking celebration modal ─────────────────────────────────────────
+function showBookingCelebration(matchId) {
+  const modal = $('booking-celebration-modal');
+  const body  = $('booking-celebration-body');
+  if (!modal || !body) return;
+
+  const match   = state.matches.find((m) => m.id === matchId);
+  const podcast = match?.podcasts || match;
+  const title   = podcast?.title || 'the show';
+  const host    = podcast?.host  || null;
+
+  // Estimate audience from listen_score (ListenNotes scale 0-100 maps roughly to listener tiers)
+  const ls = podcast?.listen_score || 0;
+  let audienceEst = '';
+  if      (ls >= 80) audienceEst = 'an estimated 500,000+ listeners';
+  else if (ls >= 65) audienceEst = 'an estimated 100,000+ listeners';
+  else if (ls >= 50) audienceEst = 'an estimated 20,000+ listeners';
+  else if (ls >= 35) audienceEst = 'an estimated 5,000+ listeners';
+  else if (ls >= 20) audienceEst = 'an estimated 1,000+ listeners';
+  else               audienceEst = 'a growing audience';
+
+  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.club`);
+  const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.club&summary=${linkedInText}`;
+
+  body.innerHTML = `
+    <div style="font-size:52px;margin-bottom:12px;line-height:1;">🎉</div>
+    <h2 style="font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin-bottom:8px;">You're booked.</h2>
+    <p style="font-size:15px;color:var(--text-secondary);margin-bottom:4px;font-weight:500;">${esc(title)}</p>
+    ${host ? `<p style="font-size:13px;color:var(--text-tertiary);margin-bottom:0;">Hosted by ${esc(host)}</p>` : ''}
+    <div style="background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);border-radius:12px;padding:14px 20px;margin:20px 0;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:var(--success);">Your voice is about to reach ${audienceEst}</div>
+    </div>
+    <div style="text-align:left;background:var(--bg-tertiary);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">What happens next</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
+          <span style="font-size:16px;">📅</span> Confirm your recording date with the host
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
+          <span style="font-size:16px;">🎙️</span> Prep your best stories and talking points
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
+          <span style="font-size:16px;">✨</span> After it airs, mark it as Aired to unlock Content Boost
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="${linkedInUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center;gap:8px;text-decoration:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Share on LinkedIn
+      </a>
+      <button class="btn btn-secondary" onclick="closeBookingCelebration();showContentBoostModal();" style="width:100%;">
+        Turn this into 30 days of content
+      </button>
+      <button class="btn btn-ghost" onclick="closeBookingCelebration();" style="width:100%;color:var(--text-tertiary);">
+        Close
+      </button>
+    </div>`;
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBookingCelebration() {
+  const modal = $('booking-celebration-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeBookingCelebration = closeBookingCelebration;
+
 // ── Content boost modal ───────────────────────────────────────────────
 function showContentBoostModal() {
   const modal = $('content-boost-modal');
@@ -1154,9 +1225,7 @@ async function bookMatch(matchId) {
         updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
         switchToFilter('booked');
         updateStatBadges();
-        renderStatsStrip();
-        showToast('🎉 Booked! Moved to your Booked tab.', 'success');
-        showContentBoostModal();
+        showBookingCelebration(matchId);
       } else {
         showToast(data.error || 'Book failed.', 'error');
       }
