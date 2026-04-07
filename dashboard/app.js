@@ -2242,6 +2242,8 @@ async function handlePhotoUpload(event) {
       const dropdownAvatar = document.getElementById('dropdown-avatar');
       if (headerAvatar)   { headerAvatar.src = data.photo_url;   headerAvatar.style.display = 'block'; }
       if (dropdownAvatar) { dropdownAvatar.src = data.photo_url; dropdownAvatar.style.display = 'block'; }
+      // Re-render hero greeting so headshot appears next to name
+      renderHeroSection();
       showToast('Photo updated!', 'success');
     } else {
       showToast(data.error || 'Upload failed.', 'error');
