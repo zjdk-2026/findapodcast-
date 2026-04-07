@@ -136,14 +136,15 @@ function likelihoodClass(likelihood) {
 
 function statusBadgeHtml(status) {
   const labels = {
-    new:       'New',
-    approved:  'Approved',
-    sent:      'Sent',
-    replied:   'Replied',
-    booked:    'Booked',
-    dismissed: 'Not a Fit',
-    dream:     'Wish List',
-    appeared:  'Aired',
+    new:          'New',
+    approved:     'Approved',
+    sent:         'Sent',
+    followed_up:  'Followed Up',
+    replied:      'Replied',
+    booked:       'Booked',
+    dismissed:    'Not a Fit',
+    dream:        'Wish List',
+    appeared:     'Aired',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -647,7 +648,7 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(contentBoostButton(match));
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="unbookMatch('${id}')">❌ Not Booked</button>`);
   } else if (status === 'appeared') {
     buttons.push(contentBoostButton(match));
   } else if (status === 'dismissed') {

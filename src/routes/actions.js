@@ -407,7 +407,7 @@ router.post('/appeared', async (req, res) => {
  * POST /api/update-status
  * Generic status update used by drag-and-drop.
  */
-const VALID_STATUSES = ['new', 'approved', 'sent', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
+const VALID_STATUSES = ['new', 'approved', 'sent', 'followed_up', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
 router.post('/update-status', async (req, res) => {
   const { matchId, status } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
