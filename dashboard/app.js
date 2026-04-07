@@ -841,8 +841,9 @@ function renderMatchCard(match) {
       </div>
     </div>`;
 
-  const episodeCount = podcast.total_episodes ? `· ${podcast.total_episodes} episodes` : '';
-  const hostLine = [podcast.host_name ? `Hosted by ${esc(podcast.host_name)}` : '', episodeCount].filter(Boolean).join(' ');
+  const episodeCount = podcast.total_episodes ? `· ${podcast.total_episodes} eps` : '';
+  const rawHost = (podcast.host_name || '').replace(/^(hosted by|created by|by)\s+/i, '').trim();
+  const hostLine = [rawHost ? `Hosted by ${esc(rawHost)}` : '', episodeCount].filter(Boolean).join(' ');
 
   const linksHtml = `<div class="card-links" onclick="event.stopPropagation()">
     ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
@@ -867,6 +868,7 @@ function renderMatchCard(match) {
         <span class="card-v2-score-num">${fitScore}</span>
         <span class="card-v2-score-label">Fit Score</span>
       </div>
+      <span class="card-v2-chevron">▼</span>
     </div>
 
     <!-- Expanded body — hidden until clicked -->
