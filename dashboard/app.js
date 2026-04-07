@@ -853,13 +853,14 @@ function renderMatchCard(match) {
   </div>`;
 
   return `
-  <article class="match-card match-card-v2 status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}">
+  <article class="match-card match-card-v2 status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
-    <!-- Card header -->
-    <div class="card-v2-header">
+    <!-- Card header — always visible, click to expand -->
+    <div class="card-v2-header" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-v2-header-left">
         <div class="card-v2-title">${esc(podcast.title) || 'Unknown Show'}</div>
         ${hostLine ? `<div class="card-v2-host">${hostLine}</div>` : ''}
+        <div class="card-v2-status-compact">${statusBadgeHtml(match.status)}</div>
         ${linksHtml}
       </div>
       <div class="card-v2-score-badge">
@@ -867,6 +868,9 @@ function renderMatchCard(match) {
         <span class="card-v2-score-label">Fit Score</span>
       </div>
     </div>
+
+    <!-- Expanded body — hidden until clicked -->
+    <div class="card-v2-body">
 
     <!-- Score grid -->
     ${scoresHtml}
@@ -885,11 +889,6 @@ function renderMatchCard(match) {
 
     <!-- Tags -->
     ${metaTagsHtml(podcast)}
-
-    <!-- Status badge -->
-    <div class="card-v2-status-row">
-      ${statusBadgeHtml(match.status)}
-    </div>
 
     <!-- Pitch + Notes buttons row -->
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;padding:0 16px 8px;">
@@ -950,6 +949,8 @@ function renderMatchCard(match) {
     <div class="card-footer" style="padding:0 16px 16px;">
       ${actionButtonsHtml(match)}
     </div>
+
+    </div><!-- /.card-v2-body -->
 
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `

@@ -389,18 +389,33 @@
           line-height: 1.55;
           margin: 0;
         }
-        /* Status row */
-        .card-v2-status-row {
-          padding: 0 16px 10px;
-          display: flex;
-          gap: 6px;
-          flex-wrap: wrap;
+        /* Compact status shown in header */
+        .card-v2-status-compact {
+          margin: 4px 0 6px;
         }
-        /* Links */
+        /* Links in header */
         .card-links {
           display: flex;
           flex-wrap: wrap;
           gap: 4px;
+        }
+        /* Expand/collapse body */
+        .card-v2-body {
+          display: none;
+        }
+        .match-card-v2[data-expanded="true"] .card-v2-body {
+          display: block;
+        }
+        /* Clickable header cue */
+        .card-v2-header {
+          cursor: pointer;
+        }
+        .card-v2-header:hover {
+          background: rgba(99,102,241,0.03);
+          border-radius: 13px 13px 0 0;
+        }
+        .match-card-v2[data-expanded="true"] .card-v2-score-badge {
+          background: #4f46e5;
         }
       </style>
 
