@@ -1008,7 +1008,7 @@ function renderDashboard(data) {
   }
 
   // Stats
-  const highCount = state.matches.filter((m) => (m.fit_score || 0) >= 80).length;
+  const highCount = state.matches.filter((m) => (m.fit_score || 0) >= 60).length;
   const avgScore  = state.matches.length > 0
     ? Math.round(state.matches.reduce((s, m) => s + (m.fit_score || 0), 0) / state.matches.length)
     : 0;
@@ -1111,7 +1111,7 @@ function updateStatBadges() {
   const m = state.matches;
   renderStats({
     total:    m.length,
-    high:     m.filter((x) => (x.fit_score || 0) >= 80).length,
+    high:     m.filter((x) => (x.fit_score || 0) >= 60).length,
     avgScore: m.length > 0
       ? Math.round(m.reduce((s, x) => s + (x.fit_score || 0), 0) / m.length)
       : 0,
