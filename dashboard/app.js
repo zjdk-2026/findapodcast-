@@ -1399,10 +1399,24 @@ function togglePitchArea(matchId) {
 }
 window.togglePitchArea = togglePitchArea;
 
-async function autoGeneratePitch(matchId, bodyEl, subjectEl) {
-  bodyEl.value = '';
-  bodyEl.placeholder = 'Writing your pitch…';
-  bodyEl.disabled = true;
+// ── Core pitch generation — used by both auto-generate and rewrite ─────
+async function generatePitch(matchId, { clearFirst = false } = {}) {
+  const bodyEl    = $(`pitch-body-${matchId}`);
+  const subjectEl = $(`pitch-subject-select-${matchId}`);
+  const rewriteBtn = document.querySelector(`[onclick="regeneratePitch('${matchId}')"]`);
+  if (!bodyEl) return;
+
+  const previousBody    = bodyEl.value;
+  const previousSubject = subjectEl?.value || '';
+
+  if (clearFirst) {
+    bodyEl.value       = '';
+    if (subjectEl) subjectEl.value = '';
+  }
+  bodyEl.placeholder = '✨ Writing your pitch…';
+  bodyEl.disabled    = true;
+  if (rewriteBtn) { rewriteBtn.disabled = true; rewriteBtn.textContent = '✦ Writing…'; }
+
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
     if (data.success) {
@@ -1410,39 +1424,32 @@ async function autoGeneratePitch(matchId, bodyEl, subjectEl) {
       bodyEl.value = data.body || '';
       bodyEl.placeholder = 'Your pitch email…';
       updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
+      showToast('Pitch generated!', 'success');
     } else {
-      bodyEl.placeholder = 'Could not generate — write manually or try again.';
-      showToast(data.error || 'Could not generate pitch.', 'error');
+      // Restore previous content — don't leave user with a blank field
+      bodyEl.value = previousBody;
+      if (subjectEl) subjectEl.value = previousSubject;
+      bodyEl.placeholder = 'Your pitch email…';
+      showToast(data.error || 'Could not generate pitch. Try again.', 'error');
     }
   } catch {
-    bodyEl.placeholder = 'Network error — write manually or try again.';
-    showToast('Network error generating pitch.', 'error');
+    bodyEl.value = previousBody;
+    if (subjectEl) subjectEl.value = previousSubject;
+    bodyEl.placeholder = 'Your pitch email…';
+    showToast('Network error. Please try again.', 'error');
   } finally {
     bodyEl.disabled = false;
+    if (rewriteBtn) { rewriteBtn.disabled = false; rewriteBtn.textContent = '✦ Rewrite Pitch'; }
   }
 }
 
+async function autoGeneratePitch(matchId, bodyEl, subjectEl) {
+  // Thin wrapper used when pitch area first opens with no content
+  await generatePitch(matchId, { clearFirst: true });
+}
+
 async function regeneratePitch(matchId) {
-  const bodyEl   = $(`pitch-body-${matchId}`);
-  const subjectEl = $(`pitch-subject-select-${matchId}`);
-  if (!bodyEl) return;
-  bodyEl.value = '✨ Generating pitch in your voice…';
-  if (subjectEl) subjectEl.value = '';
-  try {
-    const data = await apiPost('/api/generate-pitch', { matchId });
-    if (data.success) {
-      if (subjectEl) subjectEl.value = data.subject || '';
-      bodyEl.value = data.body || '';
-      updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
-      showToast('Pitch generated!', 'success');
-    } else {
-      bodyEl.value = '';
-      showToast(data.error || 'Could not generate pitch.', 'error');
-    }
-  } catch {
-    bodyEl.value = '';
-    showToast('Network error.', 'error');
-  }
+  await generatePitch(matchId, { clearFirst: false });
 }
 window.regeneratePitch = regeneratePitch;
 

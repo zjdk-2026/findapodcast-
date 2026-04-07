@@ -75,6 +75,12 @@ router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
 
     const email = await writeEmail(match.clients, match, match.podcasts);
 
+    // Don't save or return a fallback — tell the frontend to handle it gracefully
+    if (email._fallback) {
+      logger.warn('Email generation returned fallback — not saving to DB', { matchId });
+      return res.status(503).json({ success: false, error: 'Our pitch writer is temporarily unavailable. Please try again in a moment or write your pitch manually.' });
+    }
+
     const { error: updateError } = await supabase
       .from('podcast_matches')
       .update({ email_subject: email.subject, email_body: email.body })
@@ -121,7 +127,7 @@ router.post('/interview-prep', requireDashboardToken, async (req, res) => {
       'Format as JSON with these fields: host_background (2 sentences), show_format (1 sentence), suggested_topics (array of 4 strings), ' +
       'likely_questions (array of 4 strings), talking_points (array of 3 strings), one_thing_to_avoid (1 sentence). ' +
       `Podcast: ${podcast.title}, ${podcast.category}, ${podcast.description}. ` +
-      `Guest: ${client.name}, ${client.business}, ${client.topics}, ${client.bio}.`;
+      `Guest: ${client.name}, ${client.business_name || client.business || ''}, ${(client.topics || []).join(', ')}, ${client.bio_short || client.bio || ''}.`;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
