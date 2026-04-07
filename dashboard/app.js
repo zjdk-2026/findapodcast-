@@ -1480,7 +1480,7 @@ function showSendConfirmModal(matchId) {
   document.body.style.overflow = 'hidden';
 
   const confirmBtn = $('confirm-send-btn');
-  if (!confirmBtn) { await doSendMatch(matchId); return; }
+  if (!confirmBtn) { doSendMatch(matchId); return; }
   const freshBtn = confirmBtn.cloneNode(true);
   confirmBtn.parentNode.replaceChild(freshBtn, confirmBtn);
 
