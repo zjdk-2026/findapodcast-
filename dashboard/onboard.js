@@ -282,23 +282,17 @@ async function submitForm() {
 async function uploadPhotos(token) {
   if (!token) return;
   const photoInput = document.getElementById('f-photo');
-  const logoInput  = document.getElementById('f-logo');
+  if (!photoInput?.files?.[0]) return;
 
-  const uploads = [];
-  if (photoInput?.files?.[0]) uploads.push({ file: photoInput.files[0], type: 'photo' });
-  if (logoInput?.files?.[0])  uploads.push({ file: logoInput.files[0],  type: 'logo'  });
-
-  for (const { file, type } of uploads) {
-    try {
-      const fd = new FormData();
-      fd.append(type, file);
-      await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'x-dashboard-token': token },
-        body: fd,
-      });
-    } catch (_) { /* non-blocking */ }
-  }
+  try {
+    const fd = new FormData();
+    fd.append('photo', photoInput.files[0]);
+    await fetch('/api/upload-photo', {
+      method: 'POST',
+      headers: { 'x-dashboard-token': token },
+      body: fd,
+    });
+  } catch (_) { /* non-blocking */ }
 }
 
 // ── Show success screen ───────────────────────────────────────
