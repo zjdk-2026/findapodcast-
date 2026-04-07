@@ -103,6 +103,8 @@ app.use('/api', followupRouter);
 app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));
 app.use('/api', require('./routes/stripe'));
+app.use('/api', require('./routes/contentBoost'));
+app.use('/api/operator', require('./routes/contentBoost'));
 app.use('/api', actionsRouter);
 app.use('/api', require('./routes/vision-board'));
 app.use(require('./routes/upload'));

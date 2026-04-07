@@ -373,12 +373,99 @@ function closeContentBoostModal() {
 }
 window.closeContentBoostModal = closeContentBoostModal;
 
-function startContentBoostCheckout() {
+// Track which match the content boost is being ordered for
+let _contentBoostMatchId = null;
+
+function showContentBoostModal(matchId) {
+  _contentBoostMatchId = matchId || state.modalMatchId || null;
+  const modal = $('content-boost-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+async function startContentBoostCheckout() {
   closeContentBoostModal();
+  // Tag the match as 'requested' before sending to Stripe so we can link it after payment
+  if (_contentBoostMatchId) {
+    try {
+      await apiPost('/api/content-boost/request', { matchId: _contentBoostMatchId });
+      updateMatchInState(_contentBoostMatchId, { content_boost_status: 'requested' });
+      updateContentBoostTab();
+    } catch { /* non-fatal */ }
+  }
   window.open('https://buy.stripe.com/00waEX7Dqekt8B70EL8IU0L', '_blank');
 }
 window.startContentBoostCheckout = startContentBoostCheckout;
 window.closeContentBoostModal = closeContentBoostModal;
+
+// ── Content Boost tab visibility + notification ───────────────────────
+function updateContentBoostTab() {
+  const tab  = $('content-boost-tab');
+  const boostMatches = state.matches.filter((m) => m.content_boost_status);
+  if (tab) tab.style.display = boostMatches.length > 0 ? '' : 'none';
+
+  // Show notification if any completed but not yet notified
+  const newlyComplete = state.matches.filter(
+    (m) => m.content_boost_status === 'completed' && !m.content_boost_notified
+  );
+  if (newlyComplete.length > 0) {
+    const banner = $('notification-banner');
+    if (banner) {
+      banner.innerHTML = `⚡ Your Content Boost is ready! <button onclick="switchToFilter('content_boost');dismissBoostNotification()" style="margin-left:10px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">View now</button>`;
+      banner.style.display = 'block';
+    }
+  }
+}
+
+async function dismissBoostNotification() {
+  const banner = $('notification-banner');
+  if (banner) banner.style.display = 'none';
+  // Mark notified on server for each completed unnotified boost
+  const toNotify = state.matches.filter(
+    (m) => m.content_boost_status === 'completed' && !m.content_boost_notified
+  );
+  for (const m of toNotify) {
+    updateMatchInState(m.id, { content_boost_notified: true });
+    try { await apiPost('/api/save-pitch', { matchId: m.id }); } catch { /* non-fatal */ }
+  }
+}
+window.dismissBoostNotification = dismissBoostNotification;
+
+// ── Submit episode link for Content Boost ─────────────────────────────
+async function submitEpisodeLink(matchId) {
+  const input = document.getElementById(`boost-url-${matchId}`);
+  const btn   = document.getElementById(`boost-link-btn-${matchId}`);
+  const url   = input?.value.trim();
+
+  if (!url) { showToast('Paste your episode link first.', 'error'); return; }
+  if (!url.startsWith('http')) { showToast('Please enter a valid URL starting with http.', 'error'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+  try {
+    const data = await apiPost('/api/content-boost/submit-link', { matchId, episodeUrl: url });
+    if (data.success) {
+      showToast('✅ Episode link sent to our team! We\'ll start editing shortly.', 'success');
+      updateMatchInState(matchId, { content_boost_episode_url: url });
+      // Refresh card so the submission section hides
+      const card = document.getElementById(`card-${matchId}`);
+      if (card) {
+        const section = document.getElementById(`boost-link-section-${matchId}`);
+        if (section) {
+          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">✅ Episode link received — our team is on it!</p>`;
+        }
+      }
+    } else {
+      showToast(data.error || 'Failed to send link.', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Send to Team'; }
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Send to Team'; }
+  }
+}
+window.submitEpisodeLink = submitEpisodeLink;
 
 // ── Render stats ──────────────────────────────────────────────────────
 function renderStats(stats) {
@@ -714,6 +801,23 @@ function renderMatchCard(match) {
       </div><!-- /.card-expanded-inner -->
     </div><!-- /.card-expanded -->
 
+    <!-- Content Boost episode link submission -->
+    ${match.content_boost_status === 'ordered' ? `
+    <div class="boost-link-section" id="boost-link-section-${esc(match.id)}" style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:16px 20px;background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);">
+      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">⚡ Content Boost — Submit Your Episode</p>
+      <p style="font-size:12px;color:#555;margin:0 0 12px;">Paste the link to your episode (Spotify, Apple, YouTube, etc.) so our team can download and start editing.</p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="url" id="boost-url-${esc(match.id)}" class="form-input" placeholder="https://open.spotify.com/episode/..." style="flex:1;height:36px;padding:0 10px;border-radius:8px;border:1px solid #c4b5fd;font-size:13px;background:#fff;" />
+        <button class="btn btn-primary btn-sm" onclick="submitEpisodeLink('${esc(match.id)}')" id="boost-link-btn-${esc(match.id)}" style="height:36px;white-space:nowrap;background:linear-gradient(135deg,#6366f1,#8b5cf6);">Send to Team</button>
+      </div>
+    </div>` : match.content_boost_status === 'completed' ? `
+    <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);">
+      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">✅ Content Boost complete — check your inbox for your 30 days of content!</p>
+    </div>` : match.content_boost_status === 'requested' ? `
+    <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:#fffbeb;">
+      <p style="font-size:13px;color:#92400e;margin:0;">⏳ Payment processing — once confirmed you'll be able to submit your episode link.</p>
+    </div>` : ''}
+
   </article>`;
 }
 
@@ -744,7 +848,9 @@ function getFilteredSorted() {
   }
   let matches = [...byTitle.values()];
 
-  if (state.filter !== 'all') {
+  if (state.filter === 'content_boost') {
+    matches = matches.filter((m) => !!m.content_boost_status);
+  } else if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
   }
   if (state.minScore > 0) {
@@ -1014,9 +1120,10 @@ function updateStatBadges() {
     booked:   m.filter((x) => x.status === 'booked').length,
   });
 
-  // Refresh hero subtitle and onboarding checklist
+  // Refresh hero subtitle, onboarding checklist, content boost tab
   renderHeroSection();
   renderOnboardingChecklist();
+  updateContentBoostTab();
 
   // Update tab count badges
   const tabCounts = {};
@@ -2491,12 +2598,24 @@ async function submitAddPodcast() {
     });
     if (data.success) {
       closeAddPodcastModal();
-      showToast('🎉 Podcast added to your New tab!', 'success');
-      // Add to state and re-render
+      showToast('⏳ Added! Scoring compatibility — ready in ~10 seconds.', 'info');
+      // Add to state immediately as placeholder, then refresh to get real scores
       if (data.match && data.podcast) {
         state.matches.unshift({ ...data.match, podcasts: data.podcast });
         switchToFilter('new');
       }
+      // Re-fetch dashboard after 10s so scored values appear
+      setTimeout(async () => {
+        try {
+          const fresh = await apiFetch(`/api/dashboard/${state.token}`);
+          if (fresh?.matches) {
+            state.matches = fresh.matches;
+            renderGrid();
+            updateStatBadges();
+            showToast('✅ Scoring complete!', 'success');
+          }
+        } catch { /* silent */ }
+      }, 10000);
     } else {
       showToast(data.error || 'Failed to add podcast.', 'error');
       if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }

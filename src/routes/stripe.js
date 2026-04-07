@@ -126,20 +126,34 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
 
     logger.info('Stripe payment completed', { clientId, email, amount });
 
+    const matchId = session.metadata?.match_id || null;
+
     // 1. Mark client as content boost purchased in DB
     if (clientId) {
-      await supabase
-        .from('clients')
-        .update({ content_boost_purchased: true })
-        .eq('id', clientId);
+      await supabase.from('clients').update({ content_boost_purchased: true }).eq('id', clientId);
     }
 
-    // 2. Tag contact in GHL → triggers your GHL workflow/email
+    // 2. Link payment to specific match — upgrade requested → ordered
+    if (matchId) {
+      await supabase.from('podcast_matches').update({
+        content_boost_status:     'ordered',
+        content_boost_ordered_at: new Date().toISOString(),
+      }).eq('id', matchId).eq('client_id', clientId);
+      logger.info('Content Boost linked to match', { matchId, clientId });
+    } else if (clientId) {
+      // Fallback: upgrade any 'requested' match for this client
+      await supabase.from('podcast_matches').update({
+        content_boost_status:     'ordered',
+        content_boost_ordered_at: new Date().toISOString(),
+      }).eq('client_id', clientId).eq('content_boost_status', 'requested');
+    }
+
+    // 3. Tag contact in GHL
     if (email) {
       await tagContactInGHL(email, 'content-boost-purchased');
     }
 
-    logger.info('Content Boost post-payment actions complete', { clientId, email });
+    logger.info('Content Boost post-payment actions complete', { clientId, matchId, email });
   }
 
   res.json({ received: true });

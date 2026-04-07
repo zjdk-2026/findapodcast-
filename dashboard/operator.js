@@ -37,6 +37,7 @@ function checkPassword() {
     document.getElementById('pw-gate').style.display = 'none';
     document.getElementById('op-wrap').style.display = 'block';
     loadClients();
+    loadContentBoostOrders();
   } else {
     if (errEl) errEl.classList.add('show');
     if (input) { input.value = ''; input.focus(); }
@@ -232,6 +233,90 @@ async function addPodcastManually() {
     if (btn) { btn.disabled = false; btn.textContent = 'Add to Pipeline'; }
   }
 }
+
+// ── Content Boost Orders ──────────────────────────────────────
+async function loadContentBoostOrders() {
+  const el = document.getElementById('boost-orders-body');
+  if (!el) return;
+  el.innerHTML = '<p style="font-size:13px;color:#888;">Loading…</p>';
+
+  try {
+    const res  = await fetch('/api/operator/content-boost', { headers: { 'x-operator-key': OPERATOR_KEY } });
+    const data = await res.json();
+    if (!data.success || !data.orders.length) {
+      el.innerHTML = '<p style="font-size:13px;color:#888;">No content boost orders yet.</p>';
+      return;
+    }
+
+    const statusColor = { ordered: '#FF9F0A', completed: '#30D158', requested: '#6366f1' };
+    const statusLabel = { ordered: 'Ordered — Pending', completed: 'Complete', requested: 'Awaiting Payment' };
+
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border-subtle,#eee);">
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Client</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Podcast</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Episode Link</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Ordered</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Status</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.orders.map((o) => {
+            const col   = statusColor[o.content_boost_status] || '#888';
+            const label = statusLabel[o.content_boost_status] || o.content_boost_status;
+            const orderedAt = o.content_boost_ordered_at
+              ? new Date(o.content_boost_ordered_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+              : '—';
+            const episodeLink = o.content_boost_episode_url
+              ? `<a href="${esc(o.content_boost_episode_url)}" target="_blank" style="color:#6366f1;text-decoration:underline;">Open link</a>`
+              : '<span style="color:#bbb;">Not submitted yet</span>';
+            return `
+              <tr style="border-bottom:1px solid var(--border-subtle,#f5f5f5);">
+                <td style="padding:12px;"><div style="font-weight:600;">${esc(o.clients?.name || '—')}</div><div style="font-size:11px;color:#888;">${esc(o.clients?.email || '')}</div></td>
+                <td style="padding:12px;">${esc(o.podcasts?.title || '—')}</td>
+                <td style="padding:12px;">${episodeLink}</td>
+                <td style="padding:12px;color:#888;">${orderedAt}</td>
+                <td style="padding:12px;"><span style="background:${col}20;color:${col};font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;">${label}</span></td>
+                <td style="padding:12px;">
+                  ${o.content_boost_status === 'ordered'
+                    ? `<button class="btn btn-success btn-sm" onclick="completeBoostOrder('${o.id}')" style="font-size:12px;padding:6px 14px;">✓ Mark Complete</button>`
+                    : o.content_boost_status === 'completed'
+                      ? '<span style="color:#30D158;font-size:12px;font-weight:600;">✓ Done</span>'
+                      : '<span style="color:#bbb;font-size:12px;">Awaiting payment</span>'}
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  } catch (err) {
+    el.innerHTML = `<p style="color:red;font-size:13px;">Error: ${esc(err.message)}</p>`;
+  }
+}
+
+async function completeBoostOrder(matchId) {
+  if (!confirm('Mark this Content Boost as complete and email the client?')) return;
+  try {
+    const res  = await fetch('/api/operator/content-boost/complete', {
+      method:  'POST',
+      headers: { 'x-operator-key': OPERATOR_KEY, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ matchId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Marked complete. Client has been emailed.', 'success');
+      loadContentBoostOrders();
+    } else {
+      showToast(data.error || 'Failed.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+window.completeBoostOrder       = completeBoostOrder;
+window.loadContentBoostOrders   = loadContentBoostOrders;
 
 // ── HTML escape ───────────────────────────────────────────────
 function esc(str) {
