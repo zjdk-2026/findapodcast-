@@ -729,10 +729,10 @@ async function loadLeaderboard() {
             ${esc(r.display_name)}${isMe ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
           </div>
           <div style="text-align:center;">
-            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">🎉 ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+            ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
-            ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">🎉 ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
             ${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
@@ -745,8 +745,8 @@ async function loadLeaderboard() {
       <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:6px 20px;gap:4px;margin-top:2px;">
         <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Rank</div>
         <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
-        <div style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Booked</div>
         <div style="font-size:10px;font-weight:700;color:#6366f1;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Pitched</div>
+        <div style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Booked</div>
         <div style="font-size:10px;font-weight:700;color:#22c55e;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Aired</div>
       </div>`;
 
