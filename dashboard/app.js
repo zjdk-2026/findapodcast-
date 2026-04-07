@@ -212,6 +212,67 @@ function renderHeroSection() {
     </div>`;
 }
 
+// ── Onboarding checklist (first-time users) ───────────────────────────
+function renderOnboardingChecklist() {
+  const el = $('onboarding-checklist');
+  if (!el) return;
+
+  const key = `pp-onboarding-done-${state.token}`;
+  if (localStorage.getItem(key)) { el.style.display = 'none'; return; }
+
+  const hasProfile  = !!(state.client?.bio && state.client.bio.trim().length > 20);
+  const hasMatches  = state.matches.length > 0;
+  const hasActed    = state.matches.some((m) => !['new', 'dismissed', 'dream'].includes(m.status));
+  const allDone     = hasProfile && hasMatches && hasActed;
+
+  if (allDone) {
+    // Show celebration briefly then hide forever
+    el.style.display = 'block';
+    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">🎉 You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
+    setTimeout(() => {
+      el.style.transition = 'opacity 600ms ease';
+      el.style.opacity = '0';
+      setTimeout(() => { el.style.display = 'none'; }, 600);
+    }, 2500);
+    localStorage.setItem(key, '1');
+    return;
+  }
+
+  el.style.display = 'block';
+
+  const step = (done, title, sub, action) => `
+    <div class="onboarding-step ${done ? 'done' : ''}" ${!done && action ? `onclick="${action}"` : ''}>
+      <div class="onboarding-check">${done ? '✓' : ''}</div>
+      <div>
+        <div class="onboarding-step-text">${title}</div>
+        <div class="onboarding-step-sub">${sub}</div>
+      </div>
+    </div>`;
+
+  el.innerHTML = `
+    <div class="onboarding-card">
+      <div class="onboarding-inner">
+        <div>
+          <div class="onboarding-label">Getting Started</div>
+          <div class="onboarding-title">3 steps to your first booking</div>
+        </div>
+        <div class="onboarding-steps">
+          ${step(hasProfile,  'Complete your profile',      'Paste your LinkedIn bio',        'openProfileModal()')}
+          ${step(hasMatches,  'Find your first matches',    'Click Find a Podcast above',     'runPipeline()')}
+          ${step(hasActed,    'Send your first pitch',      'Approve a match and hit send',   hasMatches ? "switchToFilter('new')" : 'runPipeline()')}
+        </div>
+        <button class="onboarding-dismiss" onclick="dismissOnboarding()" title="Dismiss">&#x2715;</button>
+      </div>
+    </div>`;
+}
+
+function dismissOnboarding() {
+  const el = $('onboarding-checklist');
+  localStorage.setItem(`pp-onboarding-done-${state.token}`, '1');
+  if (el) { el.style.transition = 'opacity 400ms ease'; el.style.opacity = '0'; setTimeout(() => { el.style.display = 'none'; }, 400); }
+}
+window.dismissOnboarding = dismissOnboarding;
+
 // ── Stats strip (this month) — legacy kept for bookMatch calls ────────
 function renderStatsStrip() {
   renderHeroSection();
@@ -867,8 +928,9 @@ function updateStatBadges() {
     booked:   m.filter((x) => x.status === 'booked').length,
   });
 
-  // Refresh hero subtitle (booking/reply counts may have changed)
+  // Refresh hero subtitle and onboarding checklist
   renderHeroSection();
+  renderOnboardingChecklist();
 
   // Update tab count badges
   const tabCounts = {};
