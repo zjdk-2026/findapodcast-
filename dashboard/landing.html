@@ -296,29 +296,40 @@
     .how { background: #f5f5f7; }
     .steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2px;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
       margin-top: 52px;
-      background: rgba(0,0,0,0.06);
-      border-radius: 20px;
-      overflow: hidden;
+      max-width: 860px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
     }
-    .step { background: #ffffff; padding: 36px 28px; }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 32px 36px;
+      position: relative;
+    }
+    .step:nth-child(odd) { border-right: 1px solid rgba(0,0,0,0.07); }
+    .step:nth-child(1), .step:nth-child(2) { border-bottom: 1px solid rgba(0,0,0,0.07); }
+    .step:nth-child(3), .step:nth-child(4) { border-bottom: 1px solid rgba(0,0,0,0.07); }
     .step-num {
-      width: 38px; height: 38px;
-      background: rgba(99,102,241,0.09);
-      border: 1px solid rgba(99,102,241,0.22);
-      border-radius: 10px;
+      width: 44px; height: 44px;
+      background: #6366f1;
+      color: #fff;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 800;
-      color: #6366f1;
-      margin-bottom: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
     }
-    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1d1d1f; }
-    .step p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
+    .step-body {}
+    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #1d1d1f; }
+    .step p { font-size: 14px; color: #6e6e73; line-height: 1.6; }
 
     /* ── TIMELINE ── */
     .timeline-section { background: #ffffff; }
@@ -617,14 +628,14 @@
     }
     .compare-cell:last-child { border-right: none; }
     .compare-cell.situation { font-weight: 500; color: #1d1d1f; }
-    .compare-cell.bad { color: #94a3b8; }
+    .compare-cell.bad { color: #4b5563; }
     .compare-cell.good {
-      background: rgba(99,102,241,0.03);
+      background: rgba(99,102,241,0.04);
       color: #1d1d1f;
       font-weight: 600;
     }
-    .compare-cell.good::before { content: '✓'; color: #6366f1; font-weight: 900; flex-shrink: 0; }
-    .compare-cell.bad::before { content: '✗'; color: #e2e8f0; font-weight: 900; flex-shrink: 0; }
+    .compare-cell.good::before { content: '✓'; color: #6366f1; font-size: 17px; font-weight: 900; flex-shrink: 0; }
+    .compare-cell.bad::before { content: '✗'; color: #ef4444; font-size: 17px; font-weight: 900; flex-shrink: 0; }
 
     /* ── PLANS ── */
     .plans { background: #f5f5f7; text-align: center; }
@@ -948,7 +959,7 @@
       </div>
       <div class="hero-stat">
         <div class="hero-stat-value">Unlimited</div>
-        <div class="hero-stat-label">Bookings per month —<br>book as many as you can handle</div>
+        <div class="hero-stat-label">Bookings per month.<br>Book as many as you can handle.</div>
       </div>
     </div>
   </section>
@@ -1070,33 +1081,45 @@
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <h3>Tell us about your business</h3>
-          <p>Your offer, your ideal client, your story. A 5-minute onboarding our team personally reviews. The clearer you are on who you serve, the better your matches.</p>
+          <div class="step-body">
+            <h3>Tell us about your business</h3>
+            <p>Your offer, your ideal client, your story. A 5-minute onboarding our team personally reviews.</p>
+          </div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <h3>We find shows with your buyers in the audience</h3>
-          <p>Our system scans thousands of active podcasts and scores each one across 7 dimensions. We only surface shows where your ideal clients are actually listening.</p>
+          <div class="step-body">
+            <h3>We find shows with your buyers in the audience</h3>
+            <p>Our system scans thousands of active podcasts and scores each one across 7 dimensions.</p>
+          </div>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <h3>Pitches go out in your voice, from your inbox</h3>
-          <p>Every pitch is written for that specific host and show. Not a template blast. A real, personalised pitch sent from your own email account.</p>
+          <div class="step-body">
+            <h3>Pitches go out in your voice, from your inbox</h3>
+            <p>Every pitch is written for that specific host. A real, personalised pitch sent from your own email account.</p>
+          </div>
         </div>
         <div class="step">
           <div class="step-num">4</div>
-          <h3>Follow-ups go out automatically</h3>
-          <p>Hosts are busy. If there's no reply in 7 days, a personalised follow-up goes out automatically — written in your voice, referencing your original pitch.</p>
+          <div class="step-body">
+            <h3>Follow-ups go out automatically</h3>
+            <p>No reply in 7 days? A personalised follow-up goes out automatically, written in your voice.</p>
+          </div>
         </div>
         <div class="step">
           <div class="step-num">5</div>
-          <h3>Replies are detected instantly</h3>
-          <p>When a host replies, your dashboard updates automatically. No checking inboxes. No missed opportunities. You see it the moment it lands.</p>
+          <div class="step-body">
+            <h3>Replies are detected instantly</h3>
+            <p>When a host replies, your dashboard updates automatically. No checking inboxes. You see it the moment it lands.</p>
+          </div>
         </div>
         <div class="step">
           <div class="step-num">6</div>
-          <h3>You speak, they trust you, deals close</h3>
-          <p>Show up, tell your story, make your offer. Listeners arrive pre-sold. Sales cycles shorten. Revenue grows. We'll have the next round ready before you wrap up.</p>
+          <div class="step-body">
+            <h3>You speak, they trust you, deals close</h3>
+            <p>Show up, tell your story, make your offer. Listeners arrive pre-sold. We'll have the next round ready before you wrap up.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1114,7 +1137,7 @@
             <div class="timeline-dot">🚀</div>
           </div>
           <div class="timeline-content">
-            <div class="timeline-day">Day 0</div>
+            <div class="timeline-day">Day 1</div>
             <h3>You onboard in 5 minutes</h3>
             <p>Tell us your offer, your audience, and your best stories. Our team reviews your profile and sharpens your pitch angles before anything goes out.</p>
           </div>
@@ -1134,7 +1157,7 @@
             <div class="timeline-dot">✉️</div>
           </div>
           <div class="timeline-content">
-            <div class="timeline-day">Day 1–2</div>
+            <div class="timeline-day">Day 1</div>
             <h3>Personalised pitches are ready to review</h3>
             <p>Every email references a specific episode, leads with the right angle for that audience, and reads like you wrote it. You approve. We send. From your own inbox.</p>
           </div>
@@ -1298,7 +1321,7 @@
     <div class="container">
       <p class="section-label">The matching engine</p>
       <h2 class="section-title">50 fresh podcasts.<br><em>Every single time you click.</em></h2>
-      <p class="section-sub">Not a generic list. A ranked, deduplicated, scored shortlist of shows where your ideal clients are actually listening — and a full brief on each one.</p>
+      <p class="section-sub">Not a generic list. A ranked, scored shortlist of shows where your ideal clients are actually listening, with a full brief on each one.</p>
 
       <div class="fifty-grid">
         <div class="fifty-features">
@@ -1313,7 +1336,7 @@
             <div class="fifty-feature-icon">🚫</div>
             <div>
               <h3>Never the same show twice</h3>
-              <p>Every podcast you've already seen — regardless of status — is filtered out. Each run surfaces genuinely new opportunities from a pool of thousands.</p>
+              <p>Every podcast you've already seen is filtered out, regardless of status. Each run surfaces genuinely new opportunities from a pool of thousands.</p>
             </div>
           </div>
           <div class="fifty-feature">
@@ -1403,7 +1426,7 @@
         <div class="compare-row">
           <div class="compare-cell situation">Finding shows to pitch</div>
           <div class="compare-cell bad">Google "business podcasts", end up with the same 10 big names, give up after 2 hours</div>
-          <div class="compare-cell good">50 scored, matched shows in your dashboard — filtered to your exact niche and audience</div>
+          <div class="compare-cell good">50 scored, matched shows in your dashboard, filtered to your exact niche and audience</div>
         </div>
         <div class="compare-row">
           <div class="compare-cell situation">Writing the pitch</div>
@@ -1412,7 +1435,7 @@
         </div>
         <div class="compare-row">
           <div class="compare-cell situation">Following up</div>
-          <div class="compare-cell bad">Forget to follow up. Miss the booking. Or follow up with "Just checking in" — instantly ignored.</div>
+          <div class="compare-cell bad">Forget to follow up and miss the booking. Or send a "Just checking in" that gets ignored.</div>
           <div class="compare-cell good">Automatic 7-day follow-up in your voice. Most bookings happen on the second touch.</div>
         </div>
         <div class="compare-row">
@@ -1451,7 +1474,7 @@
           <ul class="plan-features">
             <li>50 scored podcast matches per session</li>
             <li>Personalised pitches written in your voice</li>
-            <li>Live dashboard — approve, track, and book</li>
+            <li>Live dashboard to approve, track, and book</li>
             <li>Automatic 7-day follow-up sequences</li>
             <li>Reply detection across all your outreach</li>
             <li>1x private strategy call with our team per month</li>
@@ -1469,7 +1492,7 @@
           <ul class="plan-features">
             <li>Everything in Done With You</li>
             <li>Our team writes and sends every pitch</li>
-            <li>Full pipeline management — completely hands free</li>
+            <li>Full pipeline management, completely hands free</li>
             <li>Unlimited monthly 1:1 growth strategy calls</li>
             <li>Priority access to top-tier shows</li>
           </ul>
@@ -1547,7 +1570,7 @@
     <div class="leaderboard-teaser-inner">
       <div class="soon-badge">🏆 Coming Soon</div>
       <h2 class="section-title" style="font-size:clamp(22px,3vw,34px);margin-bottom:14px;">The Find A Podcast<br>Community Leaderboard</h2>
-      <p style="font-size:16px;color:#6e6e73;line-height:1.75;margin-bottom:8px;">Top speakers on Find A Podcast are booking 2-4 shows a month. Soon you'll be able to see how you stack up — and compete for the top spot in your niche.</p>
+      <p style="font-size:16px;color:#6e6e73;line-height:1.75;margin-bottom:8px;">Top speakers on Find A Podcast are booking 10+ shows a month. Soon you'll be able to see how you stack up and compete for the top spot in your niche.</p>
       <div class="leaderboard-medals">
         <div class="leaderboard-medal">
           <div class="leaderboard-medal-icon">🥇</div>
@@ -1589,7 +1612,7 @@
         </div>
         <div class="obj-card">
           <p class="obj-q">"How is this better than paid ads?"</p>
-          <p class="obj-a">It's not a replacement, it's a different game. Ads buy attention. Podcasts build trust. If you're already running ads, this adds a channel that warms the same audience in a way paid traffic never does. Most clients run both — and find the podcast listeners close faster.</p>
+          <p class="obj-a">It's not a replacement, it's a different game. Ads buy attention. Podcasts build trust. If you're already running ads, this adds a channel that warms the same audience in a way paid traffic never does. Most clients run both and find the podcast listeners close faster.</p>
         </div>
         <div class="obj-card">
           <p class="obj-q">"Why now? My business is already growing."</p>
@@ -1597,7 +1620,7 @@
         </div>
         <div class="obj-card">
           <p class="obj-q">"What if hosts don't reply?"</p>
-          <p class="obj-a">They often don't on the first email — that's normal. That's why automatic follow-ups go out at day 7. Most bookings happen on the second touch. And the pipeline keeps running regardless — new shows added every session so momentum never stops.</p>
+          <p class="obj-a">They often don't on the first email. That's normal. That's why automatic follow-ups go out at day 7. Most bookings happen on the second touch. And the pipeline keeps running, with new shows added every session so momentum never stops.</p>
         </div>
       </div>
     </div>
