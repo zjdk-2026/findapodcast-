@@ -653,7 +653,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
 
   const monthlyCap = client.monthly_booking_cap ?? 10;
 
-  if ((bookedThisMonth || 0) >= monthlyCap) {
+  if ((bookedThisMonth || 0) >= monthlyCap && !client.unlimited_pitching) {
     logger.info('Monthly booking cap reached', { clientId: client.id, bookedThisMonth, monthlyCap });
     return [];
   }

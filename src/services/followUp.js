@@ -51,7 +51,7 @@ async function sendFollowUps(client) {
 
       // Generate follow-up via Claude
       const message = await anthropic.messages.create({
-        model:      'claude-opus-4-5',
+        model:      'claude-haiku-4-5-20251001',
         max_tokens: 300,
         system:     `You are a podcast pitch follow-up writer. The initial pitch has already been sent. Write a short second-touch email that re-opens the conversation without being needy or repeating the original pitch verbatim.
 
@@ -109,10 +109,10 @@ Return ONLY valid JSON: {"subject": "Re: [original_subject]", "body": "..."}`,
         }
       }
 
-      // Mark follow_up_sent_at
+      // Mark follow_up_sent_at and transition to followed_up status
       await supabase
         .from('podcast_matches')
-        .update({ follow_up_sent_at: new Date().toISOString() })
+        .update({ follow_up_sent_at: new Date().toISOString(), status: 'followed_up' })
         .eq('id', match.id);
 
       logger.info('Follow-up processed', { matchId: match.id });

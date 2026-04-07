@@ -166,7 +166,8 @@ router.post('/add-podcast', async (req, res) => {
       scorePodcast(podcast, client)
         .then((scored) => {
           if (scored) {
-            supabase.from('podcast_matches').update(scored).eq('id', match.id)
+            const { fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood } = scored;
+            supabase.from('podcast_matches').update({ fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood }).eq('id', match.id)
               .then(() => logger.info('Manual podcast scored', { matchId: match.id, fit_score: scored.fit_score }));
           }
         })
@@ -226,8 +227,28 @@ router.post('/re-enrich/:matchId', requireDashboardToken, async (req, res) => {
     // Re-enrich via RSS + website scrape
     const enriched = await enrichPodcast(refreshed);
 
-    // Save refreshed podcast data
-    await supabase.from('podcasts').update(enriched).eq('id', podcast.id);
+    // Save refreshed podcast data (only known schema columns — enriched may contain internal fields)
+    const podcastUpdate = {
+      title: enriched.title || podcast.title,
+      host_name: enriched.host_name || podcast.host_name,
+      description: enriched.description || podcast.description,
+      website: enriched.website || podcast.website,
+      contact_email: enriched.contact_email || podcast.contact_email,
+      contact_form_url: enriched.contact_form_url || podcast.contact_form_url,
+      apple_url: enriched.apple_url || podcast.apple_url,
+      spotify_url: enriched.spotify_url || podcast.spotify_url,
+      youtube_url: enriched.youtube_url || podcast.youtube_url,
+      instagram_url: enriched.instagram_url || podcast.instagram_url,
+      instagram_followers: enriched.instagram_followers || podcast.instagram_followers,
+      linkedin_url: enriched.linkedin_url || podcast.linkedin_url,
+      category: enriched.category || podcast.category,
+      total_episodes: enriched.total_episodes || podcast.total_episodes,
+      last_episode_date: enriched.last_episode_date || podcast.last_episode_date,
+      has_guest_history: enriched.has_guest_history ?? podcast.has_guest_history,
+      booking_page_url: enriched.booking_page_url || podcast.booking_page_url,
+      enriched_at: new Date().toISOString(),
+    };
+    await supabase.from('podcasts').update(podcastUpdate).eq('id', podcast.id);
 
     // Re-score with fresh data
     const scored = await scorePodcast(enriched, client);

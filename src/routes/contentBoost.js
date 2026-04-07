@@ -191,7 +191,7 @@ router.post('/operator/content-boost/complete', requireOperatorKey, async (req, 
     const html = `
       <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;color:#1D1D1F;">
         <h2 style="font-size:24px;font-weight:800;margin:0 0 8px;letter-spacing:-0.03em;">Your content is ready. 🎉</h2>
-        <p style="font-size:15px;color:#555;margin:0 0 24px;">Hey ${client.name.split(' ')[0]},</p>
+        <p style="font-size:15px;color:#555;margin:0 0 24px;">Hey ${(client.name || 'there').split(' ')[0]},</p>
         <p style="font-size:15px;color:#555;margin:0 0 16px;">Your Content Boost for <strong>${podcastName}</strong> is complete.</p>
         <p style="font-size:15px;color:#555;margin:0 0 24px;">Our team has turned your episode into 30 days of content — ready for you to post, schedule, and share with your audience.</p>
         <p style="font-size:15px;color:#555;margin:0 0 8px;">Everything has been delivered to this email address. Check your inbox for the full content pack.</p>
@@ -206,7 +206,7 @@ router.post('/operator/content-boost/complete', requireOperatorKey, async (req, 
 
     await sendEmail({
       to:      client.email,
-      subject: `Your Content Boost is ready, ${client.name.split(' ')[0]} 🎉`,
+      subject: `Your Content Boost is ready, ${(client.name || 'there').split(' ')[0]} 🎉`,
       html,
     });
 

@@ -157,7 +157,7 @@ function escapeHtml(str) {
  */
 async function sendDigestEmail(client, matches) {
   const apiKey   = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'pipeline@podcastpipeline.com';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.club';
   const baseUrl  = process.env.BASE_URL || 'http://localhost:3000';
 
   if (!apiKey) {

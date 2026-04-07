@@ -87,10 +87,22 @@ router.get('/auth/gmail/callback', async (req, res) => {
     }
 
     // Save refresh token and email to client record
+    // If no refresh_token returned (re-auth scenario), redirect with error so user can re-auth properly
+    if (!tokens.refresh_token) {
+      const { data: existingClient } = await supabase.from('clients').select('gmail_refresh_token, dashboard_token').eq('id', clientId).single();
+      if (!existingClient?.gmail_refresh_token) {
+        // No existing token either — send them back to re-auth with prompt=consent
+        const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+        logger.warn('Gmail OAuth: no refresh_token returned and no existing token', { clientId });
+        if (existingClient?.dashboard_token) {
+          return res.redirect(`${baseUrl}/dashboard/${existingClient.dashboard_token}?gmailError=reauth_required`);
+        }
+        return res.status(400).send('Gmail connection failed — please disconnect and reconnect to grant full access.');
+      }
+      // Already have a refresh token — just update the email
+    }
     const updateFields = {};
     if (tokens.refresh_token) updateFields.gmail_refresh_token = tokens.refresh_token;
-    // Always mark gmail as connected — use actual email or a fallback so the
-    // frontend can detect connection even if userInfo call failed
     updateFields.gmail_email = gmailEmail || 'connected';
 
     if (Object.keys(updateFields).length > 0) {

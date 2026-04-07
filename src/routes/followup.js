@@ -23,14 +23,11 @@ const { createDraft, sendDraft } = require('../services/gmailService');
 const router = express.Router();
 
 router.post('/followup-check', async (req, res) => {
-  // Accept either a per-client dashboard token OR the operator secret
+  // Only accept the exact operator/cron secret
   const token = req.headers['x-dashboard-token'] || req.headers['x-cron-secret'];
   const operatorSecret = process.env.OPERATOR_SECRET;
   if (!operatorSecret || token !== operatorSecret) {
-    // Also allow any valid dashboard token (existing clients)
-    if (!token || token.trim().length < 8) {
-      return res.status(401).json({ success: false, error: 'Unauthorised' });
-    }
+    return res.status(401).json({ success: false, error: 'Unauthorised' });
   }
   try {
     const now      = new Date();
@@ -41,7 +38,7 @@ router.post('/followup-check', async (req, res) => {
     const { data: matches, error: fetchErr } = await supabase
       .from('podcast_matches')
       .select('*, podcasts(*), clients(name, email, gmail_refresh_token)')
-      .eq('status', 'approved')
+      .eq('status', 'sent')
       .gte('updated_at', minAge.toISOString())
       .lte('updated_at', maxAge.toISOString());
 

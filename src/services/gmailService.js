@@ -28,7 +28,13 @@ function verifyState(state) {
   if (parts.length !== 3) throw new Error('Invalid OAuth state format');
   const [clientId, ts, sig] = parts;
   const expected = crypto.createHmac('sha256', stateSecret()).update(`${clientId}:${ts}`).digest('hex');
-  if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) {
+  try {
+    const sigBuf = Buffer.from(sig, 'hex');
+    const expBuf = Buffer.from(expected, 'hex');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      throw new Error('OAuth state signature invalid');
+    }
+  } catch (e) {
     throw new Error('OAuth state signature invalid');
   }
   const age = Date.now() - parseInt(ts, 10);

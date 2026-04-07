@@ -66,19 +66,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Scrape token debug (remove after fix) ───────────────────────────
-app.get('/env-check', (req, res) => {
-  const t  = process.env.SCRAPER_TOKEN || '';
-  const sa = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-  const pk = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '';
-  const sh = process.env.LEADS_SPREADSHEET_ID || '';
-  res.json({
-    scraper_token_len: t.length,
-    service_account_email: sa ? sa.slice(0, 20) + '…' : 'NOT SET',
-    private_key_len: pk.length,
-    spreadsheet_id: sh ? sh.slice(0, 10) + '…' : 'NOT SET',
-  });
-});
 
 // ── Health check ─────────────────────────────────────────────────────
 // Always returns 200 so Railway healthcheck passes as long as Node is running.
@@ -104,8 +91,7 @@ app.use('/api', onboardRouter);
 app.use('/api', pipelineRouter);
 app.use('/api', dashboardRouter);
 app.use('/api/operator', operatorRouter);
-app.use('/api/operator', require('./routes/manual-podcast'));
-app.use('/api',          require('./routes/manual-podcast')); // re-enrich endpoint for client dashboard
+app.use('/api',          require('./routes/manual-podcast')); // add-podcast + re-enrich for both operator and client dashboard
 app.use('/api', followupRouter);
 app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));

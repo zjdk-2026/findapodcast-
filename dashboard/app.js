@@ -136,14 +136,15 @@ function likelihoodClass(likelihood) {
 
 function statusBadgeHtml(status) {
   const labels = {
-    new:       'New',
-    approved:  'Approved',
-    sent:      'Sent',
-    replied:   'Replied',
-    booked:    'Booked',
-    dismissed: 'Not a Fit',
-    dream:     'Wish List',
-    appeared:  'Aired',
+    new:          'New',
+    approved:     'Approved',
+    sent:         'Sent',
+    followed_up:  'Followed Up',
+    replied:      'Replied',
+    booked:       'Booked',
+    dismissed:    'Not a Fit',
+    dream:        'Wish List',
+    appeared:     'Aired',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -302,7 +303,7 @@ function showBookingCelebration(matchId) {
   const match   = state.matches.find((m) => m.id === matchId);
   const podcast = match?.podcasts || match;
   const title   = podcast?.title || 'the show';
-  const host    = podcast?.host  || null;
+  const host    = podcast?.host_name || null;
 
   // Estimate audience from listen_score (ListenNotes scale 0-100 maps roughly to listener tiers)
   const ls = podcast?.listen_score || 0;
@@ -365,13 +366,6 @@ function closeBookingCelebration() {
 window.closeBookingCelebration = closeBookingCelebration;
 
 // ── Content boost modal ───────────────────────────────────────────────
-function showContentBoostModal() {
-  const modal = $('content-boost-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
 function closeContentBoostModal() {
   const modal = $('content-boost-modal');
   if (!modal) return;
@@ -1486,6 +1480,7 @@ function showSendConfirmModal(matchId) {
   document.body.style.overflow = 'hidden';
 
   const confirmBtn = $('confirm-send-btn');
+  if (!confirmBtn) { await doSendMatch(matchId); return; }
   const freshBtn = confirmBtn.cloneNode(true);
   confirmBtn.parentNode.replaceChild(freshBtn, confirmBtn);
 
