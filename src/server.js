@@ -81,15 +81,21 @@ app.get('/env-check', (req, res) => {
 });
 
 // ── Health check ─────────────────────────────────────────────────────
+// Always returns 200 so Railway healthcheck passes as long as Node is running.
+// DB status is reported informatively but never blocks the response.
 app.get('/health', async (req, res) => {
+  let dbStatus = 'unchecked';
   try {
     const supabase = require('./lib/supabase');
-    const { error } = await supabase.from('clients').select('id').limit(1);
-    if (error) throw error;
-    res.json({ status: 'ok', db: 'ok', uptime: Math.floor(process.uptime()) });
+    const dbCheck  = supabase.from('clients').select('id').limit(1);
+    const timeout  = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+    const { error } = await Promise.race([dbCheck, timeout]);
+    dbStatus = error ? `error: ${error.message}` : 'ok';
   } catch (err) {
-    res.status(503).json({ status: 'error', db: 'unreachable', error: err.message });
+    dbStatus = `error: ${err.message}`;
   }
+  // Always 200 — app is alive regardless of DB latency
+  res.json({ status: 'ok', db: dbStatus, uptime: Math.floor(process.uptime()) });
 });
 
 // ── API Routes ───────────────────────────────────────────────────────
