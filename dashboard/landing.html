@@ -826,7 +826,11 @@
     .leaderboard-medal {
       text-align: center;
     }
-    .leaderboard-medal-icon { font-size: 28px; margin-bottom: 6px; }
+    .leaderboard-medal-icon { margin-bottom: 6px; display:flex; justify-content:center; }
+    .medal-badge { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff; }
+    .medal-badge.gold { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .medal-badge.silver { background: linear-gradient(135deg,#9ca3af,#6b7280); }
+    .medal-badge.bronze { background: linear-gradient(135deg,#cd7c4a,#b45309); }
     .leaderboard-medal-name { font-size: 13px; font-weight: 700; color: #1d1d1f; }
     .leaderboard-medal-stat { font-size: 11px; color: #6e6e73; }
 
@@ -847,14 +851,41 @@
     .obj-q { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 10px; }
     .obj-a { font-size: 14px; color: #6e6e73; line-height: 1.7; }
 
-    /* ── SCARCITY ── */
-    .scarcity {
-      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-      text-align: center;
-      color: #e2e8f0;
+    /* ── TRIAL SECTION ── */
+    .trial-section { background: #f5f5f7; }
+    .trial-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 52px;
     }
-    .scarcity h2 { color: #ffffff; }
-    .scarcity .section-label { color: #a78bfa; }
+    .trial-step {
+      background: #fff;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .trial-day {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6366f1;
+    }
+    .trial-step h3 { font-size: 16px; font-weight: 700; color: #1d1d1f; }
+    .trial-step p { font-size: 13px; color: #6e6e73; line-height: 1.65; }
+    .trial-step-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(99,102,241,0.08);
+      display: flex; align-items: center; justify-content: center;
+      color: #6366f1;
+    }
+    @media (max-width: 700px) { .trial-steps { grid-template-columns: 1fr 1fr; } }
 
     /* ── FINAL CTA ── */
     .final-cta {
@@ -919,7 +950,7 @@
       </svg>
       Find A Podcast
     </a>
-    <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="nav-cta">Book a 15 Min Demo →</a>
+    <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="nav-cta">Start Your Free Trial →</a>
   </nav>
 
   <!-- HERO -->
@@ -939,10 +970,10 @@
     </p>
 
     <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary">
-      Book a 15 Minute Demo
+      Start Your Free 7-Day Trial
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
-    <p class="hero-note">Free 15-minute call &nbsp;·&nbsp; No pitch, no pressure</p>
+    <p class="hero-note">7 days free &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Cancel anytime</p>
 
     <div class="hero-stats">
       <div class="hero-stat">
@@ -972,22 +1003,22 @@
       <p style="font-size:18px;color:#94a3b8;max-width:580px;margin:0 auto;line-height:1.8;">Whatever's already working in your business, podcasts pour fuel on it. More trust, more authority, more warm inbound leads flowing into the same pipeline you've already built.</p>
       <div class="pain-grid">
         <div class="pain-item">
-          <div class="pain-icon">🔥</div>
+          <div class="pain-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 4-4 6-4 10a4 4 0 0 0 8 0c0-4-4-6-4-10z"/><path d="M12 12c0 2-2 3-2 5a2 2 0 0 0 4 0c0-2-2-3-2-5z"/></svg></div>
           <h3>Every channel works better when you're known</h3>
           <p>Ads convert higher when people have already heard you. Referrals come faster when you're seen as the authority. Podcasts build the trust that makes every other strategy work harder.</p>
         </div>
         <div class="pain-item">
-          <div class="pain-icon">📈</div>
+          <div class="pain-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
           <h3>Speaking compounds. Ads stop the moment you pause.</h3>
           <p>A podcast episode lives forever. One appearance today can generate leads for 3 to 5 years. That's an asset, not a campaign with an end date.</p>
         </div>
         <div class="pain-item">
-          <div class="pain-icon">🤝</div>
+          <div class="pain-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 7.65l8.42 8.42 8.42-8.42a5.4 5.4 0 0 0 0-7.65z"/><path d="M8 12l2 2 4-4"/></svg></div>
           <h3>Warm inbound beats cold outreach every time</h3>
           <p>Podcast listeners arrive already trusting you. They've heard you think, speak, and solve problems for 45 minutes. Your close rate goes up. Your sales cycle goes down.</p>
         </div>
         <div class="pain-item">
-          <div class="pain-icon">⏳</div>
+          <div class="pain-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <h3>The window is open. But not forever.</h3>
           <p>Business owners moving now are locking in authority in their niche. The ones who wait will be playing catch-up to someone who started six months earlier.</p>
         </div>
@@ -1134,7 +1165,7 @@
       <div class="timeline">
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">🚀</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Day 1</div>
@@ -1144,7 +1175,7 @@
         </div>
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">🎯</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Day 1</div>
@@ -1154,7 +1185,7 @@
         </div>
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">✉️</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Day 1</div>
@@ -1164,7 +1195,7 @@
         </div>
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">🔄</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Day 8–9</div>
@@ -1174,7 +1205,7 @@
         </div>
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">🔔</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Week 2–3</div>
@@ -1184,7 +1215,7 @@
         </div>
         <div class="timeline-item">
           <div class="timeline-left">
-            <div class="timeline-dot">🎙️</div>
+            <div class="timeline-dot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
           </div>
           <div class="timeline-content">
             <div class="timeline-day">Month 1</div>
@@ -1280,7 +1311,7 @@
               <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:97%"></div></div>
               <div class="pipeline-score-val">97</div>
             </div>
-            <div class="pipeline-card-status status-replied">🔔 Host Replied</div>
+            <div class="pipeline-card-status status-replied"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Host Replied</div>
           </div>
         </div>
 
@@ -1293,7 +1324,7 @@
               <div class="pipeline-score-bar"><div class="pipeline-score-fill" style="width:98%"></div></div>
               <div class="pipeline-score-val">98</div>
             </div>
-            <div class="pipeline-card-status status-booked">🎉 Booked</div>
+            <div class="pipeline-card-status status-booked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>Booked</div>
           </div>
         </div>
 
@@ -1326,28 +1357,28 @@
       <div class="fifty-grid">
         <div class="fifty-features">
           <div class="fifty-feature">
-            <div class="fifty-feature-icon">🎯</div>
+            <div class="fifty-feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
             <div>
               <h3>Scored across 7 dimensions</h3>
               <p>Relevance, audience fit, recency, contact ability, reach, guest history, and brand alignment. Every match gets a score. You see why it ranked.</p>
             </div>
           </div>
           <div class="fifty-feature">
-            <div class="fifty-feature-icon">🚫</div>
+            <div class="fifty-feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
             <div>
               <h3>Never the same show twice</h3>
               <p>Every podcast you've already seen is filtered out, regardless of status. Each run surfaces genuinely new opportunities from a pool of thousands.</p>
             </div>
           </div>
           <div class="fifty-feature">
-            <div class="fifty-feature-icon">📋</div>
+            <div class="fifty-feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
             <div>
               <h3>A full brief on every match</h3>
               <p>Why this show fits your audience. The best angle to pitch. Which episode to reference. Red flags to know about. You show up informed, not improvising.</p>
             </div>
           </div>
           <div class="fifty-feature">
-            <div class="fifty-feature-icon">✅</div>
+            <div class="fifty-feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <div>
               <h3>You approve before anything sends</h3>
               <p>Review every pitch before it goes out. Edit it to sound exactly like you. Or approve as-is. Your call, every time. We never send without your sign-off.</p>
@@ -1462,7 +1493,7 @@
     <div class="container">
       <p class="section-label">Your options</p>
       <h2 class="section-title">Two ways to build<br>your <em>speaking pipeline.</em></h2>
-      <p class="section-sub" style="margin: 0 auto 0;">No pricing on this page. The right plan depends on your business, your goals, and how fast you want to move. Book a call. 15 minutes and it's clear.</p>
+      <p class="section-sub" style="margin: 0 auto 0;">Both plans start with a free 7-day trial. No credit card required. The right fit depends on how hands-on you want to be — start your trial and we'll figure it out together.</p>
 
       <div class="plans-grid">
 
@@ -1480,7 +1511,7 @@
             <li>1x private strategy call with our team per month</li>
             <li>Personal onboarding call with our team</li>
           </ul>
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a 15 Min Demo →</a>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Start Your Free Trial →</a>
         </div>
 
         <!-- PRO -->
@@ -1496,12 +1527,12 @@
             <li>Unlimited monthly 1:1 growth strategy calls</li>
             <li>Priority access to top-tier shows</li>
           </ul>
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a 15 Min Demo →</a>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Start Your Free Trial →</a>
         </div>
 
       </div>
 
-      <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which is right? The 15-minute call makes it obvious. No pressure, no pitch — we just need to understand your business.</p>
+      <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which is right? Start the trial and we'll point you in the right direction on the onboarding call.</p>
     </div>
   </section>
 
@@ -1514,19 +1545,19 @@
         <div class="boost-body">You recorded the episode. Now make it work everywhere. Our team turns your appearance into a full month of content — clips, posts, threads, email copy — so the episode keeps generating leads long after it airs.</div>
         <div class="boost-items">
           <div class="boost-item">
-            <div class="boost-item-icon">🎬</div>
+            <div class="boost-item-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></div>
             <div>Short-form video clips edited for Reels, TikTok, and YouTube Shorts</div>
           </div>
           <div class="boost-item">
-            <div class="boost-item-icon">💬</div>
+            <div class="boost-item-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21l4-4 4 4"/></svg></div>
             <div>LinkedIn posts, tweets, and captions from your best moments</div>
           </div>
           <div class="boost-item">
-            <div class="boost-item-icon">✉️</div>
+            <div class="boost-item-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
             <div>Email newsletter copy your list can read the week the episode drops</div>
           </div>
           <div class="boost-item">
-            <div class="boost-item-icon">📣</div>
+            <div class="boost-item-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
             <div>Audiograms and quote cards for story posts and community sharing</div>
           </div>
         </div>
@@ -1536,27 +1567,27 @@
         <div class="boost-card-sub">What gets delivered after your episode airs</div>
         <div class="boost-deliverables">
           <div class="boost-deliverable">
-            <div class="boost-deliverable-icon">🎬</div>
+            <div class="boost-deliverable-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></div>
             <div class="boost-deliverable-text">Short-form video clips</div>
             <div class="boost-deliverable-count">6 clips</div>
           </div>
           <div class="boost-deliverable">
-            <div class="boost-deliverable-icon">📝</div>
+            <div class="boost-deliverable-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
             <div class="boost-deliverable-text">LinkedIn posts</div>
             <div class="boost-deliverable-count">8 posts</div>
           </div>
           <div class="boost-deliverable">
-            <div class="boost-deliverable-icon">🐦</div>
+            <div class="boost-deliverable-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></div>
             <div class="boost-deliverable-text">Tweets and threads</div>
             <div class="boost-deliverable-count">10 posts</div>
           </div>
           <div class="boost-deliverable">
-            <div class="boost-deliverable-icon">✉️</div>
+            <div class="boost-deliverable-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
             <div class="boost-deliverable-text">Email newsletter copy</div>
             <div class="boost-deliverable-count">1 edition</div>
           </div>
           <div class="boost-deliverable">
-            <div class="boost-deliverable-icon">🖼️</div>
+            <div class="boost-deliverable-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
             <div class="boost-deliverable-text">Quote cards and audiograms</div>
             <div class="boost-deliverable-count">5 assets</div>
           </div>
@@ -1568,22 +1599,22 @@
   <!-- LEADERBOARD TEASER -->
   <section class="leaderboard-teaser">
     <div class="leaderboard-teaser-inner">
-      <div class="soon-badge">🏆 Coming Soon</div>
+      <div class="soon-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>Coming Soon</div>
       <h2 class="section-title" style="font-size:clamp(22px,3vw,34px);margin-bottom:14px;">The Find A Podcast<br>Community Leaderboard</h2>
       <p style="font-size:16px;color:#6e6e73;line-height:1.75;margin-bottom:8px;">Top speakers on Find A Podcast are booking 10+ shows a month. Soon you'll be able to see how you stack up and compete for the top spot in your niche.</p>
       <div class="leaderboard-medals">
         <div class="leaderboard-medal">
-          <div class="leaderboard-medal-icon">🥇</div>
+          <div class="leaderboard-medal-icon"><div class="medal-badge gold">1</div></div>
           <div class="leaderboard-medal-name">Sarah M.</div>
           <div class="leaderboard-medal-stat">14 episodes aired</div>
         </div>
         <div class="leaderboard-medal">
-          <div class="leaderboard-medal-icon">🥈</div>
+          <div class="leaderboard-medal-icon"><div class="medal-badge silver">2</div></div>
           <div class="leaderboard-medal-name">James R.</div>
           <div class="leaderboard-medal-stat">11 episodes aired</div>
         </div>
         <div class="leaderboard-medal">
-          <div class="leaderboard-medal-icon">🥉</div>
+          <div class="leaderboard-medal-icon"><div class="medal-badge bronze">3</div></div>
           <div class="leaderboard-medal-name">Priya K.</div>
           <div class="leaderboard-medal-stat">9 episodes aired</div>
         </div>
@@ -1626,21 +1657,46 @@
     </div>
   </section>
 
-  <!-- SCARCITY -->
-  <section class="scarcity">
-    <div class="container" style="text-align:center;max-width:720px;">
-      <p class="section-label">A note on availability</p>
-      <h2 class="section-title" style="color:#f1f5f9;margin-bottom:20px;">Every client is onboarded<br>by our team personally.</h2>
-      <p style="font-size:18px;color:#94a3b8;line-height:1.85;margin-bottom:36px;">
-        This isn't a sign-up-and-figure-it-out service. Our team reviews your profile, sharpens your angles, and makes sure the first pitches that go out are ones you're proud of. That takes time. That's why we only take on a limited number of new clients each month.
-      </p>
-      <p style="font-size:20px;font-weight:700;color:#e2e8f0;margin-bottom:36px;">
-        If you're serious about getting heard, the call is free and it's 15 minutes.<br>If spots are gone when you book, you'll be waitlisted.
-      </p>
-      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary">
-        Book Your 15 Min Demo
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
+  <!-- TRIAL -->
+  <section class="trial-section">
+    <div class="container">
+      <p class="section-label">Your free trial</p>
+      <h2 class="section-title">Here's exactly what<br>happens in <em>your first 7 days.</em></h2>
+      <p class="section-sub">No guessing. No figuring it out alone. Here's the week.</p>
+      <div class="trial-steps">
+        <div class="trial-step">
+          <div class="trial-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="trial-day">Day 1</div>
+          <h3>Onboarding call with our team</h3>
+          <p>We review your offer, your audience, and your best stories. We sharpen your pitch angles before anything goes out.</p>
+        </div>
+        <div class="trial-step">
+          <div class="trial-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <div class="trial-day">Day 1–2</div>
+          <h3>50 matched podcasts in your dashboard</h3>
+          <p>Scored across 7 dimensions. Every match comes with a full brief — why it fits, who listens, and the best angle to pitch.</p>
+        </div>
+        <div class="trial-step">
+          <div class="trial-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <div class="trial-day">Day 2–3</div>
+          <h3>Your first pitches written and ready</h3>
+          <p>Personalised to each host. Written in your voice. You review, edit, or approve. Nothing goes out without your say-so.</p>
+        </div>
+        <div class="trial-step">
+          <div class="trial-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="trial-day">Day 7</div>
+          <h3>Your pipeline is live and running</h3>
+          <p>Pitches sent. Follow-ups scheduled. Replies being tracked. You've done nothing except show up for one call.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1649,12 +1705,12 @@
     <div class="container">
       <p class="section-label" style="display:block;text-align:center;">Your move</p>
       <h2>Your next client<br>is listening to a podcast<br><em style="font-style:normal;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">right now.</em></h2>
-      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. The 15-minute call is free.</p>
+      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. Your first 7 days are on us.</p>
       <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;">
-        Book a 15 Minute Demo
+        Start Your Free 7-Day Trial
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
-      <p class="final-note">No pitch, no pressure &nbsp;·&nbsp; Limited spots available</p>
+      <p class="final-note">7 days free &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Cancel anytime</p>
     </div>
   </section>
 
