@@ -136,15 +136,14 @@ function likelihoodClass(likelihood) {
 
 function statusBadgeHtml(status) {
   const labels = {
-    new:          'New',
-    approved:     'Approved',
-    sent:         'Sent',
-    followed_up:  'Followed Up',
-    replied:      'Replied',
-    booked:       'Booked',
-    dismissed:    'Not a Fit',
-    dream:        'Wish List',
-    appeared:     'Aired',
+    new:       'New',
+    approved:  'Approved',
+    sent:      'Sent',
+    replied:   'Replied',
+    booked:    'Booked',
+    dismissed: 'Not a Fit',
+    dream:     'Wish List',
+    appeared:  'Aired',
   };
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
@@ -217,11 +216,11 @@ function renderHeroSection() {
 
   heroEl.innerHTML = `
     <div class="hero-greeting">
-      <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v3"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></div>
+      <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
       <div class="hero-greeting-sub">${subtitle}</div>
       ${lifetimeTotal > 0 ? `
         <div class="hero-lifetime-reach">
-          <span class="hero-lifetime-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
+          <span class="hero-lifetime-icon">🎙️</span>
           Your voice has reached an estimated <strong>${formatNumber(lifetimeTotal)} people</strong> across ${airedMatches.length} episode${airedMatches.length !== 1 ? 's' : ''}
         </div>` : ''}
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
@@ -244,7 +243,7 @@ function renderOnboardingChecklist() {
   if (allDone) {
     // Show celebration briefly then hide forever
     el.style.display = 'block';
-    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:6px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
+    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">🎉 You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
     setTimeout(() => {
       el.style.transition = 'opacity 600ms ease';
       el.style.opacity = '0';
@@ -303,7 +302,7 @@ function showBookingCelebration(matchId) {
   const match   = state.matches.find((m) => m.id === matchId);
   const podcast = match?.podcasts || match;
   const title   = podcast?.title || 'the show';
-  const host    = podcast?.host_name || null;
+  const host    = podcast?.host  || null;
 
   // Estimate audience from listen_score (ListenNotes scale 0-100 maps roughly to listener tiers)
   const ls = podcast?.listen_score || 0;
@@ -315,11 +314,11 @@ function showBookingCelebration(matchId) {
   else if (ls >= 20) audienceEst = 'an estimated 1,000+ listeners';
   else               audienceEst = 'a growing audience';
 
-  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast\n\nhttps://findapodcast.club`);
+  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.club`);
   const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.club&summary=${linkedInText}`;
 
   body.innerHTML = `
-    <div style="margin-bottom:12px;line-height:1;"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
+    <div style="font-size:52px;margin-bottom:12px;line-height:1;">🎉</div>
     <h2 style="font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin-bottom:8px;">You're booked.</h2>
     <p style="font-size:15px;color:var(--text-secondary);margin-bottom:4px;font-weight:500;">${esc(title)}</p>
     ${host ? `<p style="font-size:13px;color:var(--text-tertiary);margin-bottom:0;">Hosted by ${esc(host)}</p>` : ''}
@@ -330,13 +329,13 @@ function showBookingCelebration(matchId) {
       <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">What happens next</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Confirm your recording date with the host
+          <span style="font-size:16px;">📅</span> Confirm your recording date with the host
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span> Prep your best stories and talking points
+          <span style="font-size:16px;">🎙️</span> Prep your best stories and talking points
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> After it airs, mark it as Aired to unlock Content Boost
+          <span style="font-size:16px;">✨</span> After it airs, mark it as Aired to unlock Content Boost
         </div>
       </div>
     </div>
@@ -366,6 +365,13 @@ function closeBookingCelebration() {
 window.closeBookingCelebration = closeBookingCelebration;
 
 // ── Content boost modal ───────────────────────────────────────────────
+function showContentBoostModal() {
+  const modal = $('content-boost-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
 function closeContentBoostModal() {
   const modal = $('content-boost-modal');
   if (!modal) return;
@@ -413,7 +419,7 @@ function updateContentBoostTab() {
   if (newlyComplete.length > 0) {
     const banner = $('notification-banner');
     if (banner) {
-      banner.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Your Content Boost is ready! <button onclick="switchToFilter('content_boost');dismissBoostNotification()" style="margin-left:10px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">View now</button>`;
+      banner.innerHTML = `⚡ Your Content Boost is ready! <button onclick="switchToFilter('content_boost');dismissBoostNotification()" style="margin-left:10px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">View now</button>`;
       banner.style.display = 'block';
     }
   }
@@ -447,14 +453,14 @@ async function submitEpisodeLink(matchId) {
   try {
     const data = await apiPost('/api/content-boost/submit-link', { matchId, episodeUrl: url });
     if (data.success) {
-      showToast('Episode link sent to our team! We\'ll start editing shortly.', 'success');
+      showToast('✅ Episode link sent to our team! We\'ll start editing shortly.', 'success');
       updateMatchInState(matchId, { content_boost_episode_url: url });
       // Refresh card so the submission section hides
       const card = document.getElementById(`card-${matchId}`);
       if (card) {
         const section = document.getElementById(`boost-link-section-${matchId}`);
         if (section) {
-          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Episode link received — our team is on it!</p>`;
+          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">✅ Episode link received — our team is on it!</p>`;
         }
       }
     } else {
@@ -523,7 +529,7 @@ function contactChipsHtml(podcast) {
   // Single Website button (best available URL)
   const siteUrl = podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url;
   if (isValidUrl(siteUrl)) {
-    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:3px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>`);
+    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener">🌐 Website</a>`);
   }
 
   // Social links — validated only
@@ -582,22 +588,22 @@ function contentBoostButton(match) {
 
   if (!cbs) {
     // Not purchased yet — show buy button
-    return `<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg> Content Boost</button>`;
+    return `<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`;
   }
   if (cbs === 'requested') {
     // Stripe payment processing
-    return `<button class="btn btn-xs" disabled style="background:#fef9c3;color:#92400e;border:1.5px solid #fde68a;font-weight:600;cursor:default;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Payment Processing…</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#fef9c3;color:#92400e;border:1.5px solid #fde68a;font-weight:600;cursor:default;">⏳ Payment Processing…</button>`;
   }
   if (cbs === 'ordered' && !url) {
     // Paid — waiting for episode link
-    return `<button class="btn btn-xs btn-action-primary" onclick="toggleCardExpand('${id}');document.getElementById('boost-url-${id}')?.focus()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Submit Episode Link</button>`;
+    return `<button class="btn btn-xs btn-action-primary" onclick="toggleCardExpand('${id}');document.getElementById('boost-url-${id}')?.focus()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">📎 Submit Episode Link</button>`;
   }
   if (cbs === 'ordered' && url) {
     // Link submitted, team working on it
-    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Link Submitted</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">✅ Link Submitted</button>`;
   }
   if (cbs === 'completed') {
-    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Boost Complete</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">⚡ Boost Complete</button>`;
   }
   return '';
 }
@@ -610,34 +616,34 @@ function actionButtonsHtml(match) {
   const buttons  = [];
 
   if (status === 'new') {
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'approved') {
     if (!hasEmail) {
-      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Writing your pitch…</span>`);
+      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch…</span>`);
     } else {
-      buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Send Follow Up</button>`);
+      buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
     }
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Wish List</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'replied') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Episode Aired</button>`);
-    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(contentBoostButton(match));
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Not Booked</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
   } else if (status === 'appeared') {
     buttons.push(contentBoostButton(match));
   } else if (status === 'dismissed') {
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Restore to New</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
   }
 
   return buttons.join('');
@@ -734,7 +740,7 @@ async function loadLeaderboard() {
     // Medals go to top 3 by aired (appeared) count, regardless of overall rank
     const medalMap = new Map();
     [...rows].sort((a, b) => b.appeared - a.appeared).slice(0, 3).forEach((r, i) => {
-      if (r.appeared > 0) medalMap.set(r.rank, ['<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;"><circle cx="12" cy="15" r="5"/><path d="M8.5 8.5 7 2l5 2 5-2-1.5 6.5"/></svg>','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;"><circle cx="12" cy="15" r="5"/><path d="M8.5 8.5 7 2l5 2 5-2-1.5 6.5"/></svg>','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;"><circle cx="12" cy="15" r="5"/><path d="M8.5 8.5 7 2l5 2 5-2-1.5 6.5"/></svg>'][i]);
+      if (r.appeared > 0) medalMap.set(r.rank, ['🥇','🥈','🥉'][i]);
     });
 
     const renderRow = (r, divider = false) => {
@@ -754,7 +760,7 @@ async function loadLeaderboard() {
             ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
-            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;display:inline-flex;align-items:center;gap:3px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">🎉 ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
             ${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
@@ -798,108 +804,123 @@ function renderMatchCard(match) {
   const fitScore   = match.fit_score || 0;
   const tier       = scoreTier(fitScore);
   const tierClass  = `score-tier-${tier}`;
+  const likeCls    = likelihoodClass(match.booking_likelihood);
   const isBooked   = match.status === 'booked';
   const bookedClass = isBooked ? 'card-booked-highlight' : '';
 
   const redFlagsClean = match.red_flags && match.red_flags !== 'none' && !match.red_flags.startsWith('API error') && !match.red_flags.startsWith('Scoring');
   const redFlagsHtml = redFlagsClean
-    ? `<div class="card-insight-box card-redflag-box">
-        <p class="card-insight-label">Red Flags</p>
-        <p class="card-insight-text">${esc(match.red_flags)}</p>
+    ? `<div class="why-fits-box">
+        <p class="why-fits-label">Red Flags</p>
+        <p class="red-flags-text">${esc(match.red_flags)}</p>
        </div>`
     : '';
 
   const episodeHtml = (match.episode_to_reference && match.episode_to_reference !== 'none identified')
-    ? `<div class="card-insight-box">
-        <p class="card-insight-label">Reference Episode</p>
-        <p class="card-insight-text">"${esc(match.episode_to_reference)}"</p>
+    ? `<div class="why-fits-box">
+        <p class="why-fits-label">Reference Episode</p>
+        <p class="analysis-text">"${esc(match.episode_to_reference)}"</p>
        </div>`
     : '';
 
-  // Sub-score row helper
-  function miniScoreRow(label, val) {
-    if (!val && val !== 0) return '';
-    const pct = Math.min(100, Math.max(0, val));
-    return `<div class="card-score-row">
-      <span class="card-score-label">${label}</span>
-      <div class="card-score-bar-wrap"><div class="card-score-bar-fill" style="width:${pct}%"></div></div>
-      <span class="card-score-num">${val}</span>
-    </div>`;
-  }
-
-  const scoresHtml = `
-    <div class="card-scores-grid">
-      <div class="card-scores-col">
-        ${miniScoreRow('Relevance', match.relevance_score)}
-        ${miniScoreRow('Recency', match.recency_score)}
-        ${miniScoreRow('Guest History', match.has_guest_history ? 90 : (match.guest_history_score || null))}
-      </div>
-      <div class="card-scores-col">
-        ${miniScoreRow('Audience Fit', match.audience_score)}
-        ${miniScoreRow('Contact Ability', match.contactability_score)}
-        ${miniScoreRow('Reach', match.reach_score)}
-      </div>
-    </div>`;
-
-  const episodeCount = podcast.total_episodes ? `· ${podcast.total_episodes} eps` : '';
-  const rawHost = (podcast.host_name || '').replace(/^(hosted by|created by|by)\s+/i, '').trim();
-  const hostLine = [rawHost ? `Hosted by ${esc(rawHost)}` : '', episodeCount].filter(Boolean).join(' ');
-
-  const linksHtml = `<div class="card-links" onclick="event.stopPropagation()">
-    ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
-    ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
-    ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
-    ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
-    ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
-  </div>`;
+  const socialHtml = '';
 
   return `
-  <article class="match-card match-card-v2 status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
+  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
 
-    <!-- Card header — always visible, click to expand -->
-    <div class="card-v2-header" onclick="toggleCardExpand('${esc(match.id)}')">
-      <div class="card-v2-header-left">
-        <div class="card-v2-title">${esc(podcast.title) || 'Unknown Show'}</div>
-        ${hostLine ? `<div class="card-v2-host">${hostLine}</div>` : ''}
-        <div class="card-v2-status-compact">${statusBadgeHtml(match.status)}</div>
-        ${linksHtml}
+    <!-- Collapsed row — click to expand -->
+    <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
+      <div class="card-row-left">
+        <div class="card-row-title">
+          ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
+          ${(() => {
+            const pills = [];
+            if (podcast.total_episodes) pills.push(`<span class="inline-pill">${podcast.total_episodes} eps</span>`);
+            if (podcast.last_episode_date) {
+              const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
+              pills.push(`<span class="inline-pill">${days}d ago</span>`);
+            }
+            if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
+            return pills.join('');
+          })()}
+        </div>
+        ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
+        <div class="card-row-links" onclick="event.stopPropagation()">
+          ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
+          ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+          ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
+          ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
+          ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+          ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
+          ${(podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
+        </div>
       </div>
-      <div class="card-v2-score-badge">
-        <span class="card-v2-score-num">${fitScore}</span>
-        <span class="card-v2-score-label">Fit Score</span>
+      <div class="card-row-right">
+        <span class="score-pill ${tier}">${fitScore}</span>
+        ${statusBadgeHtml(match.status)}
+        <span class="card-chevron">▸</span>
       </div>
-      <span class="card-v2-chevron">▼</span>
     </div>
 
-    <!-- Expanded body — hidden until clicked -->
-    <div class="card-v2-body">
+    <!-- Expanded content -->
+    <div class="card-expanded">
+      <div class="card-expanded-inner">
 
-    <!-- Score grid -->
-    ${scoresHtml}
+        <!-- Compatibility score + bar -->
+        <div class="fit-score-section">
+          <div class="fit-score-header">
+            <span class="fit-score-label">Compatibility Score</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="${likeCls} likelihood-badge">${esc(match.booking_likelihood || '')}</span>
+              <span class="fit-score-value" style="color:${scoreColorVar(fitScore)}">${fitScore}</span>
+            </div>
+          </div>
+          <div class="fit-score-bar-track">
+            <div class="fit-score-bar-fill score-bar-fill ${fitScore >= 70 ? 'high' : fitScore >= 40 ? 'mid' : 'low'}" style="width:${fitScore}%"></div>
+          </div>
+        </div>
 
-    <!-- Insights -->
-    ${match.why_this_client_fits ? `<div class="card-insight-box">
-      <p class="card-insight-label">Why You Fit</p>
-      <p class="card-insight-text">${esc(match.why_this_client_fits)}</p>
-    </div>` : ''}
-    ${match.best_pitch_angle ? `<div class="card-insight-box">
-      <p class="card-insight-label">Best Pitch Angle</p>
-      <p class="card-insight-text">${esc(match.best_pitch_angle)}</p>
-    </div>` : ''}
-    ${episodeHtml}
-    ${redFlagsHtml}
+        <!-- Sub-scores -->
+        <div class="score-bars">
+          ${scoreBarHtml('Relevance',  match.relevance_score)}
+          ${scoreBarHtml('Audience',   match.audience_score)}
+          ${scoreBarHtml('Recency',    match.recency_score)}
+          ${scoreBarHtml('Reach',      match.reach_score)}
+          ${scoreBarHtml('Contact',    match.contactability_score)}
+        </div>
 
-    <!-- Tags -->
+        <!-- Why fits -->
+        ${match.why_this_client_fits ? `
+        <div class="why-fits-box">
+          <p class="why-fits-label">Why You Fit</p>
+          <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
+        </div>` : ''}
+
+        <!-- Analysis -->
+        <div class="card-analysis">
+          ${match.best_pitch_angle ? `
+          <div class="why-fits-box">
+            <p class="why-fits-label">Best Pitch Angle</p>
+            <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
+          </div>` : ''}
+      ${episodeHtml}
+      ${redFlagsHtml}
+    </div>
+
+    <!-- Meta tags -->
     ${metaTagsHtml(podcast)}
 
+    <!-- Social chips -->
+    ${socialHtml}
+
     <!-- Pitch + Notes buttons row -->
-    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;padding:0 16px 8px;">
+    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
     <!-- Pitch / Thank You section -->
     <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(['replied','dismissed','booked'].includes(match.status)) ? 'display:none;' : ''}">
       <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ${match.status === 'appeared' ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Send a Thank You' : (match.email_subject ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Send Pitch Email' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Write Pitch Email')}
+        ${match.status === 'appeared' ? '✉️ Send a Thank You' : (match.email_subject ? '✉️ Send Pitch Email' : '✉️ Write Pitch Email')}
         ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
@@ -910,7 +931,7 @@ function renderMatchCard(match) {
           <option value="Thank you for having me on ${esc(podcast.title || 'your show')}">Thank you for having me on ${esc(podcast.title || 'your show')}</option>
           <option value="Really enjoyed our conversation">Really enjoyed our conversation</option>
           <option value="Thanks for the episode">Thanks for the episode</option>
-          <option value="__custom__"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Write my own…</option>
+          <option value="__custom__">✏️ Write my own…</option>
         </select>
         <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="" />
         <label class="pitch-field-label">Thank You Email</label>
@@ -925,7 +946,7 @@ function renderMatchCard(match) {
           <option value="Would love to join you on ${esc(podcast.title || 'your show')}">Would love to join you on ${esc(podcast.title || 'your show')}</option>
           <option value="Guest feature idea for ${esc(podcast.title || 'your show')}">Guest feature idea for ${esc(podcast.title || 'your show')}</option>
           <option value="Reaching out about a guest spot on ${esc(podcast.title || 'your show')}">Reaching out about a guest spot on ${esc(podcast.title || 'your show')}</option>
-          <option value="__custom__"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Write my own…</option>
+          <option value="__custom__">✏️ Write my own…</option>
         </select>
         <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
         <label class="pitch-field-label">Pitch Email Body</label>
@@ -933,7 +954,7 @@ function renderMatchCard(match) {
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
         `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="M4.5 16.5c-1.5 1.5-1.5 4.5 0 4.5s3-3 4.5-4.5"/><path d="M21 3 9 15"/><path d="m21 3-6.5 18-3.5-7-7-3.5z"/></svg> Send Pitch</button>` : ''}
+          ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Rewrite Pitch</button>` : ''}
@@ -942,36 +963,23 @@ function renderMatchCard(match) {
       </div>
     </div>
 
-    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Email</button>` : ''}
+    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')">✉️ Email</button>` : ''}
 
-    <!-- Notes toggle -->
-    <div style="flex-shrink:0;">
-      <button class="pitch-toggle-btn ${match.client_notes ? 'pitch-toggle-btn-saved' : ''}" onclick="toggleNoteArea('${esc(match.id)}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Notes${match.client_notes ? ' <span class="pitch-saved-badge">Saved</span>' : ''}
-      </button>
-      <div id="note-editor-${esc(match.id)}" style="display:none;flex-direction:column;gap:6px;margin-top:8px;width:300px;">
-        <textarea id="note-text-${esc(match.id)}" class="note-textarea" rows="4" placeholder="Private notes about this podcast…">${esc(match.client_notes || '')}</textarea>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-xs" onclick="saveNote('${esc(match.id)}')">Save Note</button>
-          <button class="btn btn-ghost btn-xs" onclick="toggleNoteArea('${esc(match.id)}')">Close</button>
-        </div>
-      </div>
-    </div>
 
     </div><!-- /.pitch-notes-row -->
 
-    <!-- Footer: action buttons -->
-    <div class="card-footer" style="padding:0 16px 16px;">
-      ${actionButtonsHtml(match)}
-    </div>
+        <!-- Footer: action buttons -->
+        <div class="card-footer">
+          ${actionButtonsHtml(match)}
+        </div>
 
-    </div><!-- /.card-v2-body -->
+      </div><!-- /.card-expanded-inner -->
+    </div><!-- /.card-expanded -->
 
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `
     <div class="boost-link-section" id="boost-link-section-${esc(match.id)}" style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:16px 20px;background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);">
-      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Content Boost — Submit Your Episode</p>
+      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">⚡ Content Boost — Submit Your Episode</p>
       <p style="font-size:12px;color:#555;margin:0 0 12px;">Paste the link to your episode (Spotify, Apple, YouTube, etc.) so our team can download and start editing.</p>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="url" id="boost-url-${esc(match.id)}" class="form-input" placeholder="https://open.spotify.com/episode/..." style="flex:1;height:36px;padding:0 10px;border-radius:8px;border:1px solid #c4b5fd;font-size:13px;background:#fff;" />
@@ -979,10 +987,10 @@ function renderMatchCard(match) {
       </div>
     </div>` : match.content_boost_status === 'completed' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);">
-      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Content Boost complete — check your inbox for your 30 days of content!</p>
+      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">✅ Content Boost complete — check your inbox for your 30 days of content!</p>
     </div>` : match.content_boost_status === 'requested' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:#fffbeb;">
-      <p style="font-size:13px;color:#92400e;margin:0;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Payment processing — once confirmed you'll be able to submit your episode link.</p>
+      <p style="font-size:13px;color:#92400e;margin:0;">⏳ Payment processing — once confirmed you'll be able to submit your episode link.</p>
     </div>` : ''}
 
   </article>`;
@@ -1055,93 +1063,21 @@ function getFilteredSorted() {
   return matches;
 }
 
-// ── Status → kanban column mapping ───────────────────────────────────
-function statusToColId(status) {
-  if (status === 'new' || status === 'approved') return 'col-new';
-  if (status === 'sent') return 'col-pitched';
-  if (status === 'followed_up') return 'col-followed_up';
-  if (status === 'replied') return 'col-replied';
-  if (status === 'booked') return 'col-booked';
-  if (status === 'appeared') return 'col-aired';
-  return null; // dismissed, dream, content_boost — hidden
-}
-
-// ── Update kanban column counts ───────────────────────────────────────
-function updateKanbanCounts() {
-  const colIds = ['new', 'pitched', 'followed_up', 'replied', 'booked', 'aired'];
-  colIds.forEach((id) => {
-    const el = $(`col-count-${id}`);
-    if (el) el.textContent = ($(`col-${id}`)?.children.length || 0);
-  });
-}
-
-// ── Render kanban board ───────────────────────────────────────────────
-function renderKanban() {
-  // Clear all columns
-  ['col-new', 'col-pitched', 'col-followed_up', 'col-replied', 'col-booked', 'col-aired'].forEach((id) => {
-    const el = $(id);
-    if (el) el.innerHTML = '';
-  });
-
-  // Deduplicate same as getFilteredSorted
-  const byTitle = new Map();
-  for (const m of state.matches) {
-    const title = (m.podcasts?.title || '').toLowerCase().trim();
-    const key   = title || m.podcast_id || m.id;
-    const existing = byTitle.get(key);
-    if (!existing) {
-      byTitle.set(key, m);
-    } else {
-      const mScore = m.fit_score || 0;
-      const eScore = existing.fit_score || 0;
-      const mHasData = !!(m.podcasts?.total_episodes || m.podcasts?.contact_email);
-      const eHasData = !!(existing.podcasts?.total_episodes || existing.podcasts?.contact_email);
-      const mBooked = m.status === 'booked';
-      const eBooked = existing.status === 'booked';
-      if (mBooked && !eBooked) {
-        byTitle.set(key, m);
-      } else if (!eBooked && (mScore > eScore || (mScore === eScore && mHasData && !eHasData))) {
-        byTitle.set(key, m);
-      }
-    }
-  }
-
-  let matches = [...byTitle.values()];
-
-  // Apply score / email filters
-  if (state.minScore > 0) {
-    matches = matches.filter((m) => (m.fit_score || 0) >= state.minScore);
-  }
-  if (state.hasEmailOnly) {
-    matches = matches.filter((m) => m.podcasts?.contact_email);
-  }
-  if (state.hasContactOnly) {
-    matches = matches.filter((m) => {
-      const p = m.podcasts || {};
-      return p.contact_email || p.booking_page_url || p.guest_application_url;
-    });
-  }
-
-  // Sort by fit_score descending within each column
-  matches.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
-
-  // Distribute into columns
-  matches.forEach((m) => {
-    const colId = statusToColId(m.status);
-    if (!colId) return;
-    const col = $(colId);
-    if (!col) return;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = renderMatchCard(m);
-    col.appendChild(tmp.firstElementChild);
-  });
-
-  updateKanbanCounts();
-}
-
-// ── Render grid (calls kanban) ────────────────────────────────────────
+// ── Render grid ───────────────────────────────────────────────────────
 function renderGrid() {
-  renderKanban();
+  const grid      = $('cards-grid');
+  const noResults = $('no-results');
+  if (!grid) return;
+
+  const filtered = getFilteredSorted();
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    if (noResults) noResults.style.display = 'block';
+  } else {
+    if (noResults) noResults.style.display = 'none';
+    grid.innerHTML = filtered.map(renderMatchCard).join('');
+  }
 }
 
 // ── Render full dashboard ─────────────────────────────────────────────
@@ -1328,32 +1264,23 @@ function updateMatchInState(matchId, updates) {
 function updateCard(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
-
-  // Remove the card from wherever it currently lives
-  const existing = $(`card-${matchId}`);
-  if (existing) existing.remove();
-
-  // Find the correct column for the new status
-  const colId = statusToColId(match.status);
-  if (!colId) {
-    // Status is dismissed/dream/etc — card is intentionally hidden, just update counts
-    updateKanbanCounts();
-    return;
-  }
-  const col = $(colId);
-  if (!col) { renderGrid(); return; }
-
-  // Render fresh card and prepend to column
+  const card = $(`card-${matchId}`);
+  if (!card) { renderGrid(); return; }
+  if (state.filter !== 'all' && match.status !== state.filter) { renderGrid(); return; }
   const tmp = document.createElement('div');
   tmp.innerHTML = renderMatchCard(match);
-  col.prepend(tmp.firstElementChild);
-  updateKanbanCounts();
+  card.replaceWith(tmp.firstElementChild);
 }
 
 // ── Switch active filter tab programmatically ─────────────────────────
-// In kanban mode this is a no-op — all columns are always visible.
 function switchToFilter(status) {
-  state.filter = status; // keep state in sync in case anything reads it
+  const tabs = $('filter-tabs');
+  if (!tabs) return;
+  tabs.querySelectorAll('.filter-tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.status === status);
+  });
+  state.filter = status;
+  renderGrid();
 }
 
 // ── Update stat badges live ───────────────────────────────────────────
@@ -1375,8 +1302,24 @@ function updateStatBadges() {
   renderOnboardingChecklist();
   updateContentBoostTab();
 
-  // Update kanban column counts
-  updateKanbanCounts();
+  // Update tab count badges
+  const tabCounts = {};
+  m.forEach((x) => { tabCounts[x.status] = (tabCounts[x.status] || 0) + 1; });
+  const tabs = $('filter-tabs');
+  if (tabs) {
+    tabs.querySelectorAll('.filter-tab').forEach((t) => {
+      const st = t.dataset.status;
+      // Remove old count badge (not the reply badge)
+      t.querySelectorAll('.tab-count').forEach((el) => el.remove());
+      const cnt = tabCounts[st] || 0;
+      if (cnt > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'tab-count';
+        badge.textContent = cnt;
+        t.appendChild(badge);
+      }
+    });
+  }
 }
 
 // ── Card loading state helper ─────────────────────────────────────────
@@ -1543,7 +1486,6 @@ function showSendConfirmModal(matchId) {
   document.body.style.overflow = 'hidden';
 
   const confirmBtn = $('confirm-send-btn');
-  if (!confirmBtn) { doSendMatch(matchId); return; }
   const freshBtn = confirmBtn.cloneNode(true);
   confirmBtn.parentNode.replaceChild(freshBtn, confirmBtn);
 
@@ -1644,7 +1586,7 @@ function showAiredCelebration(matchId) {
   const airedCount = state.matches.filter((m) => m.status === 'appeared').length;
 
   body.innerHTML = `
-    <div style="margin-bottom:12px;line-height:1;display:flex;justify-content:center;"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+    <div style="font-size:52px;margin-bottom:12px;line-height:1;">🌟</div>
     <h2 style="font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin-bottom:6px;">You just went live.</h2>
     <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">${esc(title)}</p>
 
@@ -1690,7 +1632,7 @@ async function markReplied(matchId) {
       updateMatchInState(matchId, { status: 'replied' });
       updateCard(matchId);
       renderStatsStrip();
-      showToast('Moved to Host Replied!', 'success');
+      showToast('💬 Moved to Host Replied!', 'success');
     } else {
       showToast(data.error || 'Failed.', 'error');
     }
@@ -1755,7 +1697,7 @@ async function generatePitch(matchId, { clearFirst = false } = {}) {
     bodyEl.value       = '';
     if (subjectEl) subjectEl.value = '';
   }
-  bodyEl.placeholder = 'Writing your pitch…';
+  bodyEl.placeholder = '✨ Writing your pitch…';
   bodyEl.disabled    = true;
   if (rewriteBtn) { rewriteBtn.disabled = true; rewriteBtn.textContent = '✦ Writing…'; }
 
@@ -1842,7 +1784,7 @@ function showInterviewPrepModal(matchId) {
           <div class="prep-section"><strong>Suggested topics</strong><ul>${(prep.suggested_topics||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
           <div class="prep-section"><strong>Likely questions</strong><ul>${(prep.likely_questions||[]).map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>
           <div class="prep-section"><strong>Your talking points</strong><ul>${(prep.talking_points||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
-          <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid || '')}</p></div>`;
+          <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid || '')}</p></div>`;
       } catch { contentEl.innerHTML = '<p>Loading prep…</p>'; }
     } else {
       contentEl.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">Generating your prep briefing…</p>';
@@ -1856,7 +1798,7 @@ function showInterviewPrepModal(matchId) {
             <div class="prep-section"><strong>Suggested topics</strong><ul>${(prep.suggested_topics||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
             <div class="prep-section"><strong>Likely questions</strong><ul>${(prep.likely_questions||[]).map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>
             <div class="prep-section"><strong>Your talking points</strong><ul>${(prep.talking_points||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
-            <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid||'')}</p></div>`;
+            <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid||'')}</p></div>`;
           updateMatchInState(matchId, { interview_prep: JSON.stringify(prep) });
         } else {
           contentEl.innerHTML = `<p style="color:var(--danger);font-size:14px;">Could not generate prep — ${esc(data.error || 'please try again')}.</p>`;
@@ -2229,7 +2171,7 @@ function renderVisionBoard(client) {
 
 async function triggerVisionBoardRegenerate() {
   const btn = document.getElementById('regen-vision-btn');
-  if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
+  if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
   const profileDropdown = document.getElementById('profile-dropdown');
   if (profileDropdown) profileDropdown.style.display = 'none';
 
@@ -2238,7 +2180,7 @@ async function triggerVisionBoardRegenerate() {
   window._visionBoardGenerating = true;
   if (window._visionBoardPollTimer) { clearInterval(window._visionBoardPollTimer); window._visionBoardPollTimer = null; }
   renderVisionBoard(state.client);
-  showToast('Generating your vision board…', 'info');
+  showToast('🎨 Generating your vision board…', 'info');
 
   try {
     const data = await apiPost('/api/vision-board/generate', { token: state.token });
@@ -2246,12 +2188,12 @@ async function triggerVisionBoardRegenerate() {
       window._visionBoardGenerating = false;
       state.client.vision_board_url = data.imageUrl;
       renderVisionBoard(state.client);
-      showToast('Vision board ready!', 'success');
+      showToast('🎨 Vision board ready!', 'success');
     } else if (data.cooldown) {
       window._visionBoardGenerating = false;
       if (state.client) state.client.vision_board_url = null;
       renderVisionBoard(state.client);
-      showToast(`Next generation available in ${data.hoursLeft}h`, 'info');
+      showToast(`⏳ Next generation available in ${data.hoursLeft}h`, 'info');
     } else {
       window._visionBoardGenerating = false;
       showToast(data.error || 'Generation failed.', 'error');
@@ -2260,7 +2202,7 @@ async function triggerVisionBoardRegenerate() {
     window._visionBoardGenerating = false;
     showToast('Network error.', 'error');
   }
-  if (btn) { btn.textContent = 'Regenerate Vision Board'; btn.disabled = false; }
+  if (btn) { btn.textContent = '🎨 Regenerate Vision Board'; btn.disabled = false; }
 }
 window.triggerVisionBoardRegenerate = triggerVisionBoardRegenerate;
 
@@ -2479,8 +2421,26 @@ function loadTemplate(templateId) {
 window.loadTemplate = loadTemplate;
 
 // ── Filter tabs ───────────────────────────────────────────────────────
-// initFilterTabs is a no-op in kanban mode — all columns are always visible.
-function initFilterTabs() {}
+function initFilterTabs() {
+  const tabs = $('filter-tabs');
+  if (!tabs) return;
+  tabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    tabs.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.filter = tab.dataset.status;
+    // Clear reply badge when Host Replied tab is clicked — persist seen IDs
+    if (tab.dataset.status === 'replied') {
+      const badge = document.getElementById('reply-badge');
+      if (badge) badge.style.display = 'none';
+      const seenKey = `seen_replied_${state.token}`;
+      const allRepliedIds = state.matches.filter(m => m.status === 'replied').map(m => m.id);
+      localStorage.setItem(seenKey, JSON.stringify(allRepliedIds));
+    }
+    renderGrid();
+  });
+}
 
 // ── Sort select ───────────────────────────────────────────────────────
 function initSortSelect() {
@@ -2560,7 +2520,7 @@ function showShareModal(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   const podcastName = match.podcasts?.title || 'a podcast';
-  const text = `Just landed a podcast appearance on ${podcastName}. Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.club #podcast #entrepreneur #personalbrand`;
+  const text = `Just landed a podcast appearance on ${podcastName} 🎙️ Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.club #podcast #entrepreneur #personalbrand`;
   const textarea = $('share-text');
   if (textarea) textarea.value = text;
   const m = $('share-modal');
@@ -2706,7 +2666,7 @@ async function sendFollowUp() {
       showToast(data.error || 'Send failed.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = 'Send Follow Up'; } }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '🚀 Send Follow Up'; } }
 }
 window.sendFollowUp = sendFollowUp;
 
@@ -2798,7 +2758,7 @@ async function submitAddPodcast() {
   const name = document.getElementById('add-podcast-name').value.trim();
   if (!url && !name) { showToast('Please enter a podcast URL or name.', 'error'); return; }
   const btn = document.getElementById('add-podcast-btn');
-  if (btn) { btn.textContent = 'Adding…'; btn.disabled = true; }
+  if (btn) { btn.textContent = '⏳ Adding…'; btn.disabled = true; }
   try {
     const g = (id) => { const el = document.getElementById(id); return el?.value.trim() || null; };
     const data = await apiPost('/api/operator/add-podcast', {
@@ -2815,7 +2775,7 @@ async function submitAddPodcast() {
     });
     if (data.success) {
       closeAddPodcastModal();
-      showToast('Added! Scoring compatibility — ready in ~10 seconds.', 'info');
+      showToast('⏳ Added! Scoring compatibility — ready in ~10 seconds.', 'info');
       // Add to state immediately as placeholder, then refresh to get real scores
       if (data.match && data.podcast) {
         state.matches.unshift({ ...data.match, podcasts: data.podcast });
@@ -2829,7 +2789,7 @@ async function submitAddPodcast() {
             state.matches = fresh.matches;
             renderGrid();
             updateStatBadges();
-            showToast('Scoring complete!', 'success');
+            showToast('✅ Scoring complete!', 'success');
           }
         } catch { /* silent */ }
       }, 10000);
@@ -2870,7 +2830,7 @@ async function checkForReplies() {
         badge.textContent = data.updated.length;
         badge.style.display = 'inline-flex';
       }
-      showToast(`${data.updated.length} host${data.updated.length > 1 ? 's have' : ' has'} replied to your pitch!`, 'success');
+      showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's have' : ' has'} replied to your pitch!`, 'success');
       switchToFilter('replied');
     }
   } catch {
@@ -2986,7 +2946,7 @@ function init() {
   // Handle Stripe redirect back to dashboard
   const params = new URLSearchParams(window.location.search);
   if (params.get('boost') === 'success') {
-    showToast('Content Boost purchased! Our team will be in touch shortly.', 'success');
+    showToast('🎉 Content Boost purchased! Our team will be in touch shortly.', 'success');
     // Clean URL without reload
     window.history.replaceState({}, '', window.location.pathname);
   } else if (params.get('boost') === 'cancelled') {

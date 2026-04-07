@@ -351,7 +351,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 .btn-action-wish     { background: #6366f1; color: #fff; border-color: transparent; opacity: 0.82; }
 .btn-action-wish:hover { opacity: 1; background: #4f46e5; }
 
-.btn-action-ignore   { background: transparent; color: var(--text-secondary); border: 2px solid var(--border-medium); font-weight: 700; }
+.btn-action-ignore   { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); font-weight: 700; }
 .btn-action-ignore:hover { color: #FF453A; border-color: #FF453A; background: rgba(255,69,58,0.07); }
 
 .btn-action-primary { font-size: 13px !important; padding: 7px 16px !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
@@ -368,15 +368,13 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   white-space: nowrap;
 }
 
-.status-new         { background: #F5F5F7; color: #1D1D1F; }
-.status-approved    { background: #EEF2FF; color: #6366F1; }
-.status-sent        { background: #FFF7ED; color: #FF9F0A; }
-.status-followed_up { background: #FFF1F2; color: #E11D48; }
-.status-replied     { background: #EFF6FF; color: #0A84FF; }
-.status-booked      { background: #DCFCE7; color: #16A34A; }
-.status-appeared    { background: #FEF3C7; color: #92400E; }
-.status-dream       { background: #F5F3FF; color: #7C3AED; }
-.status-dismissed   { background: rgba(110,110,115,0.08); color: var(--text-tertiary); }
+.status-new       { background: #F5F5F7; color: #1D1D1F; }
+.status-approved  { background: #EEF2FF; color: #6366F1; }
+.status-sent      { background: #FFF7ED; color: #FF9F0A; }
+.status-replied   { background: #EFF6FF; color: #0A84FF; }
+.status-booked    { background: #DCFCE7; color: #16A34A; }
+.status-dream     { background: #F5F3FF; color: #7C3AED; }
+.status-dismissed { background: rgba(110,110,115,0.08); color: var(--text-tertiary); }
 
 /* Score badges */
 .score-badge {
@@ -1029,8 +1027,8 @@ html:not(.light-mode) .card-booked-highlight {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-card);
-  border: 1px solid var(--border-medium);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 1px 8px;
   white-space: nowrap;
@@ -2386,7 +2384,7 @@ td.muted { color: var(--text-secondary); font-size: 13px; }
   padding: 7px 16px;
   border: 2px solid var(--border-medium);
   border-radius: 999px;
-  background: var(--bg-card);
+  background: var(--surface);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
