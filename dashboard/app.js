@@ -615,13 +615,83 @@ function actionButtonsHtml(match) {
 }
 
 // ── Toggle card expand ────────────────────────────────────────────────
+// On first expand: if all sub-scores are the neutral fallback (50), auto re-enrich + re-score.
+const _reenrichedMatches = new Set(); // prevent firing more than once per session
+
 function toggleCardExpand(matchId) {
   const card = $(`card-${matchId}`);
   if (!card) return;
   const isExpanded = card.getAttribute('data-expanded') === 'true';
   card.setAttribute('data-expanded', isExpanded ? 'false' : 'true');
+
+  // Auto re-enrich on first open if scores are all neutral fallback (50)
+  if (!isExpanded && !_reenrichedMatches.has(matchId)) {
+    const match = state.matches.find((m) => m.id === matchId);
+    if (match && isNeutralFallback(match)) {
+      _reenrichedMatches.add(matchId);
+      triggerReEnrich(matchId);
+    }
+  }
 }
 window.toggleCardExpand = toggleCardExpand;
+
+function isNeutralFallback(match) {
+  return (
+    match.relevance_score    === 50 &&
+    match.audience_score     === 50 &&
+    match.reach_score        === 50 &&
+    (match.recency_score     === 50 || match.recency_score == null) &&
+    (match.contactability_score === 50 || match.contactability_score == null)
+  );
+}
+
+async function triggerReEnrich(matchId) {
+  // Show subtle "refreshing" indicator in the score section
+  const scoreEl = document.querySelector(`#card-${matchId} .fit-score-value`);
+  const origText = scoreEl?.textContent;
+  if (scoreEl) scoreEl.textContent = '…';
+
+  const barFill = document.querySelector(`#card-${matchId} .fit-score-bar-fill`);
+  if (barFill) barFill.style.opacity = '0.4';
+
+  try {
+    const data = await apiPost(`/api/re-enrich/${matchId}`, {});
+    if (data.success && data.scores) {
+      const s = data.scores;
+      // Update state
+      updateMatchInState(matchId, {
+        fit_score:            s.fit_score,
+        relevance_score:      s.relevance_score,
+        audience_score:       s.audience_score,
+        recency_score:        s.recency_score,
+        reach_score:          s.reach_score,
+        contactability_score: s.contactability_score,
+        booking_likelihood:   s.booking_likelihood,
+        why_this_client_fits: s.why_this_client_fits,
+        best_pitch_angle:     s.best_pitch_angle,
+        episode_to_reference: s.episode_to_reference,
+        red_flags:            s.red_flags,
+      });
+      // Re-render just this card (preserves expanded state)
+      updateCard(matchId);
+      // Re-open it since updateCard resets expansion
+      const card = $(`card-${matchId}`);
+      if (card) card.setAttribute('data-expanded', 'true');
+      updateStatBadges();
+      if (s.fit_score && s.fit_score !== 50) {
+        showToast(`✅ Score updated: ${s.fit_score}/100`, 'success');
+      }
+    } else {
+      // Restore original display if nothing changed
+      if (scoreEl) scoreEl.textContent = origText;
+      if (barFill) barFill.style.opacity = '1';
+    }
+  } catch {
+    if (scoreEl) scoreEl.textContent = origText;
+    if (barFill) barFill.style.opacity = '1';
+  }
+}
+window.triggerReEnrich = triggerReEnrich;
 
 // ── Render a single match card ────────────────────────────────────────
 function renderMatchCard(match) {

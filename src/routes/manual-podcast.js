@@ -181,4 +181,68 @@ router.post('/add-podcast', async (req, res) => {
   }
 });
 
+// ── POST /api/re-enrich/:matchId ──────────────────────────────────────────────
+// Re-fetches iTunes + RSS data for a podcast and re-scores against the client profile.
+// Called automatically when a card with neutral 50/50/50 scores is expanded.
+const requireDashboardToken = require('../middleware/requireDashboardToken');
+
+router.post('/re-enrich/:matchId', requireDashboardToken, async (req, res) => {
+  const { matchId } = req.params;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId required.' });
+
+  try {
+    // Fetch match + podcast + client
+    const { data: match, error: matchErr } = await supabase
+      .from('podcast_matches')
+      .select('id, podcast_id, client_id, podcasts(*), clients(*)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (matchErr || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    const podcast = match.podcasts;
+    const client  = match.clients;
+
+    // Re-run iTunes lookup using whatever identifiers we have
+    const itunesData = await lookupItunes({
+      appleUrl:    podcast.apple_url    || null,
+      podcastName: podcast.title        || null,
+    });
+
+    // Merge fresh iTunes data into the existing podcast object (don't overwrite manual contact info)
+    const refreshed = {
+      ...podcast,
+      title:             itunesData.title             || podcast.title,
+      host_name:         itunesData.host_name          || podcast.host_name,
+      description:       itunesData.description        || podcast.description,
+      total_episodes:    itunesData.total_episodes      || podcast.total_episodes,
+      last_episode_date: itunesData.last_episode_date  || podcast.last_episode_date,
+      rss_feed_url:      itunesData.rss_feed_url        || podcast.rss_feed_url,
+      category:          itunesData.category            || podcast.category,
+      country:           itunesData.country             || podcast.country,
+    };
+
+    // Re-enrich via RSS + website scrape
+    const enriched = await enrichPodcast(refreshed);
+
+    // Save refreshed podcast data
+    await supabase.from('podcasts').update(enriched).eq('id', podcast.id);
+
+    // Re-score with fresh data
+    const scored = await scorePodcast(enriched, client);
+
+    if (scored) {
+      await supabase.from('podcast_matches').update(scored).eq('id', matchId);
+      logger.info('Re-enrich + re-score complete', { matchId, fit_score: scored.fit_score });
+      return res.json({ success: true, scores: scored, podcast: enriched });
+    }
+
+    return res.json({ success: true, scores: null, podcast: enriched });
+  } catch (err) {
+    logger.error('re-enrich error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
