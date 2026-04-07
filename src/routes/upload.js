@@ -38,8 +38,10 @@ router.post('/api/upload-photo', async (req, res) => {
     const tokenPart = parts.find((p) => p.name === 'token');
     const photoPart = parts.find((p) => p.name === 'photo');
 
+    logger.info('Upload parts found', { parts: parts.map(p => ({ name: p.name, size: p.data?.length })) });
+
     if (!photoPart) {
-      logger.warn('Upload missing photo part', { parts: parts.map(p => p.name) });
+      logger.warn('Upload missing photo part', { parts: parts.map(p => p.name), bodyLen: body.length, boundary });
       return res.status(400).json({ success: false, error: 'Missing photo.' });
     }
 
