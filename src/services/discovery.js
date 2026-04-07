@@ -141,7 +141,7 @@ function normalisePodcast(item) {
     host_name:               item.publisher_original || item.publisher || null,
     description:             item.description_original || item.description || null,
     website:                 item.website || null,
-    apple_url:               item.listennotes_url ? null : null, // enriched later
+    apple_url:               item.itunes_id ? `https://podcasts.apple.com/podcast/id${item.itunes_id}` : null,
     spotify_url:             null,
     youtube_url:             null,
     category:                item.genre_ids?.[0]?.toString() || null,
@@ -236,7 +236,7 @@ function normalisePodcastIndex(item) {
     host_name: item.author || item.ownerName || null,
     description: item.description || null,
     website: item.link || null,
-    apple_url: null,
+    apple_url: item.itunesId ? `https://podcasts.apple.com/podcast/id${item.itunesId}` : null,
     spotify_url: null,
     youtube_url: null,
     category: item.categories ? Object.values(item.categories)[0] : null,
