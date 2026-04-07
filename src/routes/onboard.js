@@ -38,8 +38,10 @@ Rules:
     const bio = msg.content[0]?.text?.trim() || '';
     return res.json({ bio });
   } catch (err) {
-    logger.warn('Bio generation failed', { error: err.message });
-    return res.status(500).json({ error: 'Generation failed' });
+    logger.warn('Bio generation failed — returning template', { error: err.message });
+    // Return a fill-in-the-blanks template so the user is never blocked
+    const fallback = `${name} is ${title ? `a ${title}` : 'an expert'} who helps [describe who you help] achieve [describe the result]. ${business ? `Through ${business}, they` : 'They'} have [mention a key result or credential]. [Add one more sentence about your approach or a notable achievement.]`;
+    return res.json({ bio: fallback });
   }
 });
 
@@ -358,12 +360,24 @@ router.post('/onboard', async (req, res) => {
       .single();
 
     if (error) {
-      // Handle unique constraint on email
+      // If email already exists, look up existing client and return their token
+      // so going back and re-submitting resumes the flow instead of erroring
       if (error.code === '23505') {
-        return res.status(409).json({
-          success: false,
-          error:   'A client with this email address already exists.',
-        });
+        const { data: existing } = await supabase
+          .from('clients')
+          .select('id, dashboard_token')
+          .eq('email', email)
+          .single();
+        if (existing) {
+          const baseUrl2 = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+          return res.json({
+            success:    true,
+            clientId:   existing.id,
+            dashboardToken: existing.dashboard_token,
+            gmailAuthUrl:   `${baseUrl2}/auth/gmail?clientId=${existing.id}`,
+          });
+        }
+        return res.status(409).json({ success: false, error: 'A client with this email address already exists.' });
       }
       logger.error('Failed to insert client', { email, error: error.message });
       return res.status(500).json({ success: false, error: 'Failed to create client record.' });

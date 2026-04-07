@@ -59,13 +59,45 @@ function selectPace(el) {
   if (hidden) hidden.value = selectedPace;
 }
 
-// ── Topic chips ───────────────────────────────────────────────
+// ── Topic dropdown ────────────────────────────────────────────
+function toggleTopicDropdown() {
+  const trigger = document.getElementById('topic-dropdown-trigger');
+  const list = document.getElementById('topic-dropdown-list');
+  const open = list.classList.toggle('open');
+  trigger.classList.toggle('open', open);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('topic-dropdown-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('topic-dropdown-list')?.classList.remove('open');
+    document.getElementById('topic-dropdown-trigger')?.classList.remove('open');
+  }
+});
+
 function getSelectedTopics() {
   const selected = [];
-  document.querySelectorAll('.topic-chip.selected').forEach((c) => {
-    selected.push(c.dataset.topic);
+  document.querySelectorAll('#topic-dropdown-list input[type=checkbox]:checked').forEach((cb) => {
+    selected.push(cb.value);
   });
   return selected;
+}
+
+function updateTopicPills() {
+  const pills = document.getElementById('topic-selected-pills');
+  const label = document.getElementById('topic-trigger-label');
+  if (!pills) return;
+  const selected = getSelectedTopics();
+  pills.innerHTML = selected.map((t) =>
+    `<div class="topic-selected-pill">${t}<button type="button" onclick="removeTopicPill('${t}')">&times;</button></div>`
+  ).join('');
+  label.textContent = selected.length > 0 ? `${selected.length} selected` : 'Select topics that apply to you';
+}
+
+function removeTopicPill(topic) {
+  const cb = document.querySelector(`#topic-dropdown-list input[value="${topic}"]`);
+  if (cb) { cb.checked = false; updateTopicPills(); }
 }
 
 function buildTopicsValue() {
@@ -327,11 +359,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Topic chips
-  document.querySelectorAll('.topic-chip').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('selected');
-      // Clear topic error if any chip is now selected
+  // Topic dropdown checkboxes
+  document.querySelectorAll('#topic-dropdown-list input[type=checkbox]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      updateTopicPills();
       const hasAny = getSelectedTopics().length > 0
         || (document.getElementById('f-topics')?.value || '').trim().length > 0;
       if (hasAny) document.getElementById('err-topics')?.classList.remove('show');
@@ -354,3 +385,5 @@ window.goToStep    = goToStep;
 window.submitForm  = submitForm;
 window.selectPace  = selectPace;
 window.generateBio = generateBio;
+window.toggleTopicDropdown = toggleTopicDropdown;
+window.removeTopicPill = removeTopicPill;

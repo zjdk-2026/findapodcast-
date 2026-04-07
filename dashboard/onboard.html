@@ -6,17 +6,46 @@
   <title>Find A Podcast — Get Started</title>
   <link rel="stylesheet" href="/dashboard/style.css" />
   <style>
-    /* ── Topic tag chips ─────────────────────────────── */
-    .topic-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-    .topic-chip {
-      padding:6px 14px; border:2px solid var(--border-medium);
-      border-radius:999px; background:var(--surface-card);
-      cursor:pointer; font-size:13px; font-weight:500;
-      color:var(--text-secondary); transition:all 0.15s;
-      user-select:none;
+    /* ── Topic dropdown scroller ──────────────────────── */
+    .topic-dropdown-wrap { position:relative; margin-bottom:12px; }
+    .topic-dropdown-trigger {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; border:2px solid var(--border-medium);
+      border-radius:10px; background:var(--surface-card);
+      cursor:pointer; font-size:14px; color:var(--text-secondary);
+      user-select:none; transition:border-color 0.15s;
     }
-    .topic-chip:hover { border-color:var(--accent); color:var(--accent); }
-    .topic-chip.selected { border-color:var(--accent); background:var(--accent); color:#fff; }
+    .topic-dropdown-trigger:hover, .topic-dropdown-trigger.open { border-color:var(--accent); color:var(--text-primary); }
+    .topic-dropdown-trigger svg { transition:transform 0.2s; flex-shrink:0; }
+    .topic-dropdown-trigger.open svg { transform:rotate(180deg); }
+    .topic-dropdown-list {
+      display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
+      background:var(--surface-card); border:2px solid var(--accent);
+      border-radius:10px; max-height:220px; overflow-y:auto;
+      z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.12);
+      scrollbar-width:thin;
+    }
+    .topic-dropdown-list.open { display:block; }
+    .topic-option {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; cursor:pointer; font-size:14px;
+      color:var(--text-primary); transition:background 0.1s;
+      border-bottom:1px solid var(--border-light);
+    }
+    .topic-option:last-child { border-bottom:none; }
+    .topic-option:hover { background:rgba(99,102,241,0.07); }
+    .topic-option input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+    .topic-selected-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; min-height:0; }
+    .topic-selected-pill {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:4px 10px; border-radius:999px;
+      background:var(--accent); color:#fff; font-size:12px; font-weight:600;
+    }
+    .topic-selected-pill button {
+      background:none; border:none; color:#fff; cursor:pointer;
+      padding:0; line-height:1; font-size:14px; opacity:0.8;
+    }
+    .topic-selected-pill button:hover { opacity:1; }
 
     /* ── Pace selector ───────────────────────────────── */
     .pace-options { display:flex; gap:12px; margin-top:6px; }
@@ -126,7 +155,7 @@
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" style="align-items:start;">
           <div class="form-group">
             <label class="form-label" for="f-title">How do you introduce yourself?</label>
             <input type="text" id="f-title" class="form-input" placeholder="e.g. Anxiety Coach &amp; Author, CEO &amp; Speaker" />
@@ -135,6 +164,7 @@
           <div class="form-group">
             <label class="form-label" for="f-business">Business / Brand Name</label>
             <input type="text" id="f-business" class="form-input" placeholder="e.g. The Anxiety Reset" />
+            <p class="form-hint">&nbsp;</p>
           </div>
         </div>
 
@@ -162,27 +192,34 @@
         <div class="form-group">
           <label class="form-label">What topics do you speak about? <span class="req">*</span></label>
           <p class="form-hint" style="margin-top:0;margin-bottom:10px;">Click any that apply, then add your own niche keywords below.</p>
-          <div class="topic-chips" id="topic-chips-container">
-            <div class="topic-chip" data-topic="entrepreneurship">Entrepreneurship</div>
-            <div class="topic-chip" data-topic="leadership">Leadership</div>
-            <div class="topic-chip" data-topic="mindset">Mindset</div>
-            <div class="topic-chip" data-topic="business growth">Business Growth</div>
-            <div class="topic-chip" data-topic="sales">Sales</div>
-            <div class="topic-chip" data-topic="marketing">Marketing</div>
-            <div class="topic-chip" data-topic="personal development">Personal Development</div>
-            <div class="topic-chip" data-topic="productivity">Productivity</div>
-            <div class="topic-chip" data-topic="health & wellness">Health &amp; Wellness</div>
-            <div class="topic-chip" data-topic="mental health">Mental Health</div>
-            <div class="topic-chip" data-topic="faith">Faith</div>
-            <div class="topic-chip" data-topic="finance">Finance</div>
-            <div class="topic-chip" data-topic="real estate">Real Estate</div>
-            <div class="topic-chip" data-topic="parenting">Parenting</div>
-            <div class="topic-chip" data-topic="relationships">Relationships</div>
-            <div class="topic-chip" data-topic="technology">Technology</div>
-            <div class="topic-chip" data-topic="investing">Investing</div>
-            <div class="topic-chip" data-topic="coaching">Coaching</div>
-            <div class="topic-chip" data-topic="content creation">Content Creation</div>
-            <div class="topic-chip" data-topic="women in business">Women in Business</div>
+          <div class="topic-dropdown-wrap" id="topic-dropdown-wrap">
+            <div class="topic-dropdown-trigger" id="topic-dropdown-trigger" onclick="toggleTopicDropdown()">
+              <span id="topic-trigger-label">Select topics that apply to you</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="topic-dropdown-list" id="topic-dropdown-list">
+              <label class="topic-option"><input type="checkbox" value="entrepreneurship"> Entrepreneurship</label>
+              <label class="topic-option"><input type="checkbox" value="leadership"> Leadership</label>
+              <label class="topic-option"><input type="checkbox" value="mindset"> Mindset</label>
+              <label class="topic-option"><input type="checkbox" value="business growth"> Business Growth</label>
+              <label class="topic-option"><input type="checkbox" value="sales"> Sales</label>
+              <label class="topic-option"><input type="checkbox" value="marketing"> Marketing</label>
+              <label class="topic-option"><input type="checkbox" value="personal development"> Personal Development</label>
+              <label class="topic-option"><input type="checkbox" value="productivity"> Productivity</label>
+              <label class="topic-option"><input type="checkbox" value="health & wellness"> Health &amp; Wellness</label>
+              <label class="topic-option"><input type="checkbox" value="mental health"> Mental Health</label>
+              <label class="topic-option"><input type="checkbox" value="faith"> Faith</label>
+              <label class="topic-option"><input type="checkbox" value="finance"> Finance</label>
+              <label class="topic-option"><input type="checkbox" value="real estate"> Real Estate</label>
+              <label class="topic-option"><input type="checkbox" value="parenting"> Parenting</label>
+              <label class="topic-option"><input type="checkbox" value="relationships"> Relationships</label>
+              <label class="topic-option"><input type="checkbox" value="technology"> Technology</label>
+              <label class="topic-option"><input type="checkbox" value="investing"> Investing</label>
+              <label class="topic-option"><input type="checkbox" value="coaching"> Coaching</label>
+              <label class="topic-option"><input type="checkbox" value="content creation"> Content Creation</label>
+              <label class="topic-option"><input type="checkbox" value="women in business"> Women in Business</label>
+            </div>
+            <div class="topic-selected-pills" id="topic-selected-pills"></div>
           </div>
           <label class="form-label" style="margin-top:12px;">Go deeper. The more niche, the more podcasts we find for you.</label>
           <textarea id="f-topics" class="form-textarea" rows="2" placeholder="Add your niche keywords here (faith-based entrepreneurship, burnout recovery, legacy building)"></textarea>
