@@ -681,6 +681,14 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     `${primaryTopic} entrepreneurs podcast guest interview`,
   ];
 
+  // Derive run number from existing match count (each run adds ~50 matches)
+  // Must be defined BEFORE ninetyDaysAgo which references it
+  const { count: existingMatchCount } = await supabase
+    .from('podcast_matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', client.id);
+  const runNumber = Math.max(1, Math.floor((existingMatchCount ?? 0) / 50) + 1);
+
   // Date filter: loosen on repeat runs to widen the candidate pool
   // Run 1: 180 days, Run 2: 365 days, Run 3+: no date filter (null = no filter)
   const ninetyDaysAgo = runNumber === 1
@@ -689,14 +697,6 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
       ? Math.floor((Date.now() - 365 * 24 * 60 * 60 * 1000) / 1000)
       : null;
   const language = client.languages?.[0] || 'English';
-
-  // Derive run number from existing match count (each run adds ~50 matches)
-  // Must destructure `count` not `data` — head:true returns count, not rows
-  const { count: existingMatchCount } = await supabase
-    .from('podcast_matches')
-    .select('id', { count: 'exact', head: true })
-    .eq('client_id', client.id);
-  const runNumber = Math.max(1, Math.floor((existingMatchCount ?? 0) / 50) + 1);
   // Paginate ListenNotes: fetch a fresh page per run so repeat runs get new inventory
   const lnPage = runNumber; // page 1 on first run, page 2 on second, etc.
 

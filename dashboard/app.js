@@ -70,6 +70,13 @@ function showToast(message, type = 'info') {
 }
 
 // ── API helpers ───────────────────────────────────────────────────────
+async function apiFetch(url) {
+  const res = await fetch(url, {
+    headers: { 'x-dashboard-token': state.token || '' },
+  });
+  return res.json();
+}
+
 async function apiPost(url, body) {
   const res = await fetch(url, {
     method:  'POST',
@@ -573,6 +580,34 @@ function metaTagsHtml(podcast) {
     : '';
 }
 
+// ── Content Boost button — state-aware ───────────────────────────────
+function contentBoostButton(match) {
+  const id  = match.id;
+  const cbs = match.content_boost_status;
+  const url = match.content_boost_episode_url;
+
+  if (!cbs) {
+    // Not purchased yet — show buy button
+    return `<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`;
+  }
+  if (cbs === 'requested') {
+    // Stripe payment processing
+    return `<button class="btn btn-xs" disabled style="background:#fef9c3;color:#92400e;border:1.5px solid #fde68a;font-weight:600;cursor:default;">⏳ Payment Processing…</button>`;
+  }
+  if (cbs === 'ordered' && !url) {
+    // Paid — waiting for episode link
+    return `<button class="btn btn-xs btn-action-primary" onclick="toggleCardExpand('${id}');document.getElementById('boost-url-${id}')?.focus()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">📎 Submit Episode Link</button>`;
+  }
+  if (cbs === 'ordered' && url) {
+    // Link submitted, team working on it
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">✅ Link Submitted</button>`;
+  }
+  if (cbs === 'completed') {
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">⚡ Boost Complete</button>`;
+  }
+  return '';
+}
+
 // ── Action buttons HTML ───────────────────────────────────────────────
 function actionButtonsHtml(match) {
   const status   = match.status;
@@ -603,10 +638,10 @@ function actionButtonsHtml(match) {
   } else if (status === 'booked') {
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
-    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
+    buttons.push(contentBoostButton(match));
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">❌ Not Booked</button>`);
   } else if (status === 'appeared') {
-    buttons.push(`<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`);
+    buttons.push(contentBoostButton(match));
   } else if (status === 'dismissed') {
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
   }
@@ -615,51 +650,32 @@ function actionButtonsHtml(match) {
 }
 
 // ── Toggle card expand ────────────────────────────────────────────────
-// On first expand: if all sub-scores are the neutral fallback (50), auto re-enrich + re-score.
-const _reenrichedMatches = new Set(); // prevent firing more than once per session
-
 function toggleCardExpand(matchId) {
   const card = $(`card-${matchId}`);
   if (!card) return;
   const isExpanded = card.getAttribute('data-expanded') === 'true';
   card.setAttribute('data-expanded', isExpanded ? 'false' : 'true');
-
-  // Auto re-enrich on first open if scores are all neutral fallback (50)
-  if (!isExpanded && !_reenrichedMatches.has(matchId)) {
-    const match = state.matches.find((m) => m.id === matchId);
-    if (match && isNeutralFallback(match)) {
-      _reenrichedMatches.add(matchId);
-      triggerReEnrich(matchId);
-    }
-  }
 }
 window.toggleCardExpand = toggleCardExpand;
 
 function isNeutralFallback(match) {
-  const r = match.relevance_score;
-  const a = match.audience_score;
+  const r  = match.relevance_score;
+  const a  = match.audience_score;
   const rc = match.reach_score;
-  // All-50 = neutral fallback from failed scoring
-  // All-0  = scoring never ran (inserted as placeholder)
   const allFifty = r === 50 && a === 50 && rc === 50;
   const allZero  = (r === 0 || r == null) && (a === 0 || a == null) && (rc === 0 || rc == null);
   return allFifty || allZero;
 }
 
+/**
+ * Silent background re-enrich for a single match.
+ * No UI indicators — cards just update quietly once scores come back.
+ */
 async function triggerReEnrich(matchId) {
-  // Show subtle "refreshing" indicator in the score section
-  const scoreEl = document.querySelector(`#card-${matchId} .fit-score-value`);
-  const origText = scoreEl?.textContent;
-  if (scoreEl) scoreEl.textContent = '…';
-
-  const barFill = document.querySelector(`#card-${matchId} .fit-score-bar-fill`);
-  if (barFill) barFill.style.opacity = '0.4';
-
   try {
     const data = await apiPost(`/api/re-enrich/${matchId}`, {});
     if (data.success && data.scores) {
       const s = data.scores;
-      // Update state
       updateMatchInState(matchId, {
         fit_score:            s.fit_score,
         relevance_score:      s.relevance_score,
@@ -673,26 +689,33 @@ async function triggerReEnrich(matchId) {
         episode_to_reference: s.episode_to_reference,
         red_flags:            s.red_flags,
       });
-      // Re-render just this card (preserves expanded state)
       updateCard(matchId);
-      // Re-open it since updateCard resets expansion
-      const card = $(`card-${matchId}`);
-      if (card) card.setAttribute('data-expanded', 'true');
       updateStatBadges();
-      if (s.fit_score && s.fit_score !== 50) {
-        showToast(`✅ Score updated: ${s.fit_score}/100`, 'success');
-      }
-    } else {
-      // Restore original display if nothing changed
-      if (scoreEl) scoreEl.textContent = origText;
-      if (barFill) barFill.style.opacity = '1';
     }
   } catch {
-    if (scoreEl) scoreEl.textContent = origText;
-    if (barFill) barFill.style.opacity = '1';
+    // Silently ignore — will retry next dashboard load
   }
 }
 window.triggerReEnrich = triggerReEnrich;
+
+/**
+ * On dashboard load: find all matches with neutral/missing scores and re-enrich
+ * them in the background one by one. Client sees real scores appear quietly
+ * without any loading states or toasts.
+ */
+async function backgroundReEnrichAll() {
+  if (!state.matches?.length) return;
+  const stale = state.matches.filter(isNeutralFallback);
+  if (!stale.length) return;
+
+  console.info(`[Re-enrich] ${stale.length} match(es) with missing scores — enriching in background`);
+
+  for (const match of stale) {
+    await triggerReEnrich(match.id);
+    // Small delay between calls to avoid hammering the API
+    await new Promise(r => setTimeout(r, 1500));
+  }
+}
 
 // ── Leaderboard ───────────────────────────────────────────────────────
 let _leaderboardVisible = true;
@@ -714,11 +737,15 @@ async function loadLeaderboard() {
     const hasMe  = top10.some(r => r.is_me);
     const meRow  = !hasMe ? rows.find(r => r.is_me) : null;
 
-    const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+    // Medals go to top 3 by aired (appeared) count, regardless of overall rank
+    const medalMap = new Map();
+    [...rows].sort((a, b) => b.appeared - a.appeared).slice(0, 3).forEach((r, i) => {
+      if (r.appeared > 0) medalMap.set(r.rank, ['🥇','🥈','🥉'][i]);
+    });
 
     const renderRow = (r, divider = false) => {
       const isMe   = r.is_me;
-      const medal  = MEDALS[r.rank] || '';
+      const medal  = medalMap.get(r.rank) || '';
       const rankDisp = medal || `#${r.rank}`;
       return `
         ${divider ? `<div style="border-top:1px dashed var(--border-subtle,#eee);margin:4px 20px;"></div>` : ''}
@@ -1217,6 +1244,8 @@ async function loadDashboard() {
     renderDashboard(data);
     // Check for host replies in the background — auto-moves cards to Replied tab
     checkForReplies();
+    // Re-enrich any matches with missing/neutral scores silently in the background
+    backgroundReEnrichAll();
   } catch (err) {
     $('loading-state').style.display = 'none';
     $('error-state').style.display   = 'flex';

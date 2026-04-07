@@ -230,9 +230,11 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt) {
       afterClause = ` after:${epochSeconds}`;
     }
 
+    // Search all mail (not just inbox) — replies can land in Spam, archived folders, or custom labels.
+    // The after: epoch filter already prevents false positives from pre-pitch emails.
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: `from:${fromEmail} in:inbox${afterClause}`,
+      q: `from:${fromEmail}${afterClause}`,
       maxResults: 1,
     });
     return (res.data.messages?.length || 0) > 0;

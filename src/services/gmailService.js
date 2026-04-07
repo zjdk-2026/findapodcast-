@@ -193,14 +193,16 @@ async function sendDraft(refreshToken, draftId) {
  * findThreadByContactEmail(refreshToken, contactEmail)
  * Searches Gmail sent mail for a message to contactEmail, returns threadId or null.
  */
-async function findThreadByContactEmail(refreshToken, contactEmail) {
+async function findThreadByContactEmail(refreshToken, contactEmail, emailSubject) {
   try {
     const oauth2Client = buildOAuth2Client();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    // Scope by subject if available to find the right thread when multiple pitches sent to same address
+    const subjectClause = emailSubject ? ` subject:"${emailSubject.replace(/"/g, '')}"` : '';
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: `to:${contactEmail} in:sent`,
+      q: `to:${contactEmail} in:sent${subjectClause}`,
       maxResults: 1,
     });
     const msg = res.data.messages?.[0];
