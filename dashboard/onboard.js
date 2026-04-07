@@ -94,7 +94,7 @@ async function generateBio() {
 
   const btn = document.getElementById('btn-gen-bio');
   btn.disabled = true;
-  btn.textContent = '✨ Generating…';
+  btn.textContent = 'Generating…';
 
   try {
     const res = await fetch('/api/generate-bio', {
@@ -242,7 +242,7 @@ async function submitForm() {
     showFormError(msg);
     showToast(msg, 'error');
     btn.disabled  = false;
-    label.textContent = 'Launch My Pipeline 🚀';
+    label.textContent = 'Launch My Pipeline';
   }
 }
 
