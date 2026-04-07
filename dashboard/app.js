@@ -636,13 +636,14 @@ function toggleCardExpand(matchId) {
 window.toggleCardExpand = toggleCardExpand;
 
 function isNeutralFallback(match) {
-  return (
-    match.relevance_score    === 50 &&
-    match.audience_score     === 50 &&
-    match.reach_score        === 50 &&
-    (match.recency_score     === 50 || match.recency_score == null) &&
-    (match.contactability_score === 50 || match.contactability_score == null)
-  );
+  const r = match.relevance_score;
+  const a = match.audience_score;
+  const rc = match.reach_score;
+  // All-50 = neutral fallback from failed scoring
+  // All-0  = scoring never ran (inserted as placeholder)
+  const allFifty = r === 50 && a === 50 && rc === 50;
+  const allZero  = (r === 0 || r == null) && (a === 0 || a == null) && (rc === 0 || rc == null);
+  return allFifty || allZero;
 }
 
 async function triggerReEnrich(matchId) {

@@ -333,12 +333,67 @@ async function enrichPodcast(podcastData) {
     }
   }
 
+  // ──────────────────────────────────────────────────
+  // 0d. Scrape Apple Podcasts page for "Show Website"
+  //     This is the most reliable fallback — every podcast on Apple has one.
+  //     We look for JSON-LD structured data first, then fall back to link scanning.
+  // ──────────────────────────────────────────────────
+  if (!enriched.website && enriched.apple_url) {
+    try {
+      const appleHtml = await fetchHtml(enriched.apple_url);
+      if (appleHtml) {
+        const $ap = cheerio.load(appleHtml);
+
+        // 1. Try JSON-LD first (most reliable)
+        let foundViaJsonLd = false;
+        $ap('script[type="application/ld+json"]').each((_, el) => {
+          if (foundViaJsonLd) return;
+          try {
+            const json = JSON.parse($ap(el).html() || '{}');
+            const entries = Array.isArray(json) ? json : [json];
+            for (const entry of entries) {
+              const url = entry.url || entry.sameAs?.[0] || entry.mainEntityOfPage;
+              if (url && typeof url === 'string' && url.startsWith('http') && !url.includes('apple.com') && !url.includes('podcasts.')) {
+                enriched.website = url;
+                foundViaJsonLd = true;
+                break;
+              }
+            }
+          } catch { /* ignore bad JSON */ }
+        });
+
+        // 2. Fallback: scan all anchor hrefs for the show website
+        //    Apple Podcasts pages have very few external links — the show website
+        //    is typically the only non-Apple, non-social external link
+        if (!enriched.website) {
+          const EXCLUDE = ['apple.com', 'itunes.', 'podcasts.', 'instagram.com', 'facebook.com',
+                           'twitter.com', 'x.com', 'youtube.com', 'tiktok.com', 'spotify.com',
+                           'linkedin.com', 'linktr.ee', 'privacy.apple', 'support.apple'];
+          $ap('a[href]').each((_, el) => {
+            if (enriched.website) return;
+            const href = ($ap(el).attr('href') || '').trim();
+            if (href.startsWith('http') && !EXCLUDE.some(d => href.includes(d))) {
+              enriched.website = href;
+            }
+          });
+        }
+
+        if (enriched.website) {
+          logger.info('Show website found via Apple Podcasts page', { title: podcastData.title, website: enriched.website });
+        }
+      }
+    } catch (err) {
+      logger.warn('Apple Podcasts page scrape failed', { appleUrl: enriched.apple_url, error: err.message });
+    }
+  }
+
   if (!website && !enriched.website) {
     logger.debug('No website for podcast, skipping enrichment', { title: podcastData.title });
     return enriched;
   }
 
-  // Use enriched website if it was found via RSS or link-in-bio
+  // Use enriched website — prefer what we found via RSS/Apple over the original input
+  // (original input may have been a Linktree or wrong URL)
   const siteUrl = enriched.website || website;
 
   logger.debug('Enriching podcast', { title: podcastData.title, website: siteUrl });
