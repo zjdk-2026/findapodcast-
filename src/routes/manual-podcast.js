@@ -84,6 +84,29 @@ router.post('/add-podcast', async (req, res) => {
   }
 
   try {
+    // ── 0. Pre-check: has this URL already been added for this client? ────────
+    const urlsToCheck = [podcastUrl, appleUrl, spotifyUrl].filter(Boolean);
+    if (urlsToCheck.length > 0) {
+      for (const checkUrl of urlsToCheck) {
+        const { data: existingPod } = await supabase
+          .from('podcasts')
+          .select('id')
+          .or(`website.eq.${checkUrl},apple_url.eq.${checkUrl},spotify_url.eq.${checkUrl}`)
+          .maybeSingle();
+        if (existingPod) {
+          const { data: existingMatch } = await supabase
+            .from('podcast_matches')
+            .select('id')
+            .eq('client_id', resolvedClientId)
+            .eq('podcast_id', existingPod.id)
+            .maybeSingle();
+          if (existingMatch) {
+            return res.json({ success: true, message: 'Already in your pipeline.', matchId: existingMatch.id });
+          }
+        }
+      }
+    }
+
     // ── 1. iTunes lookup: get real metadata if Apple URL or name provided ─────
     const itunesData = await lookupItunes({ appleUrl, podcastName });
 

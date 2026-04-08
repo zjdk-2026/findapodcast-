@@ -2837,7 +2837,7 @@ async function submitAddPodcast() {
   if (btn) { btn.textContent = '⏳ Adding…'; btn.disabled = true; }
   try {
     const g = (id) => { const el = document.getElementById(id); return el?.value.trim() || null; };
-    const data = await apiPost('/api/operator/add-podcast', {
+    const data = await apiPost('/api/add-podcast', {
       clientId:      state.client?.id,
       podcastUrl:    url || null,
       podcastName:   name || null,
@@ -2851,11 +2851,18 @@ async function submitAddPodcast() {
     });
     if (data.success) {
       closeAddPodcastModal();
-      showToast('⏳ Added! Scoring compatibility — ready in ~10 seconds.', 'info');
+      if (data.message === 'Already in your pipeline.') {
+        showToast('Already in your pipeline.', 'info');
+        switchToFilter('new');
+        return;
+      }
+      showToast('Added! Scoring compatibility — ready in ~10 seconds.', 'info');
       // Add to state immediately as placeholder, then refresh to get real scores
       if (data.match && data.podcast) {
         state.matches.unshift({ ...data.match, podcasts: data.podcast });
         switchToFilter('new');
+        renderGrid();
+        updateStatBadges();
       }
       // Re-fetch dashboard after 10s so scored values appear
       setTimeout(async () => {
