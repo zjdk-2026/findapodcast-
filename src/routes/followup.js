@@ -101,11 +101,11 @@ router.post('/followup-check', async (req, res) => {
         logger.warn('followup-check: send failed', { matchId: match.id, error: sendErr.message });
       }
 
-      // Mark follow_up_sent = true (fail silently if column doesn't exist)
+      // Mark follow_up_sent = true and update status to followed_up
       try {
         await supabase
           .from('podcast_matches')
-          .update({ follow_up_sent: true })
+          .update({ follow_up_sent: true, status: 'followed_up' })
           .eq('id', match.id);
       } catch (_) {
         // Column may not exist — ignore

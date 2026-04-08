@@ -470,7 +470,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   const allowed = [
     'name', 'title', 'business_name', 'bio_short',
     'topics', 'speaking_angles', 'target_audience', 'website',
-    'booking_link', 'social_instagram', 'social_linkedin',
+    'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
     'social_twitter', 'preferred_tone', 'daily_target',
     'pitch_style', 'extra_links',
     'photo_url', 'logo_url',
