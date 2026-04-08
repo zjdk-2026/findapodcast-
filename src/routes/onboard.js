@@ -212,6 +212,12 @@ async function addToGHL(client) {
         companyName: client.business_name || undefined,
         tags:        ['find-a-podcast', 'new-client'],
         source:      'Find A Podcast Onboarding',
+        customFields: [
+          {
+            key:   'dashboard_url',
+            field_value: `${process.env.BASE_URL || 'https://findapodcast.club'}/dashboard/${client.dashboard_token}`,
+          },
+        ],
       }),
     });
     contactData = await contactRes.json();
