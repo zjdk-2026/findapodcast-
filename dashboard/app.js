@@ -69,6 +69,31 @@ function showToast(message, type = 'info') {
   }, 3200);
 }
 
+// ── Country → language + geography mapping ────────────────────────────
+const COUNTRY_MAP = {
+  'Any':            { languages: ['English'],    geographies: ['US','CA','UK','AU'], itunesCountry: 'US' },
+  'Australia':      { languages: ['English'],    geographies: ['AU'],               itunesCountry: 'AU' },
+  'Brazil':         { languages: ['Portuguese'], geographies: ['BR'],               itunesCountry: 'BR' },
+  'Canada':         { languages: ['English'],    geographies: ['CA'],               itunesCountry: 'CA' },
+  'France':         { languages: ['French'],     geographies: ['FR'],               itunesCountry: 'FR' },
+  'Germany':        { languages: ['German'],     geographies: ['DE'],               itunesCountry: 'DE' },
+  'India':          { languages: ['Hindi'],      geographies: ['IN'],               itunesCountry: 'IN' },
+  'Italy':          { languages: ['Italian'],    geographies: ['IT'],               itunesCountry: 'IT' },
+  'Japan':          { languages: ['Japanese'],   geographies: ['JP'],               itunesCountry: 'JP' },
+  'Mexico':         { languages: ['Spanish'],    geographies: ['MX'],               itunesCountry: 'MX' },
+  'Netherlands':    { languages: ['Dutch'],      geographies: ['NL'],               itunesCountry: 'NL' },
+  'Poland':         { languages: ['Polish'],     geographies: ['PL'],               itunesCountry: 'PL' },
+  'Portugal':       { languages: ['Portuguese'], geographies: ['PT'],               itunesCountry: 'PT' },
+  'South Korea':    { languages: ['Korean'],     geographies: ['KR'],               itunesCountry: 'KR' },
+  'Spain':          { languages: ['Spanish'],    geographies: ['ES'],               itunesCountry: 'ES' },
+  'Sweden':         { languages: ['Swedish'],    geographies: ['SE'],               itunesCountry: 'SE' },
+  'United Kingdom': { languages: ['English'],    geographies: ['UK','GB'],          itunesCountry: 'GB' },
+};
+function countryToLangGeo(country) {
+  const m = COUNTRY_MAP[country] || COUNTRY_MAP['Any'];
+  return { languages: m.languages, geographies: m.geographies };
+}
+
 // ── API helpers ───────────────────────────────────────────────────────
 async function apiFetch(url) {
   const res = await fetch(url, {
@@ -2296,6 +2321,14 @@ function openProfileModal() {
   const paceSelect = $('profile-daily-select');
   if (paceSelect) paceSelect.value = dailyTarget <= 5 ? '5' : dailyTarget >= 20 ? '20' : '10';
 
+  // Country
+  const countryEl = $('profile-country');
+  if (countryEl) {
+    const geo = (c.geographies || [])[0];
+    const GEO_TO_COUNTRY = { FR:'France', DE:'Germany', ES:'Spain', MX:'Mexico', BR:'Brazil', IT:'Italy', PT:'Portugal', NL:'Netherlands', AU:'Australia', CA:'Canada', GB:'United Kingdom', UK:'United Kingdom', IN:'India', JP:'Japan', KR:'South Korea', PL:'Poland', SE:'Sweden' };
+    countryEl.value = GEO_TO_COUNTRY[geo] || 'Any';
+  }
+
   $('profile-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -2325,6 +2358,7 @@ async function saveProfile() {
     target_audience:  $('profile-audience').value.trim(),
     bio_short:        $('profile-bio-short').value.trim(),
     pitch_style:      $('profile-pitch-style').value.trim(),
+    ...countryToLangGeo($('profile-country')?.value || 'Any'),
   };
   try {
     const data = await apiPatch(`/api/onboard/${state.client.id}`, updates);

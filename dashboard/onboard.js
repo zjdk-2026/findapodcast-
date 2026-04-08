@@ -9,6 +9,30 @@ let currentStep = 1;
 const TOTAL_STEPS = 4;
 let selectedPace = 10;
 
+const COUNTRY_MAP = {
+  'Any':            { languages: ['English'],    geographies: ['US','CA','UK','AU'] },
+  'Australia':      { languages: ['English'],    geographies: ['AU'] },
+  'Brazil':         { languages: ['Portuguese'], geographies: ['BR'] },
+  'Canada':         { languages: ['English'],    geographies: ['CA'] },
+  'France':         { languages: ['French'],     geographies: ['FR'] },
+  'Germany':        { languages: ['German'],     geographies: ['DE'] },
+  'India':          { languages: ['Hindi'],      geographies: ['IN'] },
+  'Italy':          { languages: ['Italian'],    geographies: ['IT'] },
+  'Japan':          { languages: ['Japanese'],   geographies: ['JP'] },
+  'Mexico':         { languages: ['Spanish'],    geographies: ['MX'] },
+  'Netherlands':    { languages: ['Dutch'],      geographies: ['NL'] },
+  'Poland':         { languages: ['Polish'],     geographies: ['PL'] },
+  'Portugal':       { languages: ['Portuguese'], geographies: ['PT'] },
+  'South Korea':    { languages: ['Korean'],     geographies: ['KR'] },
+  'Spain':          { languages: ['Spanish'],    geographies: ['ES'] },
+  'Sweden':         { languages: ['Swedish'],    geographies: ['SE'] },
+  'United Kingdom': { languages: ['English'],    geographies: ['UK','GB'] },
+};
+function countryToLangGeo(country) {
+  const m = COUNTRY_MAP[country] || COUNTRY_MAP['Any'];
+  return { languages: m.languages, geographies: m.geographies };
+}
+
 // ── Toast ─────────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(message, type = 'info') {
@@ -208,6 +232,7 @@ function collectFormData() {
     pitch_style:      val('f-pitch-style')  || undefined,
     preferred_tone:   val('f-tone')         || 'warm-professional',
     daily_target:     selectedPace || 10,
+    ...countryToLangGeo(val('f-country') || 'Any'),
   };
 }
 

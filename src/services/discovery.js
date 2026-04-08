@@ -72,15 +72,18 @@ async function generateNicheQueries(client, runNumber = 1) {
 Guest topics: ${allTopics}
 Target audience: ${audience}
 Talking points: ${angles}
+Target language: ${client.languages?.[0] || 'English'}
 
 Rules:
 - Each query should be 3–6 words
 - Target niche sub-angles, not broad categories
 - Vary the angle based on run number ${runNumber} (higher = more niche/adjacent)
 - Do NOT include the word "podcast" (it will be appended)
+- If target language is not English, write the queries IN that language
 - Return ONLY a JSON array of 5 strings, nothing else
 
-Example output: ["faith-based entrepreneur interview","Christian business leadership","leadership legacy building","faith driven founder stories","entrepreneurship spiritual mindset"]`,
+Example (English): ["faith-based entrepreneur interview","Christian business leadership","leadership legacy building","faith driven founder stories","entrepreneurship spiritual mindset"]
+Example (French): ["entrepreneur chrétien interview","croissance business leadership","développement personnel mindset","fondateur foi-driven histoires","entrepreneuriat stratégie spirituelle"]`,
       }],
     });
 
@@ -163,11 +166,17 @@ function normalisePodcast(item) {
   };
 }
 
+const LANGUAGE_TO_ITUNES_COUNTRY = {
+  'English': 'US', 'French': 'FR', 'German': 'DE', 'Spanish': 'ES',
+  'Italian': 'IT', 'Portuguese': 'BR', 'Japanese': 'JP', 'Korean': 'KR',
+  'Dutch': 'NL', 'Polish': 'PL', 'Swedish': 'SE', 'Hindi': 'IN',
+};
+
 async function searchItunes(query, language) {
   try {
-    const term = encodeURIComponent(query);
-    const lang = language === 'English' ? 'en_us' : 'en_us';
-    const url = `https://itunes.apple.com/search?term=${term}&media=podcast&entity=podcast&limit=25&lang=${lang}`;
+    const term    = encodeURIComponent(query);
+    const country = LANGUAGE_TO_ITUNES_COUNTRY[language] || 'US';
+    const url = `https://itunes.apple.com/search?term=${term}&media=podcast&entity=podcast&limit=25&country=${country}`;
     const res = await axios.get(url, { timeout: 8000 });
     return res.data?.results || [];
   } catch (err) {

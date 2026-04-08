@@ -480,6 +480,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'social_twitter', 'preferred_tone', 'daily_target',
     'pitch_style', 'extra_links',
     'photo_url', 'logo_url',
+    'languages', 'geographies',
   ];
 
   const updates = {};
@@ -490,6 +491,8 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   if (req.body.topics)           updates.topics           = req.body.topics;
   if (req.body.speaking_angles)  updates.speaking_angles  = req.body.speaking_angles;
   if (req.body.daily_target)     updates.daily_target     = parseInt(req.body.daily_target, 10) || 10;
+  if (req.body.languages)        updates.languages        = req.body.languages;
+  if (req.body.geographies)      updates.geographies      = req.body.geographies;
 
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ success: false, error: 'No valid fields to update.' });
