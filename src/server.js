@@ -130,6 +130,11 @@ app.get('/onboard', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'onboard.html'));
 });
 
+// Privacy policy
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'privacy.html'));
+});
+
 // Operator page
 app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));
