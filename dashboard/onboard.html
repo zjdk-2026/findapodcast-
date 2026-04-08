@@ -75,17 +75,69 @@
     .btn-generate-bio:disabled { opacity:0.5; cursor:not-allowed; }
 
     /* ── Success screen ──────────────────────────────── */
-    .success-steps { display:flex; flex-direction:column; gap:14px; margin:24px 0; }
-    .success-step { display:flex; align-items:flex-start; gap:14px; }
-    .success-step-num {
-      width:32px; height:32px; border-radius:50%;
-      background:var(--accent); color:#fff;
-      font-size:14px; font-weight:700;
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0;
+    .success-screen { padding:0; }
+    .success-hero {
+      background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+      border-radius:18px; padding:36px 32px 32px;
+      text-align:center; margin-bottom:28px;
+      position:relative; overflow:hidden;
     }
+    .success-hero::before {
+      content:''; position:absolute; inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='25' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+      pointer-events:none;
+    }
+    .success-icon-wrap {
+      width:72px; height:72px; border-radius:50%;
+      background:rgba(255,255,255,0.15); backdrop-filter:blur(4px);
+      border:2px solid rgba(255,255,255,0.3);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 18px; position:relative; z-index:1;
+    }
+    .success-hero h2 {
+      font-size:24px; font-weight:800; color:#fff;
+      margin-bottom:8px; letter-spacing:-0.02em; position:relative; z-index:1;
+    }
+    .success-hero p {
+      font-size:14px; color:rgba(255,255,255,0.75);
+      margin:0; position:relative; z-index:1;
+    }
+    .success-steps { display:flex; flex-direction:column; gap:0; margin-bottom:24px; border:1.5px solid var(--border-light); border-radius:14px; overflow:hidden; }
+    .success-step {
+      display:flex; align-items:center; gap:14px;
+      padding:16px 18px; background:var(--surface-card);
+      border-bottom:1px solid var(--border-light);
+      transition:background 0.15s;
+    }
+    .success-step:last-child { border-bottom:none; }
+    .success-step-icon {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .success-step-icon.done { background:rgba(16,185,129,0.12); }
+    .success-step-icon.active { background:rgba(99,102,241,0.12); }
+    .success-step-icon.pending { background:var(--surface-page); border:1.5px solid var(--border-medium); }
+    .success-step-text { flex:1; }
     .success-step-text strong { display:block; font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:2px; }
-    .success-step-text span { font-size:13px; color:var(--text-secondary); }
+    .success-step-text span { font-size:12px; color:var(--text-secondary); }
+    .success-step.done-row .success-step-text strong { color:var(--text-secondary); }
+    .success-cta-primary {
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      width:100%; padding:15px 24px; border-radius:14px;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      color:#fff; font-size:15px; font-weight:700;
+      text-decoration:none; border:none; cursor:pointer;
+      margin-bottom:10px; transition:opacity 0.15s; box-shadow:0 4px 16px rgba(99,102,241,0.3);
+    }
+    .success-cta-primary:hover { opacity:0.9; }
+    .success-cta-secondary {
+      display:flex; align-items:center; justify-content:center;
+      width:100%; padding:13px 24px; border-radius:14px;
+      border:1.5px solid var(--border-medium); background:var(--surface-card);
+      color:var(--text-primary); font-size:14px; font-weight:600;
+      text-decoration:none; transition:border-color 0.15s;
+    }
+    .success-cta-secondary:hover { border-color:var(--accent); color:var(--accent); }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -129,7 +181,7 @@
         </div>
         <div class="progress-step" id="step-indicator-4">
           <div class="step-dot">4</div>
-          <span class="step-label">Photos</span>
+          <span class="step-label">Launch</span>
         </div>
       </div>
     </div>
@@ -172,7 +224,9 @@
         <div class="form-group">
           <div class="bio-generate-row">
             <label class="form-label" for="f-bio-short">Paste your LinkedIn bio <span class="req">*</span></label>
-            <button type="button" class="btn-generate-bio" id="btn-gen-bio" onclick="generateBio()">✨ Generate for me</button>
+            <button type="button" class="btn-generate-bio" id="btn-gen-bio" onclick="generateBio()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Generate for me
+          </button>
           </div>
           <textarea id="f-bio-short" class="form-textarea" rows="4" placeholder="Paste your LinkedIn About section here, or click Generate for me and we will write one for you."></textarea>
           <p class="form-hint">This is what podcast hosts see when we pitch you. The more specific, the better the pitch.</p>
@@ -376,7 +430,7 @@
 
       <!-- ─── Step 4: Photos ───────────────────────────────── -->
       <div class="step-panel" id="step-4">
-        <h2 class="step-title">Almost there 🚀</h2>
+        <h2 class="step-title">Almost there</h2>
         <p class="step-desc">Add your headshot to personalise your dashboard. It shows on every card and makes your pipeline feel like yours.</p>
 
         <div class="form-group">
@@ -389,7 +443,7 @@
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
           <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">
-            <span id="submit-label">Launch My Pipeline 🚀</span>
+            <span id="submit-label">Launch My Pipeline</span>
           </button>
         </div>
       </div>
@@ -397,38 +451,53 @@
       <!-- ─── Success screen ───────────────────────────────── -->
       <div class="step-panel" id="step-success">
         <div class="success-screen">
-          <div style="font-size:52px;margin-bottom:8px;">🎉</div>
-          <h2 class="success-title">You're live. Let's get you booked!</h2>
-          <p class="success-desc">Your pipeline is active. Here's exactly what happens next:</p>
+
+          <div class="success-hero">
+            <div class="success-icon-wrap">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h2>You're live. Let's get you booked.</h2>
+            <p>Your profile is set up. Here's your 3-step quick guide:</p>
+          </div>
 
           <div class="success-steps">
-            <div class="success-step">
-              <div class="success-step-num">1</div>
+            <div class="success-step done-row">
+              <div class="success-step-icon done">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
               <div class="success-step-text">
-                <strong>Connect your Gmail</strong>
-                <span>So we can send pitch emails directly from your inbox. Hosts see your real address, not a generic one.</span>
+                <strong>Complete your profile</strong>
+                <span>Done — your bio and pitch details are saved.</span>
               </div>
             </div>
             <div class="success-step">
-              <div class="success-step-num">2</div>
+              <div class="success-step-icon active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+              </div>
               <div class="success-step-text">
-                <strong>Click "Find a Podcast" in your dashboard</strong>
-                <span>We'll scan every major podcast directory and surface your best-fit shows in minutes.</span>
+                <strong>Find your first matches</strong>
+                <span>Connect Gmail, then click Find a Podcast in your dashboard.</span>
               </div>
             </div>
             <div class="success-step">
-              <div class="success-step-num">3</div>
+              <div class="success-step-icon pending">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </div>
               <div class="success-step-text">
-                <strong>Review your matches &amp; approve pitches</strong>
-                <span>We write every pitch for you. You just approve, tweak if needed, and we send. Replies land in your inbox.</span>
+                <strong>Send your first pitch</strong>
+                <span>Approve a match — we write it, you hit send.</span>
               </div>
             </div>
           </div>
 
-          <p class="form-label" style="text-align:left;margin-bottom:8px;">Your Dashboard Link</p>
-          <div class="success-url-box" id="success-dashboard-url">Loading…</div>
-          <a id="success-gmail-link" href="#" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px;">Step 1: Connect Gmail →</a>
-          <a id="success-dashboard-link" href="#" class="btn btn-outline" style="width:100%;justify-content:center;">Open My Dashboard →</a>
+          <a id="success-gmail-link" href="#" class="success-cta-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+            Connect Gmail to Start
+          </a>
+          <a id="success-dashboard-link" href="#" class="success-cta-secondary">Open My Dashboard</a>
+
         </div>
       </div>
 
