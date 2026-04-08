@@ -2116,15 +2116,6 @@ async function runPipeline() {
   const btn = $('header-run-pipeline');
   if (!btn || !state.client) return;
 
-  // Prompt to connect Gmail if not yet connected
-  if (!state.client.gmail_email) {
-    const go = confirm('Connect your Gmail first so pitches can be sent directly from your inbox.\n\nClick OK to connect Gmail now.');
-    if (go) {
-      window.location.href = `/auth/gmail?clientId=${esc(state.client.id)}`;
-    }
-    return;
-  }
-
   // Hide START HERE permanently after first click
   const startHereKey = `pp-start-here-gone-${state.token}`;
   if (!localStorage.getItem(startHereKey)) {
@@ -2187,6 +2178,7 @@ function pollForNewMatches() {
           const added = newCount - knownCount;
           renderDashboard(data);
           showToast(`${added} new podcast match${added === 1 ? '' : 'es'} added!`, 'success');
+          backgroundReEnrichAll();
         }
       }
     } catch { /* silent */ }
