@@ -1146,11 +1146,22 @@ function renderDashboard(data) {
   const gmailItem = $('dropdown-gmail-item');
   if (gmailItem) {
     if (client.gmail_email) {
-      const gmailLabel = client.gmail_email === 'connected' ? 'Gmail Connected' : `Gmail: ${client.gmail_email}`;
-      gmailItem.innerHTML = `<span style="color:var(--success);font-size:13px;">${gmailLabel}</span>`;
+      const gmailLabel = client.gmail_email === 'connected' ? 'Gmail' : esc(client.gmail_email);
       gmailItem.style.cursor = 'default';
+      gmailItem.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+          <span style="color:var(--success);font-size:13px;display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ${gmailLabel}
+          </span>
+          <button onclick="disconnectGmail()" style="font-size:11px;font-weight:600;color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:2px 8px;cursor:pointer;">Disconnect</button>
+        </div>`;
     } else {
-      gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;">Connect Gmail</a>`;
+      gmailItem.style.cursor = 'pointer';
+      gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+        Connect Gmail
+      </a>`;
     }
   }
 
@@ -2682,7 +2693,34 @@ async function sendFollowUp() {
 window.sendFollowUp = sendFollowUp;
 
 
+// ── Gmail disconnect ──────────────────────────────────────────────────
+async function disconnectGmail() {
+  if (!confirm('Disconnect Gmail? Pitches will no longer send from your inbox until you reconnect.')) return;
+  try {
+    const data = await apiPost('/api/gmail/disconnect', {});
+    if (data.success) {
+      state.client.gmail_email = null;
+      state.client.gmail_refresh_token = null;
+      // Re-render dropdown
+      const gmailItem = $('dropdown-gmail-item');
+      if (gmailItem) {
+        gmailItem.style.cursor = 'pointer';
+        gmailItem.innerHTML = `<a href="/auth/gmail?clientId=${esc(state.client.id)}" style="color:var(--accent);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+          Connect Gmail
+        </a>`;
+      }
+      showToast('Gmail disconnected. Click Connect Gmail to reconnect.', 'success');
+    } else {
+      showToast(data.error || 'Failed to disconnect.', 'error');
+    }
+  } catch {
+    showToast('Failed to disconnect Gmail.', 'error');
+  }
+}
+
 // ── Expose globals for inline onclick handlers ────────────────────────
+window.disconnectGmail   = disconnectGmail;
 window.approveMatch      = approveMatch;
 window.restoreMatch      = restoreMatch;
 window.dismissMatch      = dismissMatch;

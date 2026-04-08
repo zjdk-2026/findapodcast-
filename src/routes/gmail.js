@@ -256,4 +256,29 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt) {
   }
 }
 
+/**
+ * POST /api/gmail/disconnect
+ * Clears gmail credentials for the client.
+ */
+router.post('/api/gmail/disconnect', async (req, res) => {
+  const token = req.headers['x-dashboard-token'] || req.body?.token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized.' });
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('dashboard_token', token)
+    .single();
+
+  if (!client) return res.status(401).json({ success: false, error: 'Invalid token.' });
+
+  await supabase.from('clients').update({
+    gmail_refresh_token: null,
+    gmail_email: null,
+  }).eq('id', client.id);
+
+  logger.info('Gmail disconnected', { clientId: client.id });
+  return res.json({ success: true });
+});
+
 module.exports = router;
