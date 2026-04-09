@@ -9,8 +9,8 @@ const router = express.Router();
 
 const OPERATOR_KEY  = process.env.OPERATOR_KEY || 'pipeline2026';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL    = 'hi@findapodcast.club';
-const BASE_URL      = process.env.BASE_URL || 'https://findapodcast.club';
+const FROM_EMAIL    = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.io';
+const BASE_URL      = process.env.BASE_URL || 'https://findapodcast.io';
 
 function requireOperatorKey(req, res, next) {
   const key = req.headers['x-operator-key'] || req.query.key;

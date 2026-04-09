@@ -306,9 +306,9 @@ function renderOnboardingChecklist() {
           <div class="onboarding-title">3 steps to your first booking</div>
         </div>
         <div class="onboarding-steps">
-          ${step(hasProfile,  'Complete your profile',      'Paste your LinkedIn bio',        'openProfileModal()')}
-          ${step(hasMatches,  'Find your first matches',    'Click Find a Podcast above',     'runPipeline()')}
-          ${step(hasActed,    'Send your first pitch',      'Approve a match and hit send',   hasMatches ? "switchToFilter('new')" : 'runPipeline()')}
+          ${step(hasProfile,  'Complete your profile',      'Paste your LinkedIn bio',                        'openProfileModal()')}
+          ${step(state.client?.gmail_email, 'Connect your email', 'Link Gmail so we can send pitches',          'connectGmail()')}
+          ${step(hasMatches,  'Find a Podcast',             'Hit Find a Podcast to get your first matches',   'runPipeline()')}
         </div>
         <button class="onboarding-dismiss" onclick="dismissOnboarding()" title="Dismiss">&#x2715;</button>
       </div>
@@ -348,8 +348,8 @@ function showBookingCelebration(matchId) {
   else if (ls >= 20) audienceEst = 'an estimated 1,000+ listeners';
   else               audienceEst = 'a growing audience';
 
-  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.club`);
-  const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.club&summary=${linkedInText}`;
+  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.io`);
+  const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.io&summary=${linkedInText}`;
 
   body.innerHTML = `
     <div style="font-size:52px;margin-bottom:12px;line-height:1;">🎉</div>
@@ -661,6 +661,7 @@ function actionButtonsHtml(match) {
     }
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">Sent Manually</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
@@ -992,7 +993,7 @@ function renderMatchCard(match) {
           ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
-          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">✦ Rewrite Pitch</button>` : ''}
+          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? '✦ Rewrite Pitch' : '✦ Write Pitch Email'}</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
@@ -1421,6 +1422,22 @@ async function dismissMatch(matchId) {
       showToast('Match ignored.', 'info');
     } else {
       showToast(data.error || 'Dismiss failed.', 'error');
+    }
+  } catch { showToast('Network error. Please try again.', 'error'); }
+  finally  { setCardLoading(matchId, false); }
+}
+
+async function markAsPitched(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/update-status', { matchId, status: 'sent' });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'sent', sent_at: new Date().toISOString() });
+      renderGrid();
+      updateStatBadges();
+      showToast('Moved to Pitched.', 'success');
+    } else {
+      showToast(data.error || 'Could not update status.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
@@ -2301,6 +2318,7 @@ function openProfileModal() {
   $('profile-linkedin').value     = c.social_linkedin    || '';
   $('profile-twitter').value      = c.social_twitter     || '';
   $('profile-extra-links').value  = c.extra_links        || '';
+  $('profile-signature').value    = c.email_signature    || '';
   $('profile-tone').value         = c.preferred_tone     || 'warm-professional';
   $('profile-topics').value       = (c.topics            || []).join(', ');
   $('profile-angles').value       = (c.speaking_angles   || []).join(', ');
@@ -2343,6 +2361,7 @@ async function saveProfile() {
     social_linkedin:  $('profile-linkedin').value.trim(),
     social_twitter:   $('profile-twitter').value.trim(),
     extra_links:      $('profile-extra-links').value.trim(),
+    email_signature:  $('profile-signature').value.trim(),
     preferred_tone:   $('profile-tone').value,
     daily_target:     parseInt($('profile-daily-select')?.value || $('profile-daily').value, 10) || 10,
     topics:           splitTrim($('profile-topics').value),
@@ -2569,7 +2588,7 @@ function showShareModal(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   const podcastName = match.podcasts?.title || 'a podcast';
-  const text = `Just landed a podcast appearance on ${podcastName} 🎙️ Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.club #podcast #entrepreneur #personalbrand`;
+  const text = `Just landed a podcast appearance on ${podcastName} 🎙️ Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.io #podcast #entrepreneur #personalbrand`;
   const textarea = $('share-text');
   if (textarea) textarea.value = text;
   const m = $('share-modal');
@@ -2596,7 +2615,7 @@ window.shareToTwitter = shareToTwitter;
 
 function shareToLinkedIn() {
   const t = $('share-text'); if (!t) return;
-  window.open('https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.club&summary=' + encodeURIComponent(t.value), '_blank');
+  window.open('https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.io&summary=' + encodeURIComponent(t.value), '_blank');
 }
 window.shareToLinkedIn = shareToLinkedIn;
 
@@ -2721,6 +2740,10 @@ window.sendFollowUp = sendFollowUp;
 
 
 // ── Gmail disconnect ──────────────────────────────────────────────────
+function connectGmail() {
+  window.location.href = `/auth/gmail?clientId=${esc(state.client.id)}`;
+}
+
 async function disconnectGmail() {
   if (!confirm('Disconnect Gmail? Pitches will no longer send from your inbox until you reconnect.')) return;
   try {
@@ -2750,6 +2773,7 @@ async function disconnectGmail() {
 window.disconnectGmail   = disconnectGmail;
 window.approveMatch      = approveMatch;
 window.restoreMatch      = restoreMatch;
+window.markAsPitched     = markAsPitched;
 window.dismissMatch      = dismissMatch;
 window.sendMatch         = sendMatch;
 window.bookMatch         = bookMatch;
@@ -2793,7 +2817,7 @@ function copyReferralLink() {
 function openTestimonialLink() {
   closeProfileDropdown();
   // Opens a Google review / testimonial page — update URL as needed
-  window.open('https://findapodcast.club/review', '_blank');
+  window.open('https://findapodcast.io/review', '_blank');
 }
 
 window.openReferralModal  = openReferralModal;
@@ -2977,7 +3001,7 @@ function sendSupportEmail() {
   const email = state.client?.email || '';
   const body  = encodeURIComponent(`From: ${name} (${email})\n\n${message}`);
   const subj  = encodeURIComponent(subject || 'Support Request — Find A Podcast');
-  window.open(`https://mail.google.com/mail/?view=cm&to=hi@findapodcast.club&su=${subj}&body=${body}`, '_blank');
+  window.open(`https://mail.google.com/mail/?view=cm&to=hi@findapodcast.io&su=${subj}&body=${body}`, '_blank');
   closeSupportModal();
   showToast('Opening Gmail with your message pre-filled.', 'success');
 }

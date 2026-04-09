@@ -1,7 +1,7 @@
 # Podcast Pipeline — Claude Instructions
 
 ## Project
-SaaS at C:\Users\zjdkf\podcast-pipeline. Domain: findapodcast.club. Stack: Node/Express, Supabase, Claude API, Listen Notes, Gmail OAuth, Resend, Vanilla JS dashboard, Railway hosting.
+SaaS at C:\Users\zjdkf\podcast-pipeline. Domain: findapodcast.io. Stack: Node/Express, Supabase, Claude API, Listen Notes, Gmail OAuth, Resend, Vanilla JS dashboard, Railway hosting.
 
 ## Key Rules
 - MVP mindset — no gold-plating, no speculative features

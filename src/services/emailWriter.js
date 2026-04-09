@@ -84,7 +84,9 @@ async function writeEmail(client, match, podcast) {
       };
     }
 
-    return { subject: result.subject, body: result.body };
+    const signature = client.email_signature?.trim();
+    const body = signature ? `${result.body}\n\n${signature}` : result.body;
+    return { subject: result.subject, body };
   } catch (err) {
     logger.error('Claude email writer API call failed', {
       clientId: client.id,

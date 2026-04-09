@@ -55,7 +55,7 @@ router.post('/magic-link', async (req, res) => {
     });
 
     // Send email
-    const baseUrl = process.env.BASE_URL || 'https://findapodcast.club';
+    const baseUrl = process.env.BASE_URL || 'https://findapodcast.io';
     const link = `${baseUrl}/api/auth/verify?token=${token}`;
     await sendMagicLinkEmail(client, link);
 

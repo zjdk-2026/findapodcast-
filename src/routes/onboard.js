@@ -50,7 +50,7 @@ Rules:
  */
 async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
   const apiKey   = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.club';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.io';
   if (!apiKey) return;
 
   const html = `<!DOCTYPE html>
@@ -478,7 +478,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'topics', 'speaking_angles', 'target_audience', 'website',
     'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
     'social_twitter', 'preferred_tone', 'daily_target',
-    'pitch_style', 'extra_links',
+    'pitch_style', 'extra_links', 'email_signature',
     'photo_url', 'logo_url',
     'languages', 'geographies',
   ];

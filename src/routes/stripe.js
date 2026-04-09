@@ -10,7 +10,7 @@ const router = express.Router();
 const stripe         = Stripe(process.env.STRIPE_SECRET_KEY);
 const PRICE_ID       = process.env.STRIPE_CONTENT_BOOST_PRICE_ID;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-const BASE_URL       = process.env.BASE_URL || 'https://findapodcast.club';
+const BASE_URL       = process.env.BASE_URL || 'https://findapodcast.io';
 const GHL_API_KEY    = process.env.GHL_API_KEY;
 const GHL_LOCATION_ID = process.env.GHL_LOCATION_ID;
 
