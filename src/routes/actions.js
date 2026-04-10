@@ -250,7 +250,7 @@ router.post('/book', async (req, res) => {
     (async () => {
       try {
         const apiKey   = process.env.RESEND_API_KEY;
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'pipeline@podcastpipeline.com';
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
         if (!apiKey) return;
 
         const client = matchFull.clients || {};
@@ -308,7 +308,7 @@ router.post('/unbook', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('podcast_matches')
-      .update({ status: 'approved', booked_at: null })
+      .update({ status: 'sent', booked_at: null })
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .select()

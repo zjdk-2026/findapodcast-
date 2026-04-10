@@ -50,7 +50,7 @@ Rules:
  */
 async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
   const apiKey   = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.io';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
   if (!apiKey) return;
 
   const html = `<!DOCTYPE html>

@@ -117,7 +117,7 @@ router.post('/logout', (req, res) => {
 
 async function sendMagicLinkEmail(client, link) {
   const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@findapodcast.club';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
   if (!apiKey) return;
 
   const firstName = client.name.split(' ')[0];

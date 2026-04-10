@@ -136,45 +136,6 @@ function buildTopicsValue() {
   return all.join(', ');
 }
 
-// ── Bio generator ─────────────────────────────────────────────
-async function generateBio() {
-  const name    = (document.getElementById('f-name')?.value || '').trim();
-  const title   = (document.getElementById('f-title')?.value || '').trim();
-  const business= (document.getElementById('f-business')?.value || '').trim();
-
-  if (!name) {
-    showToast('Enter your name first so we can generate your bio.', 'error');
-    document.getElementById('f-name')?.focus();
-    return;
-  }
-
-  const btn = document.getElementById('btn-gen-bio');
-  btn.disabled = true;
-  btn.textContent = 'Generating…';
-
-  try {
-    const res = await fetch('/api/generate-bio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, title, business }),
-    });
-    const data = await res.json();
-    if (data.bio) {
-      document.getElementById('f-bio-short').value = data.bio;
-      document.getElementById('f-bio-short').classList.remove('error');
-      document.getElementById('err-bio-short')?.classList.remove('show');
-      showToast('Bio generated — feel free to edit it!', 'success');
-    } else {
-      showToast('Could not generate bio. Try filling in your role first.', 'error');
-    }
-  } catch (_) {
-    showToast('Bio generation failed. Please write one manually.', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✨ Generate for me';
-  }
-}
-
 // ── Validation ────────────────────────────────────────────────
 function validateStep(step) {
   let valid = true;
@@ -403,6 +364,5 @@ document.addEventListener('DOMContentLoaded', () => {
 window.goToStep    = goToStep;
 window.submitForm  = submitForm;
 window.selectPace  = selectPace;
-window.generateBio = generateBio;
 window.toggleTopicDropdown = toggleTopicDropdown;
 window.removeTopicPill = removeTopicPill;

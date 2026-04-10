@@ -5,7 +5,7 @@ const supabase   = require('../lib/supabase');
 const logger     = require('../lib/logger');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM   = process.env.RESEND_FROM_EMAIL || 'hi@podcastpipeline.com';
+const FROM   = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
 
 /**
  * sendWeeklyDigest(client)
