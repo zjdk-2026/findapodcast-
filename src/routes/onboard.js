@@ -84,7 +84,7 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
     </div>
 
     <div style="text-align:center;">
-      <p style="margin:0;color:#475569;font-size:12px;">Find A Podcast · findapodcast.club<br>Reply to this email if you need help.</p>
+      <p style="margin:0;color:#475569;font-size:12px;">Find A Podcast · findapodcast.io<br>Reply to this email if you need help.</p>
     </div>
   </div>
 </body>
@@ -215,7 +215,7 @@ async function addToGHL(client) {
         customFields: [
           {
             key:   'dashboard_url',
-            field_value: `${process.env.BASE_URL || 'https://findapodcast.club'}/dashboard/${client.dashboard_token}`,
+            field_value: `${process.env.BASE_URL || 'https://findapodcast.io'}/dashboard/${client.dashboard_token}`,
           },
         ],
       }),

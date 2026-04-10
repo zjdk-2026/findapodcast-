@@ -658,7 +658,7 @@ function actionButtonsHtml(match) {
     if (!hasEmail) {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch…</span>`);
     } else {
-      buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
     }
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
@@ -995,7 +995,7 @@ function renderMatchCard(match) {
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
         `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          ${(match.status !== 'sent' && match.status !== 'approved' && match.status !== 'appeared' && match.status !== 'dream') ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
+          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? '✦ Rewrite Pitch' : '✦ Write Pitch Email'}</button>` : ''}
@@ -1577,7 +1577,7 @@ async function bookMatch(matchId) {
       // Unbook
       const data = await apiPost('/api/unbook', { matchId });
       if (data.success) {
-        updateMatchInState(matchId, { status: 'approved', booked_at: null });
+        updateMatchInState(matchId, { status: 'sent', booked_at: null });
         updateCard(matchId);
         updateStatBadges();
         showToast('Booking undone.', 'info');
