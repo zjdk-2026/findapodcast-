@@ -71,12 +71,16 @@ router.post('/add-podcast', async (req, res) => {
     facebookUrl, spotifyUrl, appleUrl, notes,
   } = req.body;
 
-  // Resolve clientId: client dashboard sends x-dashboard-token; operator panel sends clientId directly
+  // Resolve clientId: token always wins over body clientId to prevent spoofing
   const token = req.headers['x-dashboard-token'];
-  let resolvedClientId = clientId || null;
-  if (token && !resolvedClientId) {
+  const operatorKey = req.headers['x-operator-key'];
+  let resolvedClientId = null;
+
+  if (token) {
     const { data: c } = await supabase.from('clients').select('id').eq('dashboard_token', token).single();
     resolvedClientId = c?.id || null;
+  } else if (operatorKey && operatorKey === process.env.OPERATOR_SECRET && clientId) {
+    resolvedClientId = clientId;
   }
 
   if (!resolvedClientId || (!podcastUrl && !podcastName && !appleUrl)) {
@@ -88,11 +92,13 @@ router.post('/add-podcast', async (req, res) => {
     const urlsToCheck = [podcastUrl, appleUrl, spotifyUrl].filter(Boolean);
     if (urlsToCheck.length > 0) {
       for (const checkUrl of urlsToCheck) {
-        const { data: existingPod } = await supabase
-          .from('podcasts')
-          .select('id')
-          .or(`website.eq.${checkUrl},apple_url.eq.${checkUrl},spotify_url.eq.${checkUrl}`)
-          .maybeSingle();
+        // Use separate eq queries (not .or() template) to avoid URL characters breaking PostgREST filter syntax
+        const [byWebsite, byApple, bySpotify] = await Promise.all([
+          supabase.from('podcasts').select('id').eq('website', checkUrl).maybeSingle(),
+          supabase.from('podcasts').select('id').eq('apple_url', checkUrl).maybeSingle(),
+          supabase.from('podcasts').select('id').eq('spotify_url', checkUrl).maybeSingle(),
+        ]);
+        const existingPod = byWebsite.data || byApple.data || bySpotify.data;
         if (existingPod) {
           const { data: existingMatch } = await supabase
             .from('podcast_matches')
@@ -160,7 +166,7 @@ router.post('/add-podcast', async (req, res) => {
       .select('id')
       .eq('client_id', resolvedClientId)
       .eq('podcast_id', podcast.id)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return res.json({ success: true, message: 'Already in your pipeline.', matchId: existing.id });
@@ -175,7 +181,6 @@ router.post('/add-podcast', async (req, res) => {
         status:      'new',
         fit_score:   0,
         pitch_notes: notes || null,
-        restored_at: new Date().toISOString(),
       })
       .select()
       .single();
