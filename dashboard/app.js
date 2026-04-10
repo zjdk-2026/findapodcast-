@@ -2158,7 +2158,7 @@ async function runPipeline() {
 
   btn.disabled = true;
   btn.style.color = '#fff';
-  $('profile-dropdown').style.display = 'none';
+  const pd = $('profile-dropdown'); if (pd) pd.style.display = 'none';
   const steps = [
     'Scanning global podcast network…',
     'Scanning global podcast network…',
@@ -2194,7 +2194,9 @@ async function runPipeline() {
 }
 
 function pollForNewMatches() {
-  const knownCount = state.matches.length;
+  const ACTIVE = ['new','approved','sent','followed_up','replied','booked','appeared','dream'];
+  const knownActiveCount = state.matches.filter(m => ACTIVE.includes(m.status)).length;
+  const knownTotal = state.matches.length;
   let attempts = 0;
   const maxAttempts = 20; // poll for up to ~60s
   const interval = setInterval(async () => {
@@ -2203,13 +2205,15 @@ function pollForNewMatches() {
       const res  = await fetch(`/api/dashboard/${state.token}`);
       const data = await res.json();
       if (data.success && data.matches) {
-        const newCount = data.matches.length;
-        if (newCount > knownCount) {
+        const newTotal = data.matches.length;
+        const newActiveCount = data.matches.filter(m => ACTIVE.includes(m.status)).length;
+        // Detect new inserts OR revived-from-archive matches (active count increased)
+        if (newTotal > knownTotal || newActiveCount > knownActiveCount) {
           clearInterval(interval);
           state.matches = data.matches;
-          const added = newCount - knownCount;
+          const added = newActiveCount - knownActiveCount;
           renderDashboard(data);
-          showToast(`${added} new podcast match${added === 1 ? '' : 'es'} added!`, 'success');
+          showToast(`${added > 0 ? added : 'New'} podcast match${added === 1 ? '' : 'es'} added!`, 'success');
           backgroundReEnrichAll();
         }
       }
