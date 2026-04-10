@@ -117,7 +117,7 @@ router.post('/add-podcast', async (req, res) => {
       external_id:       `manual_${Date.now()}`,
       title:             itunesData.title             || podcastName || podcastUrl || 'Unknown Podcast',
       website:           isLinkInBio ? null : (podcastUrl || null),  // Linktree → set null, enrich will try RSS website
-      linkinbio_url:     isLinkInBio ? podcastUrl : null,            // store separately for enrichment
+      // linkinbio_url not in schema — handled via website=null when isLinkInBio
       source:            'manual',
       host_name:         itunesData.host_name          || null,
       contact_email:     contactEmail                  || null,

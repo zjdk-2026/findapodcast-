@@ -746,10 +746,14 @@ async function backgroundReEnrichAll() {
 
   console.info(`[Re-enrich] ${stale.length} match(es) with missing scores — enriching in background`);
 
-  for (const match of stale) {
-    await triggerReEnrich(match.id);
-    // Small delay between calls to avoid hammering the API
-    await new Promise(r => setTimeout(r, 1500));
+  // Process in batches of 3 concurrently, 800ms between batches
+  const BATCH = 3;
+  for (let i = 0; i < stale.length; i += BATCH) {
+    const batch = stale.slice(i, i + BATCH);
+    await Promise.all(batch.map(m => triggerReEnrich(m.id)));
+    if (i + BATCH < stale.length) {
+      await new Promise(r => setTimeout(r, 800));
+    }
   }
 }
 
