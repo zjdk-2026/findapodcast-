@@ -977,12 +977,9 @@ function renderMatchCard(match) {
         <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
           <option value="">Choose a subject line</option>
           <option value="Guest inquiry for ${esc(podcast.title || 'your show')}">Guest inquiry for ${esc(podcast.title || 'your show')}</option>
-          <option value="I'd love to be a guest on ${esc(podcast.title || 'your show')}">I'd love to be a guest on ${esc(podcast.title || 'your show')}</option>
-          <option value="Quick guest pitch for ${esc(podcast.title || 'your show')}">Quick guest pitch for ${esc(podcast.title || 'your show')}</option>
+          <option value="Quick guest pitch — ${esc(podcast.title || 'your show')}">Quick guest pitch — ${esc(podcast.title || 'your show')}</option>
           <option value="Would love to join you on ${esc(podcast.title || 'your show')}">Would love to join you on ${esc(podcast.title || 'your show')}</option>
-          <option value="Guest feature idea for ${esc(podcast.title || 'your show')}">Guest feature idea for ${esc(podcast.title || 'your show')}</option>
-          <option value="Reaching out about a guest spot on ${esc(podcast.title || 'your show')}">Reaching out about a guest spot on ${esc(podcast.title || 'your show')}</option>
-          <option value="__custom__">✏️ Write my own…</option>
+          <option value="__custom__">Write my own…</option>
         </select>
         <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
         <label class="pitch-field-label">Pitch Email Body</label>

@@ -4,7 +4,7 @@ const { getClient } = require('../lib/anthropic');
 const { getEmailWriterPrompt } = require('../prompts/emailWriter.prompt');
 const logger = require('../lib/logger');
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-3-5-sonnet-20241022';
 
 /**
  * writeEmail(client, match, podcast)
