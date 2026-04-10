@@ -1040,16 +1040,17 @@ function getFilteredSorted() {
     if (!existing) {
       byTitle.set(key, m);
     } else {
-      // Prefer: higher fit_score, or more podcast data (has title), or booked status
+      // Priority: user-actioned statuses always beat 'new' (prevents pitched/booked cards disappearing)
+      const ACTION_PRIORITY = { booked: 6, appeared: 5, replied: 4, followed_up: 3, sent: 2, dream: 1, dismissed: 1, new: 0 };
+      const mPriority = ACTION_PRIORITY[m.status] ?? 0;
+      const ePriority = ACTION_PRIORITY[existing.status] ?? 0;
       const mScore = m.fit_score || 0;
       const eScore = existing.fit_score || 0;
       const mHasData = !!(m.podcasts?.total_episodes || m.podcasts?.contact_email);
       const eHasData = !!(existing.podcasts?.total_episodes || existing.podcasts?.contact_email);
-      const mBooked = m.status === 'booked';
-      const eBooked = existing.status === 'booked';
-      if (mBooked && !eBooked) {
+      if (mPriority > ePriority) {
         byTitle.set(key, m);
-      } else if (!eBooked && (mScore > eScore || (mScore === eScore && mHasData && !eHasData))) {
+      } else if (mPriority === ePriority && (mScore > eScore || (mScore === eScore && mHasData && !eHasData))) {
         byTitle.set(key, m);
       }
     }
@@ -1735,8 +1736,9 @@ function togglePitchArea(matchId) {
     const match = state.matches.find((m) => m.id === matchId);
     const bodyEl    = $(`pitch-body-${matchId}`);
     const subjectEl = $(`pitch-subject-select-${matchId}`);
-    // Auto-generate if no pitch exists yet
-    if (bodyEl && !match?.email_body) {
+    // Auto-generate if no real pitch exists yet (ignore placeholder fallback text)
+    const hasRealPitch = match?.email_body && !match.email_body.includes('[Write your pitch here');
+    if (bodyEl && !hasRealPitch) {
       autoGeneratePitch(matchId, bodyEl, subjectEl);
     }
   }
@@ -1764,7 +1766,17 @@ async function generatePitch(matchId, { clearFirst = false } = {}) {
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
     if (data.success) {
-      if (subjectEl) subjectEl.value = data.subject || '';
+      // Set subject — if it doesn't match a preset option, switch to custom
+      if (subjectEl && data.subject) {
+        const matchingOption = [...subjectEl.options].find(o => o.value === data.subject);
+        if (matchingOption) {
+          subjectEl.value = data.subject;
+        } else {
+          subjectEl.value = '__custom__';
+          const customEl = $(`pitch-subject-custom-${matchId}`);
+          if (customEl) { customEl.value = data.subject; customEl.style.display = 'block'; }
+        }
+      }
       bodyEl.value = data.body || '';
       bodyEl.placeholder = 'Your pitch email…';
       updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
