@@ -659,6 +659,7 @@ function actionButtonsHtml(match) {
       buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
     }
     buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">I Sent It Myself</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
     buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
