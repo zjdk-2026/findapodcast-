@@ -649,6 +649,23 @@ function actionButtonsHtml(match) {
   const hasEmail = (match.email_subject_edited || match.email_subject) && (match.email_body_edited || match.email_body);
   const buttons  = [];
 
+  // Write Pitch Email button — shown for all statuses where pitch editing makes sense
+  const pitchStatuses = ['new','approved','dream','sent','followed_up','replied'];
+  if (pitchStatuses.includes(status)) {
+    const label = hasEmail ? '<span class="pitch-saved-badge" style="margin-left:6px;">Saved</span>' : '<span class="pitch-ai-badge" style="margin-left:6px;">Draft Ready</span>';
+    buttons.push(`<button class="pitch-toggle-btn ${hasEmail ? 'pitch-toggle-btn-saved' : ''}" onclick="openEmailModal('${id}')" style="margin-right:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Write Pitch Email${label}
+    </button>`);
+  }
+
+  if (status === 'appeared') {
+    buttons.push(`<button class="pitch-toggle-btn" onclick="openEmailModal('${id}')" style="margin-right:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Send a Thank You
+    </button>`);
+  }
+
   if (status === 'new') {
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">Add to Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
@@ -656,13 +673,13 @@ function actionButtonsHtml(match) {
     if (!hasEmail) {
       buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Writing your pitch…</span>`);
     } else {
-      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Pitch Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send via Gmail</button>`);
     }
     buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Pitch Email</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send via Gmail</button>`);
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
@@ -961,21 +978,6 @@ function renderMatchCard(match) {
     <!-- Social chips -->
     ${socialHtml}
 
-    <!-- Pitch + Notes buttons row -->
-    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
-
-    <!-- Pitch / Thank You button — opens modal -->
-    ${!['dismissed'].includes(match.status) ? `
-    <div class="card-pitch-section" style="flex-shrink:0;">
-      <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="openEmailModal('${esc(match.id)}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ${match.status === 'appeared' ? 'Send a Thank You' : 'Write Pitch Email'}
-        ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
-      </button>
-    </div>` : ''}
-
-
-    </div><!-- /.pitch-notes-row -->
 
         <!-- Footer: action buttons -->
         <div class="card-footer">
