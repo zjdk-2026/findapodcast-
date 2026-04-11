@@ -1982,6 +1982,27 @@ function openEmailModal(matchId) {
     }
   }
 
+  // Match insights — Why You Fit, Best Pitch Angle, Reference Episode
+  const insightsEl = $('email-match-insights');
+  if (insightsEl) {
+    const rows = [];
+    if (match.why_this_client_fits) {
+      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Why You Fit</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">${esc(match.why_this_client_fits)}</p></div>`);
+    }
+    if (match.best_pitch_angle) {
+      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Best Pitch Angle</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">${esc(match.best_pitch_angle)}</p></div>`);
+    }
+    if (match.episode_to_reference && match.episode_to_reference !== 'none identified') {
+      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Reference Episode</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">"${esc(match.episode_to_reference)}"</p></div>`);
+    }
+    if (rows.length > 0) {
+      insightsEl.innerHTML = rows.join('<hr style="border:none;border-top:1px solid #e0dbff;margin:4px 0;">');
+      insightsEl.style.display = 'flex';
+    } else {
+      insightsEl.style.display = 'none';
+    }
+  }
+
   // Show/hide buttons based on status
   const status = match.status;
   const canSend    = !['sent','followed_up','replied','booked','appeared','dismissed'].includes(status);
