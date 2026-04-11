@@ -997,8 +997,8 @@ function renderMatchCard(match) {
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
         `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">🚀 Send Pitch</button>` : ''}
-          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save</button>
+          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">✉️ Send Pitch Email</button>` : ''}
+          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save Draft</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
           ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? '✦ Rewrite Pitch' : '✦ Write Pitch Email'}</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
