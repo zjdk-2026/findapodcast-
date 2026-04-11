@@ -2604,8 +2604,34 @@ function initModals() {
   $('email-copy-btn')?.addEventListener('click', copyEmailDraft);
   $('email-rewrite-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;
-    closeEmailModal();
-    await regeneratePitch(state.modalMatchId);
+    const matchId = state.modalMatchId;
+    const btn = $('email-rewrite-btn');
+    const bodyEl = $('modal-body-text');
+    const subjectEl = $('modal-subject');
+    const prevBody = bodyEl?.value || '';
+    const prevSubject = subjectEl?.value || '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+    if (bodyEl) { bodyEl.disabled = true; bodyEl.placeholder = 'Writing your pitch…'; }
+    try {
+      const data = await apiPost('/api/generate-pitch', { matchId });
+      if (data.success) {
+        if (subjectEl) subjectEl.value = data.subject || '';
+        if (bodyEl)    bodyEl.value    = data.body    || '';
+        updateMatchInState(matchId, { email_subject: data.subject, email_body: data.body });
+        showToast('Pitch generated!', 'success');
+      } else {
+        if (subjectEl) subjectEl.value = prevSubject;
+        if (bodyEl)    bodyEl.value    = prevBody;
+        showToast(data.error || 'Could not generate pitch. Try again.', 'error');
+      }
+    } catch {
+      if (subjectEl) subjectEl.value = prevSubject;
+      if (bodyEl)    bodyEl.value    = prevBody;
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Rewrite Pitch'; }
+      if (bodyEl) { bodyEl.disabled = false; bodyEl.placeholder = 'Your pitch email…'; }
+    }
   });
   $('email-sent-myself-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;

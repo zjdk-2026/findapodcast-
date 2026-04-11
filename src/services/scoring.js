@@ -4,7 +4,7 @@ const { getClient } = require('../lib/anthropic');
 const { getScoringPrompt } = require('../prompts/scoring.prompt');
 const logger = require('../lib/logger');
 
-const MODEL = 'claude-3-5-sonnet-20241022';
+const MODEL = 'claude-haiku-4-5-20251001';
 
 /**
  * Calculate the composite fit_score as a weighted sum of individual dimension scores.
