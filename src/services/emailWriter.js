@@ -127,11 +127,10 @@ async function writeEmail(client, match, podcast) {
 
     const humanizedBody = await humanize(result.body);
     const signature = client.email_signature?.trim();
-    const linkRow = buildLinkRow(client);
     const bodyParts = [humanizedBody];
     if (signature) bodyParts.push(signature);
-    if (linkRow)   bodyParts.push(linkRow);
-    return { subject: result.subject, body: bodyParts.join('\n\n') };
+    // linkRow is NOT stored in body — it's injected at send time as HTML only
+    return { subject: result.subject, body: bodyParts.join('\n\n'), linkRow: buildLinkRow(client) };
   } catch (err) {
     logger.error('Claude email writer API call failed', {
       clientId: client.id,
@@ -148,4 +147,4 @@ async function writeEmail(client, match, podcast) {
   }
 }
 
-module.exports = { writeEmail };
+module.exports = { writeEmail, buildLinkRow };

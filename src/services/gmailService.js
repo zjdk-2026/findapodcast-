@@ -112,18 +112,49 @@ function toBase64Url(str) {
 /**
  * Build an RFC 2822 MIME message string.
  */
-function buildRfc2822Message({ to, subject, body, from }) {
-  // RFC 2047 encode subject so Unicode chars (em dash etc.) survive email headers
+function buildRfc2822Message({ to, subject, body, from, linkRow }) {
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
+  const boundary = `----=_Part_${Date.now()}`;
+
+  // Plain text version — just the body as-is
+  const plainText = body;
+
+  // HTML version — convert \n\n to paragraphs, append clickable link row
+  const htmlParagraphs = body
+    .split(/\n\n+/)
+    .map(p => `<p style="margin:0 0 16px;font-family:sans-serif;font-size:15px;line-height:1.6;color:#222;">${p.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+  const linkRowHtml = linkRow
+    ? `<p style="margin:16px 0 0;font-family:sans-serif;font-size:13px;color:#888;">${linkRow}</p>`
+    : '';
+  const htmlBody = `<!DOCTYPE html><html><body style="margin:0;padding:20px;">${htmlParagraphs}${linkRowHtml}</body></html>`;
+
+  const plainPart = [
+    `--${boundary}`,
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(plainText, 'utf8').toString('base64'),
+  ].join('\r\n');
+
+  const htmlPart = [
+    `--${boundary}`,
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(htmlBody, 'utf8').toString('base64'),
+    `--${boundary}--`,
+  ].join('\r\n');
+
   const headers = [
     `From: ${from || 'me'}`,
     `To: ${to}`,
     `Subject: ${encodedSubject}`,
     'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
     '',
-    Buffer.from(body, 'utf8').toString('base64'),
+    plainPart,
+    htmlPart,
   ];
   return headers.join('\r\n');
 }
@@ -133,7 +164,7 @@ function buildRfc2822Message({ to, subject, body, from }) {
  * Creates a Gmail draft via the Gmail API.
  * Returns the draft id string.
  */
-async function createDraft(refreshToken, to, subject, body) {
+async function createDraft(refreshToken, to, subject, body, linkRow = null) {
   try {
     const oauth2Client = buildOAuth2Client();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
@@ -149,7 +180,7 @@ async function createDraft(refreshToken, to, subject, body) {
       // Fall through — Gmail API accepts 'me' as a special value
     }
 
-    const rawMessage = buildRfc2822Message({ to, subject, body, from: fromEmail });
+    const rawMessage = buildRfc2822Message({ to, subject, body, from: fromEmail, linkRow });
     const encodedMessage = toBase64Url(rawMessage);
 
     const response = await gmail.users.drafts.create({

@@ -4,7 +4,7 @@ const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { sendDraft, createDraft } = require('../services/gmailService');
-const { writeEmail } = require('../services/emailWriter');
+const { writeEmail, buildLinkRow } = require('../services/emailWriter');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
@@ -50,7 +50,7 @@ router.post('/approve', async (req, res) => {
           if (match.clients?.gmail_refresh_token) {
             const contactEmail = match.podcasts?.contact_email || null;
             if (contactEmail?.includes('@')) {
-              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body).catch(() => null);
+              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body, email.linkRow || null).catch(() => null);
             }
           }
           await supabase.from('podcast_matches').update({
@@ -176,7 +176,7 @@ router.post('/send', async (req, res) => {
         if (!draftId && match.email_body) {
           const contactEmail = match.podcasts?.contact_email || null;
           if (contactEmail?.includes('@')) {
-            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, match.email_subject || '', match.email_body).catch(() => null);
+            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, match.email_subject || '', match.email_body, buildLinkRow(match.clients)).catch(() => null);
           }
         }
         if (draftId) {

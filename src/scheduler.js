@@ -104,7 +104,8 @@ async function runPipelineForClient(client) {
               client.gmail_refresh_token,
               savedPodcast.contact_email,
               email.subject,
-              email.body
+              email.body,
+              email.linkRow || null
             );
           } catch (dErr) {
             logger.warn('Scheduler: Gmail draft failed', { error: dErr.message });
