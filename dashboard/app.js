@@ -701,7 +701,10 @@ function isNeutralFallback(match) {
   const rc = match.reach_score;
   const allFifty = r === 50 && a === 50 && rc === 50;
   const allZero  = (r === 0 || r == null) && (a === 0 || a == null) && (rc === 0 || rc == null);
-  return allFifty || allZero;
+  // Also catch demo match with hardcoded placeholder text — re-score against real client profile
+  const hasPlaceholderText = (match.why_this_client_fits || '').includes('live demo match') ||
+                             (match.best_pitch_angle || '').includes('goes directly to Zac');
+  return allFifty || allZero || hasPlaceholderText;
 }
 
 /**

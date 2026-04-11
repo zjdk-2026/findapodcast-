@@ -4,6 +4,7 @@ const express = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { getClient: getAnthropicClient } = require('../lib/anthropic');
+const { scorePodcast } = require('../services/scoring');
 
 const router = express.Router();
 
@@ -108,6 +109,13 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
  */
 async function seedBreakthroughMatch(clientId) {
   try {
+    // 0. Fetch client so we can generate personalised scoring
+    const { data: client } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', clientId)
+      .single();
+
     // 1. Upsert podcast record
     const podcastRecord = {
       external_id:       'breakthrough-moment-zac-deane',
@@ -150,22 +158,55 @@ async function seedBreakthroughMatch(clientId) {
 
     if (existing) return; // already seeded
 
-    // 3. Insert match
+    // 3. Score the podcast against the client's real profile (fire and handle gracefully)
+    let scoring = {
+      fit_score:            98,
+      booking_likelihood:   'high',
+      relevance_score:      98,
+      audience_score:       95,
+      recency_score:        100,
+      reach_score:          90,
+      contactability_score: 100,
+      brand_score:          90,
+      guest_quality_score:  90,
+      why_this_client_fits: null,
+      best_pitch_angle:     null,
+      show_summary:         null,
+      episode_to_reference: null,
+      red_flags:            null,
+    };
+
+    if (client) {
+      try {
+        const podcastForScoring = { ...podcastRecord, id: podcast.id };
+        const scored = await scorePodcast(podcastForScoring, client);
+        scoring = { ...scoring, ...scored };
+      } catch (err) {
+        logger.warn('seedBreakthroughMatch: scoring failed, using defaults', { error: err.message });
+      }
+    }
+
+    // 4. Insert match
     const { error: matchError } = await supabase
       .from('podcast_matches')
       .insert({
         client_id:            clientId,
         podcast_id:           podcast.id,
         status:               'new',
-        fit_score:            98,
-        booking_likelihood:   'high',
-        relevance_score:      98,
-        audience_score:       95,
-        recency_score:        100,
-        reach_score:          90,
-        contactability_score: 100,
-        why_this_client_fits: 'This is a live demo match — use it during onboarding calls to show clients exactly how the pitch and booking flow works end-to-end.',
-        best_pitch_angle:     'Send a real pitch email to see the full flow. The email goes directly to Zac so you can demo the experience live with every new client.',
+        fit_score:            scoring.fit_score,
+        booking_likelihood:   scoring.booking_likelihood,
+        relevance_score:      scoring.relevance_score,
+        audience_score:       scoring.audience_score,
+        recency_score:        scoring.recency_score,
+        reach_score:          scoring.reach_score,
+        contactability_score: scoring.contactability_score,
+        brand_score:          scoring.brand_score,
+        guest_quality_score:  scoring.guest_quality_score,
+        why_this_client_fits: scoring.why_this_client_fits,
+        best_pitch_angle:     scoring.best_pitch_angle,
+        show_summary:         scoring.show_summary,
+        episode_to_reference: scoring.episode_to_reference,
+        red_flags:            scoring.red_flags,
       });
 
     if (matchError) {
