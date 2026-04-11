@@ -1051,7 +1051,7 @@ function getFilteredSorted() {
       byTitle.set(key, m);
     } else {
       // Priority: user-actioned statuses always beat 'new' (prevents pitched/booked cards disappearing)
-      const ACTION_PRIORITY = { booked: 6, appeared: 5, replied: 4, followed_up: 3, sent: 2, dream: 1, dismissed: 1, new: 0 };
+      const ACTION_PRIORITY = { booked: 6, appeared: 5, replied: 4, followed_up: 3, sent: 2, approved: 1, dream: 1, dismissed: 1, new: 0 };
       const mPriority = ACTION_PRIORITY[m.status] ?? 0;
       const ePriority = ACTION_PRIORITY[existing.status] ?? 0;
       const mScore = m.fit_score || 0;
@@ -1069,6 +1069,9 @@ function getFilteredSorted() {
 
   if (state.filter === 'content_boost') {
     matches = matches.filter((m) => !!m.content_boost_status);
+  } else if (state.filter === 'new') {
+    // Show approved cards in the New tab — they're mid-send (email being written)
+    matches = matches.filter((m) => m.status === 'new' || m.status === 'approved');
   } else if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
   }
