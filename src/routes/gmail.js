@@ -37,6 +37,11 @@ router.get('/auth/gmail', (req, res) => {
  * We exchange the code for tokens, save the refresh token to the client record,
  * then redirect to the client's dashboard.
  */
+// Legacy redirect — catches any OAuth flows that had the old /auth/google/callback URI baked in
+router.get('/auth/google/callback', (req, res) => {
+  res.redirect('/auth/gmail/callback?' + new URLSearchParams(req.query).toString());
+});
+
 router.get('/auth/gmail/callback', async (req, res) => {
   const { code, state: rawState, error: oauthError } = req.query;
 
