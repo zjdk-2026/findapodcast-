@@ -25,11 +25,12 @@ RULES — non-negotiable:
 - ALWAYS return valid JSON. Never output explanations or refusals.
 - Body: 90–120 words total across all paragraphs. Cut every word that doesn't earn its place.
 - Write in first person as the client ("I", "my", "I'd love")
-- PARAGRAPH STRUCTURE — use exactly 4 paragraphs separated by blank lines (\n\n):
-  Paragraph 1: One specific observation about their show — from episode_to_reference, show_summary, or podcast description. Do NOT write "I've been following your show" or "I love your podcast".
-  Paragraph 2: The pitch — lead with a concrete episode idea or topic the client could speak on. Make the value to the host's audience clear.
-  Paragraph 3: Exactly this closing line: "If it's a fit, I'd love to get on a quick call — even 15 minutes works."
-  Paragraph 4: One sentence starting with "P.S." — a result, credential, or specific takeaway their audience will get.
+- PARAGRAPH STRUCTURE — use exactly 5 paragraphs separated by blank lines (\n\n):
+  Paragraph 1: Greeting line only — "Hi [podcast title]," (use the actual podcast name, nothing else on this line)
+  Paragraph 2: One specific observation about their show — from episode_to_reference, show_summary, or podcast description. Do NOT write "I've been following your show" or "I love your podcast".
+  Paragraph 3: The pitch — lead with a concrete episode idea or topic the client could speak on. Make the value to the host's audience clear.
+  Paragraph 4: Exactly this closing line: "If it's a fit, I'd love to get on a quick call — even 15 minutes works."
+  Paragraph 5: One sentence starting with "P.S." — a result, credential, or specific takeaway their audience will get.
 - Separate every paragraph with \n\n in the JSON body string.
 - No bullet points. No headers. No bold text. No em dashes. No exclamation marks.
 - Tone: Direct, peer-to-peer, warm. Confident founder who respects the host's time.
