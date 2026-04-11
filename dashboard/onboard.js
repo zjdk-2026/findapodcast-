@@ -190,6 +190,7 @@ function collectFormData() {
     social_linkedin:  val('f-linkedin')     || undefined,
     social_twitter:   val('f-twitter')      || undefined,
     extra_links:      val('f-extra-links')  || undefined,
+    email_signature:  val('f-email-signature') || undefined,
     pitch_style:      val('f-pitch-style')  || undefined,
     preferred_tone:   val('f-tone')         || 'warm-professional',
     daily_target:     selectedPace || 10,
