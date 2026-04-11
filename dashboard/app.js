@@ -277,7 +277,7 @@ function renderOnboardingChecklist() {
   if (allDone) {
     // Show celebration briefly then hide forever
     el.style.display = 'block';
-    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">🎉 You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
+    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
     setTimeout(() => {
       el.style.transition = 'opacity 600ms ease';
       el.style.opacity = '0';
@@ -352,7 +352,7 @@ function showBookingCelebration(matchId) {
   const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.io&summary=${linkedInText}`;
 
   body.innerHTML = `
-    <div style="font-size:52px;margin-bottom:12px;line-height:1;">🎉</div>
+    <div style="font-size:52px;margin-bottom:12px;line-height:1;"><svg width="52" height="52" viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="25" stroke="#6366f1" stroke-width="2" fill="#f5f3ff"/><path d="M15 27l8 8 14-16" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h2 style="font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin-bottom:8px;">You're booked.</h2>
     <p style="font-size:15px;color:var(--text-secondary);margin-bottom:4px;font-weight:500;">${esc(title)}</p>
     ${host ? `<p style="font-size:13px;color:var(--text-tertiary);margin-bottom:0;">Hosted by ${esc(host)}</p>` : ''}
@@ -453,7 +453,7 @@ function updateContentBoostTab() {
   if (newlyComplete.length > 0) {
     const banner = $('notification-banner');
     if (banner) {
-      banner.innerHTML = `⚡ Your Content Boost is ready! <button onclick="switchToFilter('content_boost');dismissBoostNotification()" style="margin-left:10px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">View now</button>`;
+      banner.innerHTML = `Your Content Boost is ready! <button onclick="switchToFilter('content_boost');dismissBoostNotification()" style="margin-left:10px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">View now</button>`;
       banner.style.display = 'block';
     }
   }
@@ -487,14 +487,14 @@ async function submitEpisodeLink(matchId) {
   try {
     const data = await apiPost('/api/content-boost/submit-link', { matchId, episodeUrl: url });
     if (data.success) {
-      showToast('✅ Episode link sent to our team! We\'ll start editing shortly.', 'success');
+      showToast('Episode link sent to our team! We\'ll start editing shortly.', 'success');
       updateMatchInState(matchId, { content_boost_episode_url: url });
       // Refresh card so the submission section hides
       const card = document.getElementById(`card-${matchId}`);
       if (card) {
         const section = document.getElementById(`boost-link-section-${matchId}`);
         if (section) {
-          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">✅ Episode link received — our team is on it!</p>`;
+          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">Episode link received — our team is on it!</p>`;
         }
       }
     } else {
@@ -622,22 +622,22 @@ function contentBoostButton(match) {
 
   if (!cbs) {
     // Not purchased yet — show buy button
-    return `<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">🚀 Content Boost</button>`;
+    return `<button class="btn btn-action-send btn-xs btn-action-primary" onclick="showContentBoostModal('${id}')">Content Boost</button>`;
   }
   if (cbs === 'requested') {
     // Stripe payment processing
-    return `<button class="btn btn-xs" disabled style="background:#fef9c3;color:#92400e;border:1.5px solid #fde68a;font-weight:600;cursor:default;">⏳ Payment Processing…</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#fef9c3;color:#92400e;border:1.5px solid #fde68a;font-weight:600;cursor:default;">Payment Processing…</button>`;
   }
   if (cbs === 'ordered' && !url) {
     // Paid — waiting for episode link
-    return `<button class="btn btn-xs btn-action-primary" onclick="toggleCardExpand('${id}');document.getElementById('boost-url-${id}')?.focus()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">📎 Submit Episode Link</button>`;
+    return `<button class="btn btn-xs btn-action-primary" onclick="toggleCardExpand('${id}');document.getElementById('boost-url-${id}')?.focus()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">Submit Episode Link</button>`;
   }
   if (cbs === 'ordered' && url) {
     // Link submitted, team working on it
-    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">✅ Link Submitted</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">Link Submitted</button>`;
   }
   if (cbs === 'completed') {
-    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">⚡ Boost Complete</button>`;
+    return `<button class="btn btn-xs" disabled style="background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;font-weight:600;cursor:default;">Boost Complete</button>`;
   }
   return '';
 }
@@ -650,31 +650,31 @@ function actionButtonsHtml(match) {
   const buttons  = [];
 
   if (status === 'new') {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Add to Wish List</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">Add to Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'approved') {
     if (!hasEmail) {
-      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch email…</span>`);
+      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Writing your pitch…</span>`);
     } else {
-      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">✉️ Send Pitch Email</button>`);
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Pitch Email</button>`);
     }
     buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">✉️ Send Pitch Email</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send Pitch Email</button>`);
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'followed_up') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'replied') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Mark as Aired</button>`);
-    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">Mark as Aired</button>`);
+    buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
     buttons.push(contentBoostButton(match));
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmUnbook('${id}')">Booking Fell Through</button>`);
   } else if (status === 'appeared') {
@@ -786,7 +786,7 @@ async function loadLeaderboard() {
     // Medals go to top 3 by aired (appeared) count, regardless of overall rank
     const medalMap = new Map();
     [...rows].sort((a, b) => b.appeared - a.appeared).slice(0, 3).forEach((r, i) => {
-      if (r.appeared > 0) medalMap.set(r.rank, ['🥇','🥈','🥉'][i]);
+      if (r.appeared > 0) medalMap.set(r.rank, ['1st','2nd','3rd'][i]);
     });
 
     const renderRow = (r, divider = false) => {
@@ -798,7 +798,7 @@ async function loadLeaderboard() {
         <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:9px 20px;gap:4px;
           ${isMe ? 'background:linear-gradient(90deg,#f5f3ff,#ede9fe);border-left:3px solid #6366f1;' : 'border-left:3px solid transparent;'}
           transition:background 0.15s;">
-          <div style="font-size:${medal ? '18px' : '13px'};font-weight:700;color:${isMe ? '#6366f1' : 'var(--text-secondary,#888)'};">${rankDisp}</div>
+          <div style="font-size:13px;font-weight:700;color:${medal ? '#f59e0b' : (isMe ? '#6366f1' : 'var(--text-secondary,#888)')};">${rankDisp}</div>
           <div style="font-size:13px;font-weight:${isMe ? '700' : '500'};color:${isMe ? '#6366f1' : 'var(--text-primary,#1a1a1a)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
             ${esc(r.display_name)}${isMe ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
           </div>
@@ -806,7 +806,7 @@ async function loadLeaderboard() {
             ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
-            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">🎉 ${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
+            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
           </div>
           <div style="text-align:center;">
             ${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
@@ -878,7 +878,7 @@ function renderMatchCard(match) {
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
         <div class="card-row-title">
-          ${isBooked ? '🎉 ' : ''}${esc(podcast.title) || 'Unknown Show'}
+          ${esc(podcast.title) || 'Unknown Show'}
           ${(() => {
             const pills = [];
             if (podcast.total_episodes) pills.push(`<span class="inline-pill">${podcast.total_episodes} eps</span>`);
@@ -966,7 +966,7 @@ function renderMatchCard(match) {
     <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(['replied','dismissed','booked'].includes(match.status)) ? 'display:none;' : ''}">
       <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ${match.status === 'appeared' ? '✉️ Send a Thank You' : (match.email_subject ? '✉️ Send Pitch Email' : '✉️ Write Pitch Email')}
+        ${match.status === 'appeared' ? 'Send a Thank You' : (match.email_subject ? 'Send Pitch Email' : 'Write Pitch Email')}
         ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
       </button>
       <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
@@ -997,16 +997,16 @@ function renderMatchCard(match) {
         <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
         `}
         <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">✉️ Send Pitch Email</button>` : ''}
+          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">Send Pitch Email</button>` : ''}
           <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save Draft</button>
           <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
-          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? '✦ Rewrite Pitch' : '✦ Write Pitch Email'}</button>` : ''}
+          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? 'Rewrite Pitch' : 'Write Pitch Email'}</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
         </div>
       </div>
     </div>
 
-    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')">✉️ Email</button>` : ''}
+    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')">Email</button>` : ''}
 
 
     </div><!-- /.pitch-notes-row -->
@@ -1022,7 +1022,7 @@ function renderMatchCard(match) {
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `
     <div class="boost-link-section" id="boost-link-section-${esc(match.id)}" style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:16px 20px;background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);">
-      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">⚡ Content Boost — Submit Your Episode</p>
+      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">Content Boost — Submit Your Episode</p>
       <p style="font-size:12px;color:#555;margin:0 0 12px;">Paste the link to your episode (Spotify, Apple, YouTube, etc.) so our team can download and start editing.</p>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="url" id="boost-url-${esc(match.id)}" class="form-input" placeholder="https://open.spotify.com/episode/..." style="flex:1;height:36px;padding:0 10px;border-radius:8px;border:1px solid #c4b5fd;font-size:13px;background:#fff;" />
@@ -1030,10 +1030,10 @@ function renderMatchCard(match) {
       </div>
     </div>` : match.content_boost_status === 'completed' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);">
-      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">✅ Content Boost complete — check your inbox for your 30 days of content!</p>
+      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">Content Boost complete — check your inbox for your 30 days of content!</p>
     </div>` : match.content_boost_status === 'requested' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:#fffbeb;">
-      <p style="font-size:13px;color:#92400e;margin:0;">⏳ Payment processing — once confirmed you'll be able to submit your episode link.</p>
+      <p style="font-size:13px;color:#92400e;margin:0;">Payment processing — once confirmed you'll be able to submit your episode link.</p>
     </div>` : ''}
 
   </article>`;
@@ -1821,7 +1821,7 @@ async function generatePitch(matchId, { clearFirst = false } = {}) {
   }
   bodyEl.placeholder = '✨ Writing your pitch…';
   bodyEl.disabled    = true;
-  if (rewriteBtn) { rewriteBtn.disabled = true; rewriteBtn.textContent = '✦ Writing…'; }
+  if (rewriteBtn) { rewriteBtn.disabled = true; rewriteBtn.textContent = 'Writing…'; }
 
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
@@ -1855,7 +1855,7 @@ async function generatePitch(matchId, { clearFirst = false } = {}) {
     showToast('Network error. Please try again.', 'error');
   } finally {
     bodyEl.disabled = false;
-    if (rewriteBtn) { rewriteBtn.disabled = false; rewriteBtn.textContent = '✦ Rewrite Pitch'; }
+    if (rewriteBtn) { rewriteBtn.disabled = false; rewriteBtn.textContent = 'Rewrite Pitch'; }
   }
 }
 
@@ -2299,7 +2299,7 @@ function renderVisionBoard(client) {
 
 async function triggerVisionBoardRegenerate() {
   const btn = document.getElementById('regen-vision-btn');
-  if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
   const profileDropdown = document.getElementById('profile-dropdown');
   if (profileDropdown) profileDropdown.style.display = 'none';
 
@@ -2321,7 +2321,7 @@ async function triggerVisionBoardRegenerate() {
       window._visionBoardGenerating = false;
       if (state.client) state.client.vision_board_url = null;
       renderVisionBoard(state.client);
-      showToast(`⏳ Next generation available in ${data.hoursLeft}h`, 'info');
+      showToast(`Next generation available in ${data.hoursLeft}h`, 'info');
     } else {
       window._visionBoardGenerating = false;
       showToast(data.error || 'Generation failed.', 'error');
@@ -2807,7 +2807,7 @@ async function sendFollowUp() {
       showToast(data.error || 'Send failed.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = '🚀 Send Follow Up'; } }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Send Follow Up'; } }
 }
 window.sendFollowUp = sendFollowUp;
 
@@ -2934,7 +2934,7 @@ async function submitAddPodcast() {
   const name = document.getElementById('add-podcast-name').value.trim();
   if (!url && !name) { showToast('Please enter a podcast URL or name.', 'error'); return; }
   const btn = document.getElementById('add-podcast-btn');
-  if (btn) { btn.textContent = '⏳ Adding…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Adding…'; btn.disabled = true; }
   try {
     const g = (id) => { const el = document.getElementById(id); return el?.value.trim() || null; };
     const data = await apiPost('/api/add-podcast', {
@@ -2972,7 +2972,7 @@ async function submitAddPodcast() {
             state.matches = fresh.matches;
             renderGrid();
             updateStatBadges();
-            showToast('✅ Scoring complete!', 'success');
+            showToast('Scoring complete!', 'success');
           }
         } catch { /* silent */ }
       }, 10000);
@@ -3129,7 +3129,7 @@ function init() {
   // Handle Stripe redirect back to dashboard
   const params = new URLSearchParams(window.location.search);
   if (params.get('boost') === 'success') {
-    showToast('🎉 Content Boost purchased! Our team will be in touch shortly.', 'success');
+    showToast('Content Boost purchased! Our team will be in touch shortly.', 'success');
     // Clean URL without reload
     window.history.replaceState({}, '', window.location.pathname);
   } else if (params.get('boost') === 'cancelled') {
