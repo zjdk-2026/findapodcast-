@@ -651,23 +651,20 @@ function actionButtonsHtml(match) {
 
   if (status === 'new') {
     buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Save for Later</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'approved') {
     if (!hasEmail) {
-      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch…</span>`);
+      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">✍️ Writing your pitch email…</span>`);
     } else {
       buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
     }
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">⭐ Wish List</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">Sent Manually</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">I Sent It Myself</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="dismissMatch('${id}')">Not a Fit</button>`);
+    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">🚀 Send Pitch</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
     buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">📩 Send Follow Up</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
@@ -676,14 +673,14 @@ function actionButtonsHtml(match) {
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">🎉 It's Booked!</button>`);
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Episode Aired</button>`);
+    buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">✅ Mark as Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">🏆 Share Win</button>`);
     buttons.push(contentBoostButton(match));
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="unbookMatch('${id}')">❌ Not Booked</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmUnbook('${id}')">Booking Fell Through</button>`);
   } else if (status === 'appeared') {
     buttons.push(contentBoostButton(match));
   } else if (status === 'dismissed') {
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">↩ Restore to New</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
   }
 
   return buttons.join('');
@@ -1428,12 +1425,20 @@ async function dismissMatch(matchId) {
       updateMatchInState(matchId, { status: 'dismissed' });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Match ignored.', 'info');
+      showToast('Moved to Not a Fit. You can always restore it later.', 'info');
     } else {
-      showToast(data.error || 'Dismiss failed.', 'error');
+      showToast(data.error || 'Could not dismiss.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
+}
+
+function confirmDismiss(matchId) {
+  const match = state.matches.find((m) => m.id === matchId);
+  const name  = match?.podcasts?.title || 'this show';
+  if (window.confirm(`Skip "${name}"? You can always restore it from the Not a Fit tab.`)) {
+    dismissMatch(matchId);
+  }
 }
 
 async function markAsPitched(matchId) {
@@ -1444,7 +1449,7 @@ async function markAsPitched(matchId) {
       updateMatchInState(matchId, { status: 'sent', sent_at: data.match?.sent_at || new Date().toISOString() });
       renderGrid();
       updateStatBadges();
-      showToast('Moved to Pitched.', 'success');
+      showToast('Marked as sent. We\'ll watch for a reply automatically.', 'success');
     } else {
       showToast(data.error || 'Could not update status.', 'error');
     }
@@ -1460,7 +1465,7 @@ async function restoreMatch(matchId) {
       updateMatchInState(matchId, { status: 'new', restored_at: new Date().toISOString() });
       updateCard(matchId);
       updateStatBadges();
-      showToast('↩ Restored to New!', 'success');
+      showToast('Moved back to New. Ready to pitch when you are.', 'success');
     } else {
       showToast(data.error || 'Restore failed.', 'error');
     }
@@ -1476,7 +1481,7 @@ async function dreamMatch(matchId) {
       updateMatchInState(matchId, { status: 'dream' });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Added to your Dream list.', 'success');
+      showToast('Saved to your Wish List. Pitch it when the time is right.', 'success');
     } else {
       showToast(data.error || 'Failed.', 'error');
     }
@@ -1513,7 +1518,7 @@ async function doSendMatch(matchId) {
     if (data.success) {
       updateMatchInState(matchId, { status: 'sent', sent_at: data.match?.sent_at });
       updateStatBadges();
-      showToast('Email sent successfully!', 'success');
+      showToast('Pitch sent. We\'ll notify you the moment the host replies.', 'success');
       switchToFilter('sent');
     } else {
       showToast(data.error || 'Send failed. Check your Gmail is connected and try again.', 'error');
@@ -1605,28 +1610,38 @@ async function bookMatch(matchId) {
   if (!match) return;
   setCardLoading(matchId, true);
   try {
-    if (match.status === 'booked') {
-      // Unbook
-      const data = await apiPost('/api/unbook', { matchId });
-      if (data.success) {
-        updateMatchInState(matchId, { status: 'sent', booked_at: null });
-        updateCard(matchId);
-        updateStatBadges();
-        showToast('Booking undone.', 'info');
-      } else {
-        showToast(data.error || 'Unbook failed.', 'error');
-      }
+    const data = await apiPost('/api/book', { matchId });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
+      switchToFilter('booked');
+      updateStatBadges();
+      showBookingCelebration(matchId);
     } else {
-      // Book
-      const data = await apiPost('/api/book', { matchId });
-      if (data.success) {
-        updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
-        switchToFilter('booked');
-        updateStatBadges();
-        showBookingCelebration(matchId);
-      } else {
-        showToast(data.error || 'Book failed.', 'error');
-      }
+      showToast(data.error || 'Could not mark as booked.', 'error');
+    }
+  } catch { showToast('Network error. Please try again.', 'error'); }
+  finally  { setCardLoading(matchId, false); }
+}
+
+function confirmUnbook(matchId) {
+  const match = state.matches.find((m) => m.id === matchId);
+  const name  = match?.podcasts?.title || 'this show';
+  if (window.confirm(`Did the booking for "${name}" fall through? This will move it back to Pitched.`)) {
+    unbookMatch(matchId);
+  }
+}
+
+async function unbookMatch(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/unbook', { matchId });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'sent', booked_at: null });
+      updateCard(matchId);
+      updateStatBadges();
+      showToast('Moved back to Pitched. Keep going — the next one is closer than you think.', 'info');
+    } else {
+      showToast(data.error || 'Could not update.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
@@ -2826,8 +2841,11 @@ window.approveMatch      = approveMatch;
 window.restoreMatch      = restoreMatch;
 window.markAsPitched     = markAsPitched;
 window.dismissMatch      = dismissMatch;
+window.confirmDismiss    = confirmDismiss;
 window.sendMatch         = sendMatch;
 window.bookMatch         = bookMatch;
+window.unbookMatch       = unbookMatch;
+window.confirmUnbook     = confirmUnbook;
 window.openEmailModal    = openEmailModal;
 window.openContactModal  = openContactModal;
 window.openTemplateModal = openTemplateModal;
@@ -2988,7 +3006,7 @@ async function checkForReplies() {
         badge.textContent = data.updated.length;
         badge.style.display = 'inline-flex';
       }
-      showToast(`📬 ${data.updated.length} host${data.updated.length > 1 ? 's have' : ' has'} replied to your pitch!`, 'success');
+      showToast(`A host has replied to your pitch. Head to Host Replied and lock in the booking.`, 'success');
       switchToFilter('replied');
     }
   } catch {
