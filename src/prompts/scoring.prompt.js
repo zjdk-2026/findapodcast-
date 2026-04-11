@@ -89,9 +89,9 @@ Return ONLY valid JSON — no markdown, no prose, no code fences. Your entire re
   "contactability_score": <integer 0-100>,
   "brand_score": <integer 0-100>,
   "show_summary": "<2–3 sentence objective summary of what the show is, who it serves, and its track record>",
-  "why_this_client_fits": "<2–3 sentences explaining specifically why this client would be a valuable guest on this show>",
-  "best_pitch_angle": "<1 sentence — the single strongest reason the host should book this client, framed from the host's perspective>",
-  "episode_to_reference": "<title or description of a specific past episode that makes a good bridge to the client's expertise, or 'none identified' if unavailable>",
+  "why_this_client_fits": "<2–3 sentences. Write directly and conversationally — like a smart friend explaining it over coffee. No em dashes, no corporate speak, no third-person distance. Start with the audience or the show's need, then connect it to what the client brings. Example tone: 'This show's listeners are building businesses without VC money. That's exactly who needs to hear how AI is changing the goal-setting game.'>",
+  "best_pitch_angle": "<1 sentence. The single sharpest reason the host should book this client — written from the host's perspective, in plain conversational English. No em dashes, no buzzwords. Make it feel like a pitch a real person would actually say.>",
+  "episode_to_reference": "<title or description of a specific past episode that creates a natural bridge to the client's expertise, or 'none identified' if unavailable>",
   "red_flags": "<any concerns about the show — low activity, wrong audience, bad reputation, etc. — or 'none' if clean>",
   "booking_likelihood": "<one of: high | medium | low> — overall likelihood of securing a booking, given all factors"
 }
@@ -103,6 +103,7 @@ IMPORTANT RULES
 - Use your world knowledge to fill gaps. If the podcast title or URL identifies a well-known show (e.g. "The Joe Rogan Experience", "How I Built This", "The Tim Ferriss Show"), score it using what you know — do not treat it as unknown just because scraped metadata is sparse. World-famous shows (global top 10) should have reach_score 95-100, recency reflecting their known cadence, and guest_quality reflecting their known guests.
 - Never fabricate information. If a field is genuinely unknown AND no world knowledge applies, reflect that in the score.
 - Be specific in text fields — vague generalities are not useful to the client.
+- why_this_client_fits and best_pitch_angle must use plain, direct language. No em dashes (—), no phrases like "aligns perfectly", "complements", "leverages", "synergy", "addresses a core need", "expertise", "thought leader". Write like a person, not a consultant.
 - Avoid industries or topics listed in client.avoid_industries and client.avoid_topics — these should heavily penalise the relevance and brand scores.
 - The best_pitch_angle must be genuinely compelling — not a platitude.
 - booking_likelihood should be "high" only if contactability is ≥ 60 AND fit_score would be ≥ 75.
