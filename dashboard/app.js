@@ -652,17 +652,14 @@ function actionButtonsHtml(match) {
   // Write Pitch Email button — shown for all statuses where pitch editing makes sense
   const pitchStatuses = ['new','approved','dream','sent','followed_up','replied'];
   if (pitchStatuses.includes(status)) {
-    const label = hasEmail ? '<span class="pitch-saved-badge" style="margin-left:6px;">Saved</span>' : '<span class="pitch-ai-badge" style="margin-left:6px;">Draft Ready</span>';
-    buttons.push(`<button class="pitch-toggle-btn ${hasEmail ? 'pitch-toggle-btn-saved' : ''}" onclick="openEmailModal('${id}')" style="margin-right:4px;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      Write Pitch Email${label}
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="openEmailModal('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
     </button>`);
   }
 
   if (status === 'appeared') {
-    buttons.push(`<button class="pitch-toggle-btn" onclick="openEmailModal('${id}')" style="margin-right:4px;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      Send a Thank You
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="openEmailModal('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Send a Thank You
     </button>`);
   }
 
