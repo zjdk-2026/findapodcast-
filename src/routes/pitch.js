@@ -77,8 +77,8 @@ router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
 
     // Don't save or return a fallback — tell the frontend to handle it gracefully
     if (email._fallback) {
-      logger.warn('Email generation returned fallback — not saving to DB', { matchId });
-      return res.status(503).json({ success: false, error: 'Our pitch writer is temporarily unavailable. Please try again in a moment or write your pitch manually.' });
+      logger.warn('Email generation returned fallback — not saving to DB', { matchId, fallbackError: email._error });
+      return res.status(503).json({ success: false, error: `Pitch writer error: ${email._error || 'unknown'}` });
     }
 
     const { error: updateError } = await supabase
