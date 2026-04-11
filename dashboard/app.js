@@ -964,51 +964,15 @@ function renderMatchCard(match) {
     <!-- Pitch + Notes buttons row -->
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 
-    <!-- Pitch / Thank You section -->
-    <div class="card-pitch-section" id="pitch-area-${esc(match.id)}" style="flex-shrink:0;${(['replied','dismissed','booked'].includes(match.status)) ? 'display:none;' : ''}">
-      <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="togglePitchArea('${esc(match.id)}')">
+    <!-- Pitch / Thank You button — opens modal -->
+    ${!['dismissed'].includes(match.status) ? `
+    <div class="card-pitch-section" style="flex-shrink:0;">
+      <button class="pitch-toggle-btn ${match.status !== 'appeared' && match.email_subject ? 'pitch-toggle-btn-saved' : ''}" onclick="openEmailModal('${esc(match.id)}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         ${match.status === 'appeared' ? 'Send a Thank You' : 'Write Pitch Email'}
         ${match.status !== 'appeared' ? (match.email_subject ? '<span class="pitch-saved-badge">Saved</span>' : '<span class="pitch-ai-badge">Draft Ready</span>') : ''}
       </button>
-      <div class="note-editor" id="pitch-editor-${esc(match.id)}" style="display:none;">
-        ${match.status === 'appeared' ? `
-        <label class="pitch-field-label">Subject Line</label>
-        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
-          <option value="">Choose a subject line</option>
-          <option value="Thank you for having me on ${esc(podcast.title || 'your show')}">Thank you for having me on ${esc(podcast.title || 'your show')}</option>
-          <option value="Really enjoyed our conversation">Really enjoyed our conversation</option>
-          <option value="Thanks for the episode">Thanks for the episode</option>
-          <option value="__custom__">✏️ Write my own…</option>
-        </select>
-        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="" />
-        <label class="pitch-field-label">Thank You Email</label>
-        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Write a short thank you to the host. Mention something specific from the episode, share that you are promoting it to your audience, and leave the door open for a future connection."></textarea>
-        ` : `
-        <label class="pitch-field-label">Subject Line</label>
-        <select class="subject-preset-select" id="pitch-subject-select-${esc(match.id)}" onchange="applySubjectPreset('${esc(match.id)}')" style="margin-bottom:6px;">
-          <option value="">Choose a subject line</option>
-          <option value="Guest inquiry for ${esc(podcast.title || 'your show')}">Guest inquiry for ${esc(podcast.title || 'your show')}</option>
-          <option value="Quick guest pitch — ${esc(podcast.title || 'your show')}">Quick guest pitch — ${esc(podcast.title || 'your show')}</option>
-          <option value="Would love to join you on ${esc(podcast.title || 'your show')}">Would love to join you on ${esc(podcast.title || 'your show')}</option>
-          <option value="__custom__">Write my own…</option>
-        </select>
-        <input type="text" class="note-textarea" id="pitch-subject-custom-${esc(match.id)}" placeholder="Type your custom subject line…" style="display:none;margin-bottom:6px;padding:8px 10px;" value="${esc(match.email_subject || '')}" />
-        <label class="pitch-field-label">Pitch Email Body</label>
-        ${match.email_body && match.email_body.includes('[Write your pitch here') ? `<div style="background:#FFF7ED;border:1px solid rgba(255,159,10,0.25);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;color:#C2710C;font-weight:500;">Our team is finalising your personalised pitch. In the meantime, feel free to write your own below or click Rewrite Pitch to generate it now.</div>` : ''}
-        <textarea class="note-textarea" id="pitch-body-${esc(match.id)}" rows="7" placeholder="Your pitch email…">${esc(match.email_body && match.email_body.includes('[Write your pitch here') ? '' : (match.email_body || ''))}</textarea>
-        `}
-        <div class="note-actions" style="gap:8px;flex-wrap:wrap;margin-top:10px;">
-          ${(!['sent','approved','appeared','dream','followed_up','replied','booked'].includes(match.status)) ? `<button class="btn btn-action-send btn-xs" onclick="sendMatch('${esc(match.id)}')">Send Pitch Email</button>` : ''}
-          <button class="btn btn-primary btn-xs" onclick="savePitch('${esc(match.id)}')">Save Draft</button>
-          <button class="btn btn-secondary btn-xs" onclick="copyPitch('${esc(match.id)}')">Copy</button>
-          ${match.status !== 'appeared' ? `<button class="btn btn-outline btn-xs" onclick="regeneratePitch('${esc(match.id)}')">${match.email_body && !match.email_body.includes('[Write your pitch here') ? 'Rewrite Pitch' : 'Write Pitch Email'}</button>` : ''}
-          <button class="btn btn-ghost btn-xs" onclick="togglePitchArea('${esc(match.id)}')">Close</button>
-        </div>
-      </div>
-    </div>
-
-    ${match.status === 'replied' ? `<button class="btn btn-action-followup btn-xs" onclick="openEmailModal('${esc(match.id)}')">Email</button>` : ''}
+    </div>` : ''}
 
 
     </div><!-- /.pitch-notes-row -->
@@ -1990,15 +1954,18 @@ function openEmailModal(matchId) {
   const podcast = match.podcasts || {};
   state.modalMatchId = matchId;
 
+  const isAppeared = match.status === 'appeared';
   const titleEl = $('email-modal-title');
-  if (titleEl) titleEl.textContent = `Email Draft — ${podcast.title || 'Unknown Show'}`;
+  if (titleEl) titleEl.textContent = isAppeared ? `Thank You — ${podcast.title || 'Unknown Show'}` : `Pitch Email — ${podcast.title || 'Unknown Show'}`;
 
   const subjectEl = $('modal-subject');
   const bodyEl    = $('modal-body-text');
   if (subjectEl) subjectEl.value = match.email_subject_edited || match.email_subject || '';
   if (bodyEl)    bodyEl.value    = match.email_body_edited    || match.email_body    || '';
   if (subjectEl && bodyEl && !subjectEl.value && !bodyEl.value) {
-    bodyEl.placeholder = 'Approve this match to generate your personalised pitch email.';
+    bodyEl.placeholder = isAppeared
+      ? 'Write a short thank you to the host. Mention something specific from the episode and leave the door open for a future connection.'
+      : 'Click Rewrite Pitch to generate your personalised pitch, or write it manually here.';
   }
 
   // Contact info row
@@ -2016,11 +1983,19 @@ function openEmailModal(matchId) {
     }
   }
 
-  // Show/hide approve button
-  const approveBtn = $('email-approve-btn');
-  if (approveBtn) {
-    approveBtn.style.display = match.status === 'new' ? 'inline-flex' : 'none';
-  }
+  // Show/hide buttons based on status
+  const status = match.status;
+  const canSend    = !['sent','followed_up','replied','booked','appeared','dismissed'].includes(status);
+  const canRewrite = !['sent','followed_up','replied','booked','appeared','dismissed'].includes(status);
+  const canSentMyself = ['approved','dream'].includes(status);
+  const canRestore    = ['approved','dream'].includes(status);
+
+  const show = (id, visible) => { const el = $(id); if (el) el.style.display = visible ? '' : 'none'; };
+  show('email-send-btn',       canSend);
+  show('email-rewrite-btn',    canRewrite);
+  show('email-sent-myself-btn', canSentMyself);
+  show('email-restore-btn',    canRestore);
+  show('email-approve-btn',    status === 'new');
 
   $('email-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -2625,6 +2600,23 @@ function initModals() {
   $('email-save-btn')?.addEventListener('click', saveEmailDraft);
   $('email-save-template-btn')?.addEventListener('click', saveAsTemplate);
   $('email-copy-btn')?.addEventListener('click', copyEmailDraft);
+  $('email-rewrite-btn')?.addEventListener('click', async () => {
+    if (!state.modalMatchId) return;
+    closeEmailModal();
+    await regeneratePitch(state.modalMatchId);
+  });
+  $('email-sent-myself-btn')?.addEventListener('click', async () => {
+    if (!state.modalMatchId) return;
+    const id = state.modalMatchId;
+    closeEmailModal();
+    await markAsPitched(id);
+  });
+  $('email-restore-btn')?.addEventListener('click', async () => {
+    if (!state.modalMatchId) return;
+    const id = state.modalMatchId;
+    closeEmailModal();
+    await restoreMatch(id);
+  });
   $('email-send-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;
     await saveEmailDraft();
