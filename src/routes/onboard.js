@@ -549,7 +549,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
 
     if (error) {
       logger.error('Failed to update client profile', { clientId, error: error.message });
-      return res.status(500).json({ success: false, error: 'Failed to update profile.' });
+      return res.status(500).json({ success: false, error: `DB error: ${error.message}` });
     }
     if (!data) return res.status(404).json({ success: false, error: 'Client not found.' });
 
