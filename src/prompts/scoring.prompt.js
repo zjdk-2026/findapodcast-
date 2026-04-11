@@ -89,8 +89,8 @@ Return ONLY valid JSON — no markdown, no prose, no code fences. Your entire re
   "contactability_score": <integer 0-100>,
   "brand_score": <integer 0-100>,
   "show_summary": "<2–3 sentence objective summary of what the show is, who it serves, and its track record>",
-  "why_this_client_fits": "<2–3 sentences. Write directly and conversationally — like a smart friend explaining it over coffee. No em dashes, no corporate speak, no third-person distance. Start with the audience or the show's need, then connect it to what the client brings. Example tone: 'This show's listeners are building businesses without VC money. That's exactly who needs to hear how AI is changing the goal-setting game.'>",
-  "best_pitch_angle": "<1 sentence. The single sharpest reason the host should book this client — written from the host's perspective, in plain conversational English. No em dashes, no buzzwords. Make it feel like a pitch a real person would actually say.>",
+  "why_this_client_fits": "<2–3 sentences. Use second-person coaching voice — speak directly to the client as 'you/your', like a strategist briefing them before a pitch meeting. Example: 'Your take on AI and goal-setting lands well here — this audience is full of high achievers who are tired of frameworks that stopped working.' No em dashes, no third-person, no consultant phrases.>",
+  "best_pitch_angle": "<1 sentence. Second-person coaching voice. The single sharpest angle the client should lead with. Example: 'Lead with why traditional goal-setting fails in an AI world — that is the exact question this audience is already asking.' No em dashes, no buzzwords.>",
   "episode_to_reference": "<title or description of a specific past episode that creates a natural bridge to the client's expertise, or 'none identified' if unavailable>",
   "red_flags": "<any concerns about the show — low activity, wrong audience, bad reputation, etc. — or 'none' if clean>",
   "booking_likelihood": "<one of: high | medium | low> — overall likelihood of securing a booking, given all factors"
