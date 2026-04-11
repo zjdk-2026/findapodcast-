@@ -15,6 +15,21 @@ async function hasMxRecord(email) {
   }
 }
 
+// Operator-owned emails and social handles — never assign these to discovered podcasts
+// (they appear in show notes when Zac has been a guest, causing false data)
+const OPERATOR_EMAILS    = ['hi@zacdeane.com', 'zac@zacdeane.com', 'hi@findapodcast.io'];
+const OPERATOR_DOMAINS   = ['zacdeane.com', 'findapodcast.io'];
+const OPERATOR_SOCIALS   = ['instagram.com/zacdeane', 'linkedin.com/in/zacdeane', 'instagram.com/zac_deane'];
+
+function isOperatorOwned(value) {
+  if (!value) return false;
+  const v = value.toLowerCase();
+  if (OPERATOR_EMAILS.some(e => v === e)) return true;
+  if (OPERATOR_DOMAINS.some(d => v.includes(`@${d}`))) return true;
+  if (OPERATOR_SOCIALS.some(s => v.includes(s))) return true;
+  return false;
+}
+
 // Generic email prefixes to skip — keep podcast-specific ones like guest@, booking@, contact@
 // because those ARE the right contacts for pitch outreach
 const GENERIC_EMAIL_PREFIXES = [
@@ -90,14 +105,14 @@ function extractEmail(html) {
   });
 
   for (const email of mailtoEmails) {
-    if (!isGenericEmail(email) && isValidEmailDomain(email)) return email;
+    if (!isGenericEmail(email) && isValidEmailDomain(email) && !isOperatorOwned(email)) return email;
   }
 
   // 2. Regex scan full HTML
   const matches = html.match(EMAIL_REGEX) || [];
   for (const email of matches) {
     const lower = email.toLowerCase();
-    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
+    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
       return lower;
     }
   }
@@ -413,12 +428,14 @@ async function enrichPodcast(podcastData) {
       // Extract social links from anchor hrefs
       const $home = cheerio.load(homepageHtml);
       $home('a[href]').each((_, el) => {
-        const href = ($home(el).attr('href') || '').toLowerCase();
-        if (!enriched.facebook_url  && href.includes('facebook.com'))  enriched.facebook_url  = $home(el).attr('href');
-        if (!enriched.twitter_url   && (href.includes('twitter.com') || href.includes('x.com'))) enriched.twitter_url = $home(el).attr('href');
-        if (!enriched.instagram_url && href.includes('instagram.com')) enriched.instagram_url = $home(el).attr('href');
-        if (!enriched.tiktok_url    && href.includes('tiktok.com'))    enriched.tiktok_url    = $home(el).attr('href');
-        if (!enriched.linkedin_page_url && href.includes('linkedin.com')) enriched.linkedin_page_url = $home(el).attr('href');
+        const raw  = $home(el).attr('href') || '';
+        const href = raw.toLowerCase();
+        if (isOperatorOwned(href)) return; // skip operator-owned links
+        if (!enriched.facebook_url  && href.includes('facebook.com'))  enriched.facebook_url  = raw;
+        if (!enriched.twitter_url   && (href.includes('twitter.com') || href.includes('x.com'))) enriched.twitter_url = raw;
+        if (!enriched.instagram_url && href.includes('instagram.com')) enriched.instagram_url = raw;
+        if (!enriched.tiktok_url    && href.includes('tiktok.com'))    enriched.tiktok_url    = raw;
+        if (!enriched.linkedin_page_url && href.includes('linkedin.com')) enriched.linkedin_page_url = raw;
       });
 
       // Extract guest application URL
