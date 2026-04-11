@@ -223,15 +223,20 @@
           <textarea id="modal-body-text" rows="12" class="email-edit-field" style="min-height:240px;"></textarea>
         </div>
       </div>
-      <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
-        <button class="btn btn-ghost btn-sm" id="email-modal-close-btn">Cancel</button>
-        <button class="btn btn-outline btn-sm" id="email-rewrite-btn" style="display:none;">Rewrite Pitch</button>
-        <button class="btn btn-outline btn-sm" id="email-copy-btn">Copy to Clipboard</button>
-        <button class="btn btn-outline btn-sm" id="email-save-btn">Save Draft</button>
-        <button class="btn btn-outline btn-sm" id="email-save-template-btn" title="Save this as your reusable pitch template — used for all future pitches">Save as My Template</button>
-        <button class="btn btn-xs" id="email-sent-myself-btn" style="display:none;background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;">I Sent It Myself</button>
-        <button class="btn btn-restore btn-sm" id="email-restore-btn" style="display:none;">Move Back to New</button>
-        <button class="btn btn-primary btn-sm" id="email-send-btn" title="Saves your edits and sends via your connected Gmail">Send via Gmail</button>
+      <div class="modal-footer" style="flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="email-modal-close-btn">Cancel</button>
+          <button class="btn btn-outline btn-sm" id="email-reenrich-btn" style="display:none;font-size:12px;" title="Re-score this match and refresh Why You Fit and Best Pitch Angle">Re-score</button>
+          <button class="btn btn-outline btn-sm" id="email-rewrite-btn" style="display:none;">Rewrite Pitch</button>
+          <button class="btn btn-outline btn-sm" id="email-copy-btn">Copy to Clipboard</button>
+          <button class="btn btn-outline btn-sm" id="email-save-btn">Save Draft</button>
+          <button class="btn btn-outline btn-sm" id="email-save-template-btn" title="Save this as your reusable pitch template — used for all future pitches">Save as My Template</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-outline btn-sm" id="email-restore-btn" style="display:none;">Move Back to New</button>
+          <button class="btn btn-xs" id="email-sent-myself-btn" style="display:none;background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;">I Sent It Myself</button>
+          <button class="btn btn-primary btn-sm" id="email-send-btn" style="display:none;" title="Saves your edits and sends via your connected Gmail">Send via Gmail</button>
+        </div>
       </div>
     </div>
   </div>

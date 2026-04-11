@@ -2010,12 +2010,14 @@ function openEmailModal(matchId) {
   const canSentMyself = ['approved','dream'].includes(status);
   const canRestore    = ['approved','dream'].includes(status);
 
-  const show = (id, visible) => { const el = $(id); if (el) el.style.display = visible ? '' : 'none'; };
-  show('email-send-btn',       canSend);
-  show('email-rewrite-btn',    canRewrite);
+  const show = (id, visible) => { const el = $(id); if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
+  const canRescoreStatuses = ['new','approved','dream'];
+  show('email-send-btn',        canSend);
+  show('email-rewrite-btn',     canRewrite);
   show('email-sent-myself-btn', canSentMyself);
-  show('email-restore-btn',    canRestore);
-  show('email-approve-btn',    status === 'new');
+  show('email-restore-btn',     canRestore);
+  show('email-approve-btn',     status === 'new');
+  show('email-reenrich-btn',    canRescoreStatuses.includes(status));
 
   $('email-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -2617,6 +2619,20 @@ function initModals() {
   $('email-modal-close-btn')?.addEventListener('click', closeEmailModal);
   emailModal?.addEventListener('click', (e) => { if (e.target === emailModal) closeEmailModal(); });
 
+  $('email-reenrich-btn')?.addEventListener('click', async () => {
+    if (!state.modalMatchId) return;
+    const matchId = state.modalMatchId;
+    const btn = $('email-reenrich-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Scoring…'; }
+    try {
+      await triggerReEnrich(matchId);
+      // Refresh insights panel with updated match data
+      const match = state.matches.find(m => m.id === matchId);
+      if (match) openEmailModal(matchId); // re-open refreshes all fields
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Re-score'; }
+    }
+  });
   $('email-save-btn')?.addEventListener('click', saveEmailDraft);
   $('email-save-template-btn')?.addEventListener('click', saveAsTemplate);
   $('email-copy-btn')?.addEventListener('click', copyEmailDraft);
