@@ -1441,7 +1441,7 @@ async function markAsPitched(matchId) {
   try {
     const data = await apiPost('/api/update-status', { matchId, status: 'sent' });
     if (data.success) {
-      updateMatchInState(matchId, { status: 'sent', sent_at: new Date().toISOString() });
+      updateMatchInState(matchId, { status: 'sent', sent_at: data.match?.sent_at || new Date().toISOString() });
       renderGrid();
       updateStatBadges();
       showToast('Moved to Pitched.', 'success');
@@ -1499,6 +1499,14 @@ async function doSendMatch(matchId) {
       updateMatchInState(matchId, { email_subject: getSubjectValue(matchId), email_body: bodyEl.value.trim() });
     } catch { /* non-fatal — proceed to send anyway */ }
   }
+  // Guard: don't send if there's no email content — would send a blank email
+  const currentMatch = state.matches.find((m) => m.id === matchId);
+  const hasContent = !!(currentMatch?.email_body || currentMatch?.email_body_edited || bodyEl?.value.trim());
+  if (!hasContent) {
+    showToast('Pitch email not ready yet. Write your pitch first or wait a moment and try again.', 'error');
+    return;
+  }
+
   setCardLoading(matchId, true);
   try {
     const data = await apiPost('/api/send', { matchId });
@@ -1508,7 +1516,7 @@ async function doSendMatch(matchId) {
       showToast('Email sent successfully!', 'success');
       switchToFilter('sent');
     } else {
-      showToast(data.error || 'Send failed.', 'error');
+      showToast(data.error || 'Send failed. Check your Gmail is connected and try again.', 'error');
     }
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
@@ -1531,13 +1539,31 @@ async function sendMatch(matchId) {
     updateMatchInState(matchId, { status: 'approved' });
     updateCard(matchId);
     setCardLoading(matchId, false);
-    // Poll for email to be written then open confirm modal
+    // Poll server for email to be written (fire-and-forget on server — must fetch to detect)
     let attempts = 0;
     const poll = setInterval(async () => {
       attempts++;
-      const fresh = state.matches.find((m) => m.id === matchId);
-      if ((fresh?.email_subject || fresh?.email_body) || attempts >= 12) {
+      try {
+        const res = await fetch(`/api/dashboard/${state.token}`);
+        const d   = await res.json();
+        if (d.success) {
+          const updated = (d.matches || []).find((m) => m.id === matchId);
+          if (updated?.email_subject || updated?.email_body) {
+            updateMatchInState(matchId, {
+              email_subject: updated.email_subject,
+              email_body:    updated.email_body,
+              gmail_draft_id: updated.gmail_draft_id,
+            });
+            updateCard(matchId);
+            clearInterval(poll);
+            showSendConfirmModal(matchId);
+            return;
+          }
+        }
+      } catch { /* silent — try again next tick */ }
+      if (attempts >= 12) {
         clearInterval(poll);
+        // Email generation timed out — open modal anyway so user can write their own
         showSendConfirmModal(matchId);
       }
     }, 3000);
@@ -1558,6 +1584,7 @@ function showSendConfirmModal(matchId) {
   document.body.style.overflow = 'hidden';
 
   const confirmBtn = $('confirm-send-btn');
+  if (!confirmBtn) { doSendMatch(matchId); return; }
   const freshBtn = confirmBtn.cloneNode(true);
   confirmBtn.parentNode.replaceChild(freshBtn, confirmBtn);
 
