@@ -413,16 +413,19 @@ router.post('/update-status', async (req, res) => {
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
   if (!VALID_STATUSES.includes(status)) return res.status(400).json({ success: false, error: 'Invalid status.' });
   try {
+    const updateFields = { status };
+    if (status === 'sent') updateFields.sent_at = new Date().toISOString();
+    if (status === 'booked') updateFields.booked_at = new Date().toISOString();
     const { data, error } = await supabase
       .from('podcast_matches')
-      .update({ status })
+      .update(updateFields)
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .select()
       .single();
     if (error) return res.status(500).json({ success: false, error: 'Failed to update status.' });
     if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
-    logger.info('Match status updated via drag-drop', { matchId, status });
+    logger.info('Match status updated', { matchId, status });
     return res.json({ success: true, match: data });
   } catch (err) {
     logger.error('Update-status route error', { matchId, error: err.message });
