@@ -723,6 +723,8 @@ async function triggerReEnrich(matchId) {
         recency_score:        s.recency_score,
         reach_score:          s.reach_score,
         contactability_score: s.contactability_score,
+        brand_score:          s.brand_score,
+        guest_quality_score:  s.guest_quality_score,
         booking_likelihood:   s.booking_likelihood,
         why_this_client_fits: s.why_this_client_fits,
         best_pitch_angle:     s.best_pitch_angle,
