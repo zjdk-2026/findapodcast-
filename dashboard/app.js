@@ -1321,9 +1321,13 @@ function updateCard(matchId) {
   const card = $(`card-${matchId}`);
   if (!card) { renderGrid(); return; }
   if (state.filter !== 'all' && match.status !== state.filter) { renderGrid(); return; }
+  // Preserve expanded state so background re-enrich doesn't collapse an open card
+  const wasExpanded = card.getAttribute('data-expanded') === 'true';
   const tmp = document.createElement('div');
   tmp.innerHTML = renderMatchCard(match);
-  card.replaceWith(tmp.firstElementChild);
+  const newCard = tmp.firstElementChild;
+  if (wasExpanded && newCard) newCard.setAttribute('data-expanded', 'true');
+  card.replaceWith(newCard);
 }
 
 // ── Switch active filter tab programmatically ─────────────────────────

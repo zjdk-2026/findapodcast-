@@ -774,7 +774,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
       || 67; // default to Business
 
     logger.debug('Fetching best podcasts for topic', { topic, genreId });
-    const result = await listennotes.getBestPodcasts({ genre_id: genreId, page: 1, safe_mode: 1 });
+    const result = await listennotes.getBestPodcasts({ genre_id: genreId, page: lnPage, safe_mode: 1 });
     const podcasts = result?.podcasts || [];
 
     for (const item of podcasts) {
