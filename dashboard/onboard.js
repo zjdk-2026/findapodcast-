@@ -189,6 +189,7 @@ function collectFormData() {
     social_instagram: val('f-instagram')    || undefined,
     social_linkedin:  val('f-linkedin')     || undefined,
     social_twitter:   val('f-twitter')      || undefined,
+    social_facebook:  val('f-facebook')     || undefined,
     extra_links:      val('f-extra-links')  || undefined,
     email_signature:  val('f-email-signature') || undefined,
     pitch_style:      val('f-pitch-style')  || undefined,

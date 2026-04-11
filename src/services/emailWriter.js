@@ -21,6 +21,17 @@ RULES:
 - Keep it under 130 words total
 - Return ONLY the cleaned email body — no explanation, no JSON, no extra text`;
 
+function buildLinkRow(client) {
+  const links = [];
+  if (client.website)          links.push(`<a href="${client.website}" style="color:#6366f1;text-decoration:none;">Website</a>`);
+  if (client.social_instagram) links.push(`<a href="${client.social_instagram}" style="color:#6366f1;text-decoration:none;">Instagram</a>`);
+  if (client.social_linkedin)  links.push(`<a href="${client.social_linkedin}" style="color:#6366f1;text-decoration:none;">LinkedIn</a>`);
+  if (client.social_facebook)  links.push(`<a href="${client.social_facebook}" style="color:#6366f1;text-decoration:none;">Facebook</a>`);
+  if (client.social_twitter)   links.push(`<a href="${client.social_twitter}" style="color:#6366f1;text-decoration:none;">Twitter / X</a>`);
+  if (!links.length) return null;
+  return links.join(' &nbsp;|&nbsp; ');
+}
+
 async function humanize(body) {
   try {
     const message = await getClient().messages.create({
@@ -116,8 +127,11 @@ async function writeEmail(client, match, podcast) {
 
     const humanizedBody = await humanize(result.body);
     const signature = client.email_signature?.trim();
-    const body = signature ? `${humanizedBody}\n\n${signature}` : humanizedBody;
-    return { subject: result.subject, body };
+    const linkRow = buildLinkRow(client);
+    const bodyParts = [humanizedBody];
+    if (signature) bodyParts.push(signature);
+    if (linkRow)   bodyParts.push(linkRow);
+    return { subject: result.subject, body: bodyParts.join('\n\n') };
   } catch (err) {
     logger.error('Claude email writer API call failed', {
       clientId: client.id,
