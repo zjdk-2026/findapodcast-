@@ -1012,13 +1012,24 @@ function renderMatchCard(match) {
     ${['new','approved','dream','sent','followed_up','replied'].includes(match.status) ? `
     <div class="inline-pitch-panel" id="pitch-panel-${esc(match.id)}">
       <div class="inline-pitch-header">
-        <span class="inline-pitch-title">Pitch Email</span>
-        <button class="btn btn-xs" style="background:transparent;border:none;color:var(--text-tertiary);font-size:18px;padding:0 4px;line-height:1;cursor:pointer;" onclick="toggleInlinePitch('${esc(match.id)}')" title="Close">&#x2715;</button>
+        <span class="inline-pitch-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Pitch Email
+        </span>
+        <button class="inline-pitch-close" onclick="toggleInlinePitch('${esc(match.id)}')" title="Close">&#x2715;</button>
       </div>
-      ${match.best_pitch_angle ? `<div class="inline-pitch-hint"><span class="inline-pitch-hint-label">Pitch Angle</span>${esc(match.best_pitch_angle)}</div>` : ''}
+      ${match.best_pitch_angle ? `<div class="inline-pitch-hint"><span class="inline-pitch-hint-label">Angle to lead with</span>${esc(match.best_pitch_angle)}</div>` : ''}
       <select id="inline-preset-${esc(match.id)}" class="inline-pitch-field" style="display:none;cursor:pointer;"></select>
-      <input id="inline-subject-${esc(match.id)}" type="text" class="inline-pitch-field" placeholder="Subject line…" oninput="updatePitchPreview('${esc(match.id)}')" />
-      <textarea id="inline-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your pitch will appear here…" oninput="updatePitchPreview('${esc(match.id)}')"></textarea>
+      <div class="inline-field-group">
+        <label class="inline-field-label">Subject</label>
+        <input id="inline-subject-${esc(match.id)}" type="text" class="inline-pitch-field inline-subject-field" placeholder="Subject line…" oninput="updatePitchPreview('${esc(match.id)}')" />
+      </div>
+      <div class="inline-field-group">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <label class="inline-field-label">Message</label>
+          <span class="inline-word-count" id="inline-wc-${esc(match.id)}"></span>
+        </div>
+        <textarea id="inline-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your pitch will appear here…" oninput="updatePitchPreview('${esc(match.id)}')"></textarea>
+      </div>
       <div class="pitch-preview-strip" id="pitch-preview-${esc(match.id)}"></div>
       <div class="inline-pitch-actions">
         <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
@@ -2063,9 +2074,21 @@ function updatePitchPreview(matchId) {
   const subjEl    = $(`inline-subject-${matchId}`);
   const bodyEl    = $(`inline-body-${matchId}`);
   const previewEl = $(`pitch-preview-${matchId}`);
-  if (!previewEl) return;
+  const wcEl      = $(`inline-wc-${matchId}`);
+
   const subject = subjEl?.value.trim() || '';
   const body    = bodyEl?.value.trim() || '';
+
+  // Word count
+  if (wcEl && body) {
+    const wc = body.split(/\s+/).filter(Boolean).length;
+    const wcColor = wc < 80 ? 'var(--warning)' : wc > 130 ? 'var(--danger)' : 'var(--success)';
+    wcEl.innerHTML = `<span style="color:${wcColor};font-size:11px;font-weight:600;">${wc} words</span><span style="color:var(--text-tertiary);font-size:11px;"> / 90–120 target</span>`;
+  } else if (wcEl) {
+    wcEl.innerHTML = '';
+  }
+
+  if (!previewEl) return;
   if (!subject && !body) { previewEl.style.display = 'none'; return; }
   const firstPara = body.split('\n\n')[0] || '';
   previewEl.style.display = 'block';
