@@ -239,4 +239,69 @@ router.post('/interview-prep', requireDashboardToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/generate-dm
+ * Generates a short, first-person social DM for a given match using Claude Haiku.
+ */
+router.post('/generate-dm', requireDashboardToken, async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  try {
+    const { data: match, error: fetchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(title, description, category), clients(name, topics, bio_short)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    const podcast    = match.podcasts || {};
+    const client     = match.clients  || {};
+    const firstName  = (client.name || '').split(' ')[0] || 'me';
+    const fullTitle  = podcast.title || 'your show';
+    const shortName  = fullTitle.split(/[|:—–]/)[0].trim() || fullTitle;
+    const topics     = (client.topics || []).join(', ');
+    const angle      = match.best_pitch_angle || '';
+    const bio        = client.bio_short || '';
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system: `You write short, first-person social media DMs from a podcast guest to a host. The message should feel like a real person reaching out — not a pitch, not a press release.
+
+Rules:
+- Open with "Hi ${shortName},"
+- Body: 2 short paragraphs max, 60 words total max
+- FIRST PERSON ONLY — "I", "my", "I've" — NEVER use the guest's name in the body
+- Do NOT say "I've been listening to your show" or "I love your podcast" — the sender hasn't listened
+- Lead with ONE specific, genuine reason this is a fit (audience, topic angle, or category)
+- Close with: "Would you be open to a quick chat to see if there's a fit? Even 15 minutes works."
+- Sign off with just the first name: ${firstName}
+- No em dashes. No bullet points. No exclamation marks. No fluff.
+
+Return ONLY the plain text DM — no JSON, no markdown.`,
+      messages: [{ role: 'user', content: JSON.stringify({
+        podcast_name:     shortName,
+        podcast_category: podcast.category || '',
+        podcast_description: (podcast.description || '').slice(0, 300),
+        guest_first_name: firstName,
+        guest_topics:     topics,
+        guest_bio:        bio.slice(0, 200),
+        pitch_angle:      angle.slice(0, 200),
+      }) }],
+    });
+
+    const body = message.content[0].text.trim();
+    logger.info('DM generated', { matchId });
+    return res.json({ success: true, body });
+  } catch (err) {
+    logger.error('generate-dm error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
 module.exports = router;

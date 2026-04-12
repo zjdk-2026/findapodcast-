@@ -2312,8 +2312,9 @@ function toggleSocialDM(matchId) {
 window.toggleSocialDM = toggleSocialDM;
 
 function buildDMScriptFromMatch(match) {
-  const podcast  = match.podcasts || {};
-  const name     = state.client?.name || '';
+  const podcast   = match.podcasts || {};
+  const fullName  = state.client?.name || '';
+  const firstName = fullName.split(' ')[0] || 'I';
 
   // Shorten show name — take only what's before the first pipe, colon, or em dash
   const fullTitle = podcast.title || 'your show';
@@ -2324,24 +2325,38 @@ function buildDMScriptFromMatch(match) {
   // Detect internal coaching notes that should NEVER appear in outreach
   const isInternalNote = /skip this|not a fit|focus your outreach|pass on this|avoid this|outreach budget|different demographic|cross-promotional/i.test(angle);
 
+  // Convert 3rd-person client references to 1st person
+  function toFirstPerson(text) {
+    if (!firstName || firstName === 'I') return text;
+    const fn = firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text
+      .replace(new RegExp(`\\b${fn}\\s+shows\\b`, 'gi'),   'I show')
+      .replace(new RegExp(`\\b${fn}\\s+teaches\\b`, 'gi'), 'I teach')
+      .replace(new RegExp(`\\b${fn}\\s+helps\\b`, 'gi'),   'I help')
+      .replace(new RegExp(`\\b${fn}\\s+has\\b`, 'gi'),     'I have')
+      .replace(new RegExp(`\\b${fn}\\s+is\\b`, 'gi'),      'I am')
+      .replace(new RegExp(`\\b${fn}\\s+can\\b`, 'gi'),     'I can')
+      .replace(new RegExp(`\\b${fn}\\s+works\\b`, 'gi'),   'I work')
+      .replace(new RegExp(`\\b${fn}\\s+runs\\b`, 'gi'),    'I run')
+      .replace(new RegExp(`\\b${fn}\\s+built\\b`, 'gi'),   'I built')
+      .replace(new RegExp(`\\b${fn}\\s+spent\\b`, 'gi'),   'I spent')
+      .replace(new RegExp(`\\b${fn}\\b`, 'g'),              'I');
+  }
+
   let body;
   if (angle && !isInternalNote) {
     // Strip leading directive phrases so the angle reads naturally
-    const clean = angle
+    const raw = angle
       .replace(/^(Lead with\s+a?\s*|Position yourself[^—]*?—\s*|Start with\s+|Use\s+)/i, '')
       .replace(/\.$/, '')
-      .slice(0, 140);
-    const whyFit = match.why_you_fit || '';
-    // Pull a short observation from why_you_fit if available, otherwise use angle
-    const observation = whyFit
-      ? whyFit.split('.')[0].replace(/^Your\s+/i, 'Your ').slice(0, 120)
-      : `your audience seems to be exactly who I speak to`;
-    body = `${observation}.\n\nI think there could be a strong episode angle around ${clean.charAt(0).toLowerCase() + clean.slice(1)}.`;
+      .slice(0, 160);
+    const clean = toFirstPerson(raw);
+    body = `I think there could be a strong episode angle here: ${clean.charAt(0).toLowerCase() + clean.slice(1)}.`;
   } else {
     body = `Your show's audience looks like exactly the kind of people I work with, and I think I could bring real value to your listeners.`;
   }
 
-  return `Hi ${shortName},\n\n${body}\n\nWould you be open to a quick conversation to see if there's a fit? Even 15 minutes works.\n\n${name}`;
+  return `Hi ${shortName},\n\n${body}\n\nWould you be open to a quick conversation to see if there's a fit? Even 15 minutes works.\n\n${firstName}`;
 }
 
 function buildDMScript(matchId) {
@@ -2363,19 +2378,21 @@ async function regenerateDMScript(matchId) {
   const btn = $(`dm-regen-btn-${matchId}`);
   const textarea = $(`dm-script-${matchId}`);
   if (!textarea) return;
-  if (btn) { btn.disabled = true; btn.textContent = 'Regenerating…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
   try {
-    // Re-fetch latest match data (in case why_you_fit/best_pitch_angle changed)
-    const data = await apiPost('/api/generate-pitch', { matchId });
-    if (data.subject || data.body) {
-      // Update state with fresh angle data if returned
-      if (data.body) updateMatchInState(matchId, { email_body_edited: data.body, email_subject_edited: data.subject });
+    const data = await apiPost('/api/generate-dm', { matchId });
+    if (data.body) {
+      textarea.value = data.body;
+      showToast('DM generated.', 'success');
+    } else {
+      throw new Error(data.error || 'No body returned');
     }
-    // Rebuild DM from updated state
+  } catch {
+    // Fall back to client-side builder
     const match = state.matches.find(m => m.id === matchId);
     if (match) textarea.value = buildDMScriptFromMatch(match);
-    showToast('DM refreshed.', 'success');
-  } catch { showToast('Could not regenerate. Try again.', 'error'); }
+    showToast('Used local template — AI unavailable.', 'info');
+  }
   finally { if (btn) { btn.disabled = false; btn.textContent = 'Regenerate'; } }
 }
 window.regenerateDMScript = regenerateDMScript;
