@@ -951,7 +951,7 @@ function renderMatchCard(match) {
           ${scoreBarHtml('Relevance',  match.relevance_score)}
           ${scoreBarHtml('Audience',   match.audience_score)}
           ${scoreBarHtml('Recency',    match.recency_score)}
-          ${scoreBarHtml('Reach',      match.reach_score, audienceSizeTierHtml(match.reach_score))}
+          ${scoreBarHtml('Reach',      match.reach_score)}
           ${scoreBarHtml('Contact',    match.contactability_score)}
           ${match.seo_score != null ? scoreBarHtml('SEO Value', match.seo_score) : ''}
         </div>
@@ -2285,7 +2285,7 @@ function openContactModal(matchId) {
       ${scoreBarHtml('Relevance',   match.relevance_score)}
       ${scoreBarHtml('Audience',    match.audience_score)}
       ${scoreBarHtml('Recency',     match.recency_score)}
-      ${scoreBarHtml('Reach',       match.reach_score, audienceSizeTierHtml(match.reach_score))}
+      ${scoreBarHtml('Reach',       match.reach_score)}
       ${scoreBarHtml('Contact',     match.contactability_score)}
       ${match.seo_score != null    ? scoreBarHtml('SEO Value',  match.seo_score) : ''}
       ${match.brand_score          ? scoreBarHtml('Brand Fit',  match.brand_score) : ''}
