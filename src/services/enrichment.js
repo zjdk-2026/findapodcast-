@@ -152,6 +152,10 @@ function extractHandleFromUrl(url) {
     if (!segments.length) return null;
     // For LinkedIn: /company/slug or /in/slug — take the slug part
     if (segments[0] === 'company' || segments[0] === 'in') return segments[1] || null;
+    // For YouTube: /@handle → strip the @
+    if (segments[0] && segments[0].startsWith('@')) return segments[0].slice(1);
+    // For YouTube: /channel/UCxxx or /c/slug
+    if ((segments[0] === 'channel' || segments[0] === 'c') && segments[1]) return segments[1];
     return segments[0];
   } catch { return null; }
 }
@@ -595,6 +599,19 @@ async function enrichPodcast(podcastData) {
       if (!enriched.facebook_url)     enriched.facebook_url     = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook', _title, _host);
       if (!enriched.linkedin_page_url) enriched.linkedin_page_url = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com')), 'linkedin', _title, _host);
       if (!enriched.tiktok_url)       enriched.tiktok_url       = homeHrefs.find(h => h.toLowerCase().includes('tiktok.com/')) || null;
+
+      // YouTube channel — only @handle or /channel/ or /c/ style URLs (not individual videos or playlists)
+      if (!enriched.youtube_url) {
+        const ytCandidates = homeHrefs.filter(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('youtube.com') && (
+            lower.includes('youtube.com/@') ||
+            lower.includes('youtube.com/channel/') ||
+            lower.includes('youtube.com/c/')
+          ) && !lower.includes('/watch') && !lower.includes('/playlist') && !lower.includes('/shorts');
+        });
+        enriched.youtube_url = pickMatchingSocialUrl(ytCandidates, 'youtube', _title, _host) || (ytCandidates.length === 1 ? ytCandidates[0] : null);
+      }
 
       // Extract guest application URL
       if (!enriched.guest_application_url) {
