@@ -938,7 +938,6 @@ function renderMatchCard(match) {
         </div>
       </div>
       <div class="card-row-right">
-        <span class="score-pill ${tier}">${fitScore}</span>
         ${statusBadgeHtml(match.status)}
         <span class="card-chevron">▸</span>
       </div>
