@@ -1017,7 +1017,6 @@ function renderMatchCard(match) {
         </span>
         <button class="inline-pitch-close" onclick="toggleInlinePitch('${esc(match.id)}')" title="Close">&#x2715;</button>
       </div>
-      ${match.best_pitch_angle ? `<div class="inline-pitch-hint"><span class="inline-pitch-hint-label">Angle to lead with</span>${esc(match.best_pitch_angle)}</div>` : ''}
       <select id="inline-preset-${esc(match.id)}" class="inline-pitch-field" style="display:none;cursor:pointer;"></select>
       <div class="inline-field-group">
         <label class="inline-field-label">Subject</label>
