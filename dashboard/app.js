@@ -1123,14 +1123,60 @@ function renderMatchCard(match) {
     <!-- Social DM panel -->
     ${(() => {
       const p = match.podcasts || {};
+
+      // Extract a clean @handle or /slug from a validated URL.
+      // Returns null if the URL doesn't resolve to a recognisable profile path.
+      function extractHandle(url, platform) {
+        if (!url) return null;
+        let u;
+        try { u = new URL(url); } catch { return null; }
+        const segments = u.pathname.split('/').filter(Boolean);
+        if (!segments.length) return null;
+        switch (platform) {
+          case 'instagram':
+          case 'twitter': {
+            const handle = segments[0];
+            // Must look like a real username — no dots-only, no just numbers that look like IDs
+            if (!/^[a-z0-9_.]{1,30}$/i.test(handle)) return null;
+            return '@' + handle;
+          }
+          case 'linkedin': {
+            // /company/slug or /in/slug — show the slug
+            if (segments.length >= 2 && (segments[0] === 'company' || segments[0] === 'in')) {
+              return segments[1].slice(0, 30);
+            }
+            return null;
+          }
+          case 'facebook': {
+            // Skip numeric IDs (profile.php?id=... style leaked through, or /100012345678/)
+            const slug = segments[segments.length - 1];
+            if (/^\d+$/.test(slug)) return null;
+            if (slug.length < 2) return null;
+            return slug.slice(0, 30);
+          }
+          default: return null;
+        }
+      }
+
       const platforms = [];
-      if (isValidSocialProfile(p.instagram_url, 'instagram'))                               platforms.push({ label: 'Instagram', url: p.instagram_url });
-      if (isValidSocialProfile(p.twitter_url, 'twitter'))                                   platforms.push({ label: 'Twitter/X', url: p.twitter_url });
-      if (isValidSocialProfile(p.linkedin_page_url || p.linkedin_url, 'linkedin'))          platforms.push({ label: 'LinkedIn',  url: p.linkedin_page_url || p.linkedin_url });
-      if (isValidSocialProfile(p.facebook_url, 'facebook'))                                 platforms.push({ label: 'Facebook',  url: p.facebook_url });
+      const candidates = [
+        { key: 'instagram_url',                       platform: 'instagram', label: 'Instagram'  },
+        { key: 'twitter_url',                         platform: 'twitter',   label: 'Twitter/X'  },
+        { key: 'linkedin_page_url||linkedin_url',     platform: 'linkedin',  label: 'LinkedIn'   },
+        { key: 'facebook_url',                        platform: 'facebook',  label: 'Facebook'   },
+      ];
+      for (const c of candidates) {
+        const url = c.key.includes('||')
+          ? (p[c.key.split('||')[0]] || p[c.key.split('||')[1]])
+          : p[c.key];
+        if (!isValidSocialProfile(url, c.platform)) continue;
+        const handle = extractHandle(url, c.platform);
+        if (!handle) continue;               // no recognisable handle → skip button entirely
+        platforms.push({ label: c.label, url, handle });
+      }
       if (!platforms.length) return '';
       const platformBtns = platforms.map(pl =>
-        `<a href="${esc(pl.url)}" target="_blank" rel="noopener" class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;text-decoration:none;">Open ${esc(pl.label)}</a>`
+        `<a href="${esc(pl.url)}" target="_blank" rel="noopener" class="btn btn-xs" title="${esc(pl.url)}" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;text-decoration:none;">${esc(pl.label)} <span style="opacity:0.7;font-weight:400;">${esc(pl.handle)}</span></a>`
       ).join('');
       return `
     <div class="social-dm-panel" id="dm-panel-${esc(match.id)}">
