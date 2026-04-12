@@ -162,7 +162,6 @@ function likelihoodClass(likelihood) {
 function statusBadgeHtml(status) {
   const labels = {
     new:          'New',
-    approved:     'Pitch Ready',
     sent:         'Sent',
     followed_up:  'Followed Up',
     replied:      'Replied',
@@ -662,7 +661,7 @@ function actionButtonsHtml(match) {
   const buttons  = [];
 
   // Write Pitch Email button — opens inline panel
-  const pitchStatuses = ['new','approved','dream','sent','followed_up','replied'];
+  const pitchStatuses = ['new','dream','sent','followed_up','replied'];
   if (pitchStatuses.includes(status)) {
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
@@ -685,15 +684,6 @@ function actionButtonsHtml(match) {
 
   if (status === 'new') {
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">Add to Wish List</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
-  } else if (status === 'approved') {
-    if (!hasEmail) {
-      buttons.push(`<span style="font-size:12px;color:var(--text-tertiary);font-style:italic;">Writing your pitch…</span>`);
-    } else {
-      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send via Gmail</button>`);
-    }
-    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitched('${id}')">I Sent It Myself</button>`);
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
     buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send via Gmail</button>`);
@@ -1000,7 +990,7 @@ function renderMatchCard(match) {
     </div><!-- /.card-expanded -->
 
     <!-- Inline pitch panel -->
-    ${['new','approved','dream','sent','followed_up','replied'].includes(match.status) ? `
+    ${['new','dream','sent','followed_up','replied'].includes(match.status) ? `
     <div class="inline-pitch-panel" id="pitch-panel-${esc(match.id)}">
       <div class="inline-pitch-header">
         <span class="inline-pitch-title">
@@ -1024,7 +1014,7 @@ function renderMatchCard(match) {
       <div class="inline-pitch-actions">
         <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
         <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send via Gmail</button>
-        ${['approved','dream'].includes(match.status) ? `<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${esc(match.id)}')">I Sent It Myself</button>` : ''}
+        ${['new','dream'].includes(match.status) ? `<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${esc(match.id)}')">I Sent It Myself</button>` : ''}
       </div>
     </div>` : ''}
 
@@ -1082,7 +1072,7 @@ function getFilteredSorted() {
       byTitle.set(key, m);
     } else {
       // Priority: user-actioned statuses always beat 'new' (prevents pitched/booked cards disappearing)
-      const ACTION_PRIORITY = { booked: 6, appeared: 5, replied: 4, followed_up: 3, sent: 2, approved: 1, dream: 1, dismissed: 1, new: 0 };
+      const ACTION_PRIORITY = { booked: 6, appeared: 5, replied: 4, followed_up: 3, sent: 2, dream: 1, dismissed: 1, new: 0 };
       const mPriority = ACTION_PRIORITY[m.status] ?? 0;
       const ePriority = ACTION_PRIORITY[existing.status] ?? 0;
       const mScore = m.fit_score || 0;
@@ -1101,8 +1091,7 @@ function getFilteredSorted() {
   if (state.filter === 'content_boost') {
     matches = matches.filter((m) => !!m.content_boost_status);
   } else if (state.filter === 'new') {
-    // Show approved cards in the New tab — they're mid-send (email being written)
-    matches = matches.filter((m) => m.status === 'new' || m.status === 'approved');
+    matches = matches.filter((m) => m.status === 'new');
   } else if (state.filter !== 'all') {
     matches = matches.filter((m) => m.status === state.filter);
   }
@@ -1426,7 +1415,7 @@ async function approveMatch(matchId) {
   try {
     const data = await apiPost('/api/approve', { matchId });
     if (data.success) {
-      updateMatchInState(matchId, { status: 'approved', approved_at: data.match?.approved_at });
+      updateMatchInState(matchId, { approved_at: data.match?.approved_at });
       updateCard(matchId);
       updateStatBadges();
       showToast('Pitch ready — writing your personalised email now…', 'success');
@@ -1568,50 +1557,6 @@ async function doSendMatch(matchId) {
 async function sendMatch(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
-
-  // If card is new (not yet approved), approve first to trigger email generation
-  if (match.status === 'new' || match.status === 'dream') {
-    setCardLoading(matchId, true);
-    showToast('Generating your pitch email…', 'info');
-    const approveData = await apiPost('/api/approve', { matchId });
-    if (!approveData.success) {
-      setCardLoading(matchId, false);
-      showToast(approveData.error || 'Could not generate pitch.', 'error');
-      return;
-    }
-    updateMatchInState(matchId, { status: 'approved' });
-    updateCard(matchId);
-    setCardLoading(matchId, false);
-    // Poll server for email to be written (fire-and-forget on server — must fetch to detect)
-    let attempts = 0;
-    const poll = setInterval(async () => {
-      attempts++;
-      try {
-        const res = await fetch(`/api/dashboard/${state.token}`);
-        const d   = await res.json();
-        if (d.success) {
-          const updated = (d.matches || []).find((m) => m.id === matchId);
-          if (updated?.email_subject || updated?.email_body) {
-            updateMatchInState(matchId, {
-              email_subject: updated.email_subject,
-              email_body:    updated.email_body,
-              gmail_draft_id: updated.gmail_draft_id,
-            });
-            updateCard(matchId);
-            clearInterval(poll);
-            showSendConfirmModal(matchId);
-            return;
-          }
-        }
-      } catch { /* silent — try again next tick */ }
-      if (attempts >= 12) {
-        clearInterval(poll);
-        // Email generation timed out — open modal anyway so user can write their own
-        showSendConfirmModal(matchId);
-      }
-    }, 3000);
-    return;
-  }
 
   showSendConfirmModal(matchId);
 }
@@ -2264,11 +2209,11 @@ function openEmailModal(matchId) {
   const status = match.status;
   const canSend    = !['sent','followed_up','replied','booked','appeared','dismissed'].includes(status);
   const canRewrite = !['sent','followed_up','replied','booked','appeared','dismissed'].includes(status);
-  const canSentMyself = ['approved','dream'].includes(status);
-  const canRestore    = ['approved','dream'].includes(status);
+  const canSentMyself = ['new','dream'].includes(status);
+  const canRestore    = ['new','dream'].includes(status);
 
   const show = (id, visible) => { const el = $(id); if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
-  const canRescoreStatuses = ['new','approved','dream'];
+  const canRescoreStatuses = ['new','dream'];
   show('email-send-btn',        canSend);
   show('email-rewrite-btn',     canRewrite);
   show('email-sent-myself-btn', canSentMyself);
@@ -2280,7 +2225,7 @@ function openEmailModal(matchId) {
   document.body.style.overflow = 'hidden';
 
   // Auto-generate pitch if no real pitch exists yet
-  if (isFallback && !isAppeared && ['new','approved','dream'].includes(match.status)) {
+  if (isFallback && !isAppeared && ['new','dream'].includes(match.status)) {
     setTimeout(() => $('email-rewrite-btn')?.click(), 100);
   }
 }
@@ -2510,7 +2455,7 @@ async function runPipeline() {
 }
 
 function pollForNewMatches() {
-  const ACTIVE = ['new','approved','sent','followed_up','replied','booked','appeared','dream'];
+  const ACTIVE = ['new','sent','followed_up','replied','booked','appeared','dream'];
   const knownActiveCount = state.matches.filter(m => ACTIVE.includes(m.status)).length;
   const knownTotal = state.matches.length;
   let attempts = 0;

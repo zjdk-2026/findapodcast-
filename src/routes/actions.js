@@ -162,7 +162,7 @@ router.post('/send', async (req, res) => {
   try {
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(contact_email), clients(gmail_refresh_token, name)')
+      .select('*, podcasts(contact_email), clients(gmail_refresh_token, outlook_refresh_token, name)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -173,10 +173,12 @@ router.post('/send', async (req, res) => {
       try {
         let draftId = match.gmail_draft_id;
         // No draft yet but we have email content — create one now
-        if (!draftId && match.email_body) {
+        const emailSubject = match.email_subject_edited || match.email_subject || '';
+        const emailBody    = match.email_body_edited    || match.email_body    || '';
+        if (!draftId && emailBody) {
           const contactEmail = match.podcasts?.contact_email || null;
           if (contactEmail?.includes('@')) {
-            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, match.email_subject || '', match.email_body, buildLinkRow(match.clients)).catch(() => null);
+            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, emailSubject, emailBody, buildLinkRow(match.clients)).catch(() => null);
           }
         }
         if (draftId) {
@@ -407,7 +409,7 @@ router.post('/appeared', async (req, res) => {
  * POST /api/update-status
  * Generic status update used by drag-and-drop.
  */
-const VALID_STATUSES = ['new', 'approved', 'sent', 'followed_up', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
+const VALID_STATUSES = ['new', 'sent', 'followed_up', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
 router.post('/update-status', async (req, res) => {
   const { matchId, status } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
