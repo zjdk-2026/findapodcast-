@@ -898,12 +898,7 @@ function renderMatchCard(match) {
        </div>`
     : '';
 
-  const episodeHtml = (match.episode_to_reference && match.episode_to_reference !== 'none identified')
-    ? `<div class="why-fits-box">
-        <p class="why-fits-label">Reference Episode</p>
-        <p class="analysis-text">"${esc(match.episode_to_reference)}"</p>
-       </div>`
-    : '';
+  const episodeHtml = '';
 
   const socialHtml = '';
 
@@ -2242,9 +2237,6 @@ function openEmailModal(matchId) {
     }
     if (match.best_pitch_angle) {
       rows.push(`<div><p style="${insightLabel}">Best Pitch Angle</p><p style="${insightText}">${esc(match.best_pitch_angle)}</p></div>`);
-    }
-    if (match.episode_to_reference && match.episode_to_reference !== 'none identified') {
-      rows.push(`<div><p style="${insightLabel}">Reference Episode</p><p style="${insightText}">"${esc(match.episode_to_reference)}"</p></div>`);
     }
     if (rows.length > 0) {
       insightsEl.innerHTML = rows.join('<hr style="border:none;border-top:1px solid #e0dbff;margin:4px 0;">');
