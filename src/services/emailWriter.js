@@ -13,6 +13,7 @@ RULES:
 - Remove all em dashes (—) and replace with commas or restructure the sentence
 - Remove exclamation marks
 - Remove AI-sounding phrases: "I wanted to reach out", "I hope this finds you well", "I came across your podcast", "I've been following", "touch base", "circle back", "leverage", "synergy", "game-changer", "delve", "navigate", "landscape", "foster", "resonate", "align", "thought leader", "expertise"
+- CRITICAL: Remove ALL phrases implying you have listened to or consumed the podcast: "I've been listening to your show", "I've been a listener", "what stands out to me from your episodes", "I noticed from your show", "I heard your episode", "I listened to", "your episode on X", "your show caught my attention", "I've been enjoying your content". If any such phrase exists, rewrite that sentence to observe the show from the outside (its mission, who it serves) — not from personal listening.
 - Remove persuasive or salesy language — this email asks, it does not pitch or sell
 - Fix any phrasing that sounds like a consultant or marketer — rewrite it as a curious, thoughtful person
 - Keep all paragraph breaks (double newlines) exactly as they are
@@ -148,4 +149,4 @@ async function writeEmail(client, match, podcast) {
   }
 }
 
-module.exports = { writeEmail, buildLinkRow };
+module.exports = { writeEmail, buildLinkRow, humanize };

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share Your Experience — Find A Podcast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8f7ff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      color: #1e293b;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 44px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.08), 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #64748b;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    .field-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    input, textarea, select {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      color: #1e293b;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 11px 14px;
+      transition: border-color 150ms, box-shadow 150ms;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+      background: #fff;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.65;
+    }
+    .stars {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .star {
+      font-size: 32px;
+      cursor: pointer;
+      color: #e2e8f0;
+      transition: color 150ms, transform 100ms;
+      line-height: 1;
+      user-select: none;
+    }
+    .star.active { color: #f59e0b; }
+    .star:hover { transform: scale(1.15); }
+    input[name="rating"] { display: none; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity 150ms, transform 100ms;
+      margin-top: 8px;
+    }
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .success {
+      display: none;
+      text-align: center;
+      padding: 16px 0;
+    }
+    .success-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+    }
+    .success h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .success p {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .error-msg {
+      font-size: 13px;
+      color: #ef4444;
+      margin-top: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+      </div>
+      <span class="logo-text">Find A Podcast</span>
+    </div>
+
+    <div id="form-view">
+      <h1>How has it been going?</h1>
+      <p class="subtitle">Your feedback helps us improve and helps other founders know what to expect. Takes 60 seconds.</p>
+
+      <div class="stars" id="star-row">
+        <span class="star" data-v="1">&#9733;</span>
+        <span class="star" data-v="2">&#9733;</span>
+        <span class="star" data-v="3">&#9733;</span>
+        <span class="star" data-v="4">&#9733;</span>
+        <span class="star" data-v="5">&#9733;</span>
+      </div>
+      <input type="hidden" name="rating" id="rating-val" value="" />
+
+      <form id="review-form">
+        <div class="field-group">
+          <label>Your name</label>
+          <input type="text" id="r-name" placeholder="Sarah Mitchell" required />
+        </div>
+        <div class="field-group">
+          <label>Your role or business</label>
+          <input type="text" id="r-role" placeholder="Business coach, founder of..." />
+        </div>
+        <div class="field-group">
+          <label>Your experience</label>
+          <textarea id="r-body" placeholder="What has Find A Podcast helped you with? What results have you seen?" required></textarea>
+        </div>
+        <p class="error-msg" id="err-msg">Please fill in your name, experience, and a star rating before submitting.</p>
+        <button type="submit" class="btn" id="submit-btn">Submit my review</button>
+      </form>
+    </div>
+
+    <div class="success" id="success-view">
+      <div class="success-icon">&#127881;</div>
+      <h2>Thank you so much.</h2>
+      <p>Your review means the world to us. We read every single one and use them to keep improving the product for you.</p>
+    </div>
+  </div>
+
+  <script>
+    // Star rating
+    const stars = document.querySelectorAll('.star');
+    const ratingInput = document.getElementById('rating-val');
+    let selectedRating = 0;
+
+    stars.forEach(star => {
+      star.addEventListener('mouseover', () => {
+        const v = parseInt(star.dataset.v);
+        stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.v) <= v));
+      });
+      star.addEventListener('mouseout', () => {
+        stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.v) <= selectedRating));
+      });
+      star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.v);
+        ratingInput.value = selectedRating;
+        stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.v) <= selectedRating));
+      });
+    });
+
+    document.getElementById('review-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name   = document.getElementById('r-name').value.trim();
+      const role   = document.getElementById('r-role').value.trim();
+      const body   = document.getElementById('r-body').value.trim();
+      const rating = parseInt(ratingInput.value) || 0;
+      const errEl  = document.getElementById('err-msg');
+
+      if (!name || !body || !rating) {
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      try {
+        const res  = await fetch('/api/review', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ name, role, body, rating }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('form-view').style.display  = 'none';
+          document.getElementById('success-view').style.display = 'block';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Submit my review';
+          errEl.textContent = data.error || 'Something went wrong. Please try again.';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Submit my review';
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

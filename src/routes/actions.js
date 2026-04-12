@@ -189,7 +189,12 @@ router.post('/send', async (req, res) => {
             await supabase.from('podcast_matches').update({ gmail_thread_id: sentMsg.threadId }).eq('id', matchId);
           }
         } else {
-          logger.warn('No draft to send — no contact email or no email body', { matchId });
+          const contactEmail = match.podcasts?.contact_email || null;
+          if (!contactEmail?.includes('@')) {
+            return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
+          }
+          logger.warn('No draft to send — email body missing', { matchId });
+          return res.status(400).json({ success: false, error: 'Pitch email not ready. Write your pitch first then try again.' });
         }
       } catch (gmailErr) {
         logger.warn('Gmail send failed', { matchId, error: gmailErr.message });
@@ -213,6 +218,40 @@ router.post('/send', async (req, res) => {
     return res.json({ success: true, match: updated });
   } catch (err) {
     logger.error('Send route error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/send-thankyou
+ * Sends a thank you email via Gmail without changing match status (stays 'appeared')
+ */
+router.post('/send-thankyou', async (req, res) => {
+  const { matchId, subject, body } = req.body;
+  if (!matchId || !subject || !body) return res.status(400).json({ success: false, error: 'matchId, subject, and body are required.' });
+
+  try {
+    const { data: match, error: matchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(contact_email), clients(gmail_refresh_token, name)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (matchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+    if (!match.clients?.gmail_refresh_token) return res.status(400).json({ success: false, error: 'Gmail not connected. Connect your Gmail account first to send emails.' });
+
+    const contactEmail = match.podcasts?.contact_email || null;
+    if (!contactEmail?.includes('@')) return res.status(400).json({ success: false, error: 'No contact email found for this podcast.' });
+
+    const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject, body, buildLinkRow(match.clients)).catch(() => null);
+    if (!draftId) return res.status(500).json({ success: false, error: 'Could not create draft. Try again.' });
+
+    await sendDraft(match.clients.gmail_refresh_token, draftId);
+    logger.info('Thank you email sent', { matchId });
+    return res.json({ success: true });
+  } catch (err) {
+    logger.error('Send thank you error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
   }
 });

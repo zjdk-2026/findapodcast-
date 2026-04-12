@@ -48,6 +48,102 @@ const BOOKING_PATH_KEYWORDS = ['book', 'schedule', 'calendly', 'typeform', 'acui
 
 const FETCH_TIMEOUT_MS = 12000;
 
+// ── Social URL validation ─────────────────────────────────────────────
+// Rejects share dialogs, intent URLs, post links, hashtag pages, ads pages,
+// and any URL that is not an actual profile / page handle.
+// Returns a clean canonical URL (no query params, no fragments) or null.
+
+// Known non-profile subdomains
+const SOCIAL_BAD_SUBDOMAINS = ['business.', 'ads.', 'about.', 'help.', 'developer.', 'developers.', 'newsroom.', 'careers.', 'investor.'];
+
+// Blocked path segments — matched at segment boundaries only (never as username prefixes).
+// e.g. '/intent' blocks 'twitter.com/intent/tweet' but NOT 'twitter.com/intentional_host'
+const SOCIAL_BLOCKED_SEGMENTS = new Set([
+  'intent', 'sharer', 'dialog', 'ads', 'login', 'signup', 'register',
+  'redirect', 'out', 'settings', 'notifications', 'direct',
+  'reel', 'reels', 'stories', 'explore', 'tags', 'p', 'tv',
+  'events', 'groups', 'jobs', 'learning', 'school',
+  'status', 'i', 'share', 'shareArticle', 'oauth', 'api',
+]);
+
+// Query-string patterns that indicate non-profile URLs (checked against raw URL)
+const SOCIAL_BLOCKED_QS = ['share?', 'shareArticle?', 'sharedby', 'intent/tweet', '?u=', '?url=', 'dialog/share'];
+
+function validateAndNormalizeSocialUrl(rawUrl, platform) {
+  if (!rawUrl) return null;
+  let url;
+  try { url = new URL(rawUrl); } catch { return null; }
+
+  const full  = rawUrl.toLowerCase();
+  const path  = url.pathname.toLowerCase();
+  const host  = url.hostname.toLowerCase();
+
+  // Reject bad subdomains
+  if (SOCIAL_BAD_SUBDOMAINS.some(s => host.startsWith(s))) return null;
+
+  // Reject known query-string patterns
+  if (SOCIAL_BLOCKED_QS.some(q => full.includes(q))) return null;
+
+  // Reject if any path segment matches a blocked word (segment-boundary-aware)
+  const segments = path.split('/').filter(Boolean);
+  if (segments.some(seg => SOCIAL_BLOCKED_SEGMENTS.has(seg))) return null;
+
+  // Platform-specific profile pattern validation
+  switch (platform) {
+    case 'instagram': {
+      // Must match instagram.com/{username} — username is alphanumeric + _ + .
+      if (!host.includes('instagram.com')) return null;
+      const match = path.match(/^\/([a-z0-9_.]{1,30})\/?$/);
+      if (!match) return null;
+      const username = match[1];
+      // Reject reserved Instagram paths
+      const reserved = ['accounts', 'explore', 'direct', 'reels', 'tv', 'ar', 'about', 'legal', 'privacy', 'safety', 'developer', 'blog', 'press', 'api', 'oauth'];
+      if (reserved.includes(username)) return null;
+      return `https://www.instagram.com/${username}/`;
+    }
+    case 'twitter': {
+      if (!host.includes('twitter.com') && !host.includes('x.com')) return null;
+      const match = path.match(/^\/([a-z0-9_]{1,15})\/?$/);
+      if (!match) return null;
+      const handle = match[1];
+      const reserved = ['home', 'explore', 'notifications', 'messages', 'settings', 'help', 'about', 'login', 'signup', 'tos', 'privacy', 'search', 'i', 'intent', 'share'];
+      if (reserved.includes(handle)) return null;
+      return `https://twitter.com/${handle}`;
+    }
+    case 'facebook': {
+      if (!host.includes('facebook.com')) return null;
+      // Accept /pagename, /pages/pagename/id, /profile.php?id=...
+      const validPage = /^\/(pages\/[^/]+\/[^/]+|profile\.php|[a-z0-9.]{3,})\/?$/i.test(path);
+      if (!validPage) return null;
+      const reserved = ['groups', 'events', 'watch', 'marketplace', 'gaming', 'live', 'ads', 'business', 'help', 'login', 'signup', 'notes', 'photos', 'videos'];
+      if (reserved.some(r => path.startsWith(`/${r}`))) return null;
+      // Reconstruct without tracking params — keep profile.php?id= if present
+      const clean = url.pathname.startsWith('/profile.php') && url.searchParams.get('id')
+        ? `https://www.facebook.com/profile.php?id=${url.searchParams.get('id')}`
+        : `https://www.facebook.com${url.pathname.replace(/\/$/, '')}`;
+      return clean;
+    }
+    case 'linkedin': {
+      if (!host.includes('linkedin.com')) return null;
+      // Only accept /company/{slug} or /in/{slug}
+      const match = path.match(/^\/(company|in)\/([a-z0-9\-_%.]{2,})\/?$/i);
+      if (!match) return null;
+      return `https://www.linkedin.com/${match[1]}/${match[2]}/`;
+    }
+    default:
+      return null;
+  }
+}
+
+// Helper: extract first valid social profile URL from a list of candidate hrefs
+function pickBestSocialUrl(hrefs, platform) {
+  for (const href of hrefs) {
+    const validated = validateAndNormalizeSocialUrl(href, platform);
+    if (validated) return validated;
+  }
+  return null;
+}
+
 /**
  * Fetch HTML from a URL with timeout. Returns null on failure.
  */
@@ -223,31 +319,30 @@ async function fetchRssFeed(rssUrl) {
     const desc = $('channel > description').first().text().trim();
     if (desc) result.description = desc;
 
-    // Social links from atom:link href attributes and text content
-    const socialPatterns = [
-      { key: 'instagram_url', pattern: 'instagram.com' },
-      { key: 'twitter_url',   pattern: 'twitter.com' },
-      { key: 'twitter_url',   pattern: 'x.com' },
-      { key: 'facebook_url',  pattern: 'facebook.com' },
-      { key: 'linkedin_page_url', pattern: 'linkedin.com' },
+    // Social links — collect all candidate URLs from atom:link and full XML scan,
+    // then validate each one. Only store confirmed profile URLs.
+    const socialScanPatterns = [
+      { key: 'instagram_url',    platform: 'instagram', domain: 'instagram.com' },
+      { key: 'twitter_url',      platform: 'twitter',   domain: 'twitter.com' },
+      { key: 'twitter_url',      platform: 'twitter',   domain: 'x.com' },
+      { key: 'facebook_url',     platform: 'facebook',  domain: 'facebook.com' },
+      { key: 'linkedin_page_url',platform: 'linkedin',  domain: 'linkedin.com' },
     ];
 
-    $('atom\\:link').each((_, el) => {
-      const href = ($(el).attr('href') || '').toLowerCase();
-      for (const { key, pattern } of socialPatterns) {
-        if (!result[key] && href.includes(pattern)) {
-          result[key] = $(el).attr('href');
-        }
-      }
-    });
+    // Collect all atom:link hrefs
+    const atomHrefs = [];
+    $('atom\\:link').each((_, el) => { const h = $(el).attr('href'); if (h) atomHrefs.push(h); });
 
-    // Also scan full XML text for social URLs
-    for (const { key, pattern } of socialPatterns) {
-      if (!result[key]) {
-        const regex = new RegExp(`https?://(?:www\\.)?${pattern.replace('.', '\\.')}[^\\s"'<>]+`, 'i');
-        const match = xml.match(regex);
-        if (match) result[key] = match[0];
-      }
+    for (const { key, platform, domain } of socialScanPatterns) {
+      if (result[key]) continue;
+      // From atom:link
+      const fromAtom = pickBestSocialUrl(atomHrefs.filter(h => h.toLowerCase().includes(domain)), platform);
+      if (fromAtom) { result[key] = fromAtom; continue; }
+      // From full XML regex scan — collect ALL matches first, then pick best
+      const regex = new RegExp(`https?://(?:[a-z0-9-]+\\.)?${domain.replace('.', '\\.')}[^\\s"'<>\\]]+`, 'gi');
+      const xmlMatches = [...(xml.matchAll(regex) || [])].map(m => m[0]);
+      const fromXml = pickBestSocialUrl(xmlMatches, platform);
+      if (fromXml) result[key] = fromXml;
     }
 
     // Total episode count from <itunes:episodeCount> or by counting <item> elements
@@ -329,21 +424,23 @@ async function enrichPodcast(podcastData) {
     const ltHtml = await fetchHtml(linkInBioUrl);
     if (ltHtml) {
       const $lt = cheerio.load(ltHtml);
-      $lt('a[href]').each((_, el) => {
-        const raw  = $lt(el).attr('href') || '';
-        const href = raw.toLowerCase();
-        if (!enriched.instagram_url && href.includes('instagram.com'))                        enriched.instagram_url    = raw;
-        if (!enriched.facebook_url  && href.includes('facebook.com'))                         enriched.facebook_url     = raw;
-        if (!enriched.twitter_url   && (href.includes('twitter.com') || href.includes('x.com'))) enriched.twitter_url  = raw;
-        if (!enriched.spotify_url   && href.includes('spotify.com/show'))                     enriched.spotify_url      = raw;
-        if (!enriched.apple_url     && href.includes('podcasts.apple.com'))                   enriched.apple_url        = raw;
-        if (!enriched.youtube_url   && href.includes('youtube.com'))                          enriched.youtube_url      = raw;
-        // First non-social, non-linktree HTTP link = real website
-        const SOCIAL_DOMAINS = ['instagram', 'facebook', 'twitter', 'x.com', 'youtube', 'tiktok', 'spotify', 'apple', 'linktr', 'linktree'];
-        if (!enriched.website && raw.startsWith('http') && !SOCIAL_DOMAINS.some(s => href.includes(s))) {
-          enriched.website = raw;
-        }
-      });
+      // Collect all hrefs first, then validate — avoids grabbing the first invalid one
+      const ltHrefs = [];
+      $lt('a[href]').each((_, el) => { const h = $lt(el).attr('href'); if (h) ltHrefs.push(h); });
+
+      if (!enriched.instagram_url) enriched.instagram_url = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram');
+      if (!enriched.facebook_url)  enriched.facebook_url  = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook');
+      if (!enriched.twitter_url)   enriched.twitter_url   = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter');
+      if (!enriched.spotify_url)   enriched.spotify_url   = ltHrefs.find(h => h.toLowerCase().includes('spotify.com/show')) || null;
+      if (!enriched.apple_url)     enriched.apple_url     = ltHrefs.find(h => h.toLowerCase().includes('podcasts.apple.com')) || null;
+      if (!enriched.youtube_url)   enriched.youtube_url   = ltHrefs.find(h => h.toLowerCase().includes('youtube.com')) || null;
+
+      // First non-social, non-linktree HTTP link = real website
+      const SOCIAL_DOMAINS = ['instagram', 'facebook', 'twitter', 'x.com', 'youtube', 'tiktok', 'spotify', 'apple', 'linktr', 'linktree'];
+      if (!enriched.website) {
+        const websiteHref = ltHrefs.find(h => h.startsWith('http') && !SOCIAL_DOMAINS.some(s => h.toLowerCase().includes(s)));
+        if (websiteHref) enriched.website = websiteHref;
+      }
       logger.debug('Link-in-bio enriched', { url: linkInBioUrl, foundWebsite: !!enriched.website });
     }
   }
@@ -425,18 +522,19 @@ async function enrichPodcast(podcastData) {
         enriched.contact_email = extractEmail(homepageHtml);
       }
 
-      // Extract social links from anchor hrefs
+      // Extract social links from anchor hrefs — collect ALL candidates, validate each
       const $home = cheerio.load(homepageHtml);
+      const homeHrefs = [];
       $home('a[href]').each((_, el) => {
-        const raw  = $home(el).attr('href') || '';
-        const href = raw.toLowerCase();
-        if (isOperatorOwned(href)) return; // skip operator-owned links
-        if (!enriched.facebook_url  && href.includes('facebook.com'))  enriched.facebook_url  = raw;
-        if (!enriched.twitter_url   && (href.includes('twitter.com') || href.includes('x.com'))) enriched.twitter_url = raw;
-        if (!enriched.instagram_url && href.includes('instagram.com')) enriched.instagram_url = raw;
-        if (!enriched.tiktok_url    && href.includes('tiktok.com'))    enriched.tiktok_url    = raw;
-        if (!enriched.linkedin_page_url && href.includes('linkedin.com')) enriched.linkedin_page_url = raw;
+        const raw = $home(el).attr('href') || '';
+        if (!isOperatorOwned(raw)) homeHrefs.push(raw);
       });
+
+      if (!enriched.instagram_url)    enriched.instagram_url    = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram');
+      if (!enriched.twitter_url)      enriched.twitter_url      = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter');
+      if (!enriched.facebook_url)     enriched.facebook_url     = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook');
+      if (!enriched.linkedin_page_url) enriched.linkedin_page_url = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com')), 'linkedin');
+      if (!enriched.tiktok_url)       enriched.tiktok_url       = homeHrefs.find(h => h.toLowerCase().includes('tiktok.com/')) || null;
 
       // Extract guest application URL
       if (!enriched.guest_application_url) {

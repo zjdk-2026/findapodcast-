@@ -248,12 +248,12 @@ function renderHeroSection() {
     <div class="hero-greeting">
       <div style="display:flex;align-items:center;gap:12px;">
         ${avatarHtml}
-        <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])} 👋</div>
+        <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}</div>
       </div>
       <div class="hero-greeting-sub">${subtitle}</div>
       ${lifetimeTotal > 0 ? `
         <div class="hero-lifetime-reach">
-          <span class="hero-lifetime-icon">🎙️</span>
+          <span class="hero-lifetime-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>
           Your voice has reached an estimated <strong>${formatNumber(lifetimeTotal)} people</strong> across ${airedMatches.length} episode${airedMatches.length !== 1 ? 's' : ''}
         </div>` : ''}
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
@@ -362,13 +362,16 @@ function showBookingCelebration(matchId) {
       <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">What happens next</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="font-size:16px;">📅</span> Confirm your recording date with the host
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);border-radius:6px;flex-shrink:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+          Confirm your recording date with the host
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="font-size:16px;">🎙️</span> Prep your best stories and talking points
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);border-radius:6px;flex-shrink:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>
+          Prep your best stories and talking points
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);">
-          <span style="font-size:16px;">✨</span> After it airs, mark it as Aired to unlock Content Boost
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);border-radius:6px;flex-shrink:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+          After it airs, mark it as Aired to unlock Content Boost
         </div>
       </div>
     </div>
@@ -519,13 +522,13 @@ function renderStats(stats) {
 
 // ── Score tooltips ────────────────────────────────────────────────────
 const SCORE_TOOLTIPS = {
-  'Relevance':   'How closely this show\'s topics match your niche and speaking angles.',
-  'Audience':    'The estimated size and quality of the show\'s listener base.',
-  'Recency':     'How recently the show published new episodes.',
-  'Reach':       'The show\'s overall footprint across platforms — YouTube subscribers, social following, listen score.',
-  'Contact':     'How easy it is to actually reach the host — email found, booking page, guest application form.',
-  'Brand Fit':   'How well your personal brand aligns with the show\'s tone and guest history.',
-  'Guest Qual.': 'The typical calibre of previous guests on this show.',
+  'Relevance':   'How well this show\'s topics line up with what you talk about and who you help.',
+  'Audience':    'Our best estimate of how many people are actually listening to this show.',
+  'Recency':     'Shows that publish regularly tend to be actively booking guests right now.',
+  'Reach':       'How big this show is across YouTube, social media and podcast platforms combined.',
+  'Contact':     'How easy it is to get in touch with the host. A direct email gets a much higher score than no contact info at all.',
+  'Brand Fit':   'How naturally you\'d fit in with the tone and guest style of this show.',
+  'Guest Qual.': 'The kind of guests this show typically features.',
 };
 
 // ── Score bar HTML ────────────────────────────────────────────────────
@@ -562,6 +565,42 @@ function isValidUrl(url) {
   try { new URL(url); return true; } catch { return false; }
 }
 
+// Client-side social profile URL validation — mirrors server-side rules in enrichment.js.
+// Protects against bad data already in the DB being displayed to users.
+const SOCIAL_BLOCKED_SEGMENTS_CLIENT = new Set([
+  'intent', 'sharer', 'dialog', 'ads', 'login', 'signup', 'register',
+  'redirect', 'out', 'settings', 'notifications', 'direct',
+  'reel', 'reels', 'stories', 'explore', 'tags', 'p', 'tv',
+  'events', 'groups', 'jobs', 'learning', 'school',
+  'status', 'i', 'share', 'oauth', 'api',
+]);
+const SOCIAL_BLOCKED_QS_CLIENT = ['share?', 'shareArticle?', 'sharedby', 'intent/tweet', '?u=', '?url=', 'dialog/share'];
+function isValidSocialProfile(url, platform) {
+  if (!url) return false;
+  let u;
+  try { u = new URL(url); } catch { return false; }
+  const full = url.toLowerCase();
+  const path = u.pathname.toLowerCase();
+  const host = u.hostname.toLowerCase();
+  // Reject known query-string share/intent patterns
+  if (SOCIAL_BLOCKED_QS_CLIENT.some(q => full.includes(q))) return false;
+  // Reject blocked path segments (segment-boundary-aware, not prefix match)
+  const segments = path.split('/').filter(Boolean);
+  if (segments.some(seg => SOCIAL_BLOCKED_SEGMENTS_CLIENT.has(seg))) return false;
+  switch (platform) {
+    case 'instagram':
+      return host.includes('instagram.com') && /^\/[a-z0-9_.]{1,30}\/?$/.test(path);
+    case 'twitter':
+      return (host.includes('twitter.com') || host.includes('x.com')) && /^\/[a-z0-9_]{1,15}\/?$/.test(path);
+    case 'facebook':
+      return host.includes('facebook.com') && !/\/(groups|events|watch|marketplace|gaming|live|ads|business|help|login)\b/.test(path);
+    case 'linkedin':
+      return host.includes('linkedin.com') && /^\/(company|in)\/[a-z0-9\-_%.]{2,}\/?$/i.test(path);
+    default:
+      return isValidUrl(url);
+  }
+}
+
 function contactChipsHtml(podcast) {
   const chips = [];
 
@@ -573,15 +612,14 @@ function contactChipsHtml(podcast) {
   // Single Website button (best available URL)
   const siteUrl = podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url;
   if (isValidUrl(siteUrl)) {
-    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener">🌐 Website</a>`);
+    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener">Website</a>`);
   }
 
-  // Social links — validated only
-  if (isValidUrl(podcast.instagram_url))     chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
-  if (isValidUrl(podcast.twitter_url))       chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
-  if (isValidUrl(podcast.linkedin_page_url)) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  else if (isValidUrl(podcast.linkedin_url)) chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (isValidUrl(podcast.facebook_url))      chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+  // Social links — validated with platform-specific profile rules
+  if (isValidSocialProfile(podcast.instagram_url, 'instagram'))                               chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (isValidSocialProfile(podcast.twitter_url, 'twitter'))                                   chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
+  if (isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin'))    chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (isValidSocialProfile(podcast.facebook_url, 'facebook'))                                 chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
   if (isValidUrl(podcast.tiktok_url))        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
   if (isValidUrl(podcast.youtube_url) && podcast.website) chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
 
@@ -660,24 +698,34 @@ function actionButtonsHtml(match) {
   const hasEmail = (match.email_subject_edited || match.email_subject) && (match.email_body_edited || match.email_body);
   const buttons  = [];
 
-  // Write Pitch Email button — opens inline panel
-  const pitchStatuses = ['new','dream','sent','followed_up','replied'];
+  // Write Pitch Email — only for new/replied, NOT dream/sent/followed_up
+  const pitchStatuses = ['new','replied'];
   if (pitchStatuses.includes(status)) {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
-    </button>`);
+    const hasEmail = !!podcast.contact_email;
+    if (hasEmail) {
+      buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
+      </button>`);
+    } else {
+      buttons.push(`<button class="btn btn-xs" style="background:#f8f8f8;color:#aaa;border:1.5px solid #e0e0e0;font-weight:600;cursor:pointer;" onclick="showNoEmailWarning('${id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
+      </button>`);
+    }
   }
 
-  // Social DM button — shown when no contact email but social profiles exist
-  const hasSocial = podcast.instagram_url || podcast.twitter_url || podcast.linkedin_page_url || podcast.linkedin_url;
-  if (!podcast.contact_email && hasSocial && pitchStatuses.includes(status)) {
+  // Social DM button — shown when no contact email but validated social profiles exist
+  const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
+                    isValidSocialProfile(podcast.twitter_url, 'twitter') ||
+                    isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
+                    isValidSocialProfile(podcast.facebook_url, 'facebook');
+  if (hasSocial && pitchStatuses.includes(status)) {
     buttons.push(`<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="toggleSocialDM('${id}')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>DM Template
     </button>`);
   }
 
   if (status === 'appeared') {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="openEmailModal('${id}')">
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleThankYouPanel('${id}')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Send a Thank You
     </button>`);
   }
@@ -686,19 +734,22 @@ function actionButtonsHtml(match) {
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">Add to Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-action-send btn-xs" onclick="sendMatch('${id}')">Send via Gmail</button>`);
     buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'sent') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="showFollowUpModal('${id}')">Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Send Follow Up</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'followed_up') {
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Send Follow Up</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
   } else if (status === 'booked') {
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email
+    </button>`);
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">Mark as Aired</button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
     buttons.push(contentBoostButton(match));
@@ -915,11 +966,11 @@ function renderMatchCard(match) {
         <div class="card-row-links" onclick="event.stopPropagation()">
           ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
           ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
-          ${isValidUrl(podcast.instagram_url) ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
-          ${isValidUrl(podcast.twitter_url) ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
-          ${isValidUrl(podcast.linkedin_page_url || podcast.linkedin_url) ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+          ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
+          ${isValidSocialProfile(podcast.twitter_url, 'twitter') ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
+          ${isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
           ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
-          ${(podcast.booking_page_url && podcast.booking_page_url.includes('facebook.com')) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
+          ${isValidSocialProfile(podcast.facebook_url, 'facebook') ? `<a class="card-link-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
         </div>
       </div>
       <div class="card-row-right">
@@ -990,7 +1041,7 @@ function renderMatchCard(match) {
     </div><!-- /.card-expanded -->
 
     <!-- Inline pitch panel -->
-    ${['new','dream','sent','followed_up','replied'].includes(match.status) ? `
+    ${['new','sent','followed_up','replied','booked'].includes(match.status) ? `
     <div class="inline-pitch-panel" id="pitch-panel-${esc(match.id)}">
       <div class="inline-pitch-header">
         <span class="inline-pitch-title">
@@ -1013,8 +1064,59 @@ function renderMatchCard(match) {
       <div class="pitch-preview-strip" id="pitch-preview-${esc(match.id)}"></div>
       <div class="inline-pitch-actions">
         <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
-        <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send via Gmail</button>
+        <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send</button>
         ${['new','dream'].includes(match.status) ? `<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${esc(match.id)}')">I Sent It Myself</button>` : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Inline follow-up panel -->
+    ${['sent','followed_up'].includes(match.status) ? `
+    <div class="inline-pitch-panel" id="followup-panel-${esc(match.id)}">
+      <div class="inline-pitch-header">
+        <span class="inline-pitch-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Follow Up Email
+        </span>
+        <button class="inline-pitch-close" onclick="toggleFollowUpPanel('${esc(match.id)}')" title="Close">&#x2715;</button>
+      </div>
+      <select id="followup-seq-${esc(match.id)}" class="inline-pitch-field" style="cursor:pointer;" onchange="applyFollowUpSequenceInline('${esc(match.id)}')">
+        <option value="custom">Custom message…</option>
+        <option value="followup1">Follow-up 1 — Quick check-in</option>
+        <option value="followup2">Follow-up 2 — Add value angle</option>
+        <option value="followup3">Follow-up 3 — Last note</option>
+      </select>
+      <div class="inline-field-group">
+        <label class="inline-field-label">Subject</label>
+        <input id="followup-subj-${esc(match.id)}" type="text" class="inline-pitch-field inline-subject-field" placeholder="Subject line…" />
+      </div>
+      <div class="inline-field-group">
+        <label class="inline-field-label">Message</label>
+        <textarea id="followup-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your follow-up message…"></textarea>
+      </div>
+      <div class="inline-pitch-actions">
+        <button class="btn btn-xs" id="followup-rewrite-btn-${esc(match.id)}" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteFollowUp('${esc(match.id)}')">Generate</button>
+        <button class="btn btn-action-followup btn-xs" id="followup-send-btn-${esc(match.id)}" onclick="sendFollowUpFromPanel('${esc(match.id)}')">Send Follow Up</button>
+      </div>
+    </div>` : ''}
+
+    <!-- Inline thank you panel -->
+    ${match.status === 'appeared' ? `
+    <div class="inline-pitch-panel" id="thankyou-panel-${esc(match.id)}">
+      <div class="inline-pitch-header">
+        <span class="inline-pitch-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Thank You Email
+        </span>
+        <button class="inline-pitch-close" onclick="toggleThankYouPanel('${esc(match.id)}')" title="Close">&#x2715;</button>
+      </div>
+      <div class="inline-field-group">
+        <label class="inline-field-label">Subject</label>
+        <input id="thankyou-subj-${esc(match.id)}" type="text" class="inline-pitch-field inline-subject-field" placeholder="Subject line…" />
+      </div>
+      <div class="inline-field-group">
+        <label class="inline-field-label">Message</label>
+        <textarea id="thankyou-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your thank you message…"></textarea>
+      </div>
+      <div class="inline-pitch-actions">
+        <button class="btn btn-action-send btn-xs" onclick="sendThankYouFromPanel('${esc(match.id)}')">Send</button>
       </div>
     </div>` : ''}
 
@@ -1022,9 +1124,10 @@ function renderMatchCard(match) {
     ${(() => {
       const p = match.podcasts || {};
       const platforms = [];
-      if (p.instagram_url)                        platforms.push({ label: 'Instagram',  url: p.instagram_url });
-      if (p.twitter_url)                          platforms.push({ label: 'Twitter/X',  url: p.twitter_url });
-      if (p.linkedin_page_url || p.linkedin_url)  platforms.push({ label: 'LinkedIn',   url: p.linkedin_page_url || p.linkedin_url });
+      if (isValidSocialProfile(p.instagram_url, 'instagram'))                               platforms.push({ label: 'Instagram', url: p.instagram_url });
+      if (isValidSocialProfile(p.twitter_url, 'twitter'))                                   platforms.push({ label: 'Twitter/X', url: p.twitter_url });
+      if (isValidSocialProfile(p.linkedin_page_url || p.linkedin_url, 'linkedin'))          platforms.push({ label: 'LinkedIn',  url: p.linkedin_page_url || p.linkedin_url });
+      if (isValidSocialProfile(p.facebook_url, 'facebook'))                                 platforms.push({ label: 'Facebook',  url: p.facebook_url });
       if (!platforms.length) return '';
       const platformBtns = platforms.map(pl =>
         `<a href="${esc(pl.url)}" target="_blank" rel="noopener" class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;text-decoration:none;">Open ${esc(pl.label)}</a>`
@@ -1032,9 +1135,10 @@ function renderMatchCard(match) {
       return `
     <div class="social-dm-panel" id="dm-panel-${esc(match.id)}">
       <div class="social-dm-header">DM Template — copy and send on social</div>
-      <div class="social-dm-script" id="dm-script-${esc(match.id)}">${esc(buildDMScriptFromMatch(match))}</div>
+      <textarea class="social-dm-script" id="dm-script-${esc(match.id)}" style="width:100%;box-sizing:border-box;resize:vertical;min-height:120px;font-family:inherit;font-size:13px;background:transparent;border:none;outline:none;color:inherit;line-height:1.6;">${esc(buildDMScriptFromMatch(match))}</textarea>
       <div class="social-dm-platforms">
         <button class="btn btn-xs" style="background:#6366f1;color:#fff;font-weight:600;border:none;" onclick="copyDMScript('${esc(match.id)}')">Copy DM</button>
+        <button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" id="dm-regen-btn-${esc(match.id)}" onclick="regenerateDMScript('${esc(match.id)}')">Regenerate</button>
         ${platformBtns}
       </div>
     </div>`;
@@ -1155,15 +1259,6 @@ function renderDashboard(data) {
   state.stats   = stats  || {};
 
   // Show reply badge — only for replied matches not yet seen by user
-  const seenKey = `seen_replied_${state.token}`;
-  const seenIds = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
-  const unseenReplied = (matches || []).filter(m => m.status === 'replied' && !seenIds.has(m.id));
-  const badge = document.getElementById('reply-badge');
-  if (badge) {
-    if (unseenReplied.length > 0) { badge.textContent = unseenReplied.length; badge.style.display = 'inline-flex'; }
-    else { badge.style.display = 'none'; }
-  }
-
   // Client header
   const clientNameEl = $('client-name');
   const clientSubEl  = $('client-subtitle');
@@ -1385,16 +1480,23 @@ function updateStatBadges() {
   // Update tab count badges
   const tabCounts = {};
   m.forEach((x) => { tabCounts[x.status] = (tabCounts[x.status] || 0) + 1; });
+  const seenKey2 = `seen_replied_${state.token}`;
+  const seenIds2 = new Set(JSON.parse(localStorage.getItem(seenKey2) || '[]'));
+  const unseenRepliedCount = m.filter(x => x.status === 'replied' && !seenIds2.has(x.id)).length;
   const tabs = $('filter-tabs');
   if (tabs) {
     tabs.querySelectorAll('.filter-tab').forEach((t) => {
       const st = t.dataset.status;
-      // Remove old count badge (not the reply badge)
+      // Remove old count badge
       t.querySelectorAll('.tab-count').forEach((el) => el.remove());
       const cnt = tabCounts[st] || 0;
       if (cnt > 0) {
         const badge = document.createElement('span');
         badge.className = 'tab-count';
+        // Host Replied tab: use red/orange badge when there are unseen replies
+        if (st === 'replied' && unseenRepliedCount > 0) {
+          badge.style.cssText = 'background:#ef4444;color:#fff;';
+        }
         badge.textContent = cnt;
         t.appendChild(badge);
       }
@@ -1518,17 +1620,17 @@ async function dreamMatch(matchId) {
 window.dreamMatch = dreamMatch;
 
 async function doSendMatch(matchId) {
-  // Auto-save whatever is in the pitch editor before sending
-  const bodyEl    = $(`pitch-body-${matchId}`);
-  const subjectEl = $(`pitch-subject-select-${matchId}`);
-  if (bodyEl?.value.trim()) {
+  // Auto-save whatever is in the inline pitch editor before sending
+  const inlineBodyEl    = $(`inline-body-${matchId}`);
+  const inlineSubjectEl = $(`inline-subject-${matchId}`);
+  if (inlineBodyEl?.value.trim()) {
     try {
-      await apiPost('/api/save-pitch', {
+      await apiPost('/api/email/edit', {
         matchId,
-        subject: getSubjectValue(matchId),
-        body:    bodyEl.value.trim(),
+        subject: inlineSubjectEl?.value.trim() || '',
+        body:    inlineBodyEl.value.trim(),
       });
-      updateMatchInState(matchId, { email_subject: getSubjectValue(matchId), email_body: bodyEl.value.trim() });
+      updateMatchInState(matchId, { email_subject_edited: inlineSubjectEl?.value.trim() || '', email_body_edited: inlineBodyEl.value.trim() });
     } catch { /* non-fatal — proceed to send anyway */ }
   }
   // Guard: don't send if there's no email content — would send a blank email
@@ -1728,8 +1830,8 @@ async function markReplied(matchId) {
     if (data.success) {
       updateMatchInState(matchId, { status: 'replied' });
       updateCard(matchId);
-      renderStatsStrip();
-      showToast('💬 Moved to Host Replied!', 'success');
+      updateStatBadges();
+      showToast('Moved to Host Replied.', 'success');
     } else {
       showToast(data.error || 'Failed.', 'error');
     }
@@ -1795,7 +1897,7 @@ async function generatePitch(matchId, { clearFirst = false } = {}) {
     bodyEl.value       = '';
     if (subjectEl) subjectEl.value = '';
   }
-  bodyEl.placeholder = '✨ Writing your pitch…';
+  bodyEl.placeholder = 'Writing your pitch…';
   bodyEl.disabled    = true;
   if (rewriteBtn) { rewriteBtn.disabled = true; rewriteBtn.textContent = 'Writing…'; }
 
@@ -1959,23 +2061,45 @@ async function saveNote(matchId) {
 
 // ── Inline pitch panel ────────────────────────────────────────────────
 
+function expandCard(matchId) {
+  const card = $(`card-${matchId}`);
+  if (card && card.getAttribute('data-expanded') !== 'true') {
+    card.setAttribute('data-expanded', 'true');
+  }
+}
+
 function toggleInlinePitch(matchId) {
   const panel = $(`pitch-panel-${matchId}`);
   if (!panel) return;
-  const isOpen = panel.style.display !== 'none';
+  const isOpen = panel.style.display === 'block';
   if (isOpen) { panel.style.display = 'none'; return; }
-  // Close any other open panels first
-  document.querySelectorAll('.inline-pitch-panel').forEach(p => { p.style.display = 'none'; });
+  expandCard(matchId);
+  document.querySelectorAll('.inline-pitch-panel, .social-dm-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
   panel.style.display = 'block';
   populateInlinePitch(matchId);
 }
 window.toggleInlinePitch = toggleInlinePitch;
 
+function sanitizePitchFields(subject, body) {
+  // Detect if body is a raw JSON string (AI response wasn't parsed before saving)
+  if (body && body.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed.body) {
+        return { subject: parsed.subject || subject, body: parsed.body };
+      }
+    } catch {}
+  }
+  return { subject, body };
+}
+
 function populateInlinePitch(matchId) {
   const match = state.matches.find(m => m.id === matchId);
   if (!match) return;
-  const currentSubject = match.email_subject_edited || match.email_subject || '';
-  const currentBody    = match.email_body_edited    || match.email_body    || '';
+  let currentSubject = match.email_subject_edited || match.email_subject || '';
+  let currentBody    = match.email_body_edited    || match.email_body    || '';
+  // Auto-heal corrupted JSON bodies before displaying
+  ({ subject: currentSubject, body: currentBody } = sanitizePitchFields(currentSubject, currentBody));
   const isFallback = !currentBody || currentBody.includes('[Write your pitch here') || currentBody.includes("I'd love to be a guest");
   const subjEl   = $(`inline-subject-${matchId}`);
   const bodyEl   = $(`inline-body-${matchId}`);
@@ -2091,24 +2215,133 @@ async function markAsPitchedFromInline(matchId) {
 }
 window.markAsPitchedFromInline = markAsPitchedFromInline;
 
+// ── Inline thank you panel ────────────────────────────────────────
+
+function toggleThankYouPanel(matchId) {
+  const panel = $(`thankyou-panel-${matchId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display === 'block';
+  if (isOpen) { panel.style.display = 'none'; return; }
+  document.querySelectorAll('.inline-pitch-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
+  panel.style.display = 'block';
+  populateThankYouPanel(matchId);
+}
+window.toggleThankYouPanel = toggleThankYouPanel;
+
+function populateThankYouPanel(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const podcastTitle = match.podcasts?.title || 'your show';
+  const hostName = match.podcasts?.host_name || 'there';
+  const firstName = hostName.split(' ')[0];
+  const subjEl = $(`thankyou-subj-${matchId}`);
+  const bodyEl = $(`thankyou-body-${matchId}`);
+  if (subjEl && !subjEl.value) {
+    subjEl.value = `Thank you — ${podcastTitle}`;
+  }
+  if (bodyEl && !bodyEl.value) {
+    bodyEl.value = `Hi ${firstName},\n\nJust wanted to say thank you for having me on ${podcastTitle}. I really enjoyed the conversation and hope it brings real value to your audience.\n\nIf you ever need a guest again or know someone I should connect with, I'd love to stay in touch.\n\nThanks again,`;
+  }
+}
+
+async function sendThankYouFromPanel(matchId) {
+  const subjEl = $(`thankyou-subj-${matchId}`);
+  const bodyEl = $(`thankyou-body-${matchId}`);
+  const subject = subjEl?.value?.trim() || '';
+  const body    = bodyEl?.value?.trim() || '';
+  if (!subject || !body) { showToast('Add a subject and message first.', 'error'); return; }
+  const btn = document.querySelector(`#thankyou-panel-${matchId} .btn-action-send`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const data = await apiPost('/api/send-thankyou', { matchId, subject, body });
+    if (data.success) {
+      showToast('Thank you sent.', 'success');
+      toggleThankYouPanel(matchId);
+    } else {
+      showToast(data.error || 'Could not send.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Send'; } }
+}
+window.sendThankYouFromPanel = sendThankYouFromPanel;
+
 // ── Social DM panel ──────────────────────────────────────────────
+
+function showNoEmailWarning(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  const hasSocial = match && (
+    isValidSocialProfile(match.podcasts?.instagram_url, 'instagram') ||
+    isValidSocialProfile(match.podcasts?.twitter_url, 'twitter') ||
+    isValidSocialProfile(match.podcasts?.linkedin_page_url || match.podcasts?.linkedin_url, 'linkedin') ||
+    isValidSocialProfile(match.podcasts?.facebook_url, 'facebook')
+  );
+  // Show modal instead of toast so the message is clear
+  const existing = $('no-email-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'no-email-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border-radius:16px;padding:28px 28px 24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">No email found</h3>
+      </div>
+      <p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6;">We couldn't find a contact email for this podcast. ${hasSocial ? 'Try reaching out via the <strong>DM Template</strong> instead — it uses their social profiles.' : 'Try finding their contact info on their website directly.'}</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('no-email-modal').remove()">Close</button>
+        ${hasSocial ? `<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="document.getElementById('no-email-modal').remove();toggleSocialDM('${matchId}')">Open DM Template</button>` : ''}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+window.showNoEmailWarning = showNoEmailWarning;
 
 function toggleSocialDM(matchId) {
   const panel = $(`dm-panel-${matchId}`);
   if (!panel) return;
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  const isOpen = panel.style.display === 'block';
+  if (isOpen) { panel.style.display = 'none'; return; }
+  expandCard(matchId);
+  document.querySelectorAll('.inline-pitch-panel, .social-dm-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
+  panel.style.display = 'block';
 }
 window.toggleSocialDM = toggleSocialDM;
 
 function buildDMScriptFromMatch(match) {
   const podcast  = match.podcasts || {};
-  const showName = podcast.title || 'your show';
   const name     = state.client?.name || '';
-  const angle    = match.best_pitch_angle || '';
-  const hook     = angle
-    ? angle.replace(/^Lead with /i, '').replace(/\.$/, '').slice(0, 120)
-    : `sharing my experience on this topic with your audience`;
-  return `Hi ${showName},\n\nI think there's a compelling episode in ${hook}.\n\nWould you be open to a quick conversation about having me on as a guest?\n\n${name}`;
+
+  // Shorten show name — take only what's before the first pipe, colon, or em dash
+  const fullTitle = podcast.title || 'your show';
+  const shortName = fullTitle.split(/[|:—–]/, 1)[0].trim() || fullTitle;
+
+  const angle = match.best_pitch_angle || '';
+
+  // Detect internal coaching notes that should NEVER appear in outreach
+  const isInternalNote = /skip this|not a fit|focus your outreach|pass on this|avoid this|outreach budget|different demographic|cross-promotional/i.test(angle);
+
+  let body;
+  if (angle && !isInternalNote) {
+    // Strip leading directive phrases so the angle reads naturally
+    const clean = angle
+      .replace(/^(Lead with\s+a?\s*|Position yourself[^—]*?—\s*|Start with\s+|Use\s+)/i, '')
+      .replace(/\.$/, '')
+      .slice(0, 140);
+    const whyFit = match.why_you_fit || '';
+    // Pull a short observation from why_you_fit if available, otherwise use angle
+    const observation = whyFit
+      ? whyFit.split('.')[0].replace(/^Your\s+/i, 'Your ').slice(0, 120)
+      : `your audience seems to be exactly who I speak to`;
+    body = `${observation}.\n\nI think there could be a strong episode angle around ${clean.charAt(0).toLowerCase() + clean.slice(1)}.`;
+  } else {
+    body = `Your show's audience looks like exactly the kind of people I work with, and I think I could bring real value to your listeners.`;
+  }
+
+  return `Hi ${shortName},\n\n${body}\n\nWould you be open to a quick conversation to see if there's a fit? Even 15 minutes works.\n\n${name}`;
 }
 
 function buildDMScript(matchId) {
@@ -2118,12 +2351,34 @@ function buildDMScript(matchId) {
 }
 
 function copyDMScript(matchId) {
-  const script = buildDMScript(matchId);
+  const textarea = $(`dm-script-${matchId}`);
+  const script = textarea ? textarea.value : buildDMScript(matchId);
   navigator.clipboard.writeText(script)
     .then(() => showToast('DM copied to clipboard.', 'success'))
     .catch(() => showToast('Could not copy — please copy manually.', 'error'));
 }
 window.copyDMScript = copyDMScript;
+
+async function regenerateDMScript(matchId) {
+  const btn = $(`dm-regen-btn-${matchId}`);
+  const textarea = $(`dm-script-${matchId}`);
+  if (!textarea) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Regenerating…'; }
+  try {
+    // Re-fetch latest match data (in case why_you_fit/best_pitch_angle changed)
+    const data = await apiPost('/api/generate-pitch', { matchId });
+    if (data.subject || data.body) {
+      // Update state with fresh angle data if returned
+      if (data.body) updateMatchInState(matchId, { email_body_edited: data.body, email_subject_edited: data.subject });
+    }
+    // Rebuild DM from updated state
+    const match = state.matches.find(m => m.id === matchId);
+    if (match) textarea.value = buildDMScriptFromMatch(match);
+    showToast('DM refreshed.', 'success');
+  } catch { showToast('Could not regenerate. Try again.', 'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Regenerate'; } }
+}
+window.regenerateDMScript = regenerateDMScript;
 window.buildDMScriptFromMatch = buildDMScriptFromMatch;
 
 // ── Email modal ───────────────────────────────────────────────────────
@@ -2271,14 +2526,13 @@ function openContactModal(matchId) {
   const titleEl = $('contact-modal-title');
   if (titleEl) titleEl.textContent = p.title || 'Podcast Details';
 
-  // Build social links
+  // Build social links — validated profiles only
   const socialLinks = [];
-  if (p.instagram_url)     socialLinks.push(`<a href="${esc(p.instagram_url)}" target="_blank" class="social-link">Instagram</a>`);
-  if (p.twitter_url)       socialLinks.push(`<a href="${esc(p.twitter_url)}" target="_blank" class="social-link">Twitter/X</a>`);
-  if (p.facebook_url)      socialLinks.push(`<a href="${esc(p.facebook_url)}" target="_blank" class="social-link">Facebook</a>`);
-  if (p.linkedin_page_url) socialLinks.push(`<a href="${esc(p.linkedin_page_url)}" target="_blank" class="social-link">LinkedIn</a>`);
-  if (p.linkedin_url)      socialLinks.push(`<a href="${esc(p.linkedin_url)}" target="_blank" class="social-link">LinkedIn</a>`);
-  if (p.tiktok_url)        socialLinks.push(`<a href="${esc(p.tiktok_url)}" target="_blank" class="social-link">TikTok</a>`);
+  if (isValidSocialProfile(p.instagram_url, 'instagram'))                            socialLinks.push(`<a href="${esc(p.instagram_url)}" target="_blank" class="social-link">Instagram</a>`);
+  if (isValidSocialProfile(p.twitter_url, 'twitter'))                                socialLinks.push(`<a href="${esc(p.twitter_url)}" target="_blank" class="social-link">Twitter/X</a>`);
+  if (isValidSocialProfile(p.facebook_url, 'facebook'))                              socialLinks.push(`<a href="${esc(p.facebook_url)}" target="_blank" class="social-link">Facebook</a>`);
+  if (isValidSocialProfile(p.linkedin_page_url || p.linkedin_url, 'linkedin'))       socialLinks.push(`<a href="${esc(p.linkedin_page_url || p.linkedin_url)}" target="_blank" class="social-link">LinkedIn</a>`);
+  if (isValidUrl(p.tiktok_url))                                                       socialLinks.push(`<a href="${esc(p.tiktok_url)}" target="_blank" class="social-link">TikTok</a>`);
 
   const scoreBreakdown = `
     <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">
@@ -2791,11 +3045,11 @@ function initFilterTabs() {
     state.filter = tab.dataset.status;
     // Clear reply badge when Host Replied tab is clicked — persist seen IDs
     if (tab.dataset.status === 'replied') {
-      const badge = document.getElementById('reply-badge');
-      if (badge) badge.style.display = 'none';
+      // Mark all replied as seen — tab-count badge will go back to normal grey
       const seenKey = `seen_replied_${state.token}`;
       const allRepliedIds = state.matches.filter(m => m.status === 'replied').map(m => m.id);
       localStorage.setItem(seenKey, JSON.stringify(allRepliedIds));
+      updateStatBadges(); // re-render badges so replied count goes grey
     }
     renderGrid();
   });
@@ -2936,7 +3190,7 @@ function showShareModal(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   const podcastName = match.podcasts?.title || 'a podcast';
-  const text = `Just landed a podcast appearance on ${podcastName} 🎙️ Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.io #podcast #entrepreneur #personalbrand`;
+  const text = `Just landed a podcast appearance on ${podcastName}. Excited to share my story with their audience. Find A Podcast made it happen → findapodcast.io #podcast #entrepreneur #personalbrand`;
   const textarea = $('share-text');
   if (textarea) textarea.value = text;
   const m = $('share-modal');
@@ -3002,8 +3256,104 @@ function applyFollowUpSequence() {
 }
 window.applyFollowUpSequence = applyFollowUpSequence;
 
-// ── Follow-up modal ───────────────────────────────────────────────────
+// ── Inline follow-up panel ────────────────────────────────────────────
+function toggleFollowUpPanel(matchId) {
+  const panel = $(`followup-panel-${matchId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display === 'block';
+  if (isOpen) { panel.style.display = 'none'; return; }
+  expandCard(matchId);
+  document.querySelectorAll('.inline-pitch-panel, .social-dm-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
+  panel.style.display = 'block';
+  populateFollowUpPanel(matchId);
+}
+window.toggleFollowUpPanel = toggleFollowUpPanel;
+
+function populateFollowUpPanel(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const saved = localStorage.getItem(`followup_template_${matchId}`);
+  let subject, body;
+  if (saved) { try { ({ subject, body } = JSON.parse(saved)); } catch { subject = null; } }
+  const subjEl = $(`followup-subj-${matchId}`);
+  const bodyEl = $(`followup-body-${matchId}`);
+  if (subject && body) {
+    if (subjEl) subjEl.value = subject;
+    if (bodyEl) bodyEl.value = body;
+  } else {
+    // No saved content — auto-generate
+    setTimeout(() => rewriteFollowUp(matchId), 100);
+  }
+}
+
+async function rewriteFollowUp(matchId) {
+  const btn    = $(`followup-rewrite-btn-${matchId}`);
+  const subjEl = $(`followup-subj-${matchId}`);
+  const bodyEl = $(`followup-body-${matchId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Writing…'; }
+  if (bodyEl) { bodyEl.placeholder = 'Writing your follow-up…'; bodyEl.disabled = true; }
+  try {
+    const data = await apiPost('/api/generate-followup', { matchId });
+    if (data.success && data.body) {
+      if (subjEl) subjEl.value = data.subject || '';
+      if (bodyEl) bodyEl.value = data.body;
+      showToast('Follow-up ready.', 'success');
+    } else {
+      showToast(data.error || 'Could not generate follow-up.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Generate'; }
+    if (bodyEl) { bodyEl.placeholder = 'Your follow-up message…'; bodyEl.disabled = false; }
+  }
+}
+window.rewriteFollowUp = rewriteFollowUp;
+
+function applyFollowUpSequenceInline(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  const podcastName = match?.podcasts?.title || 'the podcast';
+  const seq  = $(`followup-seq-${matchId}`)?.value;
+  if (!seq || seq === 'custom') return;
+  const preset = FOLLOWUP_SEQUENCES[seq];
+  if (!preset) return;
+  const subjEl = $(`followup-subj-${matchId}`);
+  const bodyEl = $(`followup-body-${matchId}`);
+  if (subjEl) subjEl.value = preset.subject(podcastName);
+  if (bodyEl) bodyEl.value = preset.body(podcastName);
+}
+window.applyFollowUpSequenceInline = applyFollowUpSequenceInline;
+
+async function sendFollowUpFromPanel(matchId) {
+  const subject = $(`followup-subj-${matchId}`)?.value.trim() || '';
+  const body    = $(`followup-body-${matchId}`)?.value.trim()  || '';
+  if (!body) { showToast('Write your follow-up message first.', 'error'); return; }
+  // Save to localStorage
+  localStorage.setItem(`followup_template_${matchId}`, JSON.stringify({ subject, body }));
+  const btn = $(`followup-send-btn-${matchId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Sending…'; }
+  try {
+    const data = await apiPost('/api/send-followup', { matchId, subject, body });
+    if (data.success) {
+      showToast(data.gmailSent ? 'Follow-up sent.' : 'Follow-up saved (Gmail not connected).', 'success');
+      updateMatchInState(matchId, { status: 'followed_up' });
+      updateStatBadges();
+      toggleFollowUpPanel(matchId);
+      switchToFilter('followed_up');
+    } else {
+      showToast(data.error || 'Send failed.', 'error');
+    }
+  } catch { showToast('Network error. Please try again.', 'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Send Follow Up'; } }
+}
+window.sendFollowUpFromPanel = sendFollowUpFromPanel;
+
+// ── Follow-up modal — redirected to inline panel ──────────────────────
 function showFollowUpModal(matchId) {
+  // Old modal replaced by inline panel — redirect silently
+  toggleFollowUpPanel(matchId);
+  return;
+  // eslint-disable-next-line no-unreachable
+  void matchId;
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   const podcastName = match.podcasts?.title || 'the podcast';
@@ -3281,13 +3631,7 @@ async function checkForReplies() {
     if (data.success && data.updated?.length) {
       data.updated.forEach((matchId) => updateMatchInState(matchId, { status: 'replied' }));
       renderGrid();
-      updateStatBadges();
-      // Show red badge on Host Replied tab
-      const badge = document.getElementById('reply-badge');
-      if (badge) {
-        badge.textContent = data.updated.length;
-        badge.style.display = 'inline-flex';
-      }
+      updateStatBadges(); // tab-count badge goes red automatically via unseenRepliedCount
       showToast(`A host has replied to your pitch. Head to Host Replied and lock in the booking.`, 'success');
       switchToFilter('replied');
     }
