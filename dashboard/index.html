@@ -166,6 +166,7 @@
           <button class="tab-pill filter-tab" data-status="dream">Wish List</button>
           <button class="tab-pill filter-tab" data-status="dismissed">Not a Fit</button>
           <button class="tab-pill filter-tab" data-status="content_boost" id="content-boost-tab" style="display:none;">Content Boost</button>
+          <button class="tab-pill" id="leaderboard-tab" onclick="showLeaderboardView()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;">Community</button>
         </div>
         <div class="filter-right">
           <label class="filter-label">
@@ -190,6 +191,27 @@
 
       <!-- Notification banner -->
       <div id="notification-banner" class="notification-banner" style="display:none;margin:12px 24px 0;max-width:1400px;margin-left:auto;margin-right:auto;"></div>
+
+      <!-- Community leaderboard view -->
+      <div id="leaderboard-view" style="display:none;padding:24px;max-width:1100px;margin:0 auto;">
+        <div id="leaderboard-card" style="display:none;">
+          <!-- Community member cards -->
+          <div style="margin-bottom:28px;">
+            <h2 style="font-size:18px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Community Members</h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px;">Members who've opted in to connect with the community.</p>
+            <div id="community-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+          </div>
+          <!-- Rankings table -->
+          <div style="background:var(--bg-card);border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden;">
+            <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border-subtle);">
+              <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin:0;">Rankings</h3>
+              <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">All active members, sorted by bookings.</p>
+            </div>
+            <div id="leaderboard-body"></div>
+          </div>
+        </div>
+        <div id="leaderboard-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--text-secondary);font-size:14px;">No community data yet.</div>
+      </div>
 
       <!-- Cards grid -->
       <main class="matches-grid" id="cards-grid">
@@ -400,6 +422,19 @@
           <label class="field-label">Email Signature</label>
           <textarea id="profile-signature" class="email-edit-field" rows="4" style="resize:vertical;font-family:inherit;" placeholder="e.g. Alex Ward&#10;Founder, AutomateMe&#10;alex@automatemy.email&#10;automatemy.com"></textarea>
           <p style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Appended to the bottom of every pitch email. Your social links above are automatically added as clickable hyperlinks below your signature. Note: HTML links in emails may increase the chance of landing in spam.</p>
+        </div>
+
+        <!-- Community opt-in -->
+        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px 18px;display:flex;align-items:flex-start;gap:14px;">
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-top:2px;">
+            <input type="checkbox" id="profile-share-community" style="opacity:0;width:0;height:0;" onchange="document.getElementById('community-toggle-track').style.background=this.checked?'#6366f1':'#d1d5db';document.getElementById('community-toggle-thumb').style.transform=this.checked?'translateX(20px)':'translateX(0)';" />
+            <span id="community-toggle-track" style="position:absolute;inset:0;background:#d1d5db;border-radius:999px;transition:background 0.2s;cursor:pointer;" onclick="document.getElementById('profile-share-community').click()"></span>
+            <span id="community-toggle-thumb" style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:transform 0.2s;pointer-events:none;"></span>
+          </label>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#4c1d95;">Show my profile in the community leaderboard</div>
+            <div style="font-size:12px;color:#6d28d9;margin-top:2px;line-height:1.5;">Your name, photo, social links, and stats will be visible to other members. Turn off at any time to go anonymous.</div>
+          </div>
         </div>
 
       </div>

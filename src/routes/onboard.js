@@ -526,6 +526,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'pitch_style', 'extra_links', 'email_signature',
     'photo_url', 'logo_url',
     'languages', 'geographies',
+    'share_with_community',
   ];
 
   const updates = {};

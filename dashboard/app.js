@@ -865,71 +865,123 @@ async function backgroundReEnrichAll() {
 // ── Leaderboard ───────────────────────────────────────────────────────
 let _leaderboardVisible = true;
 
+function showLeaderboardView() {
+  // Deactivate all filter tabs
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('leaderboard-tab')?.classList.add('active');
+  $('cards-grid').style.display = 'none';
+  $('leaderboard-view').style.display = '';
+  loadLeaderboard();
+}
+window.showLeaderboardView = showLeaderboardView;
+
+function hideLeaderboardView() {
+  $('leaderboard-view').style.display = 'none';
+  $('cards-grid').style.display = '';
+  document.getElementById('leaderboard-tab')?.classList.remove('active');
+}
+
 async function loadLeaderboard() {
-  const card = $('leaderboard-card');
-  const body = $('leaderboard-body');
-  if (!card || !body) return;
+  const card   = $('leaderboard-card');
+  const body   = $('leaderboard-body');
+  const grid   = $('community-members-grid');
+  const empty  = $('leaderboard-empty');
+  if (!card || !body || !grid) return;
 
   try {
-    const res  = await apiFetch(`/api/leaderboard`);
-    if (!res?.success || !res.rows?.length) return;
+    const res = await apiFetch('/api/leaderboard');
+    if (!res?.success) return;
 
-    const rows = res.rows;
-    const myRank = rows.find(r => r.is_me)?.rank;
+    const rows      = res.rows      || [];
+    const community = res.community || [];
 
-    // Only show top 10, but always include the user's own row if outside top 10
-    const top10  = rows.slice(0, 10);
-    const hasMe  = top10.some(r => r.is_me);
-    const meRow  = !hasMe ? rows.find(r => r.is_me) : null;
+    if (!rows.length) {
+      card.style.display  = 'none';
+      empty.style.display = '';
+      return;
+    }
 
-    // Medals go to top 3 by aired (appeared) count, regardless of overall rank
+    // ── Community member cards ────────────────────────────────────────
+    if (community.length) {
+      grid.innerHTML = community.map(m => {
+        const initials = (m.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const avatar   = m.photo_url
+          ? `<img src="${esc(m.photo_url)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid ${m.is_me ? '#6366f1' : '#e5e7eb'};" />`
+          : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;border:2px solid ${m.is_me ? '#6366f1' : 'transparent'};">${initials}</div>`;
+
+        const socials = [
+          m.website        && `<a href="${esc(m.website)}" target="_blank" rel="noopener" title="Website" style="color:#6366f1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`,
+          m.social_instagram && `<a href="${esc(m.social_instagram)}" target="_blank" rel="noopener" title="Instagram" style="color:#e1306c;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>`,
+          m.social_linkedin  && `<a href="${esc(m.social_linkedin)}" target="_blank" rel="noopener" title="LinkedIn" style="color:#0077b5;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>`,
+          m.social_twitter   && `<a href="${esc(m.social_twitter)}" target="_blank" rel="noopener" title="Twitter/X" style="color:#1da1f2;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>`,
+          m.social_facebook  && `<a href="${esc(m.social_facebook)}" target="_blank" rel="noopener" title="Facebook" style="color:#1877f2;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>`,
+        ].filter(Boolean).join('');
+
+        const statBadge = (val, label, color) => val > 0
+          ? `<span style="font-size:11px;font-weight:700;color:${color};background:${color}18;border-radius:6px;padding:2px 7px;">${val} ${label}</span>`
+          : '';
+
+        return `
+          <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
+            ${avatar}
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(m.display_name)}${m.is_me ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;">YOU</span>' : ''}</div>
+              ${m.title ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(m.title)}</div>` : ''}
+              ${m.business_name ? `<div style="font-size:11px;color:var(--text-tertiary);">${esc(m.business_name)}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+              ${statBadge(m.sent, 'Pitched', '#6366f1')}
+              ${statBadge(m.booked, 'Booked', '#f59e0b')}
+              ${statBadge(m.appeared, 'Aired', '#22c55e')}
+            </div>
+            ${socials ? `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">${socials}</div>` : ''}
+          </div>`;
+      }).join('');
+    } else {
+      grid.innerHTML = `<p style="font-size:13px;color:var(--text-secondary);grid-column:1/-1;">No members have opted in yet. Be the first — enable community sharing in your profile settings.</p>`;
+    }
+
+    // ── Rankings table ────────────────────────────────────────────────
+    const top10 = rows.slice(0, 10);
+    const hasMe = top10.some(r => r.is_me);
+    const meRow = !hasMe ? rows.find(r => r.is_me) : null;
+
     const medalMap = new Map();
     [...rows].sort((a, b) => b.appeared - a.appeared).slice(0, 3).forEach((r, i) => {
       if (r.appeared > 0) medalMap.set(r.rank, ['1st','2nd','3rd'][i]);
     });
 
     const renderRow = (r, divider = false) => {
-      const isMe   = r.is_me;
-      const medal  = medalMap.get(r.rank) || '';
+      const medal    = medalMap.get(r.rank) || '';
       const rankDisp = medal || `#${r.rank}`;
       return `
         ${divider ? `<div style="border-top:1px dashed var(--border-subtle,#eee);margin:4px 20px;"></div>` : ''}
         <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:9px 20px;gap:4px;
-          ${isMe ? 'background:linear-gradient(90deg,#f5f3ff,#ede9fe);border-left:3px solid #6366f1;' : 'border-left:3px solid transparent;'}
-          transition:background 0.15s;">
-          <div style="font-size:13px;font-weight:700;color:${medal ? '#f59e0b' : (isMe ? '#6366f1' : 'var(--text-secondary,#888)')};">${rankDisp}</div>
-          <div style="font-size:13px;font-weight:${isMe ? '700' : '500'};color:${isMe ? '#6366f1' : 'var(--text-primary,#1a1a1a)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-            ${esc(r.display_name)}${isMe ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
+          ${r.is_me ? 'background:linear-gradient(90deg,#f5f3ff,#ede9fe);border-left:3px solid #6366f1;' : 'border-left:3px solid transparent;'}">
+          <div style="font-size:13px;font-weight:700;color:${medal ? '#f59e0b' : (r.is_me ? '#6366f1' : 'var(--text-secondary)')};">${rankDisp}</div>
+          <div style="font-size:13px;font-weight:${r.is_me ? '700' : '500'};color:${r.is_me ? '#6366f1' : 'var(--text-primary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${esc(r.display_name)}${r.is_me ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
           </div>
-          <div style="text-align:center;">
-            ${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
-          </div>
-          <div style="text-align:center;">
-            ${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
-          </div>
-          <div style="text-align:center;">
-            ${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary,#bbb);">—</span>`}
-          </div>
+          <div style="text-align:center;">${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
         </div>`;
     };
 
-    // Header row
     const headerHtml = `
-      <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:6px 20px;gap:4px;margin-top:2px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Rank</div>
-        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary,#bbb);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
+      <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:6px 20px;gap:4px;border-bottom:1px solid var(--border-subtle);">
+        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Rank</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
         <div style="font-size:10px;font-weight:700;color:#6366f1;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Pitched</div>
         <div style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Booked</div>
         <div style="font-size:10px;font-weight:700;color:#22c55e;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Aired</div>
       </div>`;
 
-    body.innerHTML = headerHtml
-      + top10.map(r => renderRow(r)).join('')
-      + (meRow ? renderRow(meRow, true) : '');
-
-    card.style.display = '';
+    body.innerHTML = headerHtml + top10.map(r => renderRow(r)).join('') + (meRow ? renderRow(meRow, true) : '');
+    card.style.display  = '';
+    empty.style.display = 'none';
   } catch {
-    // Silently fail — leaderboard is non-critical
+    // Silently fail
   }
 }
 
@@ -1518,6 +1570,10 @@ function updateCard(matchId) {
 
 // ── Switch active filter tab programmatically ─────────────────────────
 function switchToFilter(status) {
+  // Hide leaderboard view when switching to a match filter
+  if ($('leaderboard-view')) $('leaderboard-view').style.display = 'none';
+  if ($('cards-grid'))       $('cards-grid').style.display = '';
+  document.getElementById('leaderboard-tab')?.classList.remove('active');
   const tabs = $('filter-tabs');
   if (!tabs) return;
   tabs.querySelectorAll('.filter-tab').forEach((t) => {
@@ -3002,6 +3058,13 @@ function openProfileModal() {
   $('profile-facebook').value     = c.social_facebook    || '';
   $('profile-extra-links').value  = c.extra_links        || '';
   $('profile-signature').value    = c.email_signature    || '';
+  // Community toggle
+  const shareEl  = $('profile-share-community');
+  const trackEl  = $('community-toggle-track');
+  const thumbEl  = $('community-toggle-thumb');
+  if (shareEl) shareEl.checked = !!(c.share_with_community);
+  if (trackEl) trackEl.style.background = c.share_with_community ? '#6366f1' : '#d1d5db';
+  if (thumbEl) thumbEl.style.transform  = c.share_with_community ? 'translateX(20px)' : 'translateX(0)';
   $('profile-tone').value         = c.preferred_tone     || 'warm-professional';
   $('profile-topics').value       = (c.topics            || []).join(', ');
   $('profile-angles').value       = (c.speaking_angles   || []).join(', ');
@@ -3043,9 +3106,10 @@ async function saveProfile() {
     social_instagram: $('profile-instagram').value.trim(),
     social_linkedin:  $('profile-linkedin').value.trim(),
     social_twitter:   $('profile-twitter').value.trim(),
-    social_facebook:  $('profile-facebook').value.trim(),
-    extra_links:      $('profile-extra-links').value.trim(),
-    email_signature:  $('profile-signature').value.trim(),
+    social_facebook:        $('profile-facebook').value.trim(),
+    extra_links:            $('profile-extra-links').value.trim(),
+    email_signature:        $('profile-signature').value.trim(),
+    share_with_community:   !!($('profile-share-community')?.checked),
     preferred_tone:   $('profile-tone').value,
     daily_target:     parseInt($('profile-daily-select')?.value || $('profile-daily').value, 10) || 10,
     topics:           splitTrim($('profile-topics').value),
