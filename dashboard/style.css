@@ -2564,6 +2564,23 @@ td.muted { color: var(--text-secondary); font-size: 13px; }
   margin-top: 4px;
 }
 
+.btn-spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.7s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* Social DM Panel */
 .social-dm-panel {
   display: none;

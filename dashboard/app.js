@@ -2091,7 +2091,13 @@ window.updatePitchPreview = updatePitchPreview;
 
 async function rewriteInlinePitch(matchId) {
   const btn = $(`inline-rewrite-${matchId}`);
-  if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Writing your pitch…';
+    btn.style.background = '#6366f1';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#6366f1';
+  }
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
     if (data.subject && data.body) {
@@ -2106,7 +2112,15 @@ async function rewriteInlinePitch(matchId) {
       showToast(data.error || 'Could not generate pitch.', 'error');
     }
   } catch { showToast('Network error.', 'error'); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = 'Rewrite Pitch'; } }
+  finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'Rewrite Pitch';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }
+  }
 }
 window.rewriteInlinePitch = rewriteInlinePitch;
 
