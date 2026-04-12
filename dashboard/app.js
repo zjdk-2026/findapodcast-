@@ -162,7 +162,7 @@ function likelihoodClass(likelihood) {
 function statusBadgeHtml(status) {
   const labels = {
     new:          'New',
-    approved:     'Approved',
+    approved:     'Pitch Ready',
     sent:         'Sent',
     followed_up:  'Followed Up',
     replied:      'Replied',
@@ -1363,7 +1363,7 @@ async function approveMatch(matchId) {
       updateMatchInState(matchId, { status: 'approved', approved_at: data.match?.approved_at });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Approved — writing your pitch email now…', 'success');
+      showToast('Pitch ready — writing your personalised email now…', 'success');
       // Poll for email content (written async on server)
       let attempts = 0;
       const poll = setInterval(async () => {
@@ -1957,14 +1957,37 @@ function openEmailModal(matchId) {
   const titleEl = $('email-modal-title');
   if (titleEl) titleEl.textContent = isAppeared ? `Thank You — ${podcast.title || 'Unknown Show'}` : `Pitch Email — ${podcast.title || 'Unknown Show'}`;
 
-  const subjectEl = $('modal-subject');
-  const bodyEl    = $('modal-body-text');
-  if (subjectEl) subjectEl.value = match.email_subject_edited || match.email_subject || '';
-  if (bodyEl)    bodyEl.value    = match.email_body_edited    || match.email_body    || '';
-  if (subjectEl && bodyEl && !subjectEl.value && !bodyEl.value) {
+  const subjectEl  = $('modal-subject');
+  const presetEl   = $('modal-subject-preset');
+  const bodyEl     = $('modal-body-text');
+
+  // Populate subject preset dropdown with podcast-specific options
+  if (presetEl) {
+    const t = podcast.title || 'your show';
+    const presets = isAppeared ? [
+      `Thank you for having me on ${t}`,
+      'Really enjoyed our conversation',
+      'Thanks for the episode',
+    ] : [
+      `Guest inquiry for ${t}`,
+      `Quick guest pitch for ${t}`,
+      `Would love to join you on ${t}`,
+    ];
+    presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
+      presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    presetEl.onchange = () => { if (presetEl.value && subjectEl) { subjectEl.value = presetEl.value; presetEl.value = ''; } };
+  }
+
+  const currentBody    = match.email_body_edited    || match.email_body    || '';
+  const currentSubject = match.email_subject_edited || match.email_subject || '';
+  const isFallback = !currentBody || currentBody.includes('[Write your pitch here') || currentBody.includes("I'd love to be a guest");
+
+  if (subjectEl) subjectEl.value = currentSubject;
+  if (bodyEl)    bodyEl.value    = isFallback ? '' : currentBody;
+  if (bodyEl && isFallback) {
     bodyEl.placeholder = isAppeared
       ? 'Write a short thank you to the host. Mention something specific from the episode and leave the door open for a future connection.'
-      : 'Click Rewrite Pitch to generate your personalised pitch, or write it manually here.';
+      : 'Writing your personalised pitch…';
   }
 
   // Contact info row
@@ -1986,14 +2009,16 @@ function openEmailModal(matchId) {
   const insightsEl = $('email-match-insights');
   if (insightsEl) {
     const rows = [];
+    const insightLabel = 'font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-primary);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border-subtle);';
+    const insightText  = 'font-size:14px;color:var(--text-secondary);line-height:1.65;margin:0;';
     if (match.why_this_client_fits) {
-      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Why You Fit</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">${esc(match.why_this_client_fits)}</p></div>`);
+      rows.push(`<div><p style="${insightLabel}">Why You Fit</p><p style="${insightText}">${esc(match.why_this_client_fits)}</p></div>`);
     }
     if (match.best_pitch_angle) {
-      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Best Pitch Angle</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">${esc(match.best_pitch_angle)}</p></div>`);
+      rows.push(`<div><p style="${insightLabel}">Best Pitch Angle</p><p style="${insightText}">${esc(match.best_pitch_angle)}</p></div>`);
     }
     if (match.episode_to_reference && match.episode_to_reference !== 'none identified') {
-      rows.push(`<div><p style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#6366f1;margin:0 0 3px;text-transform:uppercase;">Reference Episode</p><p style="font-size:13px;color:#333;margin:0;line-height:1.5;">"${esc(match.episode_to_reference)}"</p></div>`);
+      rows.push(`<div><p style="${insightLabel}">Reference Episode</p><p style="${insightText}">"${esc(match.episode_to_reference)}"</p></div>`);
     }
     if (rows.length > 0) {
       insightsEl.innerHTML = rows.join('<hr style="border:none;border-top:1px solid #e0dbff;margin:4px 0;">');
@@ -2021,6 +2046,11 @@ function openEmailModal(matchId) {
 
   $('email-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  // Auto-generate pitch if no real pitch exists yet
+  if (isFallback && !isAppeared && ['new','approved','dream'].includes(match.status)) {
+    setTimeout(() => $('email-rewrite-btn')?.click(), 100);
+  }
 }
 
 function closeEmailModal() {
@@ -2271,8 +2301,17 @@ function pollForNewMatches() {
         }
       }
     } catch { /* silent */ }
-    if (attempts >= maxAttempts) clearInterval(interval);
+    if (attempts >= maxAttempts) {
+      clearInterval(interval);
+      showToast('Your matches are up to date — no new podcasts found this run.', 'info');
+    }
   }, 3000);
+}
+
+async function bulkRescore() {
+  showToast('Re-scoring all matches — this may take a moment…', 'info');
+  await backgroundReEnrichAll();
+  showToast('All matches re-scored.', 'success');
 }
 
 function showUnlimitedUpsell() {
@@ -3147,6 +3186,7 @@ window.closeProfileModal = closeProfileModal;
 window.saveProfile       = saveProfile;
 window.toggleTheme       = toggleTheme;
 window.runPipeline       = runPipeline;
+window.bulkRescore       = bulkRescore;
 
 // ── Init ──────────────────────────────────────────────────────────────
 function initProfileVibePickers() {

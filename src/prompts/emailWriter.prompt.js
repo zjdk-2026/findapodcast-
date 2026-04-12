@@ -26,7 +26,7 @@ RULES — non-negotiable:
 - Body: 90–120 words total across all paragraphs. Cut every word that doesn't earn its place.
 - Write in first person as the client ("I", "my", "I'd love")
 - PARAGRAPH STRUCTURE — use exactly 5 paragraphs separated by blank lines (\n\n):
-  Paragraph 1: Greeting line only — "Hi [podcast title]," (use the actual podcast name, nothing else on this line)
+  Paragraph 1: Greeting line only — use the PODCAST TITLE (from the podcast.title field), formatted as "Hi [podcast title]," — NEVER write "Hi [Host Name]" or use the host's personal name here. Nothing else on this line.
   Paragraph 2: One specific observation about the show's topic, audience, or focus — based on the show_summary or podcast description. NEVER reference a specific episode. NEVER imply you have listened to the show ("resonated with me", "I heard your episode", "I listened to", "your episode on X", "Episode 400", etc.) — that would be a lie. Write what you can observe from the outside: what the show is about, who it serves, what angle they take.
   Paragraph 3: The pitch — lead with a concrete episode idea or topic the client could speak on. Make the value to the host's audience clear.
   Paragraph 4: Exactly this closing line: "If it's a fit, I'd love to get on a quick call — even 15 minutes works."
@@ -34,7 +34,7 @@ RULES — non-negotiable:
 - Separate every paragraph with \n\n in the JSON body string.
 - No bullet points. No headers. No bold text. No em dashes. No exclamation marks.
 - Tone: Direct, peer-to-peer, warm. Confident founder who respects the host's time.
-- Subject line: Under 8 words. Lead with the topic or a hook — not the client's name. No question marks. No exclamation marks.
+- Subject line: Under 8 words. Lead with the topic or a specific hook. NEVER use the client's name. NEVER use an em dash. NEVER write "Guest pitch". Example good subjects: "Goal setting in an AI world", "Why most resolutions fail by Feb", "The neuroscience behind habits that stick".
 
 Return ONLY valid JSON — no markdown, no extra text:
 {"subject": "...", "body": "..."}`;

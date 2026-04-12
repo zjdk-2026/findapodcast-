@@ -178,6 +178,7 @@
             <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
             Has Email
           </label>
+          <button id="bulk-rescore-btn" class="btn btn-outline btn-xs" style="font-size:11px;padding:6px 12px;" title="Re-score all cards still showing 50/50 scores" onclick="bulkRescore()">Re-score All</button>
         </div>
       </section>
 
@@ -215,6 +216,9 @@
         <!-- Subject -->
         <div>
           <label class="field-label" for="modal-subject">Subject</label>
+          <select id="modal-subject-preset" class="email-edit-field" style="margin-bottom:6px;font-size:13px;color:var(--text-secondary);">
+            <option value="">Choose a subject preset…</option>
+          </select>
           <input type="text" id="modal-subject" class="email-edit-field" style="font-size:14px;font-weight:600;" />
         </div>
         <!-- Body -->
