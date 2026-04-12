@@ -2354,8 +2354,31 @@ function toggleSocialDM(matchId) {
   expandCard(matchId);
   document.querySelectorAll('.inline-pitch-panel, .social-dm-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
   panel.style.display = 'block';
+  // Auto-generate AI DM on first open (textarea still has the static placeholder)
+  populateDMPanel(matchId);
 }
 window.toggleSocialDM = toggleSocialDM;
+
+async function populateDMPanel(matchId) {
+  const textarea = $(`dm-script-${matchId}`);
+  if (!textarea) return;
+  // Only auto-generate if it still contains the static fallback text (not already AI-generated)
+  if (textarea.dataset.aiGenerated === '1') return;
+  const btn = $(`dm-regen-btn-${matchId}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+  textarea.style.opacity = '0.5';
+  try {
+    const data = await apiPost('/api/generate-dm', { matchId });
+    if (data.body) {
+      textarea.value = data.body;
+      textarea.dataset.aiGenerated = '1';
+    }
+  } catch { /* keep static fallback already in textarea */ }
+  finally {
+    textarea.style.opacity = '';
+    if (btn) { btn.disabled = false; btn.textContent = 'Regenerate'; }
+  }
+}
 
 function buildDMScriptFromMatch(match) {
   const podcast   = match.podcasts || {};
@@ -2402,7 +2425,18 @@ function buildDMScriptFromMatch(match) {
     body = `Your show's audience looks like exactly the kind of people I work with, and I think I could bring real value to your listeners.`;
   }
 
-  return `Hi ${shortName},\n\n${body}\n\nWould you be open to a quick conversation to see if there's a fit? Even 15 minutes works.\n\n${firstName}`;
+  // Build plain-text signature from client social links
+  const c = state.client || {};
+  const sigLines = [];
+  if (c.website)          sigLines.push(c.website);
+  if (c.social_instagram) sigLines.push(c.social_instagram);
+  if (c.social_linkedin)  sigLines.push(c.social_linkedin);
+  if (c.social_twitter)   sigLines.push(c.social_twitter);
+  if (c.social_facebook)  sigLines.push(c.social_facebook);
+  if (c.booking_link)     sigLines.push(c.booking_link);
+  const sig = sigLines.length ? '\n' + sigLines.join('\n') : '';
+
+  return `Hi ${shortName},\n\n${body}\n\nWould you be open to a quick conversation to see if there's a fit? Even 15 minutes works.\n\n${firstName}${sig}`;
 }
 
 function buildDMScript(matchId) {
@@ -2429,6 +2463,7 @@ async function regenerateDMScript(matchId) {
     const data = await apiPost('/api/generate-dm', { matchId });
     if (data.body) {
       textarea.value = data.body;
+      textarea.dataset.aiGenerated = '1';
       showToast('DM generated.', 'success');
     } else {
       throw new Error(data.error || 'No body returned');
