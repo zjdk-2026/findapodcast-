@@ -2046,20 +2046,21 @@ function populateInlinePitch(matchId) {
   const presetEl = $(`inline-preset-${matchId}`);
   if (subjEl) subjEl.value = isFallback ? '' : currentSubject;
   if (bodyEl)  bodyEl.value  = isFallback ? '' : currentBody;
-  // Populate subject presets
+  // Populate subject presets — podcast-specific options
   if (presetEl) {
-    const presets = state.client?.subject_presets || [];
-    if (presets.length) {
-      presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
-        presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
-      presetEl.style.display = 'block';
-      presetEl.onchange = () => {
-        if (presetEl.value && subjEl) { subjEl.value = presetEl.value; presetEl.value = ''; }
-        updatePitchPreview(matchId);
-      };
-    } else {
-      presetEl.style.display = 'none';
-    }
+    const t = match.podcasts?.title || 'your show';
+    const presets = [
+      `Guest inquiry for ${t}`,
+      `Quick guest pitch for ${t}`,
+      `Would love to join you on ${t}`,
+    ];
+    presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
+      presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    presetEl.style.display = 'block';
+    presetEl.onchange = () => {
+      if (presetEl.value && subjEl) { subjEl.value = presetEl.value; presetEl.value = ''; }
+      updatePitchPreview(matchId);
+    };
   }
   updatePitchPreview(matchId);
   // Auto-generate if no real pitch exists
