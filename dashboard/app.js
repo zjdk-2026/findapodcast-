@@ -2803,11 +2803,30 @@ function pollForNewMatches() {
   }, 3000);
 }
 
-async function bulkRescore() {
-  showToast('Re-scoring all matches — this may take a moment…', 'info');
-  await backgroundReEnrichAll();
-  showToast('All matches re-scored.', 'success');
+async function bulkRescore() { await refreshPipeline(); }
+
+async function refreshPipeline() {
+  if (!state.matches?.length) { showToast('No matches to refresh.', 'info'); return; }
+  const btn = $('refresh-pipeline-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'default'; }
+
+  showToast('Refreshing all cards — this may take a minute…', 'info');
+
+  // Re-enrich ALL active matches (not just neutral ones) — picks up latest enrichment + scoring logic
+  const active = state.matches.filter(m => !['dismissed','archived'].includes(m.status));
+  const BATCH = 3;
+  let done = 0;
+  for (let i = 0; i < active.length; i += BATCH) {
+    const batch = active.slice(i, i + BATCH);
+    await Promise.all(batch.map(m => triggerReEnrich(m.id).catch(() => {})));
+    done += batch.length;
+    if (i + BATCH < active.length) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} updated.`, 'success');
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer'; }
 }
+window.refreshPipeline = refreshPipeline;
 
 function showUnlimitedUpsell() {
   const existing = document.getElementById('unlimited-upsell-banner');

@@ -144,6 +144,59 @@ function pickBestSocialUrl(hrefs, platform) {
   return null;
 }
 
+// Extract handle slug from a validated social URL
+function extractHandleFromUrl(url) {
+  try {
+    const u = new URL(url);
+    const segments = u.pathname.split('/').filter(Boolean);
+    if (!segments.length) return null;
+    // For LinkedIn: /company/slug or /in/slug — take the slug part
+    if (segments[0] === 'company' || segments[0] === 'in') return segments[1] || null;
+    return segments[0];
+  } catch { return null; }
+}
+
+// Tokenise a string into lowercase alpha-only words of 3+ chars
+function tokenise(str) {
+  return (str || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+}
+
+/**
+ * Like pickBestSocialUrl but requires the handle to share at least one token
+ * with the podcast title or host name. Used for homepage scraping where any
+ * social link on the page might belong to a third party (guest, sponsor, etc.)
+ *
+ * Falls back to the first valid URL only when ALL candidates fail the match
+ * AND there is exactly one candidate (i.e. the page clearly owns it).
+ */
+function pickMatchingSocialUrl(hrefs, platform, podcastTitle, hostName) {
+  const titleTokens = tokenise(podcastTitle);
+  const hostTokens  = tokenise(hostName);
+  const contextTokens = new Set([...titleTokens, ...hostTokens]);
+
+  const validated = hrefs.map(h => validateAndNormalizeSocialUrl(h, platform)).filter(Boolean);
+  if (!validated.length) return null;
+
+  // Score each: count how many context tokens appear in the handle
+  let bestUrl   = null;
+  let bestScore = 0;
+
+  for (const url of validated) {
+    const handle = (extractHandleFromUrl(url) || '').toLowerCase();
+    const score  = [...contextTokens].filter(t => handle.includes(t)).length;
+    if (score > bestScore) { bestScore = score; bestUrl = url; }
+  }
+
+  // Accept if at least one token matched
+  if (bestScore > 0) return bestUrl;
+
+  // No match — only trust the URL if it's the sole candidate (page has one social link, likely theirs)
+  if (validated.length === 1) return validated[0];
+
+  // Multiple mismatched candidates → can't tell which belongs to the show → skip
+  return null;
+}
+
 /**
  * Fetch HTML from a URL with timeout. Returns null on failure.
  */
@@ -428,9 +481,11 @@ async function enrichPodcast(podcastData) {
       const ltHrefs = [];
       $lt('a[href]').each((_, el) => { const h = $lt(el).attr('href'); if (h) ltHrefs.push(h); });
 
-      if (!enriched.instagram_url) enriched.instagram_url = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram');
-      if (!enriched.facebook_url)  enriched.facebook_url  = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook');
-      if (!enriched.twitter_url)   enriched.twitter_url   = pickBestSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter');
+      const _ltTitle = podcastData.title || '';
+      const _ltHost  = podcastData.host_name || enriched.host_name || '';
+      if (!enriched.instagram_url) enriched.instagram_url = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram', _ltTitle, _ltHost);
+      if (!enriched.facebook_url)  enriched.facebook_url  = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook', _ltTitle, _ltHost);
+      if (!enriched.twitter_url)   enriched.twitter_url   = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter', _ltTitle, _ltHost);
       if (!enriched.spotify_url)   enriched.spotify_url   = ltHrefs.find(h => h.toLowerCase().includes('spotify.com/show')) || null;
       if (!enriched.apple_url)     enriched.apple_url     = ltHrefs.find(h => h.toLowerCase().includes('podcasts.apple.com')) || null;
       if (!enriched.youtube_url)   enriched.youtube_url   = ltHrefs.find(h => h.toLowerCase().includes('youtube.com')) || null;
@@ -530,10 +585,12 @@ async function enrichPodcast(podcastData) {
         if (!isOperatorOwned(raw)) homeHrefs.push(raw);
       });
 
-      if (!enriched.instagram_url)    enriched.instagram_url    = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram');
-      if (!enriched.twitter_url)      enriched.twitter_url      = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter');
-      if (!enriched.facebook_url)     enriched.facebook_url     = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook');
-      if (!enriched.linkedin_page_url) enriched.linkedin_page_url = pickBestSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com')), 'linkedin');
+      const _title = podcastData.title || '';
+      const _host  = podcastData.host_name || enriched.host_name || '';
+      if (!enriched.instagram_url)    enriched.instagram_url    = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram', _title, _host);
+      if (!enriched.twitter_url)      enriched.twitter_url      = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter', _title, _host);
+      if (!enriched.facebook_url)     enriched.facebook_url     = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook', _title, _host);
+      if (!enriched.linkedin_page_url) enriched.linkedin_page_url = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com')), 'linkedin', _title, _host);
       if (!enriched.tiktok_url)       enriched.tiktok_url       = homeHrefs.find(h => h.toLowerCase().includes('tiktok.com/')) || null;
 
       // Extract guest application URL
