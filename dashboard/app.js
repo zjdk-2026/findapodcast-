@@ -657,14 +657,23 @@ function contentBoostButton(match) {
 function actionButtonsHtml(match) {
   const status   = match.status;
   const id       = match.id;
+  const podcast  = match.podcasts || {};
   const hasEmail = (match.email_subject_edited || match.email_subject) && (match.email_body_edited || match.email_body);
   const buttons  = [];
 
-  // Write Pitch Email button — shown for all statuses where pitch editing makes sense
+  // Write Pitch Email button — opens inline panel
   const pitchStatuses = ['new','approved','dream','sent','followed_up','replied'];
   if (pitchStatuses.includes(status)) {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="openEmailModal('${id}')">
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
+    </button>`);
+  }
+
+  // Social DM button — shown when no contact email but social profiles exist
+  const hasSocial = podcast.instagram_url || podcast.twitter_url || podcast.linkedin_page_url || podcast.linkedin_url;
+  if (!podcast.contact_email && hasSocial && pitchStatuses.includes(status)) {
+    buttons.push(`<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="toggleSocialDM('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>DM Template
     </button>`);
   }
 
@@ -998,6 +1007,47 @@ function renderMatchCard(match) {
 
       </div><!-- /.card-expanded-inner -->
     </div><!-- /.card-expanded -->
+
+    <!-- Inline pitch panel -->
+    ${['new','approved','dream','sent','followed_up','replied'].includes(match.status) ? `
+    <div class="inline-pitch-panel" id="pitch-panel-${esc(match.id)}">
+      <div class="inline-pitch-header">
+        <span class="inline-pitch-title">Pitch Email</span>
+        <button class="btn btn-xs" style="background:transparent;border:none;color:var(--text-tertiary);font-size:18px;padding:0 4px;line-height:1;cursor:pointer;" onclick="toggleInlinePitch('${esc(match.id)}')" title="Close">&#x2715;</button>
+      </div>
+      ${match.best_pitch_angle ? `<div class="inline-pitch-hint"><span class="inline-pitch-hint-label">Pitch Angle</span>${esc(match.best_pitch_angle)}</div>` : ''}
+      <select id="inline-preset-${esc(match.id)}" class="inline-pitch-field" style="display:none;cursor:pointer;"></select>
+      <input id="inline-subject-${esc(match.id)}" type="text" class="inline-pitch-field" placeholder="Subject line…" oninput="updatePitchPreview('${esc(match.id)}')" />
+      <textarea id="inline-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your pitch will appear here…" oninput="updatePitchPreview('${esc(match.id)}')"></textarea>
+      <div class="pitch-preview-strip" id="pitch-preview-${esc(match.id)}"></div>
+      <div class="inline-pitch-actions">
+        <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
+        <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send via Gmail</button>
+        ${['approved','dream'].includes(match.status) ? `<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${esc(match.id)}')">I Sent It Myself</button>` : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Social DM panel -->
+    ${(() => {
+      const p = match.podcasts || {};
+      const platforms = [];
+      if (p.instagram_url)                        platforms.push({ label: 'Instagram',  url: p.instagram_url });
+      if (p.twitter_url)                          platforms.push({ label: 'Twitter/X',  url: p.twitter_url });
+      if (p.linkedin_page_url || p.linkedin_url)  platforms.push({ label: 'LinkedIn',   url: p.linkedin_page_url || p.linkedin_url });
+      if (!platforms.length) return '';
+      const platformBtns = platforms.map(pl =>
+        `<a href="${esc(pl.url)}" target="_blank" rel="noopener" class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;text-decoration:none;">Open ${esc(pl.label)}</a>`
+      ).join('');
+      return `
+    <div class="social-dm-panel" id="dm-panel-${esc(match.id)}">
+      <div class="social-dm-header">DM Template — copy and send on social</div>
+      <div class="social-dm-script" id="dm-script-${esc(match.id)}">${esc(buildDMScriptFromMatch(match))}</div>
+      <div class="social-dm-platforms">
+        <button class="btn btn-xs" style="background:#6366f1;color:#fff;font-weight:600;border:none;" onclick="copyDMScript('${esc(match.id)}')">Copy DM</button>
+        ${platformBtns}
+      </div>
+    </div>`;
+    })()}
 
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `
@@ -1960,6 +2010,148 @@ async function saveNote(matchId) {
     }
   } catch { showToast('Network error.', 'error'); }
 }
+
+// ── Inline pitch panel ────────────────────────────────────────────────
+
+function toggleInlinePitch(matchId) {
+  const panel = $(`pitch-panel-${matchId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  if (isOpen) { panel.style.display = 'none'; return; }
+  // Close any other open panels first
+  document.querySelectorAll('.inline-pitch-panel').forEach(p => { p.style.display = 'none'; });
+  panel.style.display = 'block';
+  populateInlinePitch(matchId);
+}
+window.toggleInlinePitch = toggleInlinePitch;
+
+function populateInlinePitch(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const currentSubject = match.email_subject_edited || match.email_subject || '';
+  const currentBody    = match.email_body_edited    || match.email_body    || '';
+  const isFallback = !currentBody || currentBody.includes('[Write your pitch here') || currentBody.includes("I'd love to be a guest");
+  const subjEl   = $(`inline-subject-${matchId}`);
+  const bodyEl   = $(`inline-body-${matchId}`);
+  const presetEl = $(`inline-preset-${matchId}`);
+  if (subjEl) subjEl.value = isFallback ? '' : currentSubject;
+  if (bodyEl)  bodyEl.value  = isFallback ? '' : currentBody;
+  // Populate subject presets
+  if (presetEl) {
+    const presets = state.client?.subject_presets || [];
+    if (presets.length) {
+      presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
+        presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+      presetEl.style.display = 'block';
+      presetEl.onchange = () => {
+        if (presetEl.value && subjEl) { subjEl.value = presetEl.value; presetEl.value = ''; }
+        updatePitchPreview(matchId);
+      };
+    } else {
+      presetEl.style.display = 'none';
+    }
+  }
+  updatePitchPreview(matchId);
+  // Auto-generate if no real pitch exists
+  const isAppeared = match.status === 'appeared';
+  if (isFallback && !isAppeared) {
+    setTimeout(() => rewriteInlinePitch(matchId), 100);
+  }
+}
+
+function updatePitchPreview(matchId) {
+  const subjEl    = $(`inline-subject-${matchId}`);
+  const bodyEl    = $(`inline-body-${matchId}`);
+  const previewEl = $(`pitch-preview-${matchId}`);
+  if (!previewEl) return;
+  const subject = subjEl?.value.trim() || '';
+  const body    = bodyEl?.value.trim() || '';
+  if (!subject && !body) { previewEl.style.display = 'none'; return; }
+  const firstPara = body.split('\n\n')[0] || '';
+  previewEl.style.display = 'block';
+  previewEl.innerHTML = `<div class="preview-label">Preview</div>
+    <div class="preview-subject">${esc(subject) || '<em style="color:var(--text-tertiary)">No subject yet</em>'}</div>
+    ${firstPara ? `<div class="preview-firstline">${esc(firstPara)}</div>` : ''}`;
+}
+window.updatePitchPreview = updatePitchPreview;
+
+async function rewriteInlinePitch(matchId) {
+  const btn = $(`inline-rewrite-${matchId}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+  try {
+    const data = await apiPost('/api/generate-pitch', { matchId });
+    if (data.subject && data.body) {
+      const subjEl = $(`inline-subject-${matchId}`);
+      const bodyEl = $(`inline-body-${matchId}`);
+      if (subjEl) subjEl.value = data.subject;
+      if (bodyEl)  bodyEl.value  = data.body;
+      updateMatchInState(matchId, { email_subject_edited: data.subject, email_body_edited: data.body });
+      updatePitchPreview(matchId);
+      showToast('Pitch ready.', 'success');
+    } else {
+      showToast(data.error || 'Could not generate pitch.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Rewrite Pitch'; } }
+}
+window.rewriteInlinePitch = rewriteInlinePitch;
+
+async function saveInlineEdits(matchId) {
+  const subject = $(`inline-subject-${matchId}`)?.value || '';
+  const body    = $(`inline-body-${matchId}`)?.value    || '';
+  if (!subject && !body) return;
+  await apiPost('/api/email/edit', { matchId, subject, body });
+  updateMatchInState(matchId, { email_subject_edited: subject, email_body_edited: body });
+}
+
+async function sendFromInline(matchId) {
+  await saveInlineEdits(matchId);
+  toggleInlinePitch(matchId);
+  sendMatch(matchId);
+}
+window.sendFromInline = sendFromInline;
+
+async function markAsPitchedFromInline(matchId) {
+  await saveInlineEdits(matchId);
+  toggleInlinePitch(matchId);
+  markAsPitched(matchId);
+}
+window.markAsPitchedFromInline = markAsPitchedFromInline;
+
+// ── Social DM panel ──────────────────────────────────────────────
+
+function toggleSocialDM(matchId) {
+  const panel = $(`dm-panel-${matchId}`);
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+window.toggleSocialDM = toggleSocialDM;
+
+function buildDMScriptFromMatch(match) {
+  const podcast  = match.podcasts || {};
+  const showName = podcast.title || 'your show';
+  const name     = state.client?.name || '';
+  const angle    = match.best_pitch_angle || '';
+  const hook     = angle
+    ? angle.replace(/^Lead with /i, '').replace(/\.$/, '').slice(0, 120)
+    : `sharing my experience on this topic with your audience`;
+  return `Hi ${showName},\n\nI think there's a compelling episode in ${hook}.\n\nWould you be open to a quick conversation about having me on as a guest?\n\n${name}`;
+}
+
+function buildDMScript(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return '';
+  return buildDMScriptFromMatch(match);
+}
+
+function copyDMScript(matchId) {
+  const script = buildDMScript(matchId);
+  navigator.clipboard.writeText(script)
+    .then(() => showToast('DM copied to clipboard.', 'success'))
+    .catch(() => showToast('Could not copy — please copy manually.', 'error'));
+}
+window.copyDMScript = copyDMScript;
+window.buildDMScriptFromMatch = buildDMScriptFromMatch;
 
 // ── Email modal ───────────────────────────────────────────────────────
 function openEmailModal(matchId) {

@@ -2398,3 +2398,158 @@ td.muted { color: var(--text-secondary); font-size: 13px; }
 
 /* ── Drag and Drop ─────────────────────────────────────────────── */
 
+/* ── Inline Pitch Panel ────────────────────────────────────────── */
+.inline-pitch-panel {
+  display: none;
+  border-top: 1px solid var(--border-subtle);
+  padding: 18px 20px 14px;
+  background: var(--surface-secondary, #faf9ff);
+  animation: fadeSlideIn 0.18s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.inline-pitch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.inline-pitch-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.inline-pitch-hint {
+  font-size: 12px;
+  color: var(--accent);
+  background: #f0ebff;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.inline-pitch-hint-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 3px;
+  color: var(--accent);
+}
+
+.inline-pitch-field {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  font-family: inherit;
+  transition: border-color 150ms;
+  display: block;
+}
+
+.inline-pitch-field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #6366f115;
+}
+
+.inline-pitch-body-field {
+  resize: vertical;
+  min-height: 180px;
+  line-height: 1.65;
+}
+
+/* Pitch preview strip */
+.pitch-preview-strip {
+  display: none;
+  background: #fff;
+  border: 1px solid #e0dbff;
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+
+.preview-subject {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.preview-firstline {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.inline-pitch-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* Social DM Panel */
+.social-dm-panel {
+  display: none;
+  border-top: 1px solid var(--border-subtle);
+  padding: 14px 20px;
+  background: var(--surface-secondary, #faf9ff);
+}
+
+.social-dm-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.social-dm-script {
+  background: #fff;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+
+.social-dm-platforms {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
