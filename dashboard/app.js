@@ -2335,7 +2335,7 @@ function showNoEmailWarning(matchId) {
         </div>
         <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">No email found</h3>
       </div>
-      <p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6;">We couldn't find a contact email for this podcast. ${hasSocial ? 'Try reaching out via the <strong>DM Template</strong> instead — it uses their social profiles.' : 'Try finding their contact info on their website directly.'}</p>
+      <p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6;">No contact email found for this one. ${hasSocial ? 'Try the <strong>DM Template</strong> below to reach out on social instead.' : 'You may need to find their contact info directly on their website.'}</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('no-email-modal').remove()">Close</button>
         ${hasSocial ? `<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="document.getElementById('no-email-modal').remove();toggleSocialDM('${matchId}')">Open DM Template</button>` : ''}
