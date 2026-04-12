@@ -530,14 +530,14 @@ const SCORE_TOOLTIPS = {
 };
 
 // ── Score bar HTML ────────────────────────────────────────────────────
-function scoreBarHtml(label, value) {
+function scoreBarHtml(label, value, badge = '') {
   const v   = Math.round(value || 0);
   const tip = SCORE_TOOLTIPS[label] || '';
   const cls = v >= 70 ? 'high' : v >= 40 ? 'mid' : 'low';
   return `
     <div class="score-row"${tip ? ` title="${esc(tip)}" style="cursor:help;"` : ''}>
       <div class="score-row-header">
-        <span class="score-row-label">${esc(label)}</span>
+        <span class="score-row-label">${esc(label)}${badge ? `&nbsp;${badge}` : ''}</span>
         <span class="score-row-value" style="color:${v >= 70 ? 'var(--success)' : v >= 40 ? 'var(--warning)' : 'var(--danger)'}">${v}</span>
       </div>
       <div class="score-bar-track">
@@ -963,14 +963,11 @@ function renderMatchCard(match) {
         </div>
 
         <!-- Sub-scores -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          ${audienceSizeTierHtml(match.reach_score)}
-        </div>
         <div class="score-bars">
           ${scoreBarHtml('Relevance',  match.relevance_score)}
           ${scoreBarHtml('Audience',   match.audience_score)}
           ${scoreBarHtml('Recency',    match.recency_score)}
-          ${scoreBarHtml('Reach',      match.reach_score)}
+          ${scoreBarHtml('Reach',      match.reach_score, audienceSizeTierHtml(match.reach_score))}
           ${scoreBarHtml('Contact',    match.contactability_score)}
           ${match.seo_score != null ? scoreBarHtml('SEO Value', match.seo_score) : ''}
         </div>
@@ -2335,11 +2332,10 @@ function openContactModal(matchId) {
 
   const scoreBreakdown = `
     <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">${audienceSizeTierHtml(match.reach_score)}</div>
       ${scoreBarHtml('Relevance',   match.relevance_score)}
       ${scoreBarHtml('Audience',    match.audience_score)}
       ${scoreBarHtml('Recency',     match.recency_score)}
-      ${scoreBarHtml('Reach',       match.reach_score)}
+      ${scoreBarHtml('Reach',       match.reach_score, audienceSizeTierHtml(match.reach_score))}
       ${scoreBarHtml('Contact',     match.contactability_score)}
       ${match.seo_score != null    ? scoreBarHtml('SEO Value',  match.seo_score) : ''}
       ${match.brand_score          ? scoreBarHtml('Brand Fit',  match.brand_score) : ''}
