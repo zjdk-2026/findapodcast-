@@ -609,11 +609,25 @@ function contactChipsHtml(podcast) {
     chips.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
   }
 
-  // Single Website button (best available URL)
-  const siteUrl = podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url;
-  if (isValidUrl(siteUrl)) {
-    chips.push(`<a class="contact-chip" href="${esc(siteUrl)}" target="_blank" rel="noopener">Website</a>`);
+  // Helper: is this URL a podcast platform URL (not a real website)?
+  const PLATFORM_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm',
+    'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com',
+    'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
+  function isPlatformUrl(url) {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return PLATFORM_DOMAINS.some(d => lower.includes(d));
   }
+
+  // Website — only show if it's a real website, not a platform URL
+  if (isValidUrl(podcast.website) && !isPlatformUrl(podcast.website)) {
+    chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
+  }
+
+  // Platform links — each correctly labelled
+  if (isValidUrl(podcast.apple_url)   && podcast.apple_url.toLowerCase().includes('apple.com'))   chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>`);
+  if (isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com')) chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
+  if (isValidUrl(podcast.youtube_url))  chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
 
   // Social links — validated with platform-specific profile rules
   if (isValidSocialProfile(podcast.instagram_url, 'instagram'))                               chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
@@ -621,7 +635,6 @@ function contactChipsHtml(podcast) {
   if (isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin'))    chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
   if (isValidSocialProfile(podcast.facebook_url, 'facebook'))                                 chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
   if (isValidUrl(podcast.tiktok_url))        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
-  if (isValidUrl(podcast.youtube_url) && podcast.website) chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
 
   return chips.length > 0
     ? `<div class="contact-section"><div class="contact-chips">${chips.join('')}</div></div>`

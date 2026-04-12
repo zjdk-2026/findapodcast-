@@ -360,11 +360,14 @@ async function fetchRssFeed(rssUrl) {
     const itunesAuthor = $('itunes\\:author').first().text().trim();
     if (itunesAuthor) result.host_name = itunesAuthor;
 
-    // Website from <link> (skip atom:link)
+    // Website from <link> (skip atom:link) — exclude podcast platform URLs
+    const WEBSITE_EXCLUDE_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
     $('channel > link').each((_, el) => {
       if (!result.website) {
         const text = $(el).text().trim();
-        if (text && text.startsWith('http')) result.website = text;
+        if (text && text.startsWith('http') && !WEBSITE_EXCLUDE_DOMAINS.some(d => text.toLowerCase().includes(d))) {
+          result.website = text;
+        }
       }
     });
 
