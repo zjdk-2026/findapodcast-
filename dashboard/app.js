@@ -1204,7 +1204,7 @@ function renderMatchCard(match) {
       <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">Content Boost complete — check your inbox for your 30 days of content!</p>
     </div>` : match.content_boost_status === 'requested' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:#fffbeb;">
-      <p style="font-size:13px;color:#92400e;margin:0;">Payment processing — once confirmed you'll be able to submit your episode link.</p>
+      <p style="font-size:13px;color:#92400e;margin:0;">Payment is processing. Once confirmed you'll be able to submit your episode link.</p>
     </div>` : ''}
 
   </article>`;
