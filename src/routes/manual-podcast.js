@@ -256,18 +256,28 @@ router.post('/re-enrich/:matchId', requireDashboardToken, async (req, res) => {
     const enriched = await enrichPodcast(refreshed);
 
     // Save refreshed podcast data (only known schema columns — enriched may contain internal fields)
+    // For URL fields: trust the fresh enrichment — if it returned null, clear the old value
+    // so bad data (e.g. Apple URL stored as website) doesn't persist forever.
+    const PLATFORM_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
+    const isPlatformUrl = (url) => url && PLATFORM_DOMAINS.some(d => url.toLowerCase().includes(d));
+    // website: use fresh value; if fresh is null but old was a platform URL, clear it (don't fall back)
+    const freshWebsite = enriched.website && !isPlatformUrl(enriched.website) ? enriched.website : null;
+    const keepOldWebsite = podcast.website && !isPlatformUrl(podcast.website) ? podcast.website : null;
     const podcastUpdate = {
       title: enriched.title || podcast.title,
       host_name: enriched.host_name || podcast.host_name,
       description: enriched.description || podcast.description,
-      website: enriched.website || podcast.website,
+      website: freshWebsite || keepOldWebsite || null,
       contact_email: enriched.contact_email || podcast.contact_email,
       contact_form_url: enriched.contact_form_url || podcast.contact_form_url,
       apple_url: enriched.apple_url || podcast.apple_url,
       spotify_url: enriched.spotify_url || podcast.spotify_url,
       youtube_url: enriched.youtube_url || podcast.youtube_url,
-      instagram_url: enriched.instagram_url || podcast.instagram_url,
+      instagram_url: enriched.instagram_url || null,
       instagram_followers: enriched.instagram_followers || podcast.instagram_followers,
+      twitter_url: enriched.twitter_url || null,
+      linkedin_page_url: enriched.linkedin_page_url || null,
+      facebook_url: enriched.facebook_url || null,
       linkedin_url: enriched.linkedin_url || podcast.linkedin_url,
       category: enriched.category || podcast.category,
       total_episodes: enriched.total_episodes || podcast.total_episodes,

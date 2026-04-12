@@ -804,6 +804,15 @@ function isNeutralFallback(match) {
 async function triggerReEnrich(matchId) {
   try {
     const data = await apiPost(`/api/re-enrich/${matchId}`, {});
+    if (data.success) {
+      // Update podcast fields on the match in state so chips re-render correctly
+      if (data.podcast) {
+        const match = state.matches.find(m => m.id === matchId);
+        if (match) {
+          match.podcasts = { ...match.podcasts, ...data.podcast };
+        }
+      }
+    }
     if (data.success && data.scores) {
       const s = data.scores;
       updateMatchInState(matchId, {
