@@ -546,6 +546,17 @@ function scoreBarHtml(label, value) {
     </div>`;
 }
 
+function audienceSizeTierHtml(reachScore) {
+  const s = reachScore || 0;
+  let label, color;
+  if (s >= 85)      { label = 'Mega';  color = '#6366f1'; }
+  else if (s >= 70) { label = 'Macro'; color = '#22c55e'; }
+  else if (s >= 50) { label = 'Mid';   color = '#f59e0b'; }
+  else if (s >= 30) { label = 'Micro'; color = '#94a3b8'; }
+  else              { label = 'Nano';  color = '#cbd5e1'; }
+  return `<span title="Audience size tier based on reach signals" style="font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${color};background:${color}18;border:1px solid ${color}44;border-radius:4px;padding:2px 7px;cursor:help;">${label}</span>`;
+}
+
 // ── Contact chips HTML ────────────────────────────────────────────────
 function isValidUrl(url) {
   if (!url) return false;
@@ -943,12 +954,16 @@ function renderMatchCard(match) {
         </div>
 
         <!-- Sub-scores -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          ${audienceSizeTierHtml(match.reach_score)}
+        </div>
         <div class="score-bars">
           ${scoreBarHtml('Relevance',  match.relevance_score)}
           ${scoreBarHtml('Audience',   match.audience_score)}
           ${scoreBarHtml('Recency',    match.recency_score)}
           ${scoreBarHtml('Reach',      match.reach_score)}
           ${scoreBarHtml('Contact',    match.contactability_score)}
+          ${match.seo_score != null ? scoreBarHtml('SEO Value', match.seo_score) : ''}
         </div>
 
         <!-- Why fits -->
@@ -2105,13 +2120,15 @@ function openContactModal(matchId) {
 
   const scoreBreakdown = `
     <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">${audienceSizeTierHtml(match.reach_score)}</div>
       ${scoreBarHtml('Relevance',   match.relevance_score)}
       ${scoreBarHtml('Audience',    match.audience_score)}
       ${scoreBarHtml('Recency',     match.recency_score)}
       ${scoreBarHtml('Reach',       match.reach_score)}
       ${scoreBarHtml('Contact',     match.contactability_score)}
-      ${match.brand_score       ? scoreBarHtml('Brand Fit',   match.brand_score) : ''}
-      ${match.guest_quality_score ? scoreBarHtml('Guest Qual.', match.guest_quality_score) : ''}
+      ${match.seo_score != null    ? scoreBarHtml('SEO Value',  match.seo_score) : ''}
+      ${match.brand_score          ? scoreBarHtml('Brand Fit',  match.brand_score) : ''}
+      ${match.guest_quality_score  ? scoreBarHtml('Guest Qual.', match.guest_quality_score) : ''}
     </div>`;
 
   // Contact rows with copy buttons

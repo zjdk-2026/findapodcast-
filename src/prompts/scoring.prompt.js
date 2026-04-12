@@ -74,6 +74,14 @@ SCORING DIMENSIONS (each 0–100)
    - 30–49: Below average production, potential brand risk
    - 0–29: Low quality or misaligned brand, not recommended
 
+8. SEO SCORE (not weighted in fit_score — standalone signal)
+   How much SEO value would a guest appearance on this show deliver? This is about discoverability and backlink value — not audience size. A small podcast with a well-maintained website that publishes detailed show notes and links to every guest can outrank a large show with no web presence.
+   - 90–100: Strong web presence — dedicated website with indexed show notes per episode, links to guest websites/socials, likely high domain authority, episodes rank in Google search results
+   - 70–89: Good web presence — has a website, publishes show notes, some episode pages visible in search
+   - 50–69: Moderate — has a website but minimal show notes, or mainly distributed via Apple/Spotify with little web indexing
+   - 30–49: Weak — no dedicated website, or website is a landing page with no per-episode content
+   - 0–29: No SEO value — distributed on platforms only, no website, no indexable content
+
 ═══════════════════════════════════════════════════════════════
 REQUIRED JSON OUTPUT FORMAT
 ═══════════════════════════════════════════════════════════════
@@ -92,6 +100,7 @@ Return ONLY valid JSON — no markdown, no prose, no code fences. Your entire re
   "why_this_client_fits": "<2–3 sentences. Use second-person coaching voice — speak directly to the client as 'you/your', like a strategist briefing them before a pitch meeting. Example: 'Your take on AI and goal-setting lands well here — this audience is full of high achievers who are tired of frameworks that stopped working.' No em dashes, no third-person, no consultant phrases.>",
   "best_pitch_angle": "<1 sentence. Second-person coaching voice. The single sharpest angle the client should lead with. Example: 'Lead with why traditional goal-setting fails in an AI world — that is the exact question this audience is already asking.' No em dashes, no buzzwords.>",
   "episode_to_reference": "<title or description of a specific past episode that creates a natural bridge to the client's expertise, or 'none identified' if unavailable>",
+  "seo_score": <integer 0-100>,
   "red_flags": "<any concerns about the show — low activity, wrong audience, bad reputation, etc. — or 'none' if clean>",
   "booking_likelihood": "<one of: high | medium | low> — overall likelihood of securing a booking, given all factors"
 }

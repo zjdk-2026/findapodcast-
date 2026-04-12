@@ -194,8 +194,8 @@ router.post('/add-podcast', async (req, res) => {
       scorePodcast(podcast, client)
         .then((scored) => {
           if (scored) {
-            const { fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood } = scored;
-            supabase.from('podcast_matches').update({ fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood }).eq('id', match.id)
+            const { fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, seo_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood } = scored;
+            supabase.from('podcast_matches').update({ fit_score, relevance_score, audience_score, recency_score, guest_quality_score, reach_score, contactability_score, brand_score, seo_score, show_summary, why_this_client_fits, best_pitch_angle, episode_to_reference, red_flags, booking_likelihood }).eq('id', match.id)
               .then(() => logger.info('Manual podcast scored', { matchId: match.id, fit_score: scored.fit_score }));
           }
         })

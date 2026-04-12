@@ -98,6 +98,7 @@ async function scorePodcast(podcast, client) {
     contactability_score:  50,
     brand_score:           50,
     fit_score:             50,
+    seo_score:             50,
     show_summary:          'Score pending review.',
     why_this_client_fits:  '',
     best_pitch_angle:      '',
@@ -136,6 +137,7 @@ async function scorePodcast(podcast, client) {
       reach_score:          clamp(scores.reach_score),
       contactability_score: clamp(scores.contactability_score),
       brand_score:          clamp(scores.brand_score),
+      seo_score:            clamp(scores.seo_score),
     };
 
     const fit_score = calculateFitScore(clamped);

@@ -135,6 +135,7 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
           why_this_client_fits: scoring.why_this_client_fits,
           best_pitch_angle:     scoring.best_pitch_angle,
           episode_to_reference: scoring.episode_to_reference,
+          seo_score:            scoring.seo_score,
           red_flags:            scoring.red_flags,
           booking_likelihood:   scoring.booking_likelihood,
           status:               'new',
