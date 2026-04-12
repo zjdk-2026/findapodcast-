@@ -1315,7 +1315,7 @@ html:not(.light-mode) .card-booked-highlight {
 
 .why-fits-text {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   line-height: 1.65;
 }
 
@@ -1338,8 +1338,8 @@ html:not(.light-mode) .card-booked-highlight {
 .analysis-text,
 .pitch-text,
 .red-flags-text {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 14px;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
