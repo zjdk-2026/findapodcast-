@@ -409,7 +409,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 
 /* ── Hero Greeting Section ─────────────────────────────────── */
 .hero-greeting {
-  padding: 32px 24px 0;
+  padding: 28px 24px 0;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -420,7 +420,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   color: var(--text-primary);
   letter-spacing: -0.04em;
   line-height: 1.1;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .hero-greeting-sub {
@@ -428,7 +428,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   color: var(--text-secondary);
   font-weight: 400;
   letter-spacing: -0.01em;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .hero-lifetime-reach {
@@ -441,7 +441,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   border: 1px solid rgba(99,102,241,0.14);
   border-radius: var(--radius-pill);
   padding: 8px 16px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 .hero-lifetime-reach strong {
   color: var(--accent);
@@ -951,6 +951,29 @@ html:not(.light-mode) .onboarding-inner {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.filter-action-btn {
+  font-size: 14px;
+  background: none;
+  border: 2px solid var(--border-medium);
+  border-radius: 999px;
+  padding: 8px 18px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 150ms ease-out, background 150ms ease-out, border-color 150ms ease-out;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.filter-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-color: var(--border-medium);
 }
 
 .filter-label {

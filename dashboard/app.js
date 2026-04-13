@@ -3206,10 +3206,10 @@ async function refreshPipeline() {
     if (i + BATCH < active.length) await new Promise(r => setTimeout(r, 800));
   }
 
-  // Remove banner, restore button
+  // Remove banner, reload dashboard for clean data
   if (progressBanner) progressBanner.remove();
-  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} re-enriched with latest data.`, 'success');
-  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer'; btn.innerHTML = btnOriginalHTML; }
+  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} updated. Reloading…`, 'success');
+  setTimeout(() => window.location.reload(), 1200);
 }
 window.refreshPipeline = refreshPipeline;
 
