@@ -166,39 +166,220 @@ function tokenise(str) {
 }
 
 /**
- * Like pickBestSocialUrl but requires the handle to share at least one token
- * with the podcast title or host name. Used for homepage scraping where any
- * social link on the page might belong to a third party (guest, sponsor, etc.)
+ * Like pickBestSocialUrl but requires strong token matching between handle and
+ * podcast title/host. Used for homepage scraping where any social link on the
+ * page might belong to a third party (guest, sponsor, etc.)
  *
- * Falls back to the first valid URL only when ALL candidates fail the match
- * AND there is exactly one candidate (i.e. the page clearly owns it).
+ * Rules (Fix 1):
+ * - Short tokens under 4 chars never count alone
+ * - Need 2+ matching tokens OR one matching token of 5+ chars
+ * - If multiple candidates share the same top score → ambiguous → return null
+ * - Single-candidate fallback only if the handle actually contains a token
  */
 function pickMatchingSocialUrl(hrefs, platform, podcastTitle, hostName) {
   const titleTokens = tokenise(podcastTitle);
   const hostTokens  = tokenise(hostName);
-  const contextTokens = new Set([...titleTokens, ...hostTokens]);
+  const contextTokens = [...new Set([...titleTokens, ...hostTokens])];
 
   const validated = hrefs.map(h => validateAndNormalizeSocialUrl(h, platform)).filter(Boolean);
   if (!validated.length) return null;
 
-  // Score each: count how many context tokens appear in the handle
-  let bestUrl   = null;
-  let bestScore = 0;
-
-  for (const url of validated) {
+  // Score each candidate
+  const scored = validated.map(url => {
     const handle = (extractHandleFromUrl(url) || '').toLowerCase();
-    const score  = [...contextTokens].filter(t => handle.includes(t)).length;
-    if (score > bestScore) { bestScore = score; bestUrl = url; }
+    const matchingTokens = contextTokens.filter(t => handle.includes(t));
+    // Weight: 5+ char tokens count as 2 points, shorter as 1
+    const weightedScore = matchingTokens.reduce((sum, t) => sum + (t.length >= 5 ? 2 : 1), 0);
+    return { url, matchingTokens, weightedScore };
+  });
+
+  const bestScore = Math.max(...scored.map(s => s.weightedScore));
+
+  // Must have at least 2 tokens matched, OR one 5+ char token (weighted >= 2)
+  if (bestScore < 2) {
+    // Single-candidate fallback: only if it has at least one token match (any length)
+    if (validated.length === 1 && scored[0].matchingTokens.length > 0) {
+      return validated[0];
+    }
+    logger.warn('pickMatchingSocialUrl: no candidate meets minimum token threshold', {
+      platform, podcastTitle, candidates: validated.length,
+    });
+    return null;
   }
 
-  // Accept if at least one token matched
-  if (bestScore > 0) return bestUrl;
+  const topCandidates = scored.filter(s => s.weightedScore === bestScore);
 
-  // No match — only trust the URL if it's the sole candidate (page has one social link, likely theirs)
-  if (validated.length === 1) return validated[0];
+  // Ambiguous: multiple candidates with same top score → don't guess
+  if (topCandidates.length > 1) {
+    logger.warn('pickMatchingSocialUrl: ambiguous candidates, refusing to guess', {
+      platform, podcastTitle, topScore: bestScore, count: topCandidates.length,
+    });
+    return null;
+  }
 
-  // Multiple mismatched candidates → can't tell which belongs to the show → skip
-  return null;
+  return topCandidates[0].url;
+}
+
+/**
+ * HEAD-request verification of a social URL (Fix 2).
+ * Returns the url if it resolves (200/301/302), null otherwise.
+ */
+async function verifySocialUrl(url) {
+  if (!url) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0; +https://findapodcast.io)' },
+    });
+    if ([200, 301, 302, 303].includes(res.status)) return url;
+    logger.warn('verifySocialUrl: HEAD returned non-OK status', { url, status: res.status });
+    return null;
+  } catch (err) {
+    logger.warn('verifySocialUrl: HEAD request failed', { url, error: err.message });
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Profile existence check — lightweight content check (Fix 3).
+ * Returns true if the profile looks real, false if it's a 404/generic page.
+ */
+async function checkProfileExists(url, platform) {
+  if (!url) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0; +https://findapodcast.io)',
+        'Accept': 'text/html',
+      },
+    });
+
+    // LinkedIn login redirect means profile doesn't exist / requires auth
+    if (platform === 'linkedin') {
+      const finalUrl = res.url || '';
+      if (finalUrl.includes('linkedin.com/login') || finalUrl.includes('linkedin.com/authwall')) {
+        logger.warn('checkProfileExists: LinkedIn redirected to login', { url });
+        return false;
+      }
+      // If we got a response at all and didn't redirect to login, treat as existing
+      return res.ok;
+    }
+
+    if (!res.ok) return false;
+
+    const html = await res.text();
+    const ogTitleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+    const ogTitle = ogTitleMatch ? ogTitleMatch[1].trim() : '';
+
+    if (platform === 'instagram') {
+      if (!ogTitle || ogTitle.toLowerCase() === 'instagram' || ogTitle.toLowerCase().includes('page not found')) {
+        logger.warn('checkProfileExists: Instagram generic/404 page', { url, ogTitle });
+        return false;
+      }
+      return true;
+    }
+
+    if (platform === 'twitter') {
+      if (!ogTitle || ogTitle.toLowerCase() === 'twitter' || ogTitle.toLowerCase() === 'x' || ogTitle.toLowerCase().includes('page not found')) {
+        logger.warn('checkProfileExists: Twitter/X generic/404 page', { url, ogTitle });
+        return false;
+      }
+      return true;
+    }
+
+    if (platform === 'facebook') {
+      if (!ogTitle || ogTitle.toLowerCase().includes('page not found') || ogTitle.toLowerCase() === 'facebook') {
+        logger.warn('checkProfileExists: Facebook generic/404 page', { url, ogTitle });
+        return false;
+      }
+      return true;
+    }
+
+    return true;
+  } catch (err) {
+    logger.warn('checkProfileExists: fetch failed', { url, platform, error: err.message });
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Confidence scoring for a social URL (Fix 5).
+ * Returns 0-100. Only store if >= 60.
+ */
+function confidenceScore({ url, platform, podcastTitle, hostName, headVerified, profileChecked, fromAtomLink, isSoleCandidate }) {
+  let score = 0;
+
+  const titleTokens = tokenise(podcastTitle);
+  const hostTokens  = tokenise(hostName);
+  const contextTokens = [...new Set([...titleTokens, ...hostTokens])];
+  const handle = (extractHandleFromUrl(url) || '').toLowerCase();
+  const matchingTokens = contextTokens.filter(t => handle.includes(t));
+
+  // +40 for 2+ tokens matching (5+ char tokens worth more)
+  const longMatches  = matchingTokens.filter(t => t.length >= 5).length;
+  const shortMatches = matchingTokens.filter(t => t.length < 5).length;
+  if (longMatches >= 2) score += 40;
+  else if (longMatches >= 1 && shortMatches >= 1) score += 35;
+  else if (longMatches >= 1) score += 30;
+  else if (shortMatches >= 2) score += 20;
+  else if (shortMatches >= 1) score += 10;
+
+  if (headVerified)    score += 30;  // +30 verified via HEAD
+  if (profileChecked)  score += 20;  // +20 profile content check passed
+  if (fromAtomLink)    score += 10;  // +10 came from RSS atom:link
+  if (isSoleCandidate) score += 5;   // +5 only candidate
+
+  return score;
+}
+
+/**
+ * Verify, content-check, and score a social URL. Returns the URL if confidence >= 60, else null.
+ * fromAtomLink and isSoleCandidate are optional scoring hints.
+ */
+async function validateSocialWithConfidence(url, platform, podcastTitle, hostName, { fromAtomLink = false, isSoleCandidate = false } = {}) {
+  if (!url) return null;
+
+  // Fix 2: HEAD verification
+  const headOk = !!(await verifySocialUrl(url));
+
+  // Fix 3: Profile existence check (only for the four key platforms)
+  let profileOk = false;
+  if (headOk && ['instagram', 'twitter', 'facebook', 'linkedin'].includes(platform)) {
+    profileOk = await checkProfileExists(url, platform);
+    if (!profileOk) {
+      logger.warn('validateSocialWithConfidence: profile check failed, discarding', { url, platform });
+      return null;
+    }
+  } else if (headOk) {
+    profileOk = true; // other platforms: treat head ok as sufficient
+  }
+
+  if (!headOk) {
+    logger.warn('validateSocialWithConfidence: HEAD verification failed, discarding', { url, platform });
+    return null;
+  }
+
+  const score = confidenceScore({ url, platform, podcastTitle, hostName, headVerified: headOk, profileChecked: profileOk, fromAtomLink, isSoleCandidate });
+
+  if (score < 60) {
+    logger.warn('validateSocialWithConfidence: confidence below threshold, discarding', { url, platform, score, podcastTitle });
+    return null;
+  }
+
+  return url;
 }
 
 /**
@@ -379,8 +560,8 @@ async function fetchRssFeed(rssUrl) {
     const desc = $('channel > description').first().text().trim();
     if (desc) result.description = desc;
 
-    // Social links — collect all candidate URLs from atom:link and full XML scan,
-    // then validate each one. Only store confirmed profile URLs.
+    // Social links — Fix 4: ONLY trust atom:link tags (the show's own declared links).
+    // Full XML regex scan is removed to prevent picking up sponsor/guest/ad links.
     const socialScanPatterns = [
       { key: 'instagram_url',    platform: 'instagram', domain: 'instagram.com' },
       { key: 'twitter_url',      platform: 'twitter',   domain: 'twitter.com' },
@@ -389,20 +570,21 @@ async function fetchRssFeed(rssUrl) {
       { key: 'linkedin_page_url',platform: 'linkedin',  domain: 'linkedin.com' },
     ];
 
-    // Collect all atom:link hrefs
+    // Collect all atom:link hrefs — these are the show's own declared links
     const atomHrefs = [];
     $('atom\\:link').each((_, el) => { const h = $(el).attr('href'); if (h) atomHrefs.push(h); });
 
     for (const { key, platform, domain } of socialScanPatterns) {
       if (result[key]) continue;
-      // From atom:link
-      const fromAtom = pickBestSocialUrl(atomHrefs.filter(h => h.toLowerCase().includes(domain)), platform);
-      if (fromAtom) { result[key] = fromAtom; continue; }
-      // From full XML regex scan — collect ALL matches first, then pick best
-      const regex = new RegExp(`https?://(?:[a-z0-9-]+\\.)?${domain.replace('.', '\\.')}[^\\s"'<>\\]]+`, 'gi');
-      const xmlMatches = [...(xml.matchAll(regex) || [])].map(m => m[0]);
-      const fromXml = pickBestSocialUrl(xmlMatches, platform);
-      if (fromXml) result[key] = fromXml;
+      // Only from atom:link — no full XML scan (Fix 4)
+      const candidates = atomHrefs.filter(h => h.toLowerCase().includes(domain));
+      const validated = candidates.map(h => validateAndNormalizeSocialUrl(h, platform)).filter(Boolean);
+      if (validated.length > 0) {
+        // Mark as fromAtomLink=true for confidence scoring — stored in _rssAtomSocials for later use
+        if (!result._rssAtomSocials) result._rssAtomSocials = {};
+        result._rssAtomSocials[key] = validated[0];
+        result[key] = validated[0];
+      }
     }
 
     // Total episode count from <itunes:episodeCount> or by counting <item> elements
@@ -450,8 +632,24 @@ async function enrichPodcast(podcastData) {
   if (rssUrl) {
     try {
       const rssData = await fetchRssFeed(rssUrl);
+      const rssAtomSocials = rssData._rssAtomSocials || {};
+      delete rssData._rssAtomSocials;
       for (const [key, val] of Object.entries(rssData)) {
         if (val && !enriched[key]) enriched[key] = val;
+      }
+      // Confidence-validate atom:link socials before storing (Fix 5)
+      const _rTitle = podcastData.title || '';
+      const _rHost  = podcastData.host_name || enriched.host_name || '';
+      const socialFieldToPlatform = {
+        instagram_url: 'instagram', twitter_url: 'twitter',
+        facebook_url: 'facebook', linkedin_page_url: 'linkedin',
+      };
+      for (const [field, platform] of Object.entries(socialFieldToPlatform)) {
+        if (rssAtomSocials[field] && !enriched[field]) {
+          const verified = await validateSocialWithConfidence(rssAtomSocials[field], platform, _rTitle, _rHost, { fromAtomLink: true, isSoleCandidate: true });
+          if (verified) enriched[field] = verified;
+          else enriched[field] = null;
+        }
       }
       logger.debug('RSS feed enriched', { title: podcastData.title, found: Object.keys(rssData) });
     } catch (err) {
@@ -468,8 +666,24 @@ async function enrichPodcast(podcastData) {
       enriched.rss_feed_url = rssViaItunes;
       const rssData = await fetchRssFeed(rssViaItunes);
       if (rssData) {
+        const rssAtomSocials2 = rssData._rssAtomSocials || {};
+        delete rssData._rssAtomSocials;
         for (const [k, v] of Object.entries(rssData)) {
           if (!enriched[k] && v) enriched[k] = v;
+        }
+        // Confidence-validate atom:link socials
+        const _r2Title = podcastData.title || '';
+        const _r2Host  = podcastData.host_name || enriched.host_name || '';
+        const socialFieldToPlatform2 = {
+          instagram_url: 'instagram', twitter_url: 'twitter',
+          facebook_url: 'facebook', linkedin_page_url: 'linkedin',
+        };
+        for (const [field, platform] of Object.entries(socialFieldToPlatform2)) {
+          if (rssAtomSocials2[field] && !enriched[field]) {
+            const verified = await validateSocialWithConfidence(rssAtomSocials2[field], platform, _r2Title, _r2Host, { fromAtomLink: true, isSoleCandidate: true });
+            if (verified) enriched[field] = verified;
+            else enriched[field] = null;
+          }
         }
       }
     }
@@ -490,9 +704,21 @@ async function enrichPodcast(podcastData) {
 
       const _ltTitle = podcastData.title || '';
       const _ltHost  = podcastData.host_name || enriched.host_name || '';
-      if (!enriched.instagram_url) enriched.instagram_url = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram', _ltTitle, _ltHost);
-      if (!enriched.facebook_url)  enriched.facebook_url  = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook', _ltTitle, _ltHost);
-      if (!enriched.twitter_url)   enriched.twitter_url   = pickMatchingSocialUrl(ltHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter', _ltTitle, _ltHost);
+      const ltInstaCandidates = ltHrefs.filter(h => h.toLowerCase().includes('instagram.com'));
+      const ltFbCandidates    = ltHrefs.filter(h => h.toLowerCase().includes('facebook.com'));
+      const ltTwCandidates    = ltHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com'));
+      if (!enriched.instagram_url) {
+        const raw = pickMatchingSocialUrl(ltInstaCandidates, 'instagram', _ltTitle, _ltHost);
+        if (raw) enriched.instagram_url = await validateSocialWithConfidence(raw, 'instagram', _ltTitle, _ltHost, { isSoleCandidate: ltInstaCandidates.length === 1 });
+      }
+      if (!enriched.facebook_url) {
+        const raw = pickMatchingSocialUrl(ltFbCandidates, 'facebook', _ltTitle, _ltHost);
+        if (raw) enriched.facebook_url = await validateSocialWithConfidence(raw, 'facebook', _ltTitle, _ltHost, { isSoleCandidate: ltFbCandidates.length === 1 });
+      }
+      if (!enriched.twitter_url) {
+        const raw = pickMatchingSocialUrl(ltTwCandidates, 'twitter', _ltTitle, _ltHost);
+        if (raw) enriched.twitter_url = await validateSocialWithConfidence(raw, 'twitter', _ltTitle, _ltHost, { isSoleCandidate: ltTwCandidates.length === 1 });
+      }
       if (!enriched.spotify_url)   enriched.spotify_url   = ltHrefs.find(h => h.toLowerCase().includes('spotify.com/show')) || null;
       if (!enriched.apple_url)     enriched.apple_url     = ltHrefs.find(h => h.toLowerCase().includes('podcasts.apple.com')) || null;
       if (!enriched.youtube_url)   enriched.youtube_url   = ltHrefs.find(h => h.toLowerCase().includes('youtube.com')) || null;
@@ -555,6 +781,46 @@ async function enrichPodcast(podcastData) {
         if (enriched.website) {
           logger.info('Show website found via Apple Podcasts page', { title: podcastData.title, website: enriched.website });
         }
+
+        // 3. Additional: Extract social links from Apple Podcasts JSON-LD and page links
+        //    Apple is authoritative — podcasters submit these links themselves.
+        const _apTitle = podcastData.title || '';
+        const _apHost  = podcastData.host_name || enriched.host_name || '';
+        const appleHrefs = [];
+        $ap('a[href]').each((_, el) => { const h = ($ap(el).attr('href') || '').trim(); if (h) appleHrefs.push(h); });
+
+        // Also collect sameAs arrays from JSON-LD
+        $ap('script[type="application/ld+json"]').each((_, el) => {
+          try {
+            const json = JSON.parse($ap(el).html() || '{}');
+            const entries = Array.isArray(json) ? json : [json];
+            for (const entry of entries) {
+              const sameAs = Array.isArray(entry.sameAs) ? entry.sameAs : (entry.sameAs ? [entry.sameAs] : []);
+              for (const u of sameAs) { if (typeof u === 'string') appleHrefs.push(u); }
+            }
+          } catch { /* ignore */ }
+        });
+
+        const socialPlatformsApple = [
+          { field: 'instagram_url', platform: 'instagram', domain: 'instagram.com' },
+          { field: 'twitter_url',   platform: 'twitter',   domain: 'twitter.com' },
+          { field: 'twitter_url',   platform: 'twitter',   domain: 'x.com' },
+          { field: 'facebook_url',  platform: 'facebook',  domain: 'facebook.com' },
+          { field: 'linkedin_page_url', platform: 'linkedin', domain: 'linkedin.com' },
+        ];
+        for (const { field, platform, domain } of socialPlatformsApple) {
+          if (enriched[field]) continue;
+          const candidates = appleHrefs.filter(h => h.toLowerCase().includes(domain));
+          if (!candidates.length) continue;
+          const raw = pickMatchingSocialUrl(candidates, platform, _apTitle, _apHost);
+          if (raw) {
+            const verified = await validateSocialWithConfidence(raw, platform, _apTitle, _apHost, { isSoleCandidate: candidates.length === 1 });
+            if (verified) {
+              enriched[field] = verified;
+              logger.info('Social link extracted from Apple Podcasts page', { title: podcastData.title, platform, url: verified });
+            }
+          }
+        }
       }
     } catch (err) {
       logger.warn('Apple Podcasts page scrape failed', { appleUrl: enriched.apple_url, error: err.message });
@@ -594,10 +860,26 @@ async function enrichPodcast(podcastData) {
 
       const _title = podcastData.title || '';
       const _host  = podcastData.host_name || enriched.host_name || '';
-      if (!enriched.instagram_url)    enriched.instagram_url    = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('instagram.com')), 'instagram', _title, _host);
-      if (!enriched.twitter_url)      enriched.twitter_url      = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com')), 'twitter', _title, _host);
-      if (!enriched.facebook_url)     enriched.facebook_url     = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('facebook.com')), 'facebook', _title, _host);
-      if (!enriched.linkedin_page_url) enriched.linkedin_page_url = pickMatchingSocialUrl(homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com')), 'linkedin', _title, _host);
+      const instaCandidates = homeHrefs.filter(h => h.toLowerCase().includes('instagram.com'));
+      const twCandidates    = homeHrefs.filter(h => h.toLowerCase().includes('twitter.com') || h.toLowerCase().includes('x.com'));
+      const fbCandidates    = homeHrefs.filter(h => h.toLowerCase().includes('facebook.com'));
+      const liCandidates    = homeHrefs.filter(h => h.toLowerCase().includes('linkedin.com'));
+      if (!enriched.instagram_url) {
+        const raw = pickMatchingSocialUrl(instaCandidates, 'instagram', _title, _host);
+        if (raw) enriched.instagram_url = await validateSocialWithConfidence(raw, 'instagram', _title, _host, { isSoleCandidate: instaCandidates.length === 1 });
+      }
+      if (!enriched.twitter_url) {
+        const raw = pickMatchingSocialUrl(twCandidates, 'twitter', _title, _host);
+        if (raw) enriched.twitter_url = await validateSocialWithConfidence(raw, 'twitter', _title, _host, { isSoleCandidate: twCandidates.length === 1 });
+      }
+      if (!enriched.facebook_url) {
+        const raw = pickMatchingSocialUrl(fbCandidates, 'facebook', _title, _host);
+        if (raw) enriched.facebook_url = await validateSocialWithConfidence(raw, 'facebook', _title, _host, { isSoleCandidate: fbCandidates.length === 1 });
+      }
+      if (!enriched.linkedin_page_url) {
+        const raw = pickMatchingSocialUrl(liCandidates, 'linkedin', _title, _host);
+        if (raw) enriched.linkedin_page_url = await validateSocialWithConfidence(raw, 'linkedin', _title, _host, { isSoleCandidate: liCandidates.length === 1 });
+      }
       if (!enriched.tiktok_url)       enriched.tiktok_url       = homeHrefs.find(h => h.toLowerCase().includes('tiktok.com/')) || null;
 
       // YouTube channel — only @handle or /channel/ or /c/ style URLs (not individual videos or playlists)

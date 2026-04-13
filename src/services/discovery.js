@@ -1244,7 +1244,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     returning: filtered.length,
   });
 
-  return filtered.slice(0, 50);
+  return filtered.slice(0, 25);
 }
 
 module.exports = { discoverPodcasts };
