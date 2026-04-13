@@ -650,17 +650,11 @@ function contactChipsHtml(podcast) {
     chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
   }
 
-  // Platform links — each correctly labelled
-  if (isValidUrl(podcast.apple_url)   && podcast.apple_url.toLowerCase().includes('apple.com'))   chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple</a>`);
-  if (isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com')) chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
-  if (isValidUrl(podcast.youtube_url))  chips.push(`<a class="contact-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
+  // Apple Podcasts link
+  if (isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com')) chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
 
-  // Social links — validated with platform-specific profile rules
-  if (isValidSocialProfile(podcast.instagram_url, 'instagram'))                               chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
-  if (isValidSocialProfile(podcast.twitter_url, 'twitter'))                                   chips.push(`<a class="contact-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>`);
-  if (isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin'))    chips.push(`<a class="contact-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (isValidSocialProfile(podcast.facebook_url, 'facebook'))                                 chips.push(`<a class="contact-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
-  if (isValidUrl(podcast.tiktok_url))        chips.push(`<a class="contact-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
+  // Instagram only
+  if (isValidSocialProfile(podcast.instagram_url, 'instagram')) chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
 
   return chips.length > 0
     ? `<div class="contact-section"><div class="contact-chips">${chips.join('')}</div></div>`
@@ -1253,12 +1247,9 @@ function renderMatchCard(match) {
         ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
         <div class="card-row-links" onclick="event.stopPropagation()">
           ${podcast.contact_email ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
-          ${(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url) ? `<a class="card-link-chip" href="${esc(podcast.website || podcast.youtube_url || podcast.apple_url || podcast.spotify_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+          ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+          ${isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com') ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>` : ''}
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>` : ''}
-          ${isValidSocialProfile(podcast.twitter_url, 'twitter') ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ''}
-          ${isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
-          ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
-          ${isValidSocialProfile(podcast.facebook_url, 'facebook') ? `<a class="card-link-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
         ${match.reply_count > 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} replies</span>` : ''}
         </div>
       </div>
