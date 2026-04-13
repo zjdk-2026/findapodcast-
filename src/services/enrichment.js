@@ -317,7 +317,7 @@ async function checkProfileExists(url, platform) {
 
 /**
  * Confidence scoring for a social URL (Fix 5).
- * Returns 0-100. Only store if >= 60.
+ * Returns 0-100. Only store if >= 100.
  */
 function confidenceScore({ url, platform, podcastTitle, hostName, headVerified, profileChecked, fromAtomLink, isSoleCandidate }) {
   let score = 0;
@@ -346,7 +346,7 @@ function confidenceScore({ url, platform, podcastTitle, hostName, headVerified, 
 }
 
 /**
- * Verify, content-check, and score a social URL. Returns the URL if confidence >= 60, else null.
+ * Verify, content-check, and score a social URL. Returns the URL if confidence >= 100, else null.
  * fromAtomLink and isSoleCandidate are optional scoring hints.
  */
 async function validateSocialWithConfidence(url, platform, podcastTitle, hostName, { fromAtomLink = false, isSoleCandidate = false } = {}) {
@@ -374,7 +374,7 @@ async function validateSocialWithConfidence(url, platform, podcastTitle, hostNam
 
   const score = confidenceScore({ url, platform, podcastTitle, hostName, headVerified: headOk, profileChecked: profileOk, fromAtomLink, isSoleCandidate });
 
-  if (score < 60) {
+  if (score < 100) {
     logger.warn('validateSocialWithConfidence: confidence below threshold, discarding', { url, platform, score, podcastTitle });
     return null;
   }
