@@ -519,7 +519,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   const clientId = req.clientId; // verified token owner — ignore URL param to prevent IDOR
 
   const allowed = [
-    'name', 'title', 'business_name', 'bio_short',
+    'name', 'title', 'business_name', 'bio_short', 'bio_long',
     'topics', 'speaking_angles', 'target_audience', 'website',
     'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
     'social_twitter', 'social_facebook', 'preferred_tone', 'daily_target',

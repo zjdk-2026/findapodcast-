@@ -180,6 +180,7 @@ function collectFormData() {
     business_name:    val('f-business')     || undefined,
     title:            val('f-title')        || undefined,
     bio_short:        val('f-bio-short'),
+    bio_long:         val('f-bio-long') || undefined,
     topics:           topicsStr ? topicsStr.split(',').map((s) => s.trim()).filter(Boolean) : [],
     speaking_angles:  anglesRaw ? anglesRaw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean) : [],
     target_audience:  val('f-audience')     || undefined,

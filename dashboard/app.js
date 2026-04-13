@@ -3176,6 +3176,7 @@ function openProfileModal() {
   $('profile-angles').value       = (c.speaking_angles   || []).join(', ');
   $('profile-audience').value     = c.target_audience    || '';
   $('profile-bio-short').value    = c.bio_short          || '';
+  $('profile-bio-long').value     = c.bio_long           || '';
   $('profile-pitch-style').value  = c.pitch_style        || '';
   // Pace selector
   const dailyTarget = c.daily_target || 10;
@@ -3222,6 +3223,7 @@ async function saveProfile() {
     speaking_angles:  splitTrim($('profile-angles').value),
     target_audience:  $('profile-audience').value.trim(),
     bio_short:        $('profile-bio-short').value.trim(),
+    bio_long:         $('profile-bio-long').value.trim(),
     pitch_style:      $('profile-pitch-style').value.trim(),
     ...countryToLangGeo($('profile-country')?.value || 'Any'),
   };
