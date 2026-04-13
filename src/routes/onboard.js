@@ -522,7 +522,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'name', 'title', 'business_name', 'bio_short', 'bio_long',
     'topics', 'speaking_angles', 'target_audience', 'website',
     'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
-    'social_twitter', 'social_facebook', 'preferred_tone', 'daily_target',
+    'social_twitter', 'social_facebook', 'social_youtube', 'preferred_tone', 'daily_target',
     'pitch_style', 'extra_links', 'email_signature',
     'photo_url', 'logo_url',
     'languages', 'geographies',

@@ -3161,6 +3161,7 @@ $('profile-instagram').value    = c.social_instagram   || '';
   $('profile-linkedin').value     = c.social_linkedin    || '';
   $('profile-twitter').value      = c.social_twitter     || '';
   $('profile-facebook').value     = c.social_facebook    || '';
+  if ($('profile-youtube')) $('profile-youtube').value = c.social_youtube || '';
   $('profile-extra-links').value  = c.extra_links        || '';
   $('profile-signature').value    = c.email_signature    || '';
   // Community toggle
@@ -3212,6 +3213,7 @@ async function saveProfile() {
     social_linkedin:  $('profile-linkedin').value.trim(),
     social_twitter:   $('profile-twitter').value.trim(),
     social_facebook:        $('profile-facebook').value.trim(),
+    social_youtube:         ($('profile-youtube')?.value || '').trim(),
     extra_links:            $('profile-extra-links').value.trim(),
     email_signature:        $('profile-signature').value.trim(),
     share_with_community:   !!($('profile-share-community')?.checked),
