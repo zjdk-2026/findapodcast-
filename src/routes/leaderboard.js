@@ -18,16 +18,18 @@ router.get('/leaderboard', async (req, res) => {
   try {
     let { data: clients, error } = await supabase
       .from('clients')
-      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, bio_short, bio_long')
-      .eq('is_active', true);
+      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, bio_short, bio_long, created_at')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
 
     if (error) {
       // If share_with_community column missing, retry without it
       if (error.message?.includes('share_with_community')) {
         const { data: fallbackClients, error: fallbackError } = await supabase
           .from('clients')
-          .select('id, name, dashboard_token, is_active, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links')
-          .eq('is_active', true);
+          .select('id, name, dashboard_token, is_active, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, created_at')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
         if (fallbackError) throw fallbackError;
         if (!fallbackClients?.length) return res.json({ success: true, rows: [], community: [] });
         // Patch in missing field
@@ -78,6 +80,7 @@ router.get('/leaderboard', async (req, res) => {
         sent:     stats.sent,
         appeared: stats.appeared,
         total:    stats.total,
+        created_at: c.created_at || null,
       };
     });
 
@@ -89,8 +92,10 @@ router.get('/leaderboard', async (req, res) => {
     );
     rows.forEach((r, i) => { r.rank = i + 1; });
 
-    // Community section: only opted-in members
-    const community = rows.filter(r => r.share_with_community);
+    // Community section: only opted-in members, newest first
+    const community = rows
+      .filter(r => r.share_with_community)
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
     // Spotlight: operator sets COMMUNITY_SPOTLIGHT_ID env var to a client id
     let spotlight = null;
