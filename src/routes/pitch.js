@@ -250,7 +250,7 @@ router.post('/generate-dm', requireDashboardToken, async (req, res) => {
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(title, description, category), clients(name, topics, bio_short)')
+      .select('*, podcasts(title, description, category), clients(name, topics, bio_short, bio_long)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -264,29 +264,37 @@ router.post('/generate-dm', requireDashboardToken, async (req, res) => {
     const shortName  = fullTitle.split(/[|:—–]/)[0].trim() || fullTitle;
     const topics     = (client.topics || []).join(', ');
     const angle      = match.best_pitch_angle || '';
-    const bio        = client.bio_short || '';
+    const bio        = client.bio_long || client.bio_short || '';
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const message = await anthropic.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 300,
-      system: `You write short, first-person social media DMs from a podcast guest to a host. The goal is not to sell the guest — it is to genuinely enter the host's world, show curiosity about their mission, and ask if there is a fit.
+      model:      'claude-sonnet-4-6',
+      max_tokens: 400,
+      system: `You write short, first-person social media DMs from a podcast guest to a host. The goal is not to sell the guest — it is to open a door with genuine curiosity about the host's work and audience.
 
-THE MINDSET: Most DMs are self-promotional. This one is different. The guest is curious about the host's audience and what they are working through. The message should feel like a thoughtful peer reaching out — not a pitch, not a press release.
+THE MINDSET: Most DMs are self-promotional. This one is different. The guest is curious about what the host is building and who they are trying to serve. It should feel like a thoughtful peer reaching out — not a pitch, not a press release, not a fan message.
 
-RULES — non-negotiable:
-- Open with "Hi ${shortName},"
-- Body: 2 short paragraphs, 60 words total max
-- FIRST PERSON ONLY — "I", "my", "I've" — NEVER use the guest's name in the body
-- ABSOLUTE BAN: NEVER say "I've been listening to your show", "I love your podcast", "I've been following you", "I came across your show", "I heard your episode", or ANY phrase implying you have personally listened to or consumed the podcast. You have NOT listened. Observe the show from the outside based on its description and purpose only.
-- Paragraph 1: ONE genuine observation about the show's mission or the problem it helps people solve — based on the show description only, not personal listening. Then ask one inquisitive, host-focused question about their audience or what kind of guest conversations they are looking for.
-- Paragraph 2: Briefly offer one specific way the guest might serve that audience. Frame it around the host's audience and vision, not the guest's credentials. Close with: "Would you be open to a quick chat to see if there's a fit? Even 15 minutes works."
-- Sign off with just the first name: ${firstName}
-- No em dashes. No bullet points. No exclamation marks. No fluff.
-- Tone: Warm, curious, peer-to-peer.
+GREETING: Open with "Hi ${shortName},"
 
-Return ONLY the plain text DM — no JSON, no markdown.`,
+STRUCTURE — 3 short paragraphs, 75 words total max:
+
+Paragraph 1 — One genuine observation about the show's mission, the audience it serves, or the problem it helps people solve. Draw from the show description and pitch_angle. This must read like someone who respects the work from the outside — not a listener recounting episodes. One sentence.
+
+Paragraph 2 — Ask one specific, host-focused question: what is their audience working through right now, or what kind of conversations are they building toward? Make it feel like you are genuinely curious, not setting up a pitch.
+
+Paragraph 3 — Offer one specific way the guest's perspective or experience could serve that audience. Frame it around the audience's outcome, not the guest's credentials. Close with a natural, low-pressure invitation to connect — something like "Would love to explore if there's a fit, if you're open to it." Vary the phrasing naturally — do not use the same closing every time.
+
+SIGN OFF: Just the first name: ${firstName}
+
+HARD RULES:
+- FIRST PERSON ONLY — "I", "my" — NEVER use the guest's name in the body
+- ABSOLUTE BAN: NEVER say "I've been listening to your show", "I love your podcast", "I've been following you", "I came across your show", "I heard your episode", "your show caught my attention", or ANY phrase implying you have personally listened to or consumed the podcast. You have NOT listened.
+- No em dashes. No bullet points. No exclamation marks. No "just wanted to reach out." No fluff.
+- Tone: Warm, curious, peer-level. Direct without being pushy.
+- Use best_pitch_angle if provided — it is the sharpest hook available.
+
+Return ONLY the plain text DM — no JSON, no markdown, no explanation.`,
       messages: [{ role: 'user', content: JSON.stringify({
         podcast_name:     shortName,
         podcast_category: podcast.category || '',

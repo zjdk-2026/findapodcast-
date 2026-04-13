@@ -67,11 +67,10 @@ async function writeEmail(client, match, podcast) {
     title:           client.title,
     business_name:   client.business_name,
     bio_short:       client.bio_short,
+    bio_long:        client.bio_long,
     topics:          client.topics,
     speaking_angles: client.speaking_angles,
     target_audience: client.target_audience,
-    website:         client.website,
-    booking_link:    client.booking_link,
     pitch_style:     client.pitch_style,
     preferred_tone:  client.preferred_tone,
   };
@@ -82,10 +81,8 @@ async function writeEmail(client, match, podcast) {
     description:          podcast.description,
     website:              podcast.website,
     contact_email:        podcast.contact_email,
-    // Scoring insights — these make pitches far more targeted
     best_pitch_angle:     match.best_pitch_angle     || null,
     why_this_client_fits: match.why_this_client_fits || null,
-    episode_to_reference: match.episode_to_reference || null,
     show_summary:         match.show_summary         || null,
   };
 
