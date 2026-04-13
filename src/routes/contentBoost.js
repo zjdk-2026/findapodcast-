@@ -67,6 +67,60 @@ router.post('/content-boost/request', requireDashboardToken, async (req, res) =>
 });
 
 /**
+ * POST /api/content-boost/notify
+ * Fires an alert email to hi@zacdeane.com when a client clicks Content Boost.
+ * Called immediately on button click before Stripe checkout.
+ */
+router.post('/content-boost/notify', requireDashboardToken, async (req, res) => {
+  const { matchId } = req.body;
+  try {
+    const { data: match } = await supabase
+      .from('podcast_matches')
+      .select('id, podcasts(title, host_name), clients(name, email, dashboard_token, title, business_name)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (!match) return res.json({ success: true }); // silent fail
+
+    const client       = match.clients || {};
+    const clientName   = client.name        || 'Unknown';
+    const clientEmail  = client.email       || 'No email';
+    const clientTitle  = client.title       || '';
+    const clientBiz    = client.business_name || '';
+    const podcastTitle = match.podcasts?.title || 'Unknown podcast';
+    const dashUrl      = `${BASE_URL}/dashboard/${client.dashboard_token}`;
+
+    const html = `
+      <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;color:#1D1D1F;">
+        <h2 style="font-size:20px;font-weight:800;margin:0 0 16px;">New Content Boost purchase</h2>
+        <table style="font-size:14px;color:#444;border-collapse:collapse;width:100%;">
+          <tr><td style="padding:6px 0;font-weight:600;width:140px;">Client</td><td>${clientName}</td></tr>
+          <tr><td style="padding:6px 0;font-weight:600;">Email</td><td><a href="mailto:${clientEmail}" style="color:#6366f1;">${clientEmail}</a></td></tr>
+          ${clientTitle ? `<tr><td style="padding:6px 0;font-weight:600;">Title</td><td>${clientTitle}</td></tr>` : ''}
+          ${clientBiz   ? `<tr><td style="padding:6px 0;font-weight:600;">Business</td><td>${clientBiz}</td></tr>` : ''}
+          <tr><td style="padding:6px 0;font-weight:600;">Podcast</td><td>${podcastTitle}</td></tr>
+        </table>
+        <div style="margin:28px 0 0;">
+          <a href="${dashUrl}" style="display:inline-block;background:#6366f1;color:#fff;font-weight:700;font-size:13px;padding:12px 24px;border-radius:999px;text-decoration:none;">View their dashboard</a>
+        </div>
+      </div>`;
+
+    await sendEmail({
+      to:      'hi@zacdeane.com',
+      subject: `Content Boost purchased — ${clientName} (${podcastTitle})`,
+      html,
+    });
+
+    logger.info('Content Boost notify email sent', { matchId, clientName });
+    return res.json({ success: true });
+  } catch (err) {
+    logger.error('content-boost/notify error', { error: err.message });
+    return res.json({ success: true }); // always silent — non-blocking
+  }
+});
+
+/**
  * POST /api/content-boost/submit-link
  * Client submits the episode URL so the operator team can download and edit it.
  */

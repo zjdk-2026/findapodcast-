@@ -163,19 +163,8 @@
           <button class="tab-pill filter-tab" data-status="dismissed">Not a Fit</button>
           <button class="tab-pill filter-tab" data-status="content_boost" id="content-boost-tab" style="display:none;">Content Boost</button>
         </div>
-        <div class="filter-right">
-          <label class="filter-label">
-            Score ≥
-            <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
-            <span id="min-score-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
-          </label>
-          <label class="filter-label" style="cursor:pointer;" title="Only show podcasts where we have a direct email address for the host or producer">
-            <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
-            Has Email
-          </label>
-        </div>
       </section>
-      <!-- Filter bar — row 2: action buttons -->
+      <!-- Filter bar — row 2: action buttons + score/email far right -->
       <div style="display:flex;align-items:center;gap:8px;padding:6px 24px 0;max-width:1400px;margin:0 auto;">
         <button class="filter-action-btn" onclick="openAddPodcastModal()">+ Add a Podcast</button>
         <button class="filter-action-btn" id="leaderboard-tab" onclick="showLeaderboardView()">Community</button>
@@ -183,6 +172,16 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Refresh Pipeline
         </button>
+        <div style="flex:1;"></div>
+        <label class="filter-label">
+          Score ≥
+          <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
+          <span id="min-score-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
+        </label>
+        <label class="filter-label" style="cursor:pointer;" title="Only show podcasts where we have a direct email address for the host or producer">
+          <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
+          Has Email
+        </label>
       </div>
 
       <!-- Onboarding checklist (first-time users only) -->

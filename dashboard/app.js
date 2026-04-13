@@ -453,12 +453,14 @@ function showContentBoostModal(matchId) {
 
 async function startContentBoostCheckout() {
   closeContentBoostModal();
-  // Tag the match as 'requested' before sending to Stripe so we can link it after payment
+  // Tag the match as 'requested' and notify hi@zacdeane.com
   if (_contentBoostMatchId) {
     try {
       await apiPost('/api/content-boost/request', { matchId: _contentBoostMatchId });
       updateMatchInState(_contentBoostMatchId, { content_boost_status: 'requested' });
       updateContentBoostTab();
+      // Fire notification email to team
+      try { await apiPost('/api/content-boost/notify', { matchId: _contentBoostMatchId }); } catch { /* non-fatal */ }
     } catch { /* non-fatal */ }
   }
   window.open('https://buy.stripe.com/00waEX7Dqekt8B70EL8IU0L', '_blank');
@@ -729,17 +731,21 @@ function contentBoostButton(match) {
 
 // ── Action buttons HTML ───────────────────────────────────────────────
 function actionButtonsHtml(match) {
-  const status   = match.status;
-  const id       = match.id;
-  const podcast  = match.podcasts || {};
-  const hasEmail = (match.email_subject_edited || match.email_subject) && (match.email_body_edited || match.email_body);
-  const buttons  = [];
+  const status  = match.status;
+  const id      = match.id;
+  const podcast = match.podcasts || {};
+  const buttons = [];
 
-  // Write Pitch Email — only for new/replied, NOT dream/sent/followed_up
-  const pitchStatuses = ['new','replied'];
+  const hasContactEmail = !!podcast.contact_email;
+  const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
+                    isValidSocialProfile(podcast.twitter_url, 'twitter') ||
+                    isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
+                    isValidSocialProfile(podcast.facebook_url, 'facebook');
+
+  // ── Pitch button (Write Pitch Email / DM Template) shown on NEW and WISH LIST ──
+  const pitchStatuses = ['new', 'dream'];
   if (pitchStatuses.includes(status)) {
-    const hasEmail = !!podcast.contact_email;
-    if (hasEmail) {
+    if (hasContactEmail) {
       buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
       </button>`);
@@ -748,53 +754,63 @@ function actionButtonsHtml(match) {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
       </button>`);
     }
+    if (hasSocial) {
+      buttons.push(`<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="toggleSocialDM('${id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>DM Template
+      </button>`);
+    }
   }
 
-  // Social DM button — shown when no contact email but validated social profiles exist
-  const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
-                    isValidSocialProfile(podcast.twitter_url, 'twitter') ||
-                    isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
-                    isValidSocialProfile(podcast.facebook_url, 'facebook');
-  if (hasSocial && pitchStatuses.includes(status)) {
-    buttons.push(`<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="toggleSocialDM('${id}')">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>DM Template
-    </button>`);
-  }
-
-  if (status === 'appeared') {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleThankYouPanel('${id}')">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Send a Thank You
-    </button>`);
-  }
-
+  // ── NEW tab ──
   if (status === 'new') {
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="dreamMatch('${id}')">Add to Wish List</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
-  } else if (status === 'dream') {
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
+
+  // ── PITCHED tab ──
   } else if (status === 'sent') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Follow Up</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsFollowedUpManually('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
+
+  // ── FOLLOWED UP tab ──
   } else if (status === 'followed_up') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Send Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Follow Up Again</button>`);
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsFollowedUpManually('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
-    buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
+
+  // ── HOST REPLIED tab ──
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
+
+  // ── BOOKED tab ──
   } else if (status === 'booked') {
-    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleInlinePitch('${id}')">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email
-    </button>`);
     buttons.push(`<button class="btn btn-action-appeared btn-xs" onclick="markAppeared('${id}')">Mark as Aired</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
+
+  // ── AIRED tab ──
+  } else if (status === 'appeared') {
+    buttons.push(`<button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="toggleThankYouPanel('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Send a Thank You
+    </button>`);
     buttons.push(`<button class="btn btn-action-share btn-xs" onclick="showShareModal('${id}')">Share Win</button>`);
     buttons.push(contentBoostButton(match));
-    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmUnbook('${id}')">Booking Fell Through</button>`);
-  } else if (status === 'appeared') {
-    buttons.push(contentBoostButton(match));
+
+  // ── WISH LIST tab — same as NEW ──
+  } else if (status === 'dream') {
+    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${id}')">I Sent It Myself</button>`);
+    buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
+
+  // ── NOT A FIT tab ──
   } else if (status === 'dismissed') {
-    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Move Back to New</button>`);
+    buttons.push(`<button class="btn btn-restore btn-xs" onclick="restoreMatch('${id}')">Restore to New</button>`);
+
+  // ── CONTENT BOOST tab ──
+  } else if (status === 'content_boost') {
+    buttons.push(contentBoostButton(match));
   }
 
   return buttons.join('');
@@ -2571,6 +2587,24 @@ async function markAsPitchedFromInline(matchId) {
   markAsPitched(matchId);
 }
 window.markAsPitchedFromInline = markAsPitchedFromInline;
+
+// ── Mark as Followed Up Manually (I Sent It Myself on Pitched tab) ────
+async function markAsFollowedUpManually(matchId) {
+  setCardLoading(matchId, true);
+  try {
+    const data = await apiPost('/api/update-status', { matchId, status: 'followed_up' });
+    if (data.success) {
+      updateMatchInState(matchId, { status: 'followed_up' });
+      renderGrid();
+      showToast('Marked as Followed Up.', 'success');
+    }
+  } catch (err) {
+    showToast('Could not update status.', 'error');
+  } finally {
+    setCardLoading(matchId, false);
+  }
+}
+window.markAsFollowedUpManually = markAsFollowedUpManually;
 
 // ── Inline thank you panel ────────────────────────────────────────
 
