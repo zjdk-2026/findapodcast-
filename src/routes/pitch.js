@@ -118,7 +118,7 @@ router.post('/generate-followup', requireDashboardToken, async (req, res) => {
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(title, contact_email), clients(name)')
+      .select('*, podcasts(title, contact_email, host_name), clients(name, title, business_name)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -128,6 +128,12 @@ router.post('/generate-followup', requireDashboardToken, async (req, res) => {
     const podcastName  = match.podcasts?.title || 'the podcast';
     const origSubject  = match.email_subject_edited || match.email_subject || `Guest pitch for ${podcastName}`;
     const clientName   = match.clients?.name || '';
+    const clientFirst  = clientName.split(' ')[0] || clientName;
+    const hostName     = match.podcasts?.host_name || '';
+    const hostFirst    = hostName ? hostName.split(' ')[0] : null;
+    const clientTitle  = match.clients?.title || '';
+    const clientBiz    = match.clients?.business_name || '';
+    const signature    = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -137,22 +143,27 @@ router.post('/generate-followup', requireDashboardToken, async (req, res) => {
       system: `You are a podcast pitch follow-up writer. The initial pitch has already been sent. Write a short second-touch email that re-opens the conversation without being needy or repeating the original pitch verbatim.
 
 Rules:
-- Body: 60–80 words max
-- Do NOT open with "Just wanted to follow up" or "Checking in"
-- Open with a confident re-entry — acknowledge they're busy, then pivot back to value
+- ALWAYS open with a greeting on its own line: "Hi ${hostFirst || '[Host]'}," — use the host's first name if provided
+- Body: 60–80 words max (not counting greeting, sign-off, or P.S.)
+- Do NOT open the body with "Just wanted to follow up" or "Checking in"
+- Confident re-entry — acknowledge they're busy, then pivot back to value
 - Remind them of one specific reason the episode idea fits their audience
-- Close with: "Even a 15-minute call works — happy to be flexible."
-- Add a one-sentence P.S. that names a result, credential, or offers to send talking points
+- Close with a question that invites a reply — vary the phrasing, always end with a question mark
+- Add a one-sentence P.S. that names a result or offers to send talking points
 - Tone: warm, peer-level, slightly bolder than the first email. Not apologetic. Not pushy.
 - Subject line: use "Re: [original_subject]" format
 - No bullet points. No exclamation marks. No em dashes. First person only.
-- Sign off with the sender's name only
+- Sign off format: "Kind regards,\n[sender full name]\n[title if provided]\n[business if provided]" — use the exact signature provided
 
-Return ONLY valid JSON: {"subject": "...", "body": "..."}`,
+Return ONLY valid JSON: {"subject": "...", "body": "..."}
+The body field must include the greeting at the top and the full signature at the bottom.`,
       messages: [{ role: 'user', content: JSON.stringify({
         original_subject: origSubject,
         podcast_name:     podcastName,
+        host_first_name:  hostFirst || '',
         sender_name:      clientName,
+        sender_first:     clientFirst,
+        signature,
       }) }],
     });
 
