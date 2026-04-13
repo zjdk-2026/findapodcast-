@@ -3113,8 +3113,32 @@ async function refreshPipeline() {
   const total  = active.length;
   let done = 0;
 
+  // Show a fixed progress bar banner at the top of the page
+  let progressBanner = document.getElementById('refresh-progress-banner');
+  if (!progressBanner) {
+    progressBanner = document.createElement('div');
+    progressBanner.id = 'refresh-progress-banner';
+    progressBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#6366f1;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(99,102,241,0.4);';
+    progressBanner.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span id="refresh-progress-text">Re-enriching pipeline… 0/${total}</span>
+      <div style="flex:1;background:rgba(255,255,255,0.25);border-radius:999px;height:6px;overflow:hidden;">
+        <div id="refresh-progress-bar" style="height:100%;background:#fff;border-radius:999px;width:0%;transition:width 0.3s ease;"></div>
+      </div>
+      <span id="refresh-progress-pct" style="opacity:0.85;min-width:36px;text-align:right;">0%</span>
+    `;
+    document.body.prepend(progressBanner);
+  }
+
   const updateBtn = () => {
-    if (btn) btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> ${done}/${total}`;
+    const pct = Math.round((done / total) * 100);
+    if (btn) btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> ${done}/${total}`;
+    const txt = document.getElementById('refresh-progress-text');
+    const bar = document.getElementById('refresh-progress-bar');
+    const pctEl = document.getElementById('refresh-progress-pct');
+    if (txt) txt.textContent = `Re-enriching pipeline… ${done}/${total}`;
+    if (bar) bar.style.width = `${pct}%`;
+    if (pctEl) pctEl.textContent = `${pct}%`;
   };
 
   updateBtn();
@@ -3130,6 +3154,8 @@ async function refreshPipeline() {
     if (i + BATCH < active.length) await new Promise(r => setTimeout(r, 800));
   }
 
+  // Remove banner, restore button
+  if (progressBanner) progressBanner.remove();
   showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} re-enriched with latest data.`, 'success');
   if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer'; btn.innerHTML = btnOriginalHTML; }
 }

@@ -176,7 +176,7 @@ async function searchItunes(query, language) {
   try {
     const term    = encodeURIComponent(query);
     const country = LANGUAGE_TO_ITUNES_COUNTRY[language] || 'US';
-    const url = `https://itunes.apple.com/search?term=${term}&media=podcast&entity=podcast&limit=25&country=${country}`;
+    const url = `https://itunes.apple.com/search?term=${term}&media=podcast&entity=podcast&limit=10&country=${country}`;
     const res = await axios.get(url, { timeout: 8000 });
     return res.data?.results || [];
   } catch (err) {
@@ -1244,7 +1244,7 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     returning: filtered.length,
   });
 
-  return filtered.slice(0, 25);
+  return filtered.slice(0, 10);
 }
 
 module.exports = { discoverPodcasts };
