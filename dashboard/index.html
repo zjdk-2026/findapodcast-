@@ -203,37 +203,26 @@
         <!-- Spotlight card (operator-set featured member) -->
         <div id="community-spotlight" style="display:none;margin-bottom:24px;"></div>
 
-        <!-- Main content: wins feed + members grid + rankings -->
+        <!-- Main content: Rankings (top right) + Member rows -->
         <div id="leaderboard-card" style="display:none;">
 
-          <!-- Row 1: Wins feed (left) + Rankings (right) -->
-          <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;margin-bottom:24px;align-items:start;">
+          <!-- Rankings strip + Members side-by-side -->
+          <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start;">
 
-            <!-- Wins feed -->
-            <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);overflow:hidden;">
-              <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulse 2s infinite;"></div>
-                <span style="font-size:13px;font-weight:700;color:var(--text-primary);">Community Wins</span>
-              </div>
-              <div id="wins-feed" style="max-height:380px;overflow-y:auto;"></div>
+            <!-- Members list (podcast-card style rows) -->
+            <div>
+              <h2 style="font-size:15px;font-weight:700;color:var(--text-primary);margin:0 0 12px;">Members</h2>
+              <div id="community-members-grid" style="display:flex;flex-direction:column;gap:8px;"></div>
             </div>
 
             <!-- Rankings -->
-            <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);overflow:hidden;">
+            <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);overflow:hidden;position:sticky;top:80px;">
               <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border-subtle);">
                 <span style="font-size:13px;font-weight:700;color:var(--text-primary);">Rankings</span>
                 <p style="font-size:11px;color:var(--text-secondary);margin:2px 0 0;">Sorted by bookings. Go anonymous in your profile.</p>
               </div>
               <div id="leaderboard-body"></div>
             </div>
-          </div>
-
-          <!-- Row 2: Member cards -->
-          <div style="margin-bottom:8px;">
-            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
-              <h2 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:0;">Members</h2>
-            </div>
-            <div id="community-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
           </div>
 
         </div>

@@ -937,25 +937,47 @@ function buildMemberCard(m, featured = false) {
       </div>`;
   }
 
-  // Standard member card — compact: photo + name + LinkedIn headline + social icons + expandable bio
-  const cardId   = `member-card-${(m.display_name || m.name || Math.random()).replace(/\s+/g, '-')}`;
-  const bioLong  = m.bio_long || '';
-  const bioShort = m.bio_short || '';
-  const headline = m.title || m.business_name || '';
+  // Option A — horizontal row card (podcast-card style), click to expand
+  const cardId  = `member-card-${(m.display_name || m.name || Math.random()).replace(/\W+/g, '-')}`;
+  const bioLong = m.bio_long || m.bio_short || '';
+  const headline = m.bio_short || m.title || m.business_name || '';
+  const avatar48 = m.photo_url
+    ? `<img src="${esc(m.photo_url)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${m.is_me ? '#6366f1' : 'var(--border-medium)'};flex-shrink:0;" />`
+    : `<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid ${m.is_me ? '#6366f1' : 'transparent'};">${initials}</div>`;
+
   return `
-    <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:14px 14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
-      ${avatar}
-      <div style="width:100%;">
-        <div style="font-size:13px;font-weight:700;color:var(--text-primary);line-height:1.3;">${esc(name)}${youBadge}</div>
-        ${headline ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;line-height:1.4;">${esc(headline)}</div>` : ''}
+    <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}overflow:hidden;">
+      <!-- Collapsed row — always visible, click to expand -->
+      <div onclick="toggleMemberCard('${cardId}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none;">
+        ${avatar48}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${youBadge}</div>
+          ${headline ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(headline)}</div>` : ''}
+        </div>
+        ${socials ? `<div style="display:flex;gap:12px;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">${socials}</div>` : ''}
+        <svg id="${cardId}-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--text-tertiary);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      ${socials ? `<div style="display:flex;gap:10px;align-items:center;justify-content:center;">${socials}</div>` : ''}
-      ${(bioLong || bioShort) ? `
-        <div id="${cardId}-bio" style="display:none;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:left;width:100%;max-height:200px;overflow-y:auto;background:var(--bg-tertiary);border-radius:8px;padding:10px;margin-top:2px;">${esc(bioLong || bioShort)}</div>
-        <button onclick="(function(){var b=document.getElementById('${cardId}-bio'),btn=this;if(b.style.display==='none'){b.style.display='block';btn.textContent='Hide bio';}else{b.style.display='none';btn.textContent='Read bio';}}).call(this)" style="font-size:11px;color:#6366f1;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">Read bio</button>
-      ` : ''}
+      <!-- Expanded section — hidden by default -->
+      <div id="${cardId}-expanded" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border-subtle);">
+        ${bioLong ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.65;margin:14px 0 12px;">${esc(bioLong)}</p>` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
+          ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
+          ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
+        </div>
+      </div>
     </div>`;
 }
+
+function toggleMemberCard(cardId) {
+  const expanded = document.getElementById(`${cardId}-expanded`);
+  const chevron  = document.getElementById(`${cardId}-chevron`);
+  if (!expanded) return;
+  const isOpen = expanded.style.display !== 'none';
+  expanded.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+window.toggleMemberCard = toggleMemberCard;
 
 async function loadLeaderboard() {
   const card   = $('leaderboard-card');
@@ -1047,7 +1069,6 @@ async function loadLeaderboard() {
 
     card.style.display  = '';
     empty.style.display = 'none';
-    loadWinsFeed();
   } catch {
     // Silently fail
   }
@@ -3385,6 +3406,10 @@ function initFilterTabs() {
   tabs.addEventListener('click', (e) => {
     const tab = e.target.closest('.filter-tab');
     if (!tab) return;
+    // Always hide community view and restore cards grid when a tab is clicked
+    if ($('leaderboard-view')) $('leaderboard-view').style.display = 'none';
+    if ($('cards-grid'))       $('cards-grid').style.display = '';
+    document.getElementById('leaderboard-tab')?.classList.remove('active');
     tabs.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     state.filter = tab.dataset.status;
