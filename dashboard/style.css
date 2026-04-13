@@ -441,7 +441,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   border: 1px solid rgba(99,102,241,0.14);
   border-radius: var(--radius-pill);
   padding: 8px 16px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 .hero-lifetime-reach strong {
   color: var(--accent);
@@ -482,7 +482,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
   gap: 6px;
-  padding: 8px 24px 0;
+  padding: 4px 24px 0;
   max-width: 1400px;
   margin: 0 auto;
 }
