@@ -2394,13 +2394,21 @@ function updatePitchPreview(matchId) {
 window.updatePitchPreview = updatePitchPreview;
 
 async function rewriteInlinePitch(matchId) {
-  const btn = $(`inline-rewrite-${matchId}`);
+  const btn    = $(`inline-rewrite-${matchId}`);
+  const bodyEl = $(`inline-body-${matchId}`);
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="btn-spinner"></span>Writing your pitch…';
-    btn.style.background = '#6366f1';
-    btn.style.color = '#fff';
-    btn.style.borderColor = '#6366f1';
+    btn.innerHTML = '<span class="btn-spinner"></span> Writing your pitch…';
+    btn.style.cssText += ';background:#6366f1;color:#fff;border-color:#6366f1;opacity:1;animation:pulse 1.4s ease-in-out infinite;';
+  }
+  if (bodyEl) {
+    bodyEl.disabled = true;
+    bodyEl.placeholder = '';
+    bodyEl.value = '';
+    bodyEl.style.background = 'linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%)';
+    bodyEl.style.backgroundSize = '200% 100%';
+    bodyEl.style.animation = 'shimmer 1.4s infinite linear';
+    bodyEl.style.color = 'transparent';
   }
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
@@ -2423,6 +2431,17 @@ async function rewriteInlinePitch(matchId) {
       btn.style.background = '';
       btn.style.color = '';
       btn.style.borderColor = '';
+      btn.style.animation = '';
+      btn.style.opacity = '';
+    }
+    const bodyElFinal = $(`inline-body-${matchId}`);
+    if (bodyElFinal) {
+      bodyElFinal.disabled = false;
+      bodyElFinal.style.background = '';
+      bodyElFinal.style.animation = '';
+      bodyElFinal.style.color = '';
+      bodyElFinal.style.backgroundSize = '';
+      bodyElFinal.placeholder = 'Your pitch will appear here…';
     }
   }
 }
