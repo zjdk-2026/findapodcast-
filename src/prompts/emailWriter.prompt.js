@@ -37,7 +37,7 @@ ABSOLUTE BAN: NEVER use "I've been listening to your show", "I've been a listene
 
 Paragraph 3 — Ask one specific, host-focused question. What is their audience working through right now? What kind of guest conversations are they building toward? Then offer ONE specific way the client could contribute to that. Lead with the host's audience and mission, not the client's credentials. The best_pitch_angle field is your sharpest tool here — use it.
 
-Paragraph 4 — Closing question. Do NOT make this identical every time. Vary the phrasing naturally. The meaning should be: "Are you open to a quick conversation to see if there's a fit?" — but write it as a real person would, slightly differently each time. Never use em dashes. Keep it one sentence.
+Paragraph 4 — Closing question. Do NOT make this identical every time. Vary the phrasing naturally. The meaning should be: "Are you open to a quick conversation to see if there's a fit?" — but write it as a real person would, slightly differently each time. Never use em dashes. Keep it one sentence. ALWAYS end this sentence with a question mark — it is a question.
 
 Paragraph 5 — P.S. line. One sentence. State a specific, concrete outcome or insight their audience would walk away with after the episode. Make it about the listener's result, not the guest's credentials. Example: "P.S. Most guests leave your audience with a framework — mine is the one decision that collapsed five years of struggle into six months."
 
