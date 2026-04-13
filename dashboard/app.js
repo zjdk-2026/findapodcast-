@@ -1370,7 +1370,6 @@ function renderMatchCard(match) {
       <div class="social-dm-platforms">
         <button class="btn btn-xs" style="background:#6366f1;color:#fff;font-weight:600;border:none;" onclick="copyDMScript('${esc(match.id)}')">Copy DM</button>
         <button class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" id="dm-regen-btn-${esc(match.id)}" onclick="regenerateDMScript('${esc(match.id)}')">Regenerate</button>
-        ${platformBtns}
       </div>
     </div>`;
     })()}
