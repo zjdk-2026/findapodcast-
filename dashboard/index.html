@@ -147,10 +147,6 @@
           <span class="stat-value stat-gold" id="stat-booked">—</span>
           <span class="stat-label">Booked</span>
         </div>
-        <button onclick="openAddPodcastModal()" class="stat-card" style="background:none;border:1.5px dashed var(--border-medium);cursor:pointer;align-items:center;justify-content:center;text-align:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-medium)';this.style.color=''">
-          <span style="font-size:20px;">➕</span>
-          <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">Add a Podcast</span>
-        </button>
       </section>
 
 
@@ -177,6 +173,7 @@
             <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
             Has Email
           </label>
+          <button onclick="openAddPodcastModal()" style="font-size:11px;background:none;border:1.5px dashed var(--border-medium);border-radius:999px;padding:3px 10px;color:var(--text-secondary);font-weight:600;line-height:1;cursor:pointer;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-medium)';this.style.color='var(--text-secondary)'">+ Add a Podcast</button>
           <button id="leaderboard-tab" onclick="showLeaderboardView()" style="font-size:11px;background:none;border:1.5px solid #c4b5fd;border-radius:999px;padding:3px 10px;color:#6366f1;font-weight:600;line-height:1;cursor:pointer;">Community</button>
           <button id="refresh-pipeline-btn" onclick="refreshPipeline()" title="Re-enrich and re-score all podcast cards with the latest data" style="font-size:11px;background:none;border:1.5px solid #d1d5db;border-radius:999px;padding:3px 10px;color:var(--text-secondary);font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;gap:5px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -203,42 +200,64 @@
           <a id="community-group-link" href="#" target="_blank" rel="noopener" style="background:#fff;color:#4f46e5;font-size:13px;font-weight:700;padding:10px 20px;border-radius:999px;text-decoration:none;white-space:nowrap;flex-shrink:0;">Join the Group</a>
         </div>
 
+        <!-- Spotlight card (operator-set featured member) -->
+        <div id="community-spotlight" style="display:none;margin-bottom:24px;"></div>
+
+        <!-- Main content: wins feed + members grid + rankings -->
         <div id="leaderboard-card" style="display:none;">
 
-          <!-- Wins feed + Members side by side on wide screens -->
-          <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;margin-bottom:24px;align-items:start;">
-
-            <!-- Member cards -->
-            <div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <div>
-                  <h2 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Members</h2>
-                  <p style="font-size:12px;color:var(--text-secondary);margin:0;">Opt in via your profile to appear here.</p>
-                </div>
-              </div>
-              <div id="community-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;"></div>
-            </div>
+          <!-- Row 1: Wins feed (left) + Rankings (right) -->
+          <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;margin-bottom:24px;align-items:start;">
 
             <!-- Wins feed -->
             <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);overflow:hidden;">
               <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;"></div>
+                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulse 2s infinite;"></div>
                 <span style="font-size:13px;font-weight:700;color:var(--text-primary);">Community Wins</span>
               </div>
-              <div id="wins-feed" style="max-height:420px;overflow-y:auto;"></div>
+              <div id="wins-feed" style="max-height:380px;overflow-y:auto;"></div>
+            </div>
+
+            <!-- Rankings -->
+            <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);overflow:hidden;">
+              <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border-subtle);">
+                <span style="font-size:13px;font-weight:700;color:var(--text-primary);">Rankings</span>
+                <p style="font-size:11px;color:var(--text-secondary);margin:2px 0 0;">Sorted by bookings. Go anonymous in your profile.</p>
+              </div>
+              <div id="leaderboard-body"></div>
             </div>
           </div>
 
-          <!-- Rankings table -->
-          <div style="background:var(--bg-card);border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden;">
-            <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border-subtle);">
-              <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin:0;">Rankings</h3>
-              <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">All active members sorted by bookings. Go anonymous anytime in your profile.</p>
+          <!-- Row 2: Member cards -->
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
+              <h2 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:0;">Members</h2>
+              <span style="font-size:12px;color:var(--text-secondary);">Opt in via your profile to appear here and connect with others.</span>
             </div>
-            <div id="leaderboard-body"></div>
+            <div id="community-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+          </div>
+
+        </div>
+
+        <!-- Empty / placeholder state -->
+        <div id="leaderboard-empty" style="display:none;">
+          <div style="text-align:center;padding:40px 20px 24px;">
+            <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No members yet — be the founding member</div>
+            <p style="font-size:13px;color:var(--text-secondary);margin:0 0 20px;">Enable community sharing in your profile and your card will appear here first.</p>
+            <button onclick="openProfileModal()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;">Update My Profile</button>
+          </div>
+          <!-- Placeholder silhouette cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;opacity:0.35;filter:blur(2px);pointer-events:none;">
+            ${[1,2,3,4].map(() => `
+            <div style="background:var(--bg-card);border-radius:14px;border:1.5px solid var(--border-subtle);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;">
+              <div style="width:64px;height:64px;border-radius:50%;background:#e5e7eb;"></div>
+              <div style="width:80px;height:12px;background:#e5e7eb;border-radius:6px;"></div>
+              <div style="width:60px;height:10px;background:#e5e7eb;border-radius:6px;"></div>
+              <div style="display:flex;gap:6px;"><div style="width:50px;height:20px;background:#e5e7eb;border-radius:6px;"></div><div style="width:50px;height:20px;background:#e5e7eb;border-radius:6px;"></div></div>
+              <div style="display:flex;gap:10px;"><div style="width:16px;height:16px;background:#e5e7eb;border-radius:50%;"></div><div style="width:16px;height:16px;background:#e5e7eb;border-radius:50%;"></div><div style="width:16px;height:16px;background:#e5e7eb;border-radius:50%;"></div></div>
+            </div>`).join('')}
           </div>
         </div>
-        <div id="leaderboard-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--text-secondary);font-size:14px;">No community data yet — be the first to opt in via your profile.</div>
       </div>
 
       <!-- Cards grid -->

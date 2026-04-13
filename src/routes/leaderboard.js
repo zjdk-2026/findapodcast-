@@ -74,8 +74,25 @@ router.get('/leaderboard', async (req, res) => {
     // Community section: only opted-in members
     const community = rows.filter(r => r.share_with_community);
 
+    // Spotlight: operator sets COMMUNITY_SPOTLIGHT_ID env var to a client id
+    let spotlight = null;
+    const spotlightId = process.env.COMMUNITY_SPOTLIGHT_ID;
+    if (spotlightId) {
+      spotlight = rows.find(r => r.client_id === spotlightId) || null;
+      // Also fetch extra fields for spotlight
+      const { data: sc } = await supabase
+        .from('clients')
+        .select('id, name, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, bio_short')
+        .eq('id', spotlightId)
+        .single();
+      if (sc) {
+        const stats = counts[sc.id] || { booked: 0, sent: 0, appeared: 0, total: 0 };
+        spotlight = { ...sc, ...stats };
+      }
+    }
+
     logger.debug('Leaderboard fetched', { total: rows.length, community: community.length });
-    return res.json({ success: true, rows, community });
+    return res.json({ success: true, rows, community, spotlight });
   } catch (err) {
     logger.error('Leaderboard error', { error: err.message });
     return res.status(500).json({ success: false, error: 'Failed to load leaderboard.' });

@@ -441,7 +441,7 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   border: 1px solid rgba(99,102,241,0.14);
   border-radius: var(--radius-pill);
   padding: 8px 16px;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 .hero-lifetime-reach strong {
   color: var(--accent);
@@ -454,8 +454,8 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 10px;
-  margin-bottom: 4px;
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 .stat-chip {
@@ -480,9 +480,9 @@ html.light-mode .btn-action-view { background: #475569; color: #fff; }
 /* ── Stats Bar ─────────────────────────────────────────────── */
 .stats-bar {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 0.8fr;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
   gap: 6px;
-  padding: 16px 24px 0;
+  padding: 8px 24px 0;
   max-width: 1400px;
   margin: 0 auto;
 }

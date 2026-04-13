@@ -887,11 +887,80 @@ function hideLeaderboardView() {
   document.getElementById('leaderboard-tab')?.classList.remove('active');
 }
 
+// ── Shared social icon builder ────────────────────────────────────────
+function buildSocialIcons(m, size = 16) {
+  const s = size;
+  return [
+    m.website        && `<a href="${esc(m.website)}" target="_blank" rel="noopener" title="Website" style="color:#6366f1;display:flex;"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`,
+    m.social_instagram && `<a href="${esc(m.social_instagram)}" target="_blank" rel="noopener" title="Instagram" style="color:#e1306c;display:flex;"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>`,
+    m.social_linkedin  && `<a href="${esc(m.social_linkedin)}" target="_blank" rel="noopener" title="LinkedIn" style="color:#0077b5;display:flex;"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>`,
+    m.social_twitter   && `<a href="${esc(m.social_twitter)}" target="_blank" rel="noopener" title="Twitter/X" style="color:#1da1f2;display:flex;"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>`,
+    m.social_facebook  && `<a href="${esc(m.social_facebook)}" target="_blank" rel="noopener" title="Facebook" style="color:#1877f2;display:flex;"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>`,
+  ].filter(Boolean).join('');
+}
+
+function buildMemberCard(m, featured = false) {
+  const initials  = (m.display_name || m.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const name      = m.display_name || m.name || 'Member';
+  const avatarSz  = featured ? 80 : 64;
+  const border    = m.is_me ? '#6366f1' : (featured ? '#8b5cf6' : 'transparent');
+  const avatar    = m.photo_url
+    ? `<img src="${esc(m.photo_url)}" style="width:${avatarSz}px;height:${avatarSz}px;border-radius:50%;object-fit:cover;border:2.5px solid ${border};" />`
+    : `<div style="width:${avatarSz}px;height:${avatarSz}px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:${featured?24:18}px;font-weight:700;color:#fff;border:2.5px solid ${border};flex-shrink:0;">${initials}</div>`;
+
+  const statBadge = (val, label, color) => val > 0
+    ? `<span style="font-size:11px;font-weight:700;color:${color};background:${color}18;border-radius:6px;padding:2px 8px;">${val} ${label}</span>`
+    : '';
+  const socials = buildSocialIcons(m, featured ? 18 : 15);
+  const youBadge = m.is_me ? `<span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>` : '';
+
+  if (featured) {
+    // Spotlight — horizontal hero card
+    return `
+      <div style="background:var(--bg-card);border-radius:16px;box-shadow:var(--shadow-card);border:2px solid #8b5cf6;padding:24px 28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px;">
+        <div style="position:relative;flex-shrink:0;">
+          ${avatar}
+          <div style="position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap;">Member Spotlight</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:2px;">${esc(name)}${youBadge}</div>
+          ${m.title ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;">${esc(m.title)}</div>` : ''}
+          ${m.business_name ? `<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">${esc(m.business_name)}</div>` : ''}
+          ${m.bio_short ? `<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px;max-width:480px;">${esc(m.bio_short.slice(0,180))}${m.bio_short.length>180?'…':''}</div>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
+            ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
+            ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
+          </div>
+          ${socials ? `<div style="display:flex;gap:14px;align-items:center;">${socials}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // Standard member card
+  return `
+    <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
+      ${avatar}
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(name)}${youBadge}</div>
+        ${m.title ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(m.title)}</div>` : ''}
+        ${m.business_name ? `<div style="font-size:11px;color:var(--text-tertiary);">${esc(m.business_name)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+        ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
+        ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
+        ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
+      </div>
+      ${socials ? `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">${socials}</div>` : ''}
+    </div>`;
+}
+
 async function loadLeaderboard() {
   const card   = $('leaderboard-card');
   const body   = $('leaderboard-body');
   const grid   = $('community-members-grid');
   const empty  = $('leaderboard-empty');
+  const spotEl = $('community-spotlight');
   if (!card || !body || !grid) return;
 
   try {
@@ -900,94 +969,76 @@ async function loadLeaderboard() {
 
     const rows      = res.rows      || [];
     const community = res.community || [];
+    const spotlight = res.spotlight || null;
 
+    // ── Empty / placeholder state ────────────────────────────────────
     if (!rows.length) {
       card.style.display  = 'none';
       empty.style.display = '';
       return;
     }
 
-    // ── Community member cards ────────────────────────────────────────
-    if (community.length) {
-      grid.innerHTML = community.map(m => {
-        const initials = (m.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-        const avatar   = m.photo_url
-          ? `<img src="${esc(m.photo_url)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid ${m.is_me ? '#6366f1' : '#e5e7eb'};" />`
-          : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;border:2px solid ${m.is_me ? '#6366f1' : 'transparent'};">${initials}</div>`;
-
-        const socials = [
-          m.website        && `<a href="${esc(m.website)}" target="_blank" rel="noopener" title="Website" style="color:#6366f1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`,
-          m.social_instagram && `<a href="${esc(m.social_instagram)}" target="_blank" rel="noopener" title="Instagram" style="color:#e1306c;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>`,
-          m.social_linkedin  && `<a href="${esc(m.social_linkedin)}" target="_blank" rel="noopener" title="LinkedIn" style="color:#0077b5;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>`,
-          m.social_twitter   && `<a href="${esc(m.social_twitter)}" target="_blank" rel="noopener" title="Twitter/X" style="color:#1da1f2;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>`,
-          m.social_facebook  && `<a href="${esc(m.social_facebook)}" target="_blank" rel="noopener" title="Facebook" style="color:#1877f2;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>`,
-        ].filter(Boolean).join('');
-
-        const statBadge = (val, label, color) => val > 0
-          ? `<span style="font-size:11px;font-weight:700;color:${color};background:${color}18;border-radius:6px;padding:2px 7px;">${val} ${label}</span>`
-          : '';
-
-        return `
-          <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
-            ${avatar}
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(m.display_name)}${m.is_me ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;">YOU</span>' : ''}</div>
-              ${m.title ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(m.title)}</div>` : ''}
-              ${m.business_name ? `<div style="font-size:11px;color:var(--text-tertiary);">${esc(m.business_name)}</div>` : ''}
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-              ${statBadge(m.sent, 'Pitched', '#6366f1')}
-              ${statBadge(m.booked, 'Booked', '#f59e0b')}
-              ${statBadge(m.appeared, 'Aired', '#22c55e')}
-            </div>
-            ${socials ? `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">${socials}</div>` : ''}
-          </div>`;
-      }).join('');
-    } else {
-      grid.innerHTML = `<p style="font-size:13px;color:var(--text-secondary);grid-column:1/-1;">No members have opted in yet. Be the first — enable community sharing in your profile settings.</p>`;
+    // ── Spotlight ────────────────────────────────────────────────────
+    if (spotEl) {
+      if (spotlight) {
+        spotEl.innerHTML    = buildMemberCard(spotlight, true);
+        spotEl.style.display = '';
+      } else {
+        spotEl.style.display = 'none';
+      }
     }
 
-    // ── Rankings table ────────────────────────────────────────────────
+    // ── Member cards ─────────────────────────────────────────────────
+    if (community.length) {
+      grid.innerHTML = community.map(m => buildMemberCard(m, false)).join('');
+    } else {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;background:var(--bg-card);border-radius:14px;border:1.5px dashed var(--border-medium);padding:24px;text-align:center;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">No members visible yet</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Enable community sharing in your profile to appear here and connect with other members.</div>
+          <button onclick="openProfileModal()" style="margin-top:12px;background:#6366f1;color:#fff;border:none;border-radius:999px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;">Update My Profile</button>
+        </div>`;
+    }
+
+    // ── Rankings ─────────────────────────────────────────────────────
     const top10 = rows.slice(0, 10);
     const hasMe = top10.some(r => r.is_me);
     const meRow = !hasMe ? rows.find(r => r.is_me) : null;
-
     const medalMap = new Map();
     [...rows].sort((a, b) => b.appeared - a.appeared).slice(0, 3).forEach((r, i) => {
       if (r.appeared > 0) medalMap.set(r.rank, ['1st','2nd','3rd'][i]);
     });
 
-    const renderRow = (r, divider = false) => {
-      const medal    = medalMap.get(r.rank) || '';
+    const renderRankRow = (r, divider = false) => {
+      const medal = medalMap.get(r.rank) || '';
       const rankDisp = medal || `#${r.rank}`;
       return `
-        ${divider ? `<div style="border-top:1px dashed var(--border-subtle,#eee);margin:4px 20px;"></div>` : ''}
-        <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:9px 20px;gap:4px;
+        ${divider ? `<div style="border-top:1px dashed var(--border-subtle);margin:4px 16px;"></div>` : ''}
+        <div style="display:grid;grid-template-columns:36px 1fr 44px 44px 44px;align-items:center;padding:8px 16px;gap:4px;
           ${r.is_me ? 'background:linear-gradient(90deg,#f5f3ff,#ede9fe);border-left:3px solid #6366f1;' : 'border-left:3px solid transparent;'}">
-          <div style="font-size:13px;font-weight:700;color:${medal ? '#f59e0b' : (r.is_me ? '#6366f1' : 'var(--text-secondary)')};">${rankDisp}</div>
-          <div style="font-size:13px;font-weight:${r.is_me ? '700' : '500'};color:${r.is_me ? '#6366f1' : 'var(--text-primary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-            ${esc(r.display_name)}${r.is_me ? ' <span style="font-size:10px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 7px;margin-left:4px;">YOU</span>' : ''}
+          <div style="font-size:12px;font-weight:700;color:${medal ? '#f59e0b' : (r.is_me ? '#6366f1' : 'var(--text-secondary)')};">${rankDisp}</div>
+          <div style="font-size:12px;font-weight:${r.is_me?'700':'500'};color:${r.is_me?'#6366f1':'var(--text-primary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${esc(r.display_name)}${r.is_me ? ' <span style="font-size:9px;font-weight:700;color:#6366f1;background:#ede9fe;border-radius:999px;padding:1px 5px;margin-left:3px;">YOU</span>' : ''}
           </div>
-          <div style="text-align:center;">${r.sent > 0 ? `<span style="font-size:13px;font-weight:600;color:#6366f1;">${r.sent}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
-          <div style="text-align:center;">${r.booked > 0 ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;">${r.booked}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
-          <div style="text-align:center;">${r.appeared > 0 ? `<span style="font-size:13px;font-weight:600;color:#22c55e;">${r.appeared}</span>` : `<span style="font-size:12px;color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${r.sent>0?`<span style="font-size:12px;font-weight:600;color:#6366f1;">${r.sent}</span>`:`<span style="font-size:11px;color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${r.booked>0?`<span style="font-size:12px;font-weight:700;color:#f59e0b;">${r.booked}</span>`:`<span style="font-size:11px;color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${r.appeared>0?`<span style="font-size:12px;font-weight:600;color:#22c55e;">${r.appeared}</span>`:`<span style="font-size:11px;color:var(--text-tertiary);">—</span>`}</div>
         </div>`;
     };
 
-    const headerHtml = `
-      <div style="display:grid;grid-template-columns:44px 1fr 64px 64px 64px;align-items:center;padding:6px 20px;gap:4px;border-bottom:1px solid var(--border-subtle);">
-        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Rank</div>
-        <div style="font-size:10px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
-        <div style="font-size:10px;font-weight:700;color:#6366f1;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Pitched</div>
-        <div style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Booked</div>
-        <div style="font-size:10px;font-weight:700;color:#22c55e;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">Aired</div>
-      </div>`;
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:36px 1fr 44px 44px 44px;align-items:center;padding:5px 16px;gap:4px;border-bottom:1px solid var(--border-subtle);">
+        <div style="font-size:9px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;"></div>
+        <div style="font-size:9px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Member</div>
+        <div style="font-size:9px;font-weight:700;color:#6366f1;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">P</div>
+        <div style="font-size:9px;font-weight:700;color:#f59e0b;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">B</div>
+        <div style="font-size:9px;font-weight:700;color:#22c55e;letter-spacing:0.06em;text-transform:uppercase;text-align:center;">A</div>
+      </div>
+      ${top10.map(r => renderRankRow(r)).join('')}
+      ${meRow ? renderRankRow(meRow, true) : ''}`;
 
-    body.innerHTML = headerHtml + top10.map(r => renderRow(r)).join('') + (meRow ? renderRow(meRow, true) : '');
     card.style.display  = '';
     empty.style.display = 'none';
-
-    // ── Wins feed ────────────────────────────────────────────────────
     loadWinsFeed();
   } catch {
     // Silently fail
