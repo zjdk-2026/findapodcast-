@@ -946,16 +946,16 @@ function buildMemberCard(m, featured = false) {
     : `<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid ${m.is_me ? '#6366f1' : 'transparent'};">${initials}</div>`;
 
   return `
-    <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}overflow:hidden;">
+    <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}overflow:hidden;min-width:0;width:100%;box-sizing:border-box;">
       <!-- Collapsed row — always visible, click to expand -->
-      <div onclick="toggleMemberCard('${cardId}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none;">
+      <div onclick="toggleMemberCard('${cardId}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;min-width:0;overflow:hidden;">
         ${avatar48}
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${youBadge}</div>
-          ${headline ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(headline)}</div>` : ''}
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${youBadge}</div>
+          ${headline ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${esc(headline)}</div>` : ''}
         </div>
-        ${socials ? `<div style="display:flex;gap:12px;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">${socials}</div>` : ''}
-        <svg id="${cardId}-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--text-tertiary);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+        ${socials ? `<div style="display:flex;gap:10px;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">${socials}</div>` : ''}
+        <svg id="${cardId}-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--text-tertiary);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <!-- Expanded section — hidden by default -->
       <div id="${cardId}-expanded" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border-subtle);">
