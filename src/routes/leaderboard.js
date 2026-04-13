@@ -82,4 +82,55 @@ router.get('/leaderboard', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/leaderboard/wins
+ * Returns recent bookings and airings from opted-in members for the community wins feed.
+ */
+router.get('/leaderboard/wins', async (req, res) => {
+  try {
+    // Get opted-in clients
+    const { data: clients } = await supabase
+      .from('clients')
+      .select('id, name, photo_url, share_with_community')
+      .eq('is_active', true)
+      .eq('share_with_community', true);
+
+    if (!clients?.length) return res.json({ success: true, wins: [] });
+
+    const clientMap = {};
+    for (const c of clients) clientMap[c.id] = c;
+
+    // Get recent booked + appeared matches for opted-in members
+    const { data: matches } = await supabase
+      .from('podcast_matches')
+      .select('id, client_id, status, booked_at, updated_at, podcasts(title)')
+      .in('client_id', clients.map(c => c.id))
+      .in('status', ['booked', 'appeared'])
+      .order('updated_at', { ascending: false })
+      .limit(30);
+
+    const wins = (matches || []).map(m => {
+      const client = clientMap[m.client_id];
+      if (!client) return null;
+      const parts     = (client.name || '').trim().split(' ');
+      const firstName = parts[0] || 'Someone';
+      const showTitle = m.podcasts?.title
+        ? m.podcasts.title.split(/[|:—–]/)[0].trim()
+        : 'a podcast';
+      return {
+        first_name: firstName,
+        photo_url:  client.photo_url || null,
+        status:     m.status,
+        show:       showTitle,
+        at:         m.updated_at,
+      };
+    }).filter(Boolean);
+
+    return res.json({ success: true, wins });
+  } catch (err) {
+    logger.error('Wins feed error', { error: err.message });
+    return res.status(500).json({ success: false, error: 'Failed to load wins.' });
+  }
+});
+
 module.exports = router;

@@ -866,11 +866,17 @@ async function backgroundReEnrichAll() {
 let _leaderboardVisible = true;
 
 function showLeaderboardView() {
-  // Deactivate all filter tabs
   document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('leaderboard-tab')?.classList.add('active');
-  $('cards-grid').style.display = 'none';
-  $('leaderboard-view').style.display = '';
+  $('cards-grid').style.display        = 'none';
+  $('leaderboard-view').style.display  = '';
+  // Set community group link
+  const groupLink = $('community-group-link');
+  if (groupLink && state.communityGroupUrl) {
+    groupLink.href = state.communityGroupUrl;
+  } else if (groupLink) {
+    groupLink.style.display = 'none';
+  }
   loadLeaderboard();
 }
 window.showLeaderboardView = showLeaderboardView;
@@ -980,6 +986,54 @@ async function loadLeaderboard() {
     body.innerHTML = headerHtml + top10.map(r => renderRow(r)).join('') + (meRow ? renderRow(meRow, true) : '');
     card.style.display  = '';
     empty.style.display = 'none';
+
+    // ── Wins feed ────────────────────────────────────────────────────
+    loadWinsFeed();
+  } catch {
+    // Silently fail
+  }
+}
+
+async function loadWinsFeed() {
+  const feed = $('wins-feed');
+  if (!feed) return;
+  try {
+    const res = await apiFetch('/api/leaderboard/wins');
+    if (!res?.success || !res.wins?.length) {
+      feed.innerHTML = `<p style="font-size:12px;color:var(--text-tertiary);padding:16px;text-align:center;">No wins yet — be the first to get booked!</p>`;
+      return;
+    }
+    feed.innerHTML = res.wins.map(w => {
+      const initials = (w.first_name || '?')[0].toUpperCase();
+      const avatar   = w.photo_url
+        ? `<img src="${esc(w.photo_url)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" />`
+        : `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">${initials}</div>`;
+      const verb  = w.status === 'appeared' ? 'aired on' : 'got booked on';
+      const color = w.status === 'appeared' ? '#22c55e' : '#f59e0b';
+      const icon  = w.status === 'appeared'
+        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`
+        : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+      const ago   = (() => {
+        const d = new Date(w.at);
+        const diff = Date.now() - d;
+        const hrs  = Math.floor(diff / 36e5);
+        const days = Math.floor(diff / 864e5);
+        return days > 0 ? `${days}d ago` : hrs > 0 ? `${hrs}h ago` : 'just now';
+      })();
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border-subtle);">
+          ${avatar}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text-primary);line-height:1.4;">
+              <strong>${esc(w.first_name)}</strong> ${verb} <strong style="color:${color};">${esc(w.show)}</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+              ${icon}
+              <span style="font-size:11px;color:var(--text-tertiary);">${esc(ago)}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
   } catch {
     // Silently fail
   }
@@ -1374,9 +1428,10 @@ function renderGrid() {
 // ── Render full dashboard ─────────────────────────────────────────────
 function renderDashboard(data) {
   const { client, matches, stats } = data;
-  state.client  = client;
-  state.matches = matches || [];
-  state.stats   = stats  || {};
+  state.client            = client;
+  state.matches           = matches || [];
+  state.stats             = stats   || {};
+  state.communityGroupUrl = data.community_group_url || null;
 
   // Show reply badge — only for replied matches not yet seen by user
   // Client header

@@ -712,6 +712,11 @@ html:not(.light-mode) .onboarding-inner {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
 /* ── Client Header ─────────────────────────────────────────── */
 .client-header {
   padding: 0 24px 0;
