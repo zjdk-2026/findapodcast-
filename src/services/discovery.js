@@ -643,7 +643,7 @@ function normaliseSpotify(item) {
  * Main discovery pipeline for a single client.
  * Returns up to 100 raw, deduplicated, pre-filtered podcast objects.
  */
-async function discoverPodcasts(client, { isManual = false } = {}) {
+async function discoverPodcasts(client, { isManual = false, runNumber = 1 } = {}) {
   logger.info('Starting discovery', { clientId: client.id, clientName: client.name });
 
   // ─────────────────────────────────────────────────────────────
@@ -696,20 +696,22 @@ async function discoverPodcasts(client, { isManual = false } = {}) {
     .from('podcast_matches')
     .select('id', { count: 'exact', head: true })
     .eq('client_id', client.id);
-  const runNumber = Math.max(1, Math.floor((existingMatchCount ?? 0) / 50) + 1);
+  // Use passed-in runNumber (from button click counter) — fallback to deriving from match count
+  const _derivedRun = Math.max(1, Math.floor((existingMatchCount ?? 0) / 10) + 1);
+  const effectiveRunNumber = runNumber > 1 ? runNumber : _derivedRun;
 
   // Date filter: loosen on repeat runs to widen the candidate pool
   // Run 1: 180 days, Run 2: 365 days, Run 3+: no date filter (null = no filter)
-  const ninetyDaysAgo = runNumber === 1
+  const ninetyDaysAgo = effectiveRunNumber === 1
     ? Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000)
-    : runNumber === 2
+    : effectiveRunNumber === 2
       ? Math.floor((Date.now() - 365 * 24 * 60 * 60 * 1000) / 1000)
       : null;
   const language = client.languages?.[0] || 'English';
   // Paginate ListenNotes: fetch a fresh page per run so repeat runs get new inventory
-  const lnPage = runNumber; // page 1 on first run, page 2 on second, etc.
+  const lnPage = effectiveRunNumber; // page 1 on first run, page 2 on second, etc.
 
-  logger.info('Discovery run metadata', { clientId: client.id, runNumber, lnPage });
+  logger.info('Discovery run metadata', { clientId: client.id, runNumber: effectiveRunNumber, lnPage });
 
   for (const query of queries) {
     logger.debug('Running Listen Notes search', { query, page: lnPage });

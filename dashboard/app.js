@@ -3050,7 +3050,11 @@ async function runPipeline() {
     btn.textContent = steps[stepIdx];
   }, 2200);
   try {
-    const res  = await fetch(`/api/run/${state.client.id}`, { method: 'POST', headers: { 'x-dashboard-token': state.token } });
+    // Increment run number each click so discovery fetches a fresh offset each time
+    const runKey = `pp-run-number-${state.client.id}`;
+    const runNumber = (parseInt(localStorage.getItem(runKey) || '0', 10)) + 1;
+    localStorage.setItem(runKey, String(runNumber));
+    const res  = await fetch(`/api/run/${state.client.id}?run=${runNumber}`, { method: 'POST', headers: { 'x-dashboard-token': state.token } });
     const data = await res.json();
     if (data.success) {
       if (data.capReached) {

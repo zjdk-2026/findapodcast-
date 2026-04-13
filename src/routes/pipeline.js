@@ -69,7 +69,8 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
     // ── 2. Discovery ──────────────────────────────────────────
     logger.info('Step 1: Discovery', { clientId });
     const isManual = req.query.manual !== 'false'; // manual by default for POST runs
-    const rawPodcasts = await discoverPodcasts(client, { isManual });
+    const runNumber = parseInt(req.query.run || '1', 10);
+    const rawPodcasts = await discoverPodcasts(client, { isManual, runNumber });
     logger.info('Discovery complete', { clientId, count: rawPodcasts.length });
 
     // Guardrail: log any run that falls short of the 50-podcast target
