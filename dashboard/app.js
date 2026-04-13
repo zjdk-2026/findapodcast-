@@ -965,7 +965,13 @@ async function loadLeaderboard() {
 
   try {
     const res = await apiFetch('/api/leaderboard');
-    if (!res?.success) return;
+    if (!res?.success) {
+      // Show rankings section anyway with a note
+      card.style.display  = '';
+      empty.style.display = 'none';
+      body.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--text-tertiary);text-align:center;">Could not load rankings.</div>`;
+      return;
+    }
 
     const rows      = res.rows      || [];
     const community = res.community || [];

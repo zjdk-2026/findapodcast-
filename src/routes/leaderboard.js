@@ -16,12 +16,26 @@ router.get('/leaderboard', async (req, res) => {
   const token = req.headers['x-dashboard-token'] || req.query.token;
 
   try {
-    const { data: clients, error } = await supabase
+    let { data: clients, error } = await supabase
       .from('clients')
       .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links')
       .eq('is_active', true);
 
-    if (error) throw error;
+    if (error) {
+      // If share_with_community column missing, retry without it
+      if (error.message?.includes('share_with_community')) {
+        const { data: fallbackClients, error: fallbackError } = await supabase
+          .from('clients')
+          .select('id, name, dashboard_token, is_active, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links')
+          .eq('is_active', true);
+        if (fallbackError) throw fallbackError;
+        if (!fallbackClients?.length) return res.json({ success: true, rows: [], community: [] });
+        // Patch in missing field
+        clients = fallbackClients.map(c => ({ ...c, share_with_community: false }));
+      } else {
+        throw error;
+      }
+    }
     if (!clients?.length) return res.json({ success: true, rows: [], community: [] });
 
     const { data: matches } = await supabase
