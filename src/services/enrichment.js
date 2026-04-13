@@ -3,6 +3,7 @@
 const cheerio = require('cheerio');
 const logger = require('../lib/logger');
 const dns = require('dns').promises;
+const net = require('net');
 
 async function hasMxRecord(email) {
   try {
@@ -13,6 +14,335 @@ async function hasMxRecord(email) {
   } catch {
     return false; // domain has no MX record = email likely invalid
   }
+}
+
+// ── LAYER 3: SMTP mailbox verification ───────────────────────────────────────
+/**
+ * Verify a mailbox exists via SMTP handshake.
+ * Falls back to MX-only check on any error.
+ * Returns true if mailbox likely exists, false if definitively rejected.
+ */
+async function verifySMTP(email) {
+  try {
+    const domain = email.split('@')[1];
+    if (!domain) return false;
+
+    // First, resolve MX records
+    let mxRecords;
+    try {
+      mxRecords = await dns.resolveMx(domain);
+    } catch {
+      return false;
+    }
+    if (!mxRecords || mxRecords.length === 0) return false;
+
+    // Sort by priority, pick the best MX host
+    mxRecords.sort((a, b) => a.priority - b.priority);
+    const mxHost = mxRecords[0].exchange;
+
+    // Attempt SMTP handshake on port 25 with 5s timeout
+    const result = await new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        socket.destroy();
+        resolve(true); // timeout = uncertain, don't discard
+      }, 5000);
+
+      const socket = net.createConnection(25, mxHost);
+      let step = 0;
+      let buffer = '';
+
+      socket.on('error', () => {
+        clearTimeout(timeout);
+        resolve(true); // connection error = uncertain, don't discard
+      });
+
+      socket.on('data', (data) => {
+        buffer += data.toString();
+        const lines = buffer.split('\r\n');
+        buffer = lines.pop(); // keep incomplete last line
+
+        for (const line of lines) {
+          if (!line) continue;
+          const code = line.slice(0, 3);
+
+          if (step === 0 && code === '220') {
+            // Server ready — send HELO
+            socket.write('HELO findapodcast.io\r\n');
+            step = 1;
+          } else if (step === 1 && (code === '250' || code === '220')) {
+            // HELO accepted — send MAIL FROM
+            socket.write('MAIL FROM:<verify@findapodcast.io>\r\n');
+            step = 2;
+          } else if (step === 2 && code === '250') {
+            // MAIL FROM accepted — send RCPT TO
+            socket.write(`RCPT TO:<${email}>\r\n`);
+            step = 3;
+          } else if (step === 3) {
+            clearTimeout(timeout);
+            socket.write('QUIT\r\n');
+            socket.destroy();
+            if (code === '250' || code === '251') {
+              resolve(true); // mailbox exists
+            } else if (code === '550' || code === '551' || code === '553') {
+              resolve(false); // mailbox definitively doesn't exist
+            } else {
+              resolve(true); // uncertain — don't discard
+            }
+          }
+        }
+      });
+
+      socket.on('close', () => {
+        clearTimeout(timeout);
+        if (step < 3) resolve(true); // didn't complete — uncertain
+      });
+    });
+
+    return result;
+  } catch (err) {
+    logger.warn('verifySMTP: unexpected error, falling back to MX check', { email, error: err.message });
+    return hasMxRecord(email);
+  }
+}
+
+// ── LAYER 1: Listen Notes API ─────────────────────────────────────────────────
+/**
+ * Fetch podcast data from Listen Notes API.
+ * Returns structured contact/social data or {} on failure.
+ */
+async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl) {
+  const apiKey = process.env.LISTENNOTES_API_KEY;
+  if (!apiKey) return {};
+
+  try {
+    const headers = { 'X-ListenAPI-Key': apiKey };
+    let bestResult = null;
+
+    // Try lookup by Apple ID or Spotify ID first (most accurate)
+    const appleId = appleUrl?.match(/[?&]?id(\d{6,})/)?.[1];
+    const spotifyId = spotifyUrl?.match(/spotify\.com\/show\/([A-Za-z0-9]+)/)?.[1];
+
+    if (appleId || spotifyId) {
+      try {
+        const params = new URLSearchParams();
+        if (appleId)   params.set('apple_podcast_id', appleId);
+        if (spotifyId) params.set('spotify_id', spotifyId);
+        const res = await fetch(`https://listen-api.listennotes.com/api/v2/podcasts?${params}`, {
+          headers,
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          bestResult = data.podcasts?.[0] || data;
+        }
+      } catch { /* continue to title search */ }
+    }
+
+    // Fall back to title search if no result yet
+    if (!bestResult && podcastTitle) {
+      const q = encodeURIComponent(podcastTitle.slice(0, 100));
+      const res = await fetch(`https://listen-api.listennotes.com/api/v2/search?q=${q}&type=podcast&only_in=title&safe_mode=0`, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Pick closest title match
+        const lower = podcastTitle.toLowerCase();
+        bestResult = data.results?.find(r => r.title_original?.toLowerCase().includes(lower.slice(0, 12)))
+                  || data.results?.[0]
+                  || null;
+      }
+    }
+
+    if (!bestResult) return {};
+
+    const raw = {
+      email:            bestResult.email           || null,
+      website:          bestResult.website         || null,
+      instagram_url:    bestResult.extra?.url_instagram || bestResult.instagram || null,
+      twitter_url:      bestResult.extra?.url_twitter   || bestResult.twitter   || null,
+      facebook_url:     bestResult.extra?.url_facebook  || bestResult.facebook  || null,
+      linkedin_page_url: bestResult.extra?.url_linkedin || bestResult.linkedin  || null,
+      listen_notes_id:  bestResult.id              || null,
+    };
+
+    // Validate social URLs through existing validator
+    const platformMap = {
+      instagram_url: 'instagram',
+      twitter_url:   'twitter',
+      facebook_url:  'facebook',
+      linkedin_page_url: 'linkedin',
+    };
+    for (const [field, platform] of Object.entries(platformMap)) {
+      if (raw[field]) {
+        raw[field] = validateAndNormalizeSocialUrl(raw[field], platform);
+      }
+    }
+
+    // Filter out operator-owned emails
+    if (raw.email && isOperatorOwned(raw.email)) raw.email = null;
+
+    logger.debug('Listen Notes data fetched', {
+      title: podcastTitle,
+      hasEmail: !!raw.email,
+      hasId: !!raw.listen_notes_id,
+    });
+
+    return raw;
+  } catch (err) {
+    logger.warn('fetchListenNotesData: failed silently', { podcastTitle, error: err.message });
+    return {};
+  }
+}
+
+// ── LAYER 2: Cross-source agreement engine ───────────────────────────────────
+// Authoritative source keys — single-source values from these are stored
+const AUTHORITATIVE_SOURCES = new Set(['rssData', 'listenNotesData']);
+
+/**
+ * Normalize a field value for comparison (lowercase, remove trailing slash/whitespace).
+ */
+function normalizeFieldValue(val) {
+  if (!val || typeof val !== 'string') return null;
+  return val.toLowerCase().trim().replace(/\/+$/, '');
+}
+
+/**
+ * Cross-source agreement engine.
+ * sources: array of { key: 'rssData'|'listenNotesData'|'scrapedData'|'itunesData'|'inferredData', data: {...} }
+ * Returns an object with agreed-upon field values.
+ */
+function crossSourceAgree(sources) {
+  const fields = ['email', 'instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url', 'website'];
+  // Map RSS contact_email → email for unified comparison
+  const fieldAliases = { contact_email: 'email' };
+
+  const result = {};
+
+  for (const field of fields) {
+    // Collect all values with their source keys
+    const values = [];
+    for (const { key, data } of sources) {
+      if (!data) continue;
+      // Handle alias (rssData uses contact_email, others may use email)
+      let val = data[field] ?? data[fieldAliases[field] === field ? 'contact_email' : field] ?? null;
+      // Special: rssData stores email as contact_email
+      if (field === 'email' && !val && data.contact_email) val = data.contact_email;
+      if (val) values.push({ key, val: normalizeFieldValue(val), raw: val });
+    }
+
+    if (values.length === 0) {
+      result[field] = null;
+      continue;
+    }
+
+    // Count agreements
+    const counts = {};
+    const rawByNorm = {};
+    for (const { val, raw } of values) {
+      if (!val) continue;
+      counts[val] = (counts[val] || 0) + 1;
+      rawByNorm[val] = raw; // keep last raw value for each normalized
+    }
+
+    // Find values with 2+ agreements
+    const agreed = Object.entries(counts).filter(([, c]) => c >= 2);
+
+    if (agreed.length > 0) {
+      // HIGH CONFIDENCE: pick the most agreed-upon value
+      agreed.sort((a, b) => b[1] - a[1]);
+      result[field] = rawByNorm[agreed[0][0]];
+      logger.debug('crossSourceAgree: HIGH CONFIDENCE', { field, value: result[field], count: agreed[0][1] });
+    } else if (values.length === 1) {
+      // LOW CONFIDENCE: only 1 source — only store if it's authoritative
+      const { key, raw } = values[0];
+      if (AUTHORITATIVE_SOURCES.has(key)) {
+        result[field] = raw;
+        logger.debug('crossSourceAgree: LOW CONFIDENCE but authoritative source', { field, value: raw, source: key });
+      } else {
+        result[field] = null;
+        logger.debug('crossSourceAgree: LOW CONFIDENCE non-authoritative, skipping', { field, source: key });
+      }
+    } else {
+      // Multiple sources, no agreement — CONFLICT
+      const allVals = values.map(v => `${v.key}:${v.val}`);
+      logger.warn('crossSourceAgree: CONFLICT — multiple sources disagree, clearing field', {
+        field,
+        conflictingValues: allVals,
+      });
+      result[field] = null;
+    }
+  }
+
+  return result;
+}
+
+// ── LAYER 4: Domain-pattern handle inference ──────────────────────────────────
+const STOP_WORDS = new Set(['the', 'a', 'an', 'of', 'for', 'in', 'on', 'with', 'and', 'or', 'to', 'from']);
+
+/**
+ * Infer social handles from the podcast website domain and title.
+ * Only returns handles that pass both HEAD + profile content checks.
+ * These are LOW CONFIDENCE — only used if cross-source agrees OR no other source found anything.
+ */
+async function inferSocialHandles(websiteUrl, podcastTitle, hostName) {
+  const result = { instagram_url: null, twitter_url: null, facebook_url: null, linkedin_page_url: null };
+
+  try {
+    const candidates = new Set();
+
+    // Extract domain slug from website
+    if (websiteUrl) {
+      try {
+        const u = new URL(websiteUrl);
+        const domainSlug = u.hostname.replace(/^www\./, '').split('.')[0].toLowerCase();
+        if (domainSlug && domainSlug.length >= 3) candidates.add(domainSlug);
+      } catch { /* ignore */ }
+    }
+
+    // Generate handle candidates from podcast title tokens (remove stop words)
+    if (podcastTitle) {
+      const tokens = podcastTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(t => t.length >= 3 && !STOP_WORDS.has(t));
+      // Try concatenated title slug
+      if (tokens.length > 0) candidates.add(tokens.join(''));
+      // Try first significant token alone
+      if (tokens[0]) candidates.add(tokens[0]);
+    }
+
+    if (candidates.size === 0) return result;
+
+    const platforms = [
+      { field: 'instagram_url',    platform: 'instagram', urlFn: (s) => `https://www.instagram.com/${s}/` },
+      { field: 'twitter_url',      platform: 'twitter',   urlFn: (s) => `https://twitter.com/${s}` },
+      { field: 'facebook_url',     platform: 'facebook',  urlFn: (s) => `https://www.facebook.com/${s}` },
+      { field: 'linkedin_page_url',platform: 'linkedin',  urlFn: (s) => `https://www.linkedin.com/company/${s}/` },
+    ];
+
+    for (const { field, platform, urlFn } of platforms) {
+      for (const slug of candidates) {
+        const candidateUrl = urlFn(slug);
+        const validated = validateAndNormalizeSocialUrl(candidateUrl, platform);
+        if (!validated) continue;
+
+        // Must pass HEAD check
+        const headOk = await verifySocialUrl(validated);
+        if (!headOk) continue;
+
+        // Must pass profile content check
+        const profileOk = await checkProfileExists(validated, platform);
+        if (!profileOk) continue;
+
+        result[field] = validated;
+        logger.debug('inferSocialHandles: found valid handle', { platform, url: validated, slug });
+        break; // found one for this platform, move on
+      }
+    }
+  } catch (err) {
+    logger.warn('inferSocialHandles: failed', { websiteUrl, error: err.message });
+  }
+
+  return result;
 }
 
 // Operator-owned emails and social handles — never assign these to discovered podcasts
@@ -620,6 +950,16 @@ async function fetchRssFeed(rssUrl) {
  * Fetches the podcast website and supplementary pages to extract contact info,
  * guest application URLs, booking links, and YouTube subscriber counts.
  * Never throws. Returns partial data if any step fails.
+ *
+ * Flow:
+ * 1. RSS feed scrape → rssData
+ * 2. iTunes lookup (handled by caller) → itunesData passed in podcastData
+ * 3. Listen Notes API lookup → listenNotesData
+ * 4. Homepage scrape → scrapedData
+ * 5. Domain-pattern inference → inferredData
+ * 6. Cross-source agreement on all 5 sources → agreedData
+ * 7. SMTP email verification on agreed email
+ * 8. Populate enriched fields from agreedData
  */
 async function enrichPodcast(podcastData) {
   const enriched = { ...podcastData };
@@ -628,12 +968,14 @@ async function enrichPodcast(podcastData) {
   // ──────────────────────────────────────────────────
   // 0. RSS feed scrape (before homepage)
   // ──────────────────────────────────────────────────
+  let _capturedRssData = {};
   const rssUrl = podcastData.rss_feed_url || null;
   if (rssUrl) {
     try {
       const rssData = await fetchRssFeed(rssUrl);
       const rssAtomSocials = rssData._rssAtomSocials || {};
       delete rssData._rssAtomSocials;
+      _capturedRssData = { ...rssData };
       for (const [key, val] of Object.entries(rssData)) {
         if (val && !enriched[key]) enriched[key] = val;
       }
@@ -647,8 +989,12 @@ async function enrichPodcast(podcastData) {
       for (const [field, platform] of Object.entries(socialFieldToPlatform)) {
         if (rssAtomSocials[field] && !enriched[field]) {
           const verified = await validateSocialWithConfidence(rssAtomSocials[field], platform, _rTitle, _rHost, { fromAtomLink: true, isSoleCandidate: true });
-          if (verified) enriched[field] = verified;
-          else enriched[field] = null;
+          if (verified) {
+            enriched[field] = verified;
+            _capturedRssData[field] = verified;
+          } else {
+            enriched[field] = null;
+          }
         }
       }
       logger.debug('RSS feed enriched', { title: podcastData.title, found: Object.keys(rssData) });
@@ -668,6 +1014,8 @@ async function enrichPodcast(podcastData) {
       if (rssData) {
         const rssAtomSocials2 = rssData._rssAtomSocials || {};
         delete rssData._rssAtomSocials;
+        // Merge into _capturedRssData
+        Object.assign(_capturedRssData, rssData);
         for (const [k, v] of Object.entries(rssData)) {
           if (!enriched[k] && v) enriched[k] = v;
         }
@@ -681,12 +1029,34 @@ async function enrichPodcast(podcastData) {
         for (const [field, platform] of Object.entries(socialFieldToPlatform2)) {
           if (rssAtomSocials2[field] && !enriched[field]) {
             const verified = await validateSocialWithConfidence(rssAtomSocials2[field], platform, _r2Title, _r2Host, { fromAtomLink: true, isSoleCandidate: true });
-            if (verified) enriched[field] = verified;
-            else enriched[field] = null;
+            if (verified) {
+              enriched[field] = verified;
+              _capturedRssData[field] = verified;
+            } else {
+              enriched[field] = null;
+            }
           }
         }
       }
     }
+  }
+
+  // ──────────────────────────────────────────────────
+  // 0b2. Listen Notes API lookup (Layer 1)
+  // ──────────────────────────────────────────────────
+  let _listenNotesData = {};
+  try {
+    _listenNotesData = await fetchListenNotesData(
+      podcastData.title,
+      podcastData.apple_url || enriched.apple_url,
+      podcastData.spotify_url || enriched.spotify_url,
+    );
+    // Store listen_notes_id if found
+    if (_listenNotesData.listen_notes_id && !enriched.listen_notes_id) {
+      enriched.listen_notes_id = _listenNotesData.listen_notes_id;
+    }
+  } catch (err) {
+    logger.warn('Listen Notes lookup failed', { title: podcastData.title, error: err.message });
   }
 
   // ──────────────────────────────────────────────────
@@ -965,13 +1335,91 @@ async function enrichPodcast(podcastData) {
       }
     }
 
-    // Validate contact email has a real MX record
-    // Skip MX check if email came from RSS feed — iTunes emails are always real
+    // ──────────────────────────────────────────────────
+    // Layer 4: Domain-pattern handle inference
+    // ──────────────────────────────────────────────────
+    let _inferredData = {};
+    try {
+      const _inferSite = enriched.website || podcastData.website;
+      if (_inferSite || podcastData.title) {
+        _inferredData = await inferSocialHandles(_inferSite, podcastData.title, podcastData.host_name || enriched.host_name);
+      }
+    } catch (err) {
+      logger.warn('inferSocialHandles failed', { title: podcastData.title, error: err.message });
+    }
+
+    // ──────────────────────────────────────────────────
+    // Capture scrapedData snapshot for cross-source agree
+    // ──────────────────────────────────────────────────
+    const _scrapedData = {
+      email:            enriched.contact_email || null,
+      instagram_url:    enriched.instagram_url || null,
+      twitter_url:      enriched.twitter_url   || null,
+      facebook_url:     enriched.facebook_url  || null,
+      linkedin_page_url: enriched.linkedin_page_url || null,
+      website:          enriched.website       || null,
+    };
+
+    // ──────────────────────────────────────────────────
+    // Layer 2: Cross-source agreement engine
+    // ──────────────────────────────────────────────────
+    const _itunesData = {
+      // iTunes data that came in via podcastData (passed by caller)
+      website:  podcastData._itunesWebsite || null,
+      email:    null, // iTunes API doesn't return email
+    };
+
+    const sources = [
+      { key: 'rssData',        data: _capturedRssData },
+      { key: 'listenNotesData', data: { ..._listenNotesData, email: _listenNotesData.email } },
+      { key: 'scrapedData',    data: _scrapedData },
+      { key: 'itunesData',     data: _itunesData },
+      { key: 'inferredData',   data: _inferredData },
+    ];
+
+    const agreedData = crossSourceAgree(sources);
+
+    // Apply agreed values — overwrite the enriched fields
+    const socialFields = ['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url', 'website'];
+    for (const field of socialFields) {
+      if (agreedData[field] !== undefined) {
+        if (agreedData[field] !== null) {
+          enriched[field] = agreedData[field];
+        } else if (enriched[field] && !AUTHORITATIVE_SOURCES.has('rssData')) {
+          // Only clear if it wasn't from an authoritative source
+          // (rssData atom:link socials already went through confidence scoring)
+          const fromRss = _capturedRssData[field] && normalizeFieldValue(_capturedRssData[field]) === normalizeFieldValue(enriched[field]);
+          if (!fromRss) enriched[field] = null;
+        }
+      }
+    }
+
+    // Apply agreed email
+    if (agreedData.email !== undefined) {
+      if (agreedData.email !== null) {
+        enriched.contact_email = agreedData.email;
+      }
+      // Don't clear if it came from RSS (already authoritative)
+    }
+
+    // For inferred handles: only use if cross-source agreed on the same value, OR no other source found anything
+    for (const field of ['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url']) {
+      if (_inferredData[field] && !enriched[field]) {
+        // No other source found anything — use inferred as last resort
+        enriched[field] = _inferredData[field];
+        logger.debug('enrichPodcast: using inferred handle as last resort', { field, url: _inferredData[field] });
+      }
+    }
+
+    // ──────────────────────────────────────────────────
+    // Layer 3: SMTP email verification (replaces MX check)
+    // ──────────────────────────────────────────────────
+    // Skip SMTP check if email came from RSS feed — iTunes emails are always real
     const emailFromRss = podcastData.rss_feed_url && enriched.contact_email === podcastData.contact_email;
     if (enriched.contact_email && !emailFromRss) {
-      const valid = await hasMxRecord(enriched.contact_email);
+      const valid = await verifySMTP(enriched.contact_email);
       if (!valid) {
-        logger.warn('Email failed MX validation, clearing', { email: enriched.contact_email, title: podcastData.title });
+        logger.warn('Email failed SMTP verification, clearing', { email: enriched.contact_email, title: podcastData.title });
         enriched.contact_email = null;
       }
     }

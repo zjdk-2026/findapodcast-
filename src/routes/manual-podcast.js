@@ -152,9 +152,13 @@ router.post('/add-podcast', async (req, res) => {
     const enriched = await enrichPodcast(base);
 
     // ── 3. Upsert podcast ─────────────────────────────────────────────────────
+    // listen_notes_id is stored if the column exists — handled gracefully if not
+    const upsertData = { ...enriched };
+    if (!upsertData.listen_notes_id) delete upsertData.listen_notes_id;
+
     const { data: podcast, error: podcastError } = await supabase
       .from('podcasts')
-      .upsert(enriched, { onConflict: 'external_id' })
+      .upsert(upsertData, { onConflict: 'external_id' })
       .select()
       .single();
 
@@ -286,6 +290,7 @@ router.post('/re-enrich/:matchId', requireDashboardToken, async (req, res) => {
       booking_page_url: enriched.booking_page_url || podcast.booking_page_url,
       estimated_monthly_listeners: enriched.estimated_monthly_listeners || podcast.estimated_monthly_listeners || null,
       enriched_at: new Date().toISOString(),
+      ...(enriched.listen_notes_id ? { listen_notes_id: enriched.listen_notes_id } : {}),
     };
     await supabase.from('podcasts').update(podcastUpdate).eq('id', podcast.id);
 
