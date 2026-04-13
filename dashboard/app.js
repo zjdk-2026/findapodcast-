@@ -2449,12 +2449,22 @@ async function rewriteInlinePitch(matchId) {
   }
   if (bodyEl) {
     bodyEl.disabled = true;
-    bodyEl.placeholder = '';
     bodyEl.value = '';
-    bodyEl.style.background = 'linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%)';
-    bodyEl.style.backgroundSize = '200% 100%';
-    bodyEl.style.animation = 'shimmer 1.4s infinite linear';
-    bodyEl.style.color = 'transparent';
+    bodyEl.placeholder = 'Writing your pitch…';
+    bodyEl.style.opacity = '0.4';
+    // Inject a loading overlay sibling
+    const existingOverlay = document.getElementById(`pitch-loading-${matchId}`);
+    if (!existingOverlay) {
+      const overlay = document.createElement('div');
+      overlay.id = `pitch-loading-${matchId}`;
+      overlay.style.cssText = 'position:absolute;inset:0;background:linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%);background-size:200% 100%;animation:shimmer 1.4s infinite linear;border-radius:inherit;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = '<span style="font-size:13px;font-weight:600;color:#6366f1;animation:pulse 1.4s ease-in-out infinite;">Writing your pitch…</span>';
+      const parent = bodyEl.parentElement;
+      if (parent) {
+        parent.style.position = 'relative';
+        parent.appendChild(overlay);
+      }
+    }
   }
   try {
     const data = await apiPost('/api/generate-pitch', { matchId });
@@ -2483,12 +2493,11 @@ async function rewriteInlinePitch(matchId) {
     const bodyElFinal = $(`inline-body-${matchId}`);
     if (bodyElFinal) {
       bodyElFinal.disabled = false;
-      bodyElFinal.style.background = '';
-      bodyElFinal.style.animation = '';
-      bodyElFinal.style.color = '';
-      bodyElFinal.style.backgroundSize = '';
+      bodyElFinal.style.opacity = '';
       bodyElFinal.placeholder = 'Your pitch will appear here…';
     }
+    const overlay = document.getElementById(`pitch-loading-${matchId}`);
+    if (overlay) overlay.remove();
   }
 }
 window.rewriteInlinePitch = rewriteInlinePitch;
