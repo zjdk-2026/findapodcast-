@@ -148,12 +148,38 @@ router.get('/auth/gmail/callback', async (req, res) => {
 });
 
 /**
+ * getThreadMessageCount(refreshToken, threadId)
+ * Returns the number of messages in a Gmail thread. Returns 0 on any error.
+ */
+async function getThreadMessageCount(refreshToken, threadId) {
+  try {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.threads.get({
+      userId: 'me',
+      id: threadId,
+      format: 'minimal',
+    });
+    return (res.data.messages?.length) || 0;
+  } catch (err) {
+    logger.warn('getThreadMessageCount failed', { threadId, error: err.message });
+    return 0;
+  }
+}
+
+/**
  * POST /api/gmail/check-replies
- * Called on dashboard load and polled every 5 minutes. Checks all sent/followed_up
+ * Called on dashboard load and polled every 5 minutes. Checks all sent/followed_up/replied
  * matches for Gmail replies. Auto-moves any replied matches to 'replied' status.
+ * Tracks reply_count (thread message count) and last_reply_at for new-reply detection.
  *
  * Detection uses two strategies:
- *  1. Thread message count > 1 (reply came in the same Gmail thread)
+ *  1. Thread message count > stored reply_count (reply came in the same Gmail thread)
  *  2. Inbox search for a message from: the contact email (handles out-of-thread replies)
  */
 router.post('/api/gmail/check-replies', async (req, res) => {
@@ -171,13 +197,13 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     return res.json({ success: true, updated: [], gmailConnected: false });
   }
 
-  // Scan both 'sent' AND 'followed_up' matches — a reply can arrive after either
-  // Include email_subject + sent_at so we can scope Gmail search more precisely
+  // Scan 'sent', 'followed_up', AND 'replied' matches — keep monitoring replied ones for new messages
+  // Include reply_count so we can compare against current thread message count
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, email_subject, sent_at, podcasts(contact_email, title)')
+    .select('id, gmail_thread_id, email_subject, sent_at, status, reply_count, podcasts(contact_email, title)')
     .eq('client_id', client.id)
-    .in('status', ['sent', 'followed_up']);
+    .in('status', ['sent', 'followed_up', 'replied']);
 
   if (!matches?.length) return res.json({ success: true, updated: [], gmailConnected: true, checked: 0 });
 
@@ -188,6 +214,7 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     try {
       let threadId = m.gmail_thread_id;
       const contactEmail = m.podcasts?.contact_email;
+      const storedCount = m.reply_count || 0;
 
       // Fallback: find thread by contact email for older matches missing thread ID
       if (!threadId && contactEmail) {
@@ -198,22 +225,52 @@ router.post('/api/gmail/check-replies', async (req, res) => {
         }
       }
 
-      // Strategy 1: check if the known Gmail thread has > 1 message (host replied in-thread)
+      // Strategy 1: compare current thread message count vs stored reply_count
       let hasReply = false;
+      let isNewReply = false;
+      let currentThreadCount = 0;
       if (threadId) {
-        hasReply = await checkThreadForReply(client.gmail_refresh_token, threadId);
+        currentThreadCount = await getThreadMessageCount(client.gmail_refresh_token, threadId);
+        if (currentThreadCount > 1) hasReply = true;
+        // New reply = thread grew since we last checked
+        if (currentThreadCount > storedCount) isNewReply = true;
       }
 
       // Strategy 2: search inbox for any inbound message from that address AFTER the pitch was sent.
       // The after: filter prevents false positives from historic emails.
       if (!hasReply && contactEmail) {
         hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at);
+        if (hasReply && storedCount === 0) isNewReply = true;
       }
 
-      if (hasReply) {
-        await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
+      if (hasReply && m.status !== 'replied') {
+        // First reply for a sent/followed_up match — move to replied and record count
+        const replyFields = { status: 'replied', last_reply_at: new Date().toISOString() };
+        if (currentThreadCount > 0) replyFields.reply_count = currentThreadCount;
+        else replyFields.reply_count = 1;
+        try {
+          await supabase.from('podcast_matches').update(replyFields).eq('id', m.id);
+        } catch (dbErr) {
+          // Fallback if new columns don't exist yet
+          await supabase.from('podcast_matches').update({ status: 'replied' }).eq('id', m.id);
+          logger.warn('reply_count/last_reply_at columns may be missing', { matchId: m.id, error: dbErr.message });
+        }
         updated.push(m.id);
         logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
+      } else if (hasReply && m.status === 'replied' && isNewReply) {
+        // Already replied — but there's a NEW message in the thread since last check
+        const updateFields = {
+          reply_count: currentThreadCount || (storedCount + 1),
+          last_reply_at: new Date().toISOString(),
+          // Do NOT touch last_reply_seen_at — only the client sets that
+        };
+        try {
+          await supabase.from('podcast_matches').update(updateFields).eq('id', m.id);
+          updated.push(m.id);
+          logger.info('New reply detected on already-replied match', { matchId: m.id, newCount: updateFields.reply_count });
+        } catch (dbErr) {
+          logger.warn('Failed to update reply tracking fields', { matchId: m.id, error: dbErr.message });
+        }
       }
     } catch (matchErr) {
       logger.warn('Reply check failed for match', { matchId: m.id, error: matchErr.message });
@@ -222,6 +279,39 @@ router.post('/api/gmail/check-replies', async (req, res) => {
   }
 
   return res.json({ success: true, updated, gmailConnected: true, checked: matches.length });
+});
+
+/**
+ * POST /api/mark-reply-seen
+ * Called when a card with a new reply is expanded by the client.
+ * Sets last_reply_seen_at = now so the pulsing badge goes away.
+ */
+router.post('/api/mark-reply-seen', async (req, res) => {
+  const token = req.headers['x-dashboard-token'] || req.body?.token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorised.' });
+
+  const { matchId } = req.body || {};
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId required.' });
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('dashboard_token', token)
+    .single();
+
+  if (!client) return res.status(401).json({ success: false, error: 'Invalid token.' });
+
+  try {
+    await supabase
+      .from('podcast_matches')
+      .update({ last_reply_seen_at: new Date().toISOString() })
+      .eq('id', matchId)
+      .eq('client_id', client.id);
+  } catch (dbErr) {
+    logger.warn('mark-reply-seen: last_reply_seen_at column may be missing', { matchId, error: dbErr.message });
+  }
+
+  return res.json({ success: true });
 });
 
 /**

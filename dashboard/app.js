@@ -208,6 +208,30 @@ function copyEmail(e, email) {
   });
 }
 
+// ── Reply tracking helpers ────────────────────────────────────────────
+function hasUnseenReply() {
+  return state.matches.some((m) =>
+    (m.reply_count > 0) &&
+    (!m.last_reply_seen_at || new Date(m.last_reply_at) > new Date(m.last_reply_seen_at))
+  );
+}
+
+function updateHeaderReplyDot() {
+  const el = document.getElementById('hero-greeting-name');
+  if (!el) return;
+  const existing = el.querySelector('.header-reply-dot');
+  if (hasUnseenReply()) {
+    if (!existing) {
+      const dot = document.createElement('span');
+      dot.className = 'header-reply-dot';
+      dot.title = 'You have unseen host replies';
+      el.appendChild(dot);
+    }
+  } else {
+    if (existing) existing.remove();
+  }
+}
+
 // ── Hero section (replaces stats strip) ──────────────────────────────
 function renderHeroSection() {
   const heroEl = $('hero-section');
@@ -248,7 +272,7 @@ function renderHeroSection() {
     <div class="hero-greeting">
       <div style="display:flex;align-items:center;gap:12px;">
         ${avatarHtml}
-        <div class="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}</div>
+        <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
       <div class="hero-greeting-sub">${subtitle}</div>
       ${lifetimeTotal > 0 ? `
@@ -781,7 +805,24 @@ function toggleCardExpand(matchId) {
   const card = $(`card-${matchId}`);
   if (!card) return;
   const isExpanded = card.getAttribute('data-expanded') === 'true';
-  card.setAttribute('data-expanded', isExpanded ? 'false' : 'true');
+  const nowExpanded = !isExpanded;
+  card.setAttribute('data-expanded', nowExpanded ? 'true' : 'false');
+
+  // When expanding, mark any unseen reply as seen
+  if (nowExpanded) {
+    const match = state.matches.find((m) => m.id === matchId);
+    if (match) {
+      const hasUnseen = (match.reply_count > 0) &&
+        (!match.last_reply_seen_at || new Date(match.last_reply_at) > new Date(match.last_reply_seen_at));
+      if (hasUnseen) {
+        const seenAt = new Date().toISOString();
+        apiPost('/api/mark-reply-seen', { matchId }).catch(() => {});
+        updateMatchInState(matchId, { last_reply_seen_at: seenAt });
+        updateCard(matchId);
+        updateHeaderReplyDot();
+      }
+    }
+  }
 }
 window.toggleCardExpand = toggleCardExpand;
 
@@ -1202,10 +1243,17 @@ function renderMatchCard(match) {
           ${isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
           ${isValidUrl(podcast.youtube_url) && podcast.website ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ''}
           ${isValidSocialProfile(podcast.facebook_url, 'facebook') ? `<a class="card-link-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>` : ''}
+        ${match.reply_count > 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} replies</span>` : ''}
         </div>
       </div>
       <div class="card-row-right">
         ${statusBadgeHtml(match.status)}
+        ${(() => {
+          const hasUnseen = (match.reply_count > 0) &&
+            (!match.last_reply_seen_at || new Date(match.last_reply_at) > new Date(match.last_reply_seen_at));
+          if (!hasUnseen) return '';
+          return `<span class="new-reply-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> New Reply</span>`;
+        })()}
         <span class="card-chevron">▸</span>
       </div>
     </div>
@@ -4062,9 +4110,25 @@ async function checkForReplies() {
     }
 
     if (data.success && data.updated?.length) {
-      data.updated.forEach((matchId) => updateMatchInState(matchId, { status: 'replied' }));
+      // Re-fetch fresh match data so reply_count/last_reply_at fields are up to date
+      try {
+        const fresh = await apiFetch(`/api/dashboard/${state.token}`);
+        if (fresh?.matches) {
+          state.matches = fresh.matches;
+        }
+      } catch { /* silent — use stale state if fetch fails */ }
+
+      // Also apply status updates for any new-to-replied matches
+      data.updated.forEach((matchId) => {
+        const existing = state.matches.find((m) => m.id === matchId);
+        if (existing && existing.status !== 'replied') {
+          updateMatchInState(matchId, { status: 'replied' });
+        }
+      });
+
       renderGrid();
       updateStatBadges(); // tab-count badge goes red automatically via unseenRepliedCount
+      updateHeaderReplyDot();
       showToast(`A host has replied to your pitch. Head to Host Replied and lock in the booking.`, 'success');
       switchToFilter('replied');
     }

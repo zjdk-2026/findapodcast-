@@ -717,6 +717,46 @@ html:not(.light-mode) .onboarding-inner {
   50%       { opacity: 0.5; transform: scale(0.85); }
 }
 
+/* ── Reply tracking badges ─────────────────────────────────── */
+.new-reply-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 10px;
+  animation: replyPulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes replyPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
+  50%       { opacity: 0.85; box-shadow: 0 0 0 5px rgba(99,102,241,0); }
+}
+.reply-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0,0,0,0.06);
+  color: var(--text-muted, #888);
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 6px;
+}
+.header-reply-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: replyPulse 1.4s ease-in-out infinite;
+}
+
 /* ── Client Header ─────────────────────────────────────────── */
 .client-header {
   padding: 0 24px 0;
