@@ -328,4 +328,75 @@ Return ONLY the plain text DM — no JSON, no markdown, no explanation.`,
   }
 });
 
+/**
+ * POST /api/generate-thankyou
+ * Generates an AI thank you email after an episode airs.
+ */
+router.post('/generate-thankyou', requireDashboardToken, async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  try {
+    const { data: match, error: fetchError } = await supabase
+      .from('podcast_matches')
+      .select('*, podcasts(title, host_name, contact_email), clients(name, title, business_name)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+
+    if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
+
+    const podcastTitle = match.podcasts?.title    || 'your show';
+    const hostName     = match.podcasts?.host_name || '';
+    const hostFirst    = hostName ? hostName.split(' ')[0] : null;
+    const clientName   = match.clients?.name || '';
+    const clientTitle  = match.clients?.title || '';
+    const clientBiz    = match.clients?.business_name || '';
+    const signature    = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: 350,
+      system: `You write short, warm thank you emails from a podcast guest to a host, sent after the episode airs.
+
+Rules:
+- ALWAYS open with a greeting: "Hi ${hostFirst || '[Host]'},"
+- Body: 50–70 words max (not counting greeting, sign-off)
+- Thank them genuinely — not sycophantically
+- Reference something specific about the conversation or what the audience might get from it
+- Offer to stay in touch or return if useful
+- Close with "Kind regards," then the full signature provided
+- No bullet points. No exclamation marks. No em dashes. First person only.
+- Subject line: "Thank you — [podcast title]" format
+
+Return ONLY valid JSON: {"subject": "...", "body": "..."}
+The body must include the greeting at the top and full signature at the bottom.`,
+      messages: [{ role: 'user', content: JSON.stringify({
+        podcast_title: podcastTitle,
+        host_first_name: hostFirst || '',
+        sender_name: clientName,
+        signature,
+        pitch_angle: match.best_pitch_angle || '',
+      }) }],
+    });
+
+    const raw = message.content[0].text;
+    const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); }
+    catch { return res.status(500).json({ success: false, error: 'Could not parse response.' }); }
+
+    const { humanize } = require('../services/emailWriter');
+    const humanizedBody = await humanize(parsed.body);
+
+    logger.info('Thank you email generated', { matchId });
+    return res.json({ success: true, subject: parsed.subject, body: humanizedBody });
+  } catch (err) {
+    logger.error('generate-thankyou error', { matchId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
 module.exports = router;

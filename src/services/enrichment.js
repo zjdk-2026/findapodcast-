@@ -704,7 +704,7 @@ async function validateSocialWithConfidence(url, platform, podcastTitle, hostNam
 
   const score = confidenceScore({ url, platform, podcastTitle, hostName, headVerified: headOk, profileChecked: profileOk, fromAtomLink, isSoleCandidate });
 
-  if (score < 100) {
+  if (score < 90) {
     logger.warn('validateSocialWithConfidence: confidence below threshold, discarding', { url, platform, score, podcastTitle });
     return null;
   }
@@ -975,28 +975,42 @@ async function enrichPodcast(podcastData) {
       const rssData = await fetchRssFeed(rssUrl);
       const rssAtomSocials = rssData._rssAtomSocials || {};
       delete rssData._rssAtomSocials;
-      _capturedRssData = { ...rssData };
+
+      const RSS_SOCIAL_KEYS = new Set(['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url']);
+
+      // BUG FIX: Copy non-social fields directly; social fields only after confidence validation below
       for (const [key, val] of Object.entries(rssData)) {
-        if (val && !enriched[key]) enriched[key] = val;
+        if (!RSS_SOCIAL_KEYS.has(key) && val && !enriched[key]) enriched[key] = val;
       }
-      // Confidence-validate atom:link socials before storing (Fix 5)
+
+      // BUG FIX: Confidence-validate atom:link socials FIRST, then snapshot into _capturedRssData
+      // (previously _capturedRssData was snapshotted before validation, passing unvalidated socials into crossSourceAgree)
       const _rTitle = podcastData.title || '';
       const _rHost  = podcastData.host_name || enriched.host_name || '';
       const socialFieldToPlatform = {
         instagram_url: 'instagram', twitter_url: 'twitter',
         facebook_url: 'facebook', linkedin_page_url: 'linkedin',
       };
+
+      // Start _capturedRssData with non-social fields only
+      _capturedRssData = Object.fromEntries(Object.entries(rssData).filter(([k]) => !RSS_SOCIAL_KEYS.has(k)));
+
+      // Now validate each atom:link social and store validated result only
       for (const [field, platform] of Object.entries(socialFieldToPlatform)) {
-        if (rssAtomSocials[field] && !enriched[field]) {
+        if (rssAtomSocials[field]) {
           const verified = await validateSocialWithConfidence(rssAtomSocials[field], platform, _rTitle, _rHost, { fromAtomLink: true, isSoleCandidate: true });
           if (verified) {
             enriched[field] = verified;
-            _capturedRssData[field] = verified;
+            _capturedRssData[field] = verified; // only validated URLs enter crossSourceAgree
           } else {
             enriched[field] = null;
+            _capturedRssData[field] = null; // rejected — don't pollute crossSourceAgree
           }
+        } else {
+          _capturedRssData[field] = null; // no atom:link social for this platform
         }
       }
+
       logger.debug('RSS feed enriched', { title: podcastData.title, found: Object.keys(rssData) });
     } catch (err) {
       logger.warn('RSS enrichment failed', { title: podcastData.title, rssUrl, error: err.message });
@@ -1014,11 +1028,12 @@ async function enrichPodcast(podcastData) {
       if (rssData) {
         const rssAtomSocials2 = rssData._rssAtomSocials || {};
         delete rssData._rssAtomSocials;
-        // Merge into _capturedRssData
-        Object.assign(_capturedRssData, rssData);
+        const RSS_SOCIAL_KEYS2 = new Set(['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url']);
+        // BUG FIX: Merge non-social fields only; validate atom:link socials before storing
         for (const [k, v] of Object.entries(rssData)) {
-          if (!enriched[k] && v) enriched[k] = v;
+          if (!RSS_SOCIAL_KEYS2.has(k) && !enriched[k] && v) enriched[k] = v;
         }
+        Object.assign(_capturedRssData, Object.fromEntries(Object.entries(rssData).filter(([k]) => !RSS_SOCIAL_KEYS2.has(k))));
         // Confidence-validate atom:link socials
         const _r2Title = podcastData.title || '';
         const _r2Host  = podcastData.host_name || enriched.host_name || '';
@@ -1027,14 +1042,17 @@ async function enrichPodcast(podcastData) {
           facebook_url: 'facebook', linkedin_page_url: 'linkedin',
         };
         for (const [field, platform] of Object.entries(socialFieldToPlatform2)) {
-          if (rssAtomSocials2[field] && !enriched[field]) {
+          if (rssAtomSocials2[field]) {
             const verified = await validateSocialWithConfidence(rssAtomSocials2[field], platform, _r2Title, _r2Host, { fromAtomLink: true, isSoleCandidate: true });
             if (verified) {
               enriched[field] = verified;
               _capturedRssData[field] = verified;
             } else {
               enriched[field] = null;
+              _capturedRssData[field] = null;
             }
+          } else {
+            _capturedRssData[field] = null;
           }
         }
       }

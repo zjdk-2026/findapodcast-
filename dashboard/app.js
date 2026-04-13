@@ -1411,6 +1411,7 @@ function renderMatchCard(match) {
         <textarea id="thankyou-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your thank you message…"></textarea>
       </div>
       <div class="inline-pitch-actions">
+        <button id="thankyou-generate-btn-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="generateThankYou('${esc(match.id)}')">Generate</button>
         <button class="btn btn-action-send btn-xs" onclick="sendThankYouFromPanel('${esc(match.id)}')">Send</button>
       </div>
     </div>` : ''}
@@ -2622,18 +2623,36 @@ window.toggleThankYouPanel = toggleThankYouPanel;
 function populateThankYouPanel(matchId) {
   const match = state.matches.find(m => m.id === matchId);
   if (!match) return;
-  const podcastTitle = match.podcasts?.title || 'your show';
-  const hostName = match.podcasts?.host_name || 'there';
-  const firstName = hostName.split(' ')[0];
   const subjEl = $(`thankyou-subj-${matchId}`);
   const bodyEl = $(`thankyou-body-${matchId}`);
-  if (subjEl && !subjEl.value) {
-    subjEl.value = `Thank you — ${podcastTitle}`;
-  }
-  if (bodyEl && !bodyEl.value) {
-    bodyEl.value = `Hi ${firstName},\n\nJust wanted to say thank you for having me on ${podcastTitle}. I really enjoyed the conversation and hope it brings real value to your audience.\n\nIf you ever need a guest again or know someone I should connect with, I'd love to stay in touch.\n\nThanks again,`;
+  // Auto-generate if blank
+  if (!subjEl?.value && !bodyEl?.value) {
+    setTimeout(() => generateThankYou(matchId), 100);
   }
 }
+
+async function generateThankYou(matchId) {
+  const btn    = $(`thankyou-generate-btn-${matchId}`);
+  const subjEl = $(`thankyou-subj-${matchId}`);
+  const bodyEl = $(`thankyou-body-${matchId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Writing…'; }
+  if (bodyEl) { bodyEl.disabled = true; bodyEl.placeholder = 'Writing your thank you…'; }
+  try {
+    const data = await apiPost('/api/generate-thankyou', { matchId });
+    if (data.success && data.body) {
+      if (subjEl) subjEl.value = data.subject || '';
+      if (bodyEl) bodyEl.value = data.body;
+      showToast('Thank you drafted.', 'success');
+    } else {
+      showToast(data.error || 'Could not generate thank you.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Generate'; }
+    if (bodyEl) { bodyEl.disabled = false; bodyEl.placeholder = 'Your thank you message…'; }
+  }
+}
+window.generateThankYou = generateThankYou;
 
 async function sendThankYouFromPanel(matchId) {
   const subjEl = $(`thankyou-subj-${matchId}`);
