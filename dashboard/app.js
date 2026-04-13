@@ -945,6 +945,21 @@ function buildMemberCard(m, featured = false) {
     ? `<img src="${esc(m.photo_url)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${m.is_me ? '#6366f1' : 'var(--border-medium)'};flex-shrink:0;" />`
     : `<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid ${m.is_me ? '#6366f1' : 'transparent'};">${initials}</div>`;
 
+  // Empty state: what to show when no headline or bio
+  const headlineHtml = headline
+    ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${esc(headline)}</div>`
+    : m.is_me
+      ? `<div style="font-size:12px;color:#a78bfa;margin-top:2px;font-style:italic;">Add your headline in your profile</div>`
+      : `<div style="font-size:12px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">New member</div>`;
+
+  const expandedBioHtml = bioLong
+    ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.65;margin:14px 0 12px;">${esc(bioLong)}</p>`
+    : m.is_me
+      ? `<p style="font-size:13px;color:#a78bfa;font-style:italic;margin:14px 0 12px;">Your bio is empty — add it in your profile so other members can get to know you.</p>`
+      : `<p style="font-size:13px;color:var(--text-tertiary);font-style:italic;margin:14px 0 12px;">This member hasn't added a bio yet.</p>`;
+
+  const hasStats = (m.sent||0) + (m.booked||0) + (m.appeared||0) > 0;
+
   return `
     <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}overflow:hidden;min-width:0;width:100%;box-sizing:border-box;">
       <!-- Collapsed row — always visible, click to expand -->
@@ -952,19 +967,19 @@ function buildMemberCard(m, featured = false) {
         ${avatar48}
         <div style="flex:1;min-width:0;overflow:hidden;">
           <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${youBadge}</div>
-          ${headline ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${esc(headline)}</div>` : ''}
+          ${headlineHtml}
         </div>
         ${socials ? `<div style="display:flex;gap:10px;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">${socials}</div>` : ''}
         <svg id="${cardId}-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--text-tertiary);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <!-- Expanded section — hidden by default -->
       <div id="${cardId}-expanded" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border-subtle);">
-        ${bioLong ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.65;margin:14px 0 12px;">${esc(bioLong)}</p>` : ''}
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        ${expandedBioHtml}
+        ${hasStats ? `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
           ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
           ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
-        </div>
+        </div>` : ''}
       </div>
     </div>`;
 }
