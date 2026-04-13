@@ -271,17 +271,20 @@ router.post('/generate-dm', requireDashboardToken, async (req, res) => {
     const message = await anthropic.messages.create({
       model:      'claude-haiku-4-5-20251001',
       max_tokens: 300,
-      system: `You write short, first-person social media DMs from a podcast guest to a host. The message should feel like a real person reaching out — not a pitch, not a press release.
+      system: `You write short, first-person social media DMs from a podcast guest to a host. The goal is not to sell the guest — it is to genuinely enter the host's world, show curiosity about their mission, and ask if there is a fit.
 
-Rules:
+THE MINDSET: Most DMs are self-promotional. This one is different. The guest is curious about the host's audience and what they are working through. The message should feel like a thoughtful peer reaching out — not a pitch, not a press release.
+
+RULES — non-negotiable:
 - Open with "Hi ${shortName},"
-- Body: 2 short paragraphs max, 60 words total max
+- Body: 2 short paragraphs, 60 words total max
 - FIRST PERSON ONLY — "I", "my", "I've" — NEVER use the guest's name in the body
-- Do NOT say "I've been listening to your show" or "I love your podcast" — the sender hasn't listened
-- Lead with ONE specific, genuine reason this is a fit (audience, topic angle, or category)
-- Close with: "Would you be open to a quick chat to see if there's a fit? Even 15 minutes works."
+- ABSOLUTE BAN: NEVER say "I've been listening to your show", "I love your podcast", "I've been following you", "I came across your show", "I heard your episode", or ANY phrase implying you have personally listened to or consumed the podcast. You have NOT listened. Observe the show from the outside based on its description and purpose only.
+- Paragraph 1: ONE genuine observation about the show's mission or the problem it helps people solve — based on the show description only, not personal listening. Then ask one inquisitive, host-focused question about their audience or what kind of guest conversations they are looking for.
+- Paragraph 2: Briefly offer one specific way the guest might serve that audience. Frame it around the host's audience and vision, not the guest's credentials. Close with: "Would you be open to a quick chat to see if there's a fit? Even 15 minutes works."
 - Sign off with just the first name: ${firstName}
 - No em dashes. No bullet points. No exclamation marks. No fluff.
+- Tone: Warm, curious, peer-to-peer.
 
 Return ONLY the plain text DM — no JSON, no markdown.`,
       messages: [{ role: 'user', content: JSON.stringify({
