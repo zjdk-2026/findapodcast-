@@ -95,7 +95,7 @@ router.get('/dashboard/:token', async (req, res) => {
     return res.json({
       success: true,
       client:  safeClient,
-      community_group_url: process.env.COMMUNITY_GROUP_URL || null,
+      community_group_url: process.env.COMMUNITY_GROUP_URL || 'https://www.facebook.com/groups/1453098208738507',
       matches: matches || [],
       stats: {
         total:    (matches || []).length,
