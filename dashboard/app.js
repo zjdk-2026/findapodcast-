@@ -937,21 +937,23 @@ function buildMemberCard(m, featured = false) {
       </div>`;
   }
 
-  // Standard member card
+  // Standard member card — compact: photo + name + LinkedIn headline + social icons + expandable bio
+  const cardId   = `member-card-${(m.display_name || m.name || Math.random()).replace(/\s+/g, '-')}`;
+  const bioLong  = m.bio_long || '';
+  const bioShort = m.bio_short || '';
+  const headline = m.title || m.business_name || '';
   return `
-    <div style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
+    <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);padding:14px 14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}">
       ${avatar}
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(name)}${youBadge}</div>
-        ${m.title ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(m.title)}</div>` : ''}
-        ${m.business_name ? `<div style="font-size:11px;color:var(--text-tertiary);">${esc(m.business_name)}</div>` : ''}
+      <div style="width:100%;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-primary);line-height:1.3;">${esc(name)}${youBadge}</div>
+        ${headline ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;line-height:1.4;">${esc(headline)}</div>` : ''}
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-        ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
-        ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
-        ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
-      </div>
-      ${socials ? `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">${socials}</div>` : ''}
+      ${socials ? `<div style="display:flex;gap:10px;align-items:center;justify-content:center;">${socials}</div>` : ''}
+      ${(bioLong || bioShort) ? `
+        <div id="${cardId}-bio" style="display:none;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:left;width:100%;max-height:200px;overflow-y:auto;background:var(--bg-tertiary);border-radius:8px;padding:10px;margin-top:2px;">${esc(bioLong || bioShort)}</div>
+        <button onclick="(function(){var b=document.getElementById('${cardId}-bio'),btn=this;if(b.style.display==='none'){b.style.display='block';btn.textContent='Hide bio';}else{b.style.display='none';btn.textContent='Read bio';}}).call(this)" style="font-size:11px;color:#6366f1;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">Read bio</button>
+      ` : ''}
     </div>`;
 }
 
@@ -1142,6 +1144,14 @@ function renderMatchCard(match) {
             if (podcast.last_episode_date) {
               const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
               pills.push(`<span class="inline-pill">${days}d ago</span>`);
+            }
+            if (podcast.estimated_monthly_listeners) {
+              const n = podcast.estimated_monthly_listeners;
+              const label = n >= 1000000 ? (n/1000000).toFixed(1).replace(/\.0$/,'')+'M' : n >= 1000 ? Math.round(n/1000)+'K' : n;
+              pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners from Rephonic">~${label}/mo</span>`);
+            } else if (podcast.listen_score) {
+              const est = estimateAudience(podcast.listen_score);
+              pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners based on listen score">~${est.label}/mo</span>`);
             }
             if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
             return pills.join('');

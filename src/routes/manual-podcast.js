@@ -284,6 +284,7 @@ router.post('/re-enrich/:matchId', requireDashboardToken, async (req, res) => {
       last_episode_date: enriched.last_episode_date || podcast.last_episode_date,
       has_guest_history: enriched.has_guest_history ?? podcast.has_guest_history,
       booking_page_url: enriched.booking_page_url || podcast.booking_page_url,
+      estimated_monthly_listeners: enriched.estimated_monthly_listeners || podcast.estimated_monthly_listeners || null,
       enriched_at: new Date().toISOString(),
     };
     await supabase.from('podcasts').update(podcastUpdate).eq('id', podcast.id);

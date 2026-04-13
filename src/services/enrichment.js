@@ -694,6 +694,44 @@ async function enrichPodcast(podcastData) {
       }
     }
 
+    // ──────────────────────────────────────────────────
+    // 3. Rephonic — estimated monthly listeners
+    //    Search by podcast title, scrape the first result's listener count.
+    //    Only runs if we don't already have this data.
+    // ──────────────────────────────────────────────────
+    if (!enriched.estimated_monthly_listeners && podcastData.title) {
+      try {
+        const searchQuery = encodeURIComponent(podcastData.title.trim());
+        const rephonicUrl = `https://rephonic.com/podcasts?q=${searchQuery}`;
+        const rephonicHtml = await fetchHtml(rephonicUrl);
+        if (rephonicHtml) {
+          const $r = cheerio.load(rephonicHtml);
+          // Rephonic renders listener count in elements like "X,XXX listeners per month" or "X.XK listeners"
+          let found = null;
+          $r('*').each((_, el) => {
+            if (found) return false;
+            const text = $r(el).text().trim();
+            // Match patterns: "12,400 listeners", "12.4K listeners", "1.2M listeners"
+            const m = text.match(/^([\d,]+(?:\.\d+)?[KkMm]?)\s+listeners?\s+per\s+month/i) ||
+                      text.match(/^([\d,]+(?:\.\d+)?[KkMm]?)\s+monthly\s+listeners?/i);
+            if (m) {
+              const raw = m[1].replace(/,/g, '');
+              let val = parseFloat(raw);
+              if (/[Mm]$/.test(raw)) val *= 1000000;
+              else if (/[Kk]$/.test(raw)) val *= 1000;
+              if (val > 0) found = Math.round(val);
+            }
+          });
+          if (found) {
+            enriched.estimated_monthly_listeners = found;
+            logger.info('Rephonic listeners scraped', { title: podcastData.title, listeners: found });
+          }
+        }
+      } catch (rephonicErr) {
+        logger.debug('Rephonic scrape failed (non-blocking)', { title: podcastData.title, error: rephonicErr.message });
+      }
+    }
+
     enriched.enriched_at = new Date().toISOString();
   } catch (err) {
     logger.error('Enrichment failed for podcast', {

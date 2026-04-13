@@ -18,7 +18,7 @@ router.get('/leaderboard', async (req, res) => {
   try {
     let { data: clients, error } = await supabase
       .from('clients')
-      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links')
+      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, bio_short, bio_long')
       .eq('is_active', true);
 
     if (error) {
@@ -54,22 +54,26 @@ router.get('/leaderboard', async (req, res) => {
 
     const rows = clients.map(c => {
       const isMe   = c.dashboard_token === token;
+      // Default opt-in: share_with_community is true unless explicitly set to false
+      const shared = c.share_with_community !== false;
       const parts  = (c.name || 'Anonymous').trim().split(' ');
       const first  = parts[0] || 'Someone';
       const last   = parts[1] ? parts[1][0].toUpperCase() + '.' : '';
       const stats  = counts[c.id] || { booked: 0, sent: 0, appeared: 0, total: 0 };
       return {
-        display_name:   c.share_with_community || isMe ? (c.name || first) : (last ? `${first} ${last}` : first),
+        display_name:   shared || isMe ? (c.name || first) : (last ? `${first} ${last}` : first),
         is_me:          isMe,
-        share_with_community: !!(c.share_with_community),
-        photo_url:      (c.share_with_community || isMe) ? (c.photo_url || null) : null,
-        title:          (c.share_with_community || isMe) ? (c.title || null) : null,
-        business_name:  (c.share_with_community || isMe) ? (c.business_name || null) : null,
-        website:        (c.share_with_community || isMe) ? (c.website || null) : null,
-        social_instagram: (c.share_with_community || isMe) ? (c.social_instagram || null) : null,
-        social_linkedin:  (c.share_with_community || isMe) ? (c.social_linkedin || null) : null,
-        social_twitter:   (c.share_with_community || isMe) ? (c.social_twitter || null) : null,
-        social_facebook:  (c.share_with_community || isMe) ? (c.social_facebook || null) : null,
+        share_with_community: shared,
+        photo_url:      (shared || isMe) ? (c.photo_url || null) : null,
+        title:          (shared || isMe) ? (c.title || null) : null,
+        business_name:  (shared || isMe) ? (c.business_name || null) : null,
+        website:        (shared || isMe) ? (c.website || null) : null,
+        social_instagram: (shared || isMe) ? (c.social_instagram || null) : null,
+        social_linkedin:  (shared || isMe) ? (c.social_linkedin || null) : null,
+        social_twitter:   (shared || isMe) ? (c.social_twitter || null) : null,
+        social_facebook:  (shared || isMe) ? (c.social_facebook || null) : null,
+        bio_short:        (shared || isMe) ? (c.bio_short || null) : null,
+        bio_long:         (shared || isMe) ? (c.bio_long || null) : null,
         booked:   stats.booked,
         sent:     stats.sent,
         appeared: stats.appeared,
