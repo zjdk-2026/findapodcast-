@@ -3157,8 +3157,7 @@ function openProfileModal() {
   $('profile-title').value        = c.title              || '';
   $('profile-business').value     = c.business_name      || '';
   $('profile-website').value      = c.website            || '';
-  $('profile-booking').value      = c.booking_link       || '';
-  $('profile-instagram').value    = c.social_instagram   || '';
+$('profile-instagram').value    = c.social_instagram   || '';
   $('profile-linkedin').value     = c.social_linkedin    || '';
   $('profile-twitter').value      = c.social_twitter     || '';
   $('profile-facebook').value     = c.social_facebook    || '';
@@ -3209,7 +3208,6 @@ async function saveProfile() {
     title:            $('profile-title').value.trim(),
     business_name:    $('profile-business').value.trim(),
     website:          $('profile-website').value.trim(),
-    booking_link:     $('profile-booking').value.trim(),
     social_instagram: $('profile-instagram').value.trim(),
     social_linkedin:  $('profile-linkedin').value.trim(),
     social_twitter:   $('profile-twitter').value.trim(),
