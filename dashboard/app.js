@@ -1336,7 +1336,7 @@ function renderMatchCard(match) {
     </div><!-- /.card-expanded -->
 
     <!-- Inline pitch panel -->
-    ${['new','sent','followed_up','replied','booked'].includes(match.status) ? `
+    ${['new','dream','sent','followed_up','replied','booked'].includes(match.status) ? `
     <div class="inline-pitch-panel" id="pitch-panel-${esc(match.id)}">
       <div class="inline-pitch-header">
         <span class="inline-pitch-title">
