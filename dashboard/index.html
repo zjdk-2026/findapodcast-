@@ -166,7 +166,6 @@
           <button class="tab-pill filter-tab" data-status="dream">Wish List</button>
           <button class="tab-pill filter-tab" data-status="dismissed">Not a Fit</button>
           <button class="tab-pill filter-tab" data-status="content_boost" id="content-boost-tab" style="display:none;">Content Boost</button>
-          <button class="tab-pill" id="leaderboard-tab" onclick="showLeaderboardView()">Leaderboard <span style="font-size:9px;font-weight:700;background:#6366f1;color:#fff;border-radius:999px;padding:1px 6px;margin-left:3px;letter-spacing:0.04em;">SOON</span></button>
         </div>
         <div class="filter-right">
           <label class="filter-label">
@@ -174,11 +173,11 @@
             <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
             <span id="min-score-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
           </label>
+          <button id="leaderboard-tab" onclick="showLeaderboardView()" style="font-size:11px;background:none;border:1.5px solid #c4b5fd;border-radius:999px;padding:3px 10px;color:#6366f1;font-weight:600;line-height:1;cursor:pointer;">Community</button>
           <label class="filter-label" style="cursor:pointer;" title="Only show podcasts where we have a direct email address for the host or producer">
             <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
             Has Email
           </label>
-          <button disabled style="opacity:0.55;cursor:default;font-size:11px;background:none;border:1.5px solid #c4b5fd;border-radius:999px;padding:3px 10px;color:#6366f1;font-weight:600;line-height:1;">Leaderboard <span style="font-size:9px;font-weight:700;background:#6366f1;color:#fff;border-radius:999px;padding:1px 6px;margin-left:3px;letter-spacing:0.04em;">SOON</span></button>
           <button id="refresh-pipeline-btn" onclick="refreshPipeline()" title="Re-enrich and re-score all podcast cards with the latest data" style="font-size:11px;background:none;border:1.5px solid #d1d5db;border-radius:999px;padding:3px 10px;color:var(--text-secondary);font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;gap:5px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Refresh Pipeline
