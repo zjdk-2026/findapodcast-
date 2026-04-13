@@ -317,7 +317,9 @@ Return ONLY the plain text DM — no JSON, no markdown, no explanation.`,
       }) }],
     });
 
-    const body = message.content[0].text.trim();
+    // Strip em dashes and run through humanizer
+    const rawBody = message.content[0].text.trim().replace(/—/g, '-').replace(/–/g, '-');
+    const body = await humanize(rawBody);
     logger.info('DM generated', { matchId });
     return res.json({ success: true, body });
   } catch (err) {
