@@ -3106,23 +3106,32 @@ async function bulkRescore() { await refreshPipeline(); }
 async function refreshPipeline() {
   if (!state.matches?.length) { showToast('No matches to refresh.', 'info'); return; }
   const btn = $('refresh-pipeline-btn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'default'; }
+  const btnOriginalHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'default'; }
 
-  showToast('Refreshing all cards — this may take a minute…', 'info');
-
-  // Re-enrich ALL active matches (not just neutral ones) — picks up latest enrichment + scoring logic
   const active = state.matches.filter(m => !['dismissed','archived'].includes(m.status));
-  const BATCH = 3;
+  const total  = active.length;
   let done = 0;
+
+  const updateBtn = () => {
+    if (btn) btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> ${done}/${total}`;
+  };
+
+  updateBtn();
+
+  const BATCH = 3;
   for (let i = 0; i < active.length; i += BATCH) {
     const batch = active.slice(i, i + BATCH);
-    await Promise.all(batch.map(m => triggerReEnrich(m.id).catch(() => {})));
-    done += batch.length;
-    if (i + BATCH < active.length) await new Promise(r => setTimeout(r, 1000));
+    await Promise.all(batch.map(async m => {
+      await triggerReEnrich(m.id).catch(() => {});
+      done++;
+      updateBtn();
+    }));
+    if (i + BATCH < active.length) await new Promise(r => setTimeout(r, 800));
   }
 
-  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} updated.`, 'success');
-  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer'; }
+  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} re-enriched with latest data.`, 'success');
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer'; btn.innerHTML = btnOriginalHTML; }
 }
 window.refreshPipeline = refreshPipeline;
 
