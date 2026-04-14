@@ -205,7 +205,7 @@ async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl, hostName
     }
 
     // Filter out operator-owned emails
-    if (raw.email && isOperatorOwned(raw.email)) raw.email = null;
+    if (raw.email && (isOperatorOwned(raw.email) || isPlatformEmail(raw.email))) raw.email = null;
 
     logger.debug('Listen Notes data fetched', {
       title: podcastTitle,
@@ -467,7 +467,32 @@ const GENERIC_EMAIL_PREFIXES = [
   'hey', 'hi',
   'general', 'partnerships', 'partner', 'advertise',
   'advertising', 'sponsor', 'sponsors', 'pr', 'publicist',
+  'podcastsales', 'podcasting', 'customer', 'customerservice',
+  'customercare', 'contact', 'enquiries', 'enquiry', 'webmaster',
 ];
+
+// Email domains that belong to platforms/networks — never a podcast host's contact
+const PLATFORM_EMAIL_DOMAINS = [
+  'iheartmedia.com', 'iheart.com', 'spotify.com', 'anchor.fm',
+  'podcasters.spotify.com', 'audacy.com', 'siriusxm.com',
+  'wondery.com', 'megaphone.fm', 'soundcloud.com', 'stitcher.com',
+  'listennotes.com', 'podchaser.com', 'penname.co',
+];
+
+// Placeholder/fake emails that slip through SMTP (some have valid MX records)
+const PLACEHOLDER_EMAIL_PATTERNS = [
+  /^user@domain\./i, /^john@doe\./i, /^test@test\./i,
+  /^example@example\./i, /^name@email\./i, /^email@email\./i,
+  /^your@email\./i, /^host@podcast\./i, /feeds\+\d+@/i,
+];
+
+function isPlatformEmail(email) {
+  if (!email) return false;
+  const lower = email.toLowerCase();
+  if (PLATFORM_EMAIL_DOMAINS.some(d => lower.endsWith('@' + d) || lower.includes('@' + d))) return true;
+  if (PLACEHOLDER_EMAIL_PATTERNS.some(p => p.test(lower))) return true;
+  return false;
+}
 
 const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 
@@ -867,14 +892,14 @@ function extractEmail(html) {
   });
 
   for (const email of mailtoEmails) {
-    if (!isGenericEmail(email) && isValidEmailDomain(email) && !isOperatorOwned(email)) return email;
+    if (!isGenericEmail(email) && isValidEmailDomain(email) && !isOperatorOwned(email) && !isPlatformEmail(email)) return email;
   }
 
   // 2. Regex scan full HTML
   const matches = html.match(EMAIL_REGEX) || [];
   for (const email of matches) {
     const lower = email.toLowerCase();
-    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
+    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !isPlatformEmail(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
       return lower;
     }
   }
@@ -967,7 +992,7 @@ async function fetchRssFeed(rssUrl) {
 
     // Contact email from itunes:email
     const itunesEmail = $('itunes\\:email').first().text().trim();
-    if (itunesEmail && itunesEmail.includes('@') && !isOperatorOwned(itunesEmail)) result.contact_email = itunesEmail.toLowerCase();
+    if (itunesEmail && itunesEmail.includes('@') && !isOperatorOwned(itunesEmail) && !isPlatformEmail(itunesEmail)) result.contact_email = itunesEmail.toLowerCase();
 
     // Host name from itunes:author
     const itunesAuthor = $('itunes\\:author').first().text().trim();
@@ -1508,7 +1533,7 @@ async function enrichPodcast(podcastData) {
 
     // Apply agreed email
     if (agreedData.email !== undefined) {
-      if (agreedData.email !== null && !isOperatorOwned(agreedData.email)) {
+      if (agreedData.email !== null && !isOperatorOwned(agreedData.email) && !isPlatformEmail(agreedData.email)) {
         enriched.contact_email = agreedData.email;
       }
       // Don't clear if it came from RSS (already authoritative)

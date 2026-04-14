@@ -18,9 +18,9 @@ router.get('/leaderboard', async (req, res) => {
   try {
     let { data: clients, error } = await supabase
       .from('clients')
-      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, bio_short, bio_long, created_at')
+      .select('id, name, dashboard_token, is_active, share_with_community, photo_url, title, business_name, website, social_instagram, social_linkedin, social_twitter, social_facebook, extra_links, bio_short, bio_long, onboarded_at')
       .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .order('onboarded_at', { ascending: false });
 
     if (error) {
       // Column missing — retry with minimal safe columns only
@@ -31,7 +31,7 @@ router.get('/leaderboard', async (req, res) => {
         .eq('is_active', true);
       if (fallbackError) throw fallbackError;
       if (!fallbackClients?.length) return res.json({ success: true, rows: [], community: [] });
-      clients = fallbackClients.map(c => ({ ...c, share_with_community: true, bio_short: null, bio_long: null, created_at: null }));
+      clients = fallbackClients.map(c => ({ ...c, share_with_community: true, bio_short: null, bio_long: null, created_at: null // onboarded_at not available in fallback }));
     }
     if (!clients?.length) return res.json({ success: true, rows: [], community: [] });
 
@@ -75,22 +75,24 @@ router.get('/leaderboard', async (req, res) => {
         sent:     stats.sent,
         appeared: stats.appeared,
         total:    stats.total,
-        created_at: c.created_at || null,
+        created_at: c.onboarded_at || null,
       };
     });
 
     rows.sort((a, b) =>
       b.booked   - a.booked   ||
       b.sent     - a.sent     ||
-      b.appeared - a.appeared ||
-      b.total    - a.total
+      b.appeared - a.appeared
     );
     rows.forEach((r, i) => { r.rank = i + 1; });
 
-    // Community section: only opted-in members, newest first
+    // Community section: only opted-in members, most active first then oldest first (new members at bottom)
     const community = rows
       .filter(r => r.share_with_community)
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      .sort((a, b) =>
+        (b.booked + b.sent + b.appeared) - (a.booked + a.sent + a.appeared) ||
+        new Date(a.created_at || 0) - new Date(b.created_at || 0)
+      );
 
     // Spotlight: operator sets COMMUNITY_SPOTLIGHT_ID env var to a client id
     let spotlight = null;
