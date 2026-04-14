@@ -1022,7 +1022,7 @@ async function enrichPodcast(podcastData) {
   // ──────────────────────────────────────────────────
   // 0b. If still no RSS URL, try iTunes lookup by title
   // ──────────────────────────────────────────────────
-  if (!enriched.rss_feed_url && !enriched.contact_email) {
+  if (!enriched.rss_feed_url && (!enriched.contact_email || !enriched.website)) {
     const rssViaItunes = await findRssViaItunes(podcastData.title);
     if (rssViaItunes) {
       enriched.rss_feed_url = rssViaItunes;
