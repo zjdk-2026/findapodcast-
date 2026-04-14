@@ -44,9 +44,9 @@ router.get('/leaderboard', async (req, res) => {
     for (const m of matches || []) {
       if (!counts[m.client_id]) counts[m.client_id] = { booked: 0, sent: 0, appeared: 0, total: 0 };
       counts[m.client_id].total++;
-      if (m.status === 'booked')                              counts[m.client_id].booked++;
-      if (m.status === 'sent' || m.status === 'followed_up') counts[m.client_id].sent++;
-      if (m.status === 'appeared')                           counts[m.client_id].appeared++;
+      if (m.status === 'booked')                                        counts[m.client_id].booked++;
+      if (['sent','followed_up','replied'].includes(m.status))          counts[m.client_id].sent++;
+      if (m.status === 'appeared' || m.status === 'aired')              counts[m.client_id].appeared++;
     }
 
     const rows = clients.map(c => {
@@ -140,7 +140,7 @@ router.get('/leaderboard/wins', async (req, res) => {
       .from('podcast_matches')
       .select('id, client_id, status, booked_at, updated_at, podcasts(title)')
       .in('client_id', clients.map(c => c.id))
-      .in('status', ['booked', 'appeared'])
+      .in('status', ['booked', 'appeared', 'aired'])
       .order('updated_at', { ascending: false })
       .limit(30);
 

@@ -939,6 +939,8 @@ function showLeaderboardView() {
   document.getElementById('leaderboard-tab')?.classList.add('active');
   $('cards-grid').style.display        = 'none';
   $('leaderboard-view').style.display  = '';
+  $('min-score-slider')?.closest('label')?.style && ($('min-score-slider').closest('label').style.display = 'none');
+  $('filter-has-email')?.closest('label')?.style && ($('filter-has-email').closest('label').style.display = 'none');
   // Set community group link
   const groupLink = $('community-group-link');
   if (groupLink && state.communityGroupUrl) {
@@ -954,6 +956,8 @@ function hideLeaderboardView() {
   $('leaderboard-view').style.display = 'none';
   $('cards-grid').style.display = '';
   document.getElementById('leaderboard-tab')?.classList.remove('active');
+  $('min-score-slider')?.closest('label')?.style && ($('min-score-slider').closest('label').style.display = '');
+  $('filter-has-email')?.closest('label')?.style && ($('filter-has-email').closest('label').style.display = '');
 }
 
 // ── Shared social icon builder ────────────────────────────────────────
@@ -4239,9 +4243,9 @@ function sendSupportEmail() {
   const email = state.client?.email || '';
   const body  = encodeURIComponent(`From: ${name} (${email})\n\n${message}`);
   const subj  = encodeURIComponent(subject || 'Support Request: Find A Podcast');
-  window.open(`https://mail.google.com/mail/?view=cm&to=hi@findapodcast.io&su=${subj}&body=${body}`, '_blank');
+  window.location.href = `mailto:hi@findapodcast.io?subject=${subj}&body=${body}`;
   closeSupportModal();
-  showToast('Opening Gmail with your message pre-filled.', 'success');
+  showToast('Opening your email client with the message pre-filled.', 'success');
 }
 window.openSupportModal  = openSupportModal;
 window.closeSupportModal = closeSupportModal;
