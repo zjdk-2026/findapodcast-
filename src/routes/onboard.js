@@ -566,4 +566,78 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/detect-socials
+ * Scrapes a website URL and returns detected social links + handles.
+ * Used by the onboarding form to auto-fill social fields.
+ */
+router.post('/detect-socials', async (req, res) => {
+  const { website } = req.body || {};
+  if (!website || typeof website !== 'string') {
+    return res.status(400).json({ success: false, error: 'website required' });
+  }
+
+  // Normalise URL
+  let url = website.trim();
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  const SOCIAL_PATTERNS = {
+    instagram: /instagram\.com\/([a-z0-9_.]{1,30})\/?(?:\?|$|#)/i,
+    twitter:   /(?:twitter|x)\.com\/([a-z0-9_]{1,15})\/?(?:\?|$|#)/i,
+    linkedin:  /linkedin\.com\/((?:company|in)\/[a-z0-9\-_.%]{2,})\/?(?:\?|$|#)/i,
+    facebook:  /facebook\.com\/([a-zA-Z0-9.]{5,})\/?(?:\?|$|#)/i,
+  };
+
+  const BLOCKED_HANDLES = new Set([
+    'p','reel','reels','share','sharer','intent','home','explore','discover',
+    'search','hashtag','accounts','privacy','terms','help','about','login','signup',
+  ]);
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    let html = '';
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcast/1.0)' },
+      });
+      html = await response.text();
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const found = {};
+
+    // Extract all href values
+    const hrefRegex = /href=["']([^"']+)["']/gi;
+    let match;
+    while ((match = hrefRegex.exec(html)) !== null) {
+      const href = match[1];
+      for (const [platform, pattern] of Object.entries(SOCIAL_PATTERNS)) {
+        if (found[platform]) continue;
+        const m = href.match(pattern);
+        if (!m) continue;
+        const handle = m[1].split('?')[0].replace(/\/$/, '');
+        if (BLOCKED_HANDLES.has(handle.toLowerCase())) continue;
+        if (platform === 'instagram' || platform === 'twitter') {
+          found[platform] = '@' + handle;
+        } else if (platform === 'linkedin') {
+          found[platform] = 'https://linkedin.com/' + handle;
+        } else {
+          found[platform] = 'https://facebook.com/' + handle;
+        }
+      }
+    }
+
+    logger.debug('detect-socials result', { url, found });
+    return res.json({ success: true, socials: found });
+  } catch (err) {
+    // Don't error — just return empty so frontend degrades gracefully
+    logger.warn('detect-socials fetch failed', { url, error: err.message });
+    return res.json({ success: true, socials: {} });
+  }
+});
+
 module.exports = router;

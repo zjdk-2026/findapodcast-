@@ -335,6 +335,99 @@ function showPaymentBanner() {
   if (header) header.insertAdjacentElement('beforebegin', banner);
 }
 
+// ── Social link helpers ───────────────────────────────────────
+/**
+ * Given any pasted value (full URL or @handle), normalise it to
+ * what the field expects:
+ *   instagram / twitter → @handle
+ *   linkedin / facebook → full https URL
+ * Returns null if nothing useful extracted.
+ */
+function normaliseSocialInput(value, platform) {
+  const v = value.trim();
+  if (!v) return null;
+
+  const PATTERNS = {
+    instagram: /instagram\.com\/([a-z0-9_.]{1,30})\/?(?:\?|$|#)/i,
+    twitter:   /(?:twitter|x)\.com\/([a-z0-9_]{1,15})\/?(?:\?|$|#)/i,
+    linkedin:  /linkedin\.com\/((?:company|in)\/[a-z0-9\-_.%]{2,})\/?(?:\?|$|#)/i,
+    facebook:  /facebook\.com\/([a-zA-Z0-9.]{5,})\/?(?:\?|$|#)/i,
+  };
+
+  // If it already looks like a URL, extract the handle/path
+  if (/^https?:\/\//i.test(v) || v.includes('.com/')) {
+    const pattern = PATTERNS[platform];
+    if (!pattern) return v;
+    const m = v.match(pattern);
+    if (!m) return null;
+    const handle = m[1].replace(/\/$/, '').split('?')[0];
+    if (platform === 'instagram' || platform === 'twitter') return '@' + handle;
+    if (platform === 'linkedin') return 'https://linkedin.com/' + handle;
+    if (platform === 'facebook') return 'https://facebook.com/' + handle;
+  }
+
+  // Handle-style input (@handle or plain handle)
+  if (platform === 'instagram' || platform === 'twitter') {
+    const handle = v.replace(/^@/, '');
+    if (/^[a-z0-9_.]{1,30}$/i.test(handle)) return '@' + handle;
+  }
+
+  return null;
+}
+
+/**
+ * Auto-detect social links from the user's website and pre-fill fields.
+ * Shows a subtle banner so users know what was found.
+ */
+async function detectSocialsFromWebsite() {
+  const websiteEl = document.getElementById('f-website');
+  const website = websiteEl?.value?.trim();
+  if (!website) return;
+
+  // Show a loading hint
+  const hint = document.getElementById('detect-socials-hint');
+  if (hint) { hint.textContent = 'Scanning your website for social links...'; hint.style.display = 'block'; hint.style.color = '#6b7280'; }
+
+  try {
+    const res = await fetch('/api/detect-socials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ website }),
+    });
+    const data = await res.json();
+    if (!data.success || !data.socials) { if (hint) hint.style.display = 'none'; return; }
+
+    const { instagram, twitter, linkedin, facebook } = data.socials;
+    const filled = [];
+
+    function fillIfEmpty(fieldId, value, label) {
+      if (!value) return;
+      const el = document.getElementById(fieldId);
+      if (el && !el.value.trim()) { el.value = value; filled.push(label); }
+    }
+
+    fillIfEmpty('f-instagram', instagram, 'Instagram');
+    fillIfEmpty('f-twitter',   twitter,   'Twitter/X');
+    fillIfEmpty('f-linkedin',  linkedin,  'LinkedIn');
+    fillIfEmpty('f-facebook',  facebook,  'Facebook');
+
+    if (hint) {
+      if (filled.length > 0) {
+        hint.textContent = 'Found: ' + filled.join(', ') + ' — check them below and edit if needed.';
+        hint.style.color = '#059669';
+        hint.style.display = 'block';
+      } else {
+        hint.textContent = 'No social links found on your website. Please fill them in manually.';
+        hint.style.color = '#6b7280';
+        hint.style.display = 'block';
+        setTimeout(() => { if (hint) hint.style.display = 'none'; }, 4000);
+      }
+    }
+  } catch (_) {
+    if (hint) hint.style.display = 'none';
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
@@ -369,6 +462,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Auto-detect socials when user leaves the website field
+  const websiteEl = document.getElementById('f-website');
+  if (websiteEl) {
+    websiteEl.addEventListener('blur', () => detectSocialsFromWebsite());
+  }
+
+  // Smart paste: normalise full URLs pasted into social fields
+  const SOCIAL_FIELDS = [
+    { id: 'f-instagram', platform: 'instagram' },
+    { id: 'f-twitter',   platform: 'twitter'   },
+    { id: 'f-linkedin',  platform: 'linkedin'  },
+    { id: 'f-facebook',  platform: 'facebook'  },
+  ];
+  SOCIAL_FIELDS.forEach(({ id, platform }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('paste', (e) => {
+      const pasted = (e.clipboardData || window.clipboardData).getData('text');
+      if (!pasted.includes('.com/')) return; // Only intercept full URLs
+      e.preventDefault();
+      const normalised = normaliseSocialInput(pasted, platform);
+      el.value = normalised || pasted;
+    });
+    el.addEventListener('blur', () => {
+      const normalised = normaliseSocialInput(el.value, platform);
+      if (normalised) el.value = normalised;
+    });
+  });
 });
 
 // Expose to inline onclick handlers
