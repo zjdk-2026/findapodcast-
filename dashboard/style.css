@@ -1018,6 +1018,10 @@ html:not(.light-mode) .onboarding-inner {
   box-shadow: var(--shadow-card);
   transition: box-shadow var(--transition), border-color var(--transition);
   position: relative;
+  overflow: visible;
+}
+.match-card .card-row {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   overflow: hidden;
 }
 

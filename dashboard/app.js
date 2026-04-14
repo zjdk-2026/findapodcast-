@@ -748,7 +748,7 @@ function actionButtonsHtml(match) {
   const podcast = match.podcasts || {};
   const buttons = [];
 
-  const hasContactEmail = !!podcast.contact_email;
+  const hasContactEmail = !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
   const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
                     isValidSocialProfile(podcast.twitter_url, 'twitter') ||
                     isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
