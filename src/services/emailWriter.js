@@ -43,7 +43,8 @@ async function humanize(body) {
       messages: [{ role: 'user', content: body }],
     });
     const cleaned = message.content?.[0]?.text?.trim();
-    return cleaned || body;
+    // Hard strip any surviving em dashes regardless of what the model did
+    return (cleaned || body).replace(/\s*—\s*/g, ', ');
   } catch (_) {
     return body; // non-blocking — return original if humanizer fails
   }
@@ -125,7 +126,13 @@ async function writeEmail(client, match, podcast) {
     }
 
     const humanizedBody = await humanize(result.body);
-    const signature = client.email_signature?.trim();
+    const storedSig = client.email_signature?.trim();
+    const autoSig = [
+      'Best,',
+      client.name || '',
+      [client.title, client.business_name].filter(Boolean).join(' - '),
+    ].filter(Boolean).join('\n');
+    const signature = storedSig || autoSig;
     const bodyParts = [humanizedBody];
     if (signature) bodyParts.push(signature);
     // linkRow is NOT stored in body — it's injected at send time as HTML only

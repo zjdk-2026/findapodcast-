@@ -169,7 +169,7 @@ router.post('/send', async (req, res) => {
 
     if (matchError || !match) {
       logger.warn('/api/send match lookup failed', { matchId, clientId: req.clientId, supabaseError: matchError?.message });
-      return res.status(404).json({ success: false, error: `Match not found. Debug: clientId=${req.clientId?.slice(0,8)}, matchId=${matchId?.slice(0,8)}, err=${matchError?.message||'no row'}` });
+      return res.status(404).json({ success: false, error: 'Match not found.' });
     }
 
     if (match.clients?.gmail_refresh_token) {
