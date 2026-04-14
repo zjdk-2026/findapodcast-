@@ -110,7 +110,7 @@ async function verifySMTP(email) {
  * Fetch podcast data from Listen Notes API.
  * Returns structured contact/social data or {} on failure.
  */
-async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl) {
+async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl, hostName) {
   const apiKey = process.env.LISTENNOTES_API_KEY;
   if (!apiKey) return {};
 
@@ -167,7 +167,27 @@ async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl) {
       listen_notes_id:  bestResult.id              || null,
     };
 
-    // Validate social URLs through existing validator
+    // Hard-block known generic/platform Instagram handles that Listen Notes
+    // incorrectly assigns to podcasts distributed via those platforms.
+    const LN_BLOCKED_HANDLES = new Set([
+      'podcasts', 'siriusxm', 'spotify', 'anchor', 'iheartradio',
+      'audacy', 'iheart', 'wondery', 'megaphone', 'spreaker',
+    ]);
+    const extractHandle = url => {
+      if (!url) return null;
+      const m = url.match(/instagram\.com\/([^/?#]+)/i);
+      return m ? m[1].toLowerCase().replace(/\/$/, '') : null;
+    };
+    if (raw.instagram_url) {
+      const handle = extractHandle(raw.instagram_url);
+      if (handle && LN_BLOCKED_HANDLES.has(handle)) {
+        logger.warn('Listen Notes: blocked generic Instagram handle', { handle, podcastTitle });
+        raw.instagram_url = null;
+      }
+    }
+
+    // Run all social URLs through confidence validator (same bar as RSS atom:link socials).
+    // Listen Notes frequently cross-contaminates social links between podcasts — this catches mismatches.
     const platformMap = {
       instagram_url: 'instagram',
       twitter_url:   'twitter',
@@ -176,7 +196,11 @@ async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl) {
     };
     for (const [field, platform] of Object.entries(platformMap)) {
       if (raw[field]) {
-        raw[field] = validateAndNormalizeSocialUrl(raw[field], platform);
+        const normalized = validateAndNormalizeSocialUrl(raw[field], platform);
+        if (!normalized) { raw[field] = null; continue; }
+        const verified = await validateSocialWithConfidence(normalized, platform, podcastTitle, hostName || '', { isSoleCandidate: true });
+        raw[field] = verified || null;
+        if (!verified) logger.warn('Listen Notes social failed confidence check', { field, url: normalized, podcastTitle });
       }
     }
 
@@ -1070,6 +1094,7 @@ async function enrichPodcast(podcastData) {
       podcastData.title,
       podcastData.apple_url || enriched.apple_url,
       podcastData.spotify_url || enriched.spotify_url,
+      podcastData.host_name || enriched.host_name || '',
     );
     // Store listen_notes_id if found
     if (_listenNotesData.listen_notes_id && !enriched.listen_notes_id) {
