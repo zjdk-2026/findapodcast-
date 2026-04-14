@@ -133,7 +133,7 @@ async function seedBreakthroughMatch(clientId) {
       country:           'AU',
       language:          'English',
       listen_score:      50,
-      contact_email:     'hi@zacdeane.com',
+      contact_email:     null,
       booking_page_url:  'https://api.leadconnectorhq.com/widget/bookings/meeting-with-zac-deane-15-minute',
     };
 

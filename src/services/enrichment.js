@@ -350,6 +350,8 @@ async function inferSocialHandles(websiteUrl, podcastTitle, hostName) {
 const OPERATOR_EMAILS    = ['hi@zacdeane.com', 'zac@zacdeane.com', 'hi@findapodcast.io'];
 const OPERATOR_DOMAINS   = ['zacdeane.com', 'findapodcast.io'];
 const OPERATOR_SOCIALS   = ['instagram.com/zacdeane', 'linkedin.com/in/zacdeane', 'instagram.com/zac_deane'];
+// Operator-owned podcast external_ids — never overwrite host_name or contact_email for these
+const OPERATOR_PODCAST_IDS = ['breakthrough-moment-zac-deane'];
 
 function isOperatorOwned(value) {
   if (!value) return false;
@@ -869,11 +871,11 @@ async function fetchRssFeed(rssUrl) {
 
     // Contact email from itunes:email
     const itunesEmail = $('itunes\\:email').first().text().trim();
-    if (itunesEmail && itunesEmail.includes('@')) result.contact_email = itunesEmail.toLowerCase();
+    if (itunesEmail && itunesEmail.includes('@') && !isOperatorOwned(itunesEmail)) result.contact_email = itunesEmail.toLowerCase();
 
     // Host name from itunes:author
     const itunesAuthor = $('itunes\\:author').first().text().trim();
-    if (itunesAuthor) result.host_name = itunesAuthor;
+    if (itunesAuthor && !OPERATOR_PODCAST_IDS.includes(podcastData.external_id)) result.host_name = itunesAuthor;
 
     // Website from <link> (skip atom:link) — exclude podcast platform URLs
     const WEBSITE_EXCLUDE_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
@@ -1414,7 +1416,7 @@ async function enrichPodcast(podcastData) {
 
     // Apply agreed email
     if (agreedData.email !== undefined) {
-      if (agreedData.email !== null) {
+      if (agreedData.email !== null && !isOperatorOwned(agreedData.email)) {
         enriched.contact_email = agreedData.email;
       }
       // Don't clear if it came from RSS (already authoritative)
