@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Review — Find A Podcast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f5f5f7; color: #1d1d1f; }
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { font-size: 15px; font-weight: 700; color: #6366f1; }
+    .nav-right { font-size: 13px; color: #6b7280; }
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+    h1 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; }
+    .stat { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 20px; }
+    .stat-num { font-size: 28px; font-weight: 800; color: #6366f1; }
+    .stat-label { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; color: #374151; transition: all 0.15s; }
+    .filter-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; }
+    .card.flagged { border-left: 3px solid #f59e0b; }
+    .card.clean { border-left: 3px solid #10b981; opacity: 0.7; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .card-host { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+    .card-client { font-size: 11px; color: #9ca3af; margin-bottom: 8px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .chip { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .chip-email { background: #eff6ff; color: #2563eb; }
+    .chip-website { background: #f0fdf4; color: #16a34a; }
+    .chip-apple { background: #fdf4ff; color: #7c3aed; }
+    .chip-spotify { background: #f0fdf4; color: #15803d; }
+    .chip-instagram { background: #fff7ed; color: #c2410c; }
+    .chip-bad { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .flag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.8; }
+    .btn-clear { background: #fef2f2; color: #dc2626; }
+    .btn-approve { background: #f0fdf4; color: #16a34a; }
+    .btn-open { background: #eff6ff; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; }
+    .loading { text-align: center; padding: 48px; color: #6b7280; }
+    .empty { text-align: center; padding: 48px; color: #6b7280; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    #key-input { padding: 8px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; width: 240px; }
+    #key-form { display: flex; gap: 8px; align-items: center; padding: 48px; justify-content: center; flex-direction: column; }
+    #key-form p { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">Find A Podcast — Data Review</span>
+  <span class="nav-right" id="nav-stats"></span>
+</nav>
+
+<div class="container" id="main">
+  <div id="key-form">
+    <p>Enter operator key to access review queue</p>
+    <div style="display:flex;gap:8px;">
+      <input type="password" id="key-input" placeholder="Operator key" />
+      <button class="btn btn-approve" onclick="loadReview()">Enter</button>
+    </div>
+    <p id="key-error" style="color:#dc2626;font-size:13px;display:none;">Incorrect key</p>
+  </div>
+</div>
+
+<script>
+let opKey = '';
+let allPodcasts = [];
+let currentFilter = 'flagged';
+
+const PLATFORM_PATTERNS = ['podcasts.apple.com','open.spotify.com','anchor.fm','soundcloud.com','stitcher.com','podbean.com','buzzsprout.com','transistor.fm','simplecast.com','libsyn.com','captivate.fm','redcircle.com','listennotes.com','megaphone.fm'];
+
+function isPlatformUrl(url) {
+  if (!url) return false;
+  return PLATFORM_PATTERNS.some(d => url.toLowerCase().includes(d));
+}
+
+function getFlags(p) {
+  const flags = [];
+  if (p.website && isPlatformUrl(p.website)) flags.push('Website is platform URL');
+  if (p.instagram_url && p.instagram_url.includes('/podcasts/')) flags.push('Instagram is generic platform page');
+  if (!p.contact_email && !p.apple_url) flags.push('No email and no Apple URL');
+  if (p.host_name && p.host_name === p.title) flags.push('Host name = podcast title (likely wrong)');
+  return flags;
+}
+
+async function loadReview() {
+  opKey = document.getElementById('key-input').value.trim();
+  const res = await fetch('/api/operator/podcasts-for-review', {
+    headers: { 'x-operator-key': opKey }
+  });
+  if (!res.ok) {
+    document.getElementById('key-error').style.display = 'block';
+    return;
+  }
+  const data = await res.json();
+  allPodcasts = data.podcasts || [];
+  renderPage();
+}
+
+function renderPage() {
+  const flagged = allPodcasts.filter(p => getFlags(p).length > 0);
+  const clean   = allPodcasts.filter(p => getFlags(p).length === 0);
+
+  document.getElementById('main').innerHTML = `
+    <h1>Data Review Queue</h1>
+    <p class="subtitle">Podcasts with potentially incorrect data. Review and fix before customers see them.</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">${flagged.length}</div><div class="stat-label">Flagged</div></div>
+      <div class="stat"><div class="stat-num">${clean.length}</div><div class="stat-label">Clean</div></div>
+      <div class="stat"><div class="stat-num">${allPodcasts.length}</div><div class="stat-label">Total</div></div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn ${currentFilter==='flagged'?'active':''}" onclick="setFilter('flagged')">Flagged (${flagged.length})</button>
+      <button class="filter-btn ${currentFilter==='all'?'active':''}" onclick="setFilter('all')">All (${allPodcasts.length})</button>
+    </div>
+    <div id="cards-list"></div>
+  `;
+  renderCards();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  renderPage();
+}
+
+function renderCards() {
+  const list = document.getElementById('cards-list');
+  const pods = currentFilter === 'flagged'
+    ? allPodcasts.filter(p => getFlags(p).length > 0)
+    : allPodcasts;
+
+  if (!pods.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p>No podcasts to review.</p></div>';
+    return;
+  }
+
+  list.innerHTML = pods.map(p => {
+    const flags = getFlags(p);
+    return `
+    <div class="card ${flags.length > 0 ? 'flagged' : 'clean'}" id="card-${p.id}">
+      <div class="card-client">${p.client_name || ''}</div>
+      <div class="card-title">${esc(p.title)}</div>
+      <div class="card-host">Hosted by ${esc(p.host_name || 'Unknown')}</div>
+      <div class="chips">
+        ${p.contact_email ? `<span class="chip chip-email">${esc(p.contact_email)}</span>` : ''}
+        ${p.website && !isPlatformUrl(p.website) ? `<span class="chip chip-website">Website</span>` : ''}
+        ${p.website && isPlatformUrl(p.website) ? `<span class="chip chip-bad">Bad website: ${esc(p.website.slice(0,40))}</span>` : ''}
+        ${p.apple_url ? `<span class="chip chip-apple">Apple</span>` : ''}
+        ${p.spotify_url ? `<span class="chip chip-spotify">Spotify</span>` : ''}
+        ${p.instagram_url ? `<span class="chip chip-instagram">@${esc(p.instagram_url.split('/').filter(Boolean).pop())}</span>` : ''}
+      </div>
+      ${flags.length > 0 ? `<div class="flags">${flags.map(f=>`<span class="flag">${f}</span>`).join('')}</div>` : ''}
+      <div class="actions">
+        ${p.website && isPlatformUrl(p.website) ? `<button class="btn btn-clear" onclick="clearField('${p.id}','website')">Clear bad website</button>` : ''}
+        ${p.instagram_url && p.instagram_url.includes('/podcasts/') ? `<button class="btn btn-clear" onclick="clearField('${p.id}','instagram_url')">Clear bad Instagram</button>` : ''}
+        ${p.apple_url ? `<a class="btn btn-open" href="${esc(p.apple_url)}" target="_blank">Apple</a>` : ''}
+        ${p.website && !isPlatformUrl(p.website) ? `<a class="btn btn-open" href="${esc(p.website)}" target="_blank">Website</a>` : ''}
+        <button class="btn btn-approve" onclick="approveCard('${p.id}')">Looks good</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function clearField(podcastId, field) {
+  await fetch('/api/operator/patch-podcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-operator-key': opKey },
+    body: JSON.stringify({ podcastId, updates: { [field]: null } }),
+  });
+  const p = allPodcasts.find(x => x.id === podcastId);
+  if (p) p[field] = null;
+  renderCards();
+}
+
+function approveCard(podcastId) {
+  allPodcasts = allPodcasts.filter(p => p.id !== podcastId);
+  renderCards();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('key-input').addEventListener('keydown', e => { if (e.key === 'Enter') loadReview(); });
+</script>
+</body>
+</html>

@@ -219,6 +219,14 @@ async function submitForm() {
   const errEl = document.getElementById('form-submit-error');
   if (errEl) errEl.style.display = 'none';
 
+  const termsChecked = document.getElementById('f-terms')?.checked;
+  if (!termsChecked) {
+    const errEl = document.getElementById('form-submit-error');
+    if (errEl) { errEl.textContent = 'Please agree to the Terms of Service and Privacy Policy to continue.'; errEl.style.display = 'block'; }
+    else alert('Please agree to the Terms of Service and Privacy Policy to continue.');
+    return;
+  }
+
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
   btn.disabled  = true;

@@ -1,8 +1,9 @@
 'use strict';
 
-const express  = require('express');
-const supabase = require('../lib/supabase');
-const logger   = require('../lib/logger');
+const express        = require('express');
+const supabase       = require('../lib/supabase');
+const logger         = require('../lib/logger');
+const { enrichPodcast } = require('../services/enrichment');
 
 const router = express.Router();
 
@@ -151,6 +152,140 @@ router.post('/toggle-active', requireOperatorKey, async (req, res) => {
   } catch (err) {
     logger.error('Operator toggle-active error', { error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
+  }
+});
+
+/**
+ * GET /api/operator/podcasts-for-review
+ * Returns all podcasts joined with their client name for the admin review queue.
+ */
+router.get('/podcasts-for-review', requireOperatorKey, async (req, res) => {
+  try {
+    const { data: matches, error } = await supabase
+      .from('podcast_matches')
+      .select('client_id, clients(name), podcasts(id, title, host_name, contact_email, website, apple_url, spotify_url, instagram_url, enriched_at)')
+      .not('podcasts', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) return res.status(500).json({ success: false, error: error.message });
+
+    // Deduplicate by podcast id, attach client name
+    const seen = new Set();
+    const podcasts = [];
+    for (const m of matches || []) {
+      if (!m.podcasts || seen.has(m.podcasts.id)) continue;
+      seen.add(m.podcasts.id);
+      podcasts.push({ ...m.podcasts, client_name: m.clients?.name || '' });
+    }
+
+    return res.json({ success: true, podcasts });
+  } catch (err) {
+    logger.error('podcasts-for-review error', { error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/operator/patch-podcast
+ * Patches specific fields on a podcast record.
+ * Body: { podcastId, updates: { field: value } }
+ */
+router.post('/patch-podcast', requireOperatorKey, async (req, res) => {
+  const { podcastId, updates } = req.body;
+  if (!podcastId || !updates) return res.status(400).json({ success: false, error: 'podcastId and updates required.' });
+
+  const ALLOWED_FIELDS = ['website', 'instagram_url', 'twitter_url', 'facebook_url', 'contact_email', 'host_name', 'apple_url', 'spotify_url'];
+  const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => ALLOWED_FIELDS.includes(k)));
+  if (!Object.keys(safe).length) return res.status(400).json({ success: false, error: 'No allowed fields in updates.' });
+
+  try {
+    const { error } = await supabase.from('podcasts').update(safe).eq('id', podcastId);
+    if (error) return res.status(500).json({ success: false, error: error.message });
+    logger.info('Operator: podcast field patched', { podcastId, fields: Object.keys(safe) });
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/operator/bulk-reenrich
+ * Re-enriches all podcasts that have bad data:
+ *   - website is a platform URL (Apple/Spotify/etc stored as website)
+ *   - never been enriched (enriched_at is null)
+ *   - enriched more than 30 days ago
+ * Processes in batches of 5 with a 2s delay between each to avoid hammering APIs.
+ * Returns immediately with a job ID; progress logged server-side.
+ */
+router.post('/bulk-reenrich', requireOperatorKey, async (req, res) => {
+  const PLATFORM_PATTERNS = [
+    'podcasts.apple.com', 'itunes.apple.com', 'open.spotify.com',
+    'anchor.fm', 'soundcloud.com', 'stitcher.com', 'podbean.com',
+    'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com',
+    'captivate.fm', 'redcircle.com', 'listennotes.com', 'megaphone.fm',
+  ];
+
+  try {
+    // Fetch all podcasts — we'll filter client-side for platform URLs
+    const { data: allPodcasts, error } = await supabase
+      .from('podcasts')
+      .select('id, title, website, apple_url, spotify_url, instagram_url, contact_email, rss_feed_url, host_name, external_id, enriched_at')
+      .order('enriched_at', { ascending: true, nullsFirst: true });
+
+    if (error) return res.status(500).json({ success: false, error: error.message });
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const needsReenrich = allPodcasts.filter(p => {
+      const websiteIsBad = p.website && PLATFORM_PATTERNS.some(d => p.website.toLowerCase().includes(d));
+      const neverEnriched = !p.enriched_at;
+      const stale = p.enriched_at && p.enriched_at < thirtyDaysAgo;
+      return websiteIsBad || neverEnriched || stale;
+    });
+
+    logger.info('Bulk re-enrich started', { total: needsReenrich.length });
+    res.json({ success: true, queued: needsReenrich.length, message: `Re-enriching ${needsReenrich.length} podcasts in background.` });
+
+    // Process in background — don't await
+    (async () => {
+      let done = 0;
+      for (const podcast of needsReenrich) {
+        try {
+          const enriched = await enrichPodcast(podcast);
+
+          const isPlatform = (url) => url && PLATFORM_PATTERNS.some(d => url.toLowerCase().includes(d));
+          const freshWebsite  = enriched.website  && !isPlatform(enriched.website)  ? enriched.website  : null;
+          const keepOldWeb    = podcast.website   && !isPlatform(podcast.website)   ? podcast.website   : null;
+
+          await supabase.from('podcasts').update({
+            host_name:     enriched.host_name     || podcast.host_name,
+            website:       freshWebsite            || keepOldWeb || null,
+            contact_email: enriched.contact_email || podcast.contact_email,
+            apple_url:     enriched.apple_url     || podcast.apple_url,
+            spotify_url:   enriched.spotify_url   || podcast.spotify_url,
+            instagram_url: enriched.instagram_url || null,
+            twitter_url:   enriched.twitter_url   || null,
+            facebook_url:  enriched.facebook_url  || null,
+            linkedin_page_url: enriched.linkedin_page_url || null,
+            rss_feed_url:  enriched.rss_feed_url  || podcast.rss_feed_url,
+            enriched_at:   new Date().toISOString(),
+          }).eq('id', podcast.id);
+
+          done++;
+          if (done % 10 === 0) logger.info('Bulk re-enrich progress', { done, total: needsReenrich.length });
+        } catch (err) {
+          logger.warn('Bulk re-enrich: podcast failed', { id: podcast.id, title: podcast.title, error: err.message });
+        }
+        // 2s throttle between each podcast
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      logger.info('Bulk re-enrich complete', { done, total: needsReenrich.length });
+    })();
+
+  } catch (err) {
+    logger.error('Bulk re-enrich error', { error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
