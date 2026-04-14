@@ -758,7 +758,7 @@ function actionButtonsHtml(match) {
   const pitchStatuses = ['new', 'dream'];
   if (pitchStatuses.includes(status)) {
     if (hasContactEmail) {
-      buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleInlinePitch('${id}')">
+      buttons.push(`<button class="btn btn-action-send btn-xs" onclick="toggleInlinePitch('${id}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Write Pitch Email
       </button>`);
     } else {
