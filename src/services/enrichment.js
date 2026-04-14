@@ -233,11 +233,46 @@ function normalizeFieldValue(val) {
 }
 
 /**
+ * Check if a social URL handle has meaningful character overlap with
+ * the podcast title or host name. Used to auto-clear single-source
+ * Listen Notes socials that are clearly from a different show.
+ *
+ * Returns true if the handle plausibly belongs to this podcast.
+ */
+function handleMatchesPodcast(url, podcastTitle, hostName) {
+  if (!url) return false;
+
+  // Extract handle from URL
+  const m = url.match(/(?:instagram|twitter|x|facebook|linkedin)\.com\/(?:in\/)?([^/?#]+)/i);
+  const handle = m ? m[1].toLowerCase().replace(/[._-]/g, '') : null;
+  if (!handle || handle.length < 2) return false;
+
+  // Build a combined token set from title + host name
+  const combined = `${podcastTitle || ''} ${hostName || ''}`.toLowerCase().replace(/[^a-z0-9 ]/g, ' ');
+  const tokens = combined.split(/\s+/).filter(t => t.length > 2 && !['the','and','for','with','podcast','show','radio'].includes(t));
+
+  if (!tokens.length) return true; // no tokens to check — give benefit of doubt
+
+  // Check if handle contains any meaningful token or vice-versa
+  for (const token of tokens) {
+    if (handle.includes(token) || token.includes(handle.slice(0, Math.max(4, handle.length - 2)))) return true;
+  }
+
+  // Check bigram overlap: count shared chars as a fraction of handle length
+  const handleChars = new Set(handle.split(''));
+  const titleChars  = new Set(combined.replace(/\s/g, '').split(''));
+  const shared = [...handleChars].filter(c => titleChars.has(c)).length;
+  const overlap = shared / handle.length;
+
+  return overlap >= 0.5; // at least 50% of handle chars appear in title+host
+}
+
+/**
  * Cross-source agreement engine.
  * sources: array of { key: 'rssData'|'listenNotesData'|'scrapedData'|'itunesData'|'inferredData', data: {...} }
  * Returns an object with agreed-upon field values.
  */
-function crossSourceAgree(sources) {
+function crossSourceAgree(sources, podcastTitle, hostName) {
   const fields = ['email', 'instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url', 'website'];
   // Map RSS contact_email → email for unified comparison
   const fieldAliases = { contact_email: 'email' };
@@ -282,6 +317,20 @@ function crossSourceAgree(sources) {
       // LOW CONFIDENCE: only 1 source — only store if it's authoritative
       const { key, raw } = values[0];
       if (AUTHORITATIVE_SOURCES.has(key)) {
+        // Extra check for Listen Notes single-source social URLs:
+        // LN frequently cross-contaminates social links between podcasts.
+        // Auto-clear if the handle has no meaningful overlap with the podcast title/host.
+        const SOCIAL_FIELDS = new Set(['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url']);
+        if (key === 'listenNotesData' && SOCIAL_FIELDS.has(field)) {
+          const matches = handleMatchesPodcast(raw, podcastTitle, hostName);
+          if (!matches) {
+            result[field] = null;
+            logger.warn('crossSourceAgree: LN single-source social cleared — handle does not match podcast', {
+              field, url: raw, podcastTitle, hostName,
+            });
+            continue;
+          }
+        }
         result[field] = raw;
         logger.debug('crossSourceAgree: LOW CONFIDENCE but authoritative source', { field, value: raw, source: key });
       } else {
@@ -1422,7 +1471,7 @@ async function enrichPodcast(podcastData) {
       { key: 'inferredData',   data: _inferredData },
     ];
 
-    const agreedData = crossSourceAgree(sources);
+    const agreedData = crossSourceAgree(sources, podcastData.title, podcastData.host_name || enriched.host_name || '');
 
     // Apply agreed values — overwrite the enriched fields
     const socialFields = ['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url', 'website'];
