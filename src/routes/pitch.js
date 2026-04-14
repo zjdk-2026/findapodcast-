@@ -118,7 +118,7 @@ router.post('/generate-followup', requireDashboardToken, async (req, res) => {
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(title, contact_email, host_name), clients(name, title, business_name)')
+      .select('*, podcasts(title, contact_email, host_name), clients(name, title, business_name, email_signature)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -133,7 +133,9 @@ router.post('/generate-followup', requireDashboardToken, async (req, res) => {
     const hostFirst    = hostName ? hostName.split(' ')[0] : null;
     const clientTitle  = match.clients?.title || '';
     const clientBiz    = match.clients?.business_name || '';
-    const signature    = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+    const storedSig    = match.clients?.email_signature?.trim();
+    const autoSig      = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+    const signature    = storedSig || autoSig;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -340,7 +342,7 @@ router.post('/generate-thankyou', requireDashboardToken, async (req, res) => {
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(title, host_name, contact_email), clients(name, title, business_name, speaking_bio, target_audience, social_instagram, social_twitter, social_linkedin)')
+      .select('*, podcasts(title, host_name, contact_email), clients(name, title, business_name, email_signature, speaking_bio, target_audience, social_instagram, social_twitter, social_linkedin)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -356,7 +358,9 @@ router.post('/generate-thankyou', requireDashboardToken, async (req, res) => {
     const speakingBio   = match.clients?.speaking_bio  || '';
     const targetAud     = match.clients?.target_audience || '';
     const hasSocial     = !!(match.clients?.social_instagram || match.clients?.social_twitter || match.clients?.social_linkedin);
-    const signature     = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+    const storedSig2    = match.clients?.email_signature?.trim();
+    const autoSig2      = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+    const signature     = storedSig2 || autoSig2;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
