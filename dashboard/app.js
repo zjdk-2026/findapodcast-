@@ -2496,7 +2496,7 @@ async function rewriteInlinePitch(matchId) {
   const bodyEl = $(`inline-body-${matchId}`);
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="btn-spinner"></span> Writing your pitch…';
+    btn.textContent = 'Writing your pitch...';
     btn.style.cssText += ';background:#6366f1;color:#fff;border-color:#6366f1;opacity:1;animation:pulse 1.4s ease-in-out infinite;';
   }
   if (bodyEl) {
@@ -2509,8 +2509,8 @@ async function rewriteInlinePitch(matchId) {
     if (!existingOverlay) {
       const overlay = document.createElement('div');
       overlay.id = `pitch-loading-${matchId}`;
-      overlay.style.cssText = 'position:absolute;inset:0;background:linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%);background-size:200% 100%;animation:shimmer 1.4s infinite linear;border-radius:inherit;pointer-events:none;display:flex;align-items:center;justify-content:center;';
-      overlay.innerHTML = '<span style="font-size:13px;font-weight:600;color:#6366f1;animation:pulse 1.4s ease-in-out infinite;">Writing your pitch…</span>';
+      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.7);border-radius:inherit;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = '<span style="font-size:13px;font-weight:500;color:var(--text-secondary);">Writing your pitch...</span>';
       const parent = bodyEl.parentElement;
       if (parent) {
         parent.style.position = 'relative';
@@ -2622,8 +2622,8 @@ async function generateThankYou(matchId) {
   const btn    = $(`thankyou-generate-btn-${matchId}`);
   const subjEl = $(`thankyou-subj-${matchId}`);
   const bodyEl = $(`thankyou-body-${matchId}`);
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Writing…'; }
-  if (bodyEl) { bodyEl.disabled = true; bodyEl.placeholder = 'Writing your thank you…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Writing...'; }
+  if (bodyEl) { bodyEl.disabled = true; bodyEl.placeholder = 'Writing your thank you...'; }
   try {
     const data = await apiPost('/api/generate-thankyou', { matchId });
     if (data.success && data.body) {
@@ -3811,8 +3811,8 @@ async function rewriteFollowUp(matchId) {
   const btn    = $(`followup-rewrite-btn-${matchId}`);
   const subjEl = $(`followup-subj-${matchId}`);
   const bodyEl = $(`followup-body-${matchId}`);
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Writing…'; }
-  if (bodyEl) { bodyEl.placeholder = 'Writing your follow-up…'; bodyEl.disabled = true; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Writing...'; }
+  if (bodyEl) { bodyEl.placeholder = 'Writing your follow-up...'; bodyEl.disabled = true; }
   try {
     const data = await apiPost('/api/generate-followup', { matchId });
     if (data.success && data.body) {
@@ -3851,7 +3851,7 @@ async function sendFollowUpFromPanel(matchId) {
   // Save to localStorage
   localStorage.setItem(`followup_template_${matchId}`, JSON.stringify({ subject, body }));
   const btn = $(`followup-send-btn-${matchId}`);
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Sending…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
   try {
     const data = await apiPost('/api/send-followup', { matchId, subject, body });
     if (data.success) {
