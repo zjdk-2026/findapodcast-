@@ -159,7 +159,7 @@ async function fetchListenNotesData(podcastTitle, appleUrl, spotifyUrl, hostName
 
     const raw = {
       email:            bestResult.email           || null,
-      website:          bestResult.website         || null,
+      website:          (bestResult.website && !isPodcastPlatformUrl(bestResult.website)) ? bestResult.website : null,
       instagram_url:    bestResult.extra?.url_instagram || bestResult.instagram || null,
       twitter_url:      bestResult.extra?.url_twitter   || bestResult.twitter   || null,
       facebook_url:     bestResult.extra?.url_facebook  || bestResult.facebook  || null,
@@ -416,6 +416,29 @@ async function inferSocialHandles(websiteUrl, podcastTitle, hostName) {
   }
 
   return result;
+}
+
+// Domains that must never be stored as a podcast's website URL.
+// These are podcast platforms, aggregators, or social networks — not the show's own site.
+const WEBSITE_EXCLUDE_DOMAINS = [
+  'apple.com', 'podcasts.apple.com', 'itunes.apple.com', 'itunes.',
+  'spotify.com', 'open.spotify.com',
+  'anchor.fm', 'podcasters.spotify.com',
+  'youtube.com', 'youtu.be',
+  'soundcloud.com', 'stitcher.com', 'podbean.com',
+  'buzzsprout.com', 'transistor.fm', 'simplecast.com',
+  'libsyn.com', 'captivate.fm', 'redcircle.com',
+  'listennotes.com', 'podchaser.com', 'podtail.com',
+  'listen.com', 'omnystudio.com', 'megaphone.fm',
+  'spreaker.com', 'audioboom.com', 'podomatic.com',
+  'instagram.com', 'facebook.com', 'twitter.com', 'x.com',
+  'linkedin.com', 'tiktok.com', 'linktr.ee', 'linktree.com',
+];
+
+function isPodcastPlatformUrl(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return WEBSITE_EXCLUDE_DOMAINS.some(d => lower.includes(d));
 }
 
 // Operator-owned emails and social handles — never assign these to discovered podcasts
@@ -951,11 +974,10 @@ async function fetchRssFeed(rssUrl) {
     if (itunesAuthor && !OPERATOR_PODCAST_IDS.includes(podcastData.external_id)) result.host_name = itunesAuthor;
 
     // Website from <link> (skip atom:link) — exclude podcast platform URLs
-    const WEBSITE_EXCLUDE_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm', 'redcircle.com', 'listennotes.com', 'podchaser.com', 'podtail.com', 'listen.com', 'omnystudio.com', 'megaphone.fm', 'spreaker.com', 'audioboom.com', 'podomatic.com'];
     $('channel > link').each((_, el) => {
       if (!result.website) {
         const text = $(el).text().trim();
-        if (text && text.startsWith('http') && !WEBSITE_EXCLUDE_DOMAINS.some(d => text.toLowerCase().includes(d))) {
+        if (text && text.startsWith('http') && !isPodcastPlatformUrl(text)) {
           result.website = text;
         }
       }
@@ -1187,10 +1209,9 @@ async function enrichPodcast(podcastData) {
       if (!enriched.apple_url)     enriched.apple_url     = ltHrefs.find(h => h.toLowerCase().includes('podcasts.apple.com')) || null;
       if (!enriched.youtube_url)   enriched.youtube_url   = ltHrefs.find(h => h.toLowerCase().includes('youtube.com')) || null;
 
-      // First non-social, non-linktree HTTP link = real website
-      const SOCIAL_DOMAINS = ['instagram', 'facebook', 'twitter', 'x.com', 'youtube', 'tiktok', 'spotify', 'apple', 'linktr', 'linktree'];
+      // First non-platform HTTP link = real website
       if (!enriched.website) {
-        const websiteHref = ltHrefs.find(h => h.startsWith('http') && !SOCIAL_DOMAINS.some(s => h.toLowerCase().includes(s)));
+        const websiteHref = ltHrefs.find(h => h.startsWith('http') && !isPodcastPlatformUrl(h));
         if (websiteHref) enriched.website = websiteHref;
       }
       logger.debug('Link-in-bio enriched', { url: linkInBioUrl, foundWebsite: !!enriched.website });
@@ -1217,7 +1238,7 @@ async function enrichPodcast(podcastData) {
             const entries = Array.isArray(json) ? json : [json];
             for (const entry of entries) {
               const url = entry.url || entry.sameAs?.[0] || entry.mainEntityOfPage;
-              if (url && typeof url === 'string' && url.startsWith('http') && !url.includes('apple.com') && !url.includes('podcasts.')) {
+              if (url && typeof url === 'string' && url.startsWith('http') && !isPodcastPlatformUrl(url)) {
                 enriched.website = url;
                 foundViaJsonLd = true;
                 break;
@@ -1230,13 +1251,10 @@ async function enrichPodcast(podcastData) {
         //    Apple Podcasts pages have very few external links — the show website
         //    is typically the only non-Apple, non-social external link
         if (!enriched.website) {
-          const EXCLUDE = ['apple.com', 'itunes.', 'podcasts.', 'instagram.com', 'facebook.com',
-                           'twitter.com', 'x.com', 'youtube.com', 'tiktok.com', 'spotify.com',
-                           'linkedin.com', 'linktr.ee', 'privacy.apple', 'support.apple'];
           $ap('a[href]').each((_, el) => {
             if (enriched.website) return;
             const href = ($ap(el).attr('href') || '').trim();
-            if (href.startsWith('http') && !EXCLUDE.some(d => href.includes(d))) {
+            if (href.startsWith('http') && !isPodcastPlatformUrl(href) && !href.includes('privacy.apple') && !href.includes('support.apple')) {
               enriched.website = href;
             }
           });
@@ -1534,8 +1552,7 @@ async function enrichPodcast(podcastData) {
         clearTimeout(timer);
         // Check final URL didn't redirect into a social/platform domain
         const finalUrl = res.url || enriched.website;
-        const _websiteBlockedDomains = ['instagram.com','facebook.com','twitter.com','x.com','youtube.com','tiktok.com','spotify.com','podcasts.apple.com','itunes.apple.com','linktr.ee','linktree.com'];
-        const isSocialRedirect = _websiteBlockedDomains.some(d => finalUrl.toLowerCase().includes(d));
+        const isSocialRedirect = isPodcastPlatformUrl(finalUrl);
         const isPlatformRedirect = false; // already covered above
         if (![200, 301, 302, 303].includes(res.status) || isSocialRedirect) {
           logger.warn('Website failed HEAD verification, clearing', { website: enriched.website, status: res.status, finalUrl });
