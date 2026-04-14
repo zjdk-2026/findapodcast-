@@ -645,8 +645,9 @@ function isValidSocialProfile(url, platform) {
 function contactChipsHtml(podcast) {
   const chips = [];
 
-  // Email (always first if present)
-  if (podcast.contact_email) {
+  // Email (always first if present — skip anchor.fm auto-generated addresses)
+  const isAutoEmail = podcast.contact_email && /podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email);
+  if (podcast.contact_email && !isAutoEmail) {
     chips.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
   }
 
@@ -1550,8 +1551,13 @@ function getFilteredSorted() {
   }
 
   // Restored cards always float to the top of New tab
+  // Cards with no email AND no Apple URL sink to the bottom (nothing actionable)
   if (state.filter === 'new') {
     matches.sort((a, b) => {
+      const aActionable = !!(a.podcasts?.contact_email || a.podcasts?.apple_url);
+      const bActionable = !!(b.podcasts?.contact_email || b.podcasts?.apple_url);
+      if (aActionable && !bActionable) return -1;
+      if (!aActionable && bActionable) return 1;
       if (a.restored_at && !b.restored_at) return -1;
       if (!a.restored_at && b.restored_at) return 1;
       if (a.restored_at && b.restored_at) return new Date(b.restored_at) - new Date(a.restored_at);
