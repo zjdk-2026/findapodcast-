@@ -796,6 +796,10 @@ function actionButtonsHtml(match) {
   // ── HOST REPLIED tab ──
   } else if (status === 'replied') {
     buttons.push(`<button class="btn btn-action-book btn-xs btn-action-primary" onclick="bookMatch('${id}')">It's Booked!</button>`);
+    if (match.podcasts?.contact_email) {
+      const replySubject = encodeURIComponent(`Re: ${match.email_subject_edited || match.email_subject || 'Guest pitch'}`);
+      buttons.push(`<a href="mailto:${esc(match.podcasts.contact_email)}?subject=${replySubject}" class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;text-decoration:none;">Reply</a>`);
+    }
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
 
   // ── BOOKED tab ──
