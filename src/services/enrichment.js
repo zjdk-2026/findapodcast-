@@ -878,7 +878,7 @@ async function fetchRssFeed(rssUrl) {
     if (itunesAuthor && !OPERATOR_PODCAST_IDS.includes(podcastData.external_id)) result.host_name = itunesAuthor;
 
     // Website from <link> (skip atom:link) — exclude podcast platform URLs
-    const WEBSITE_EXCLUDE_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
+    const WEBSITE_EXCLUDE_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm', 'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com', 'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm', 'redcircle.com', 'listennotes.com', 'podchaser.com', 'podtail.com', 'listen.com', 'omnystudio.com', 'megaphone.fm', 'spreaker.com', 'audioboom.com', 'podomatic.com'];
     $('channel > link').each((_, el) => {
       if (!result.website) {
         const text = $(el).text().trim();
