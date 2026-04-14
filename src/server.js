@@ -100,6 +100,9 @@ app.use('/api', require('./routes/vision-board'));
 app.use('/api', require('./routes/leaderboard'));
 app.use(require('./routes/upload'));
 
+// ── Public static files (served before catch-alls) ───────────────────
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);
 
