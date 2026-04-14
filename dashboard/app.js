@@ -315,7 +315,7 @@ function renderOnboardingChecklist() {
   if (allDone) {
     // Show celebration briefly then hide forever
     el.style.display = 'block';
-    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">You're all set. Your pipeline is live — keep pitching!</div></div></div>`;
+    el.innerHTML = `<div class="onboarding-card"><div class="onboarding-inner" style="justify-content:center;"><div class="onboarding-complete">You're all set. Your pipeline is live. Keep pitching!</div></div></div>`;
     setTimeout(() => {
       el.style.transition = 'opacity 600ms ease';
       el.style.opacity = '0';
@@ -386,7 +386,7 @@ function showBookingCelebration(matchId) {
   else if (ls >= 20) audienceEst = 'an estimated 1,000+ listeners';
   else               audienceEst = 'a growing audience';
 
-  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting — highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.io`);
+  const linkedInText = encodeURIComponent(`Just booked a guest spot on ${title}. Can't wait to share my thoughts on [your topic] with their audience.\n\nIf you want to grow through podcasting, highly recommend @FindAPodcast 🎙️\n\nhttps://findapodcast.io`);
   const linkedInUrl  = `https://www.linkedin.com/sharing/share-offsite/?url=https://findapodcast.io&summary=${linkedInText}`;
 
   body.innerHTML = `
@@ -537,7 +537,7 @@ async function submitEpisodeLink(matchId) {
       if (card) {
         const section = document.getElementById(`boost-link-section-${matchId}`);
         if (section) {
-          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">Episode link received — our team is on it!</p>`;
+          section.innerHTML = `<p style="font-size:13px;font-weight:700;color:#6366f1;margin:0;">Episode link received. Our team is on it!</p>`;
         }
       }
     } else {
@@ -651,7 +651,7 @@ function contactChipsHtml(podcast) {
   }
 
   // Helper: is this URL a podcast platform URL (not a real website)?
-  const PLATFORM_DOMAINS = ['apple.com', 'podcasts.apple', 'itunes.', 'spotify.com', 'anchor.fm',
+  const PLATFORM_DOMAINS = ['apple.com', 'podcasts.apple.com', 'itunes.apple.com', 'itunes.', 'spotify.com', 'anchor.fm',
     'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com',
     'transistor.fm', 'simplecast.com', 'libsyn.com', 'captivate.fm'];
   function isPlatformUrl(url) {
@@ -660,8 +660,10 @@ function contactChipsHtml(podcast) {
     return PLATFORM_DOMAINS.some(d => lower.includes(d));
   }
 
-  // Website — only show if it's a real website, not a platform URL
-  if (isValidUrl(podcast.website) && !isPlatformUrl(podcast.website)) {
+  // Website — only show if it's a real website, not a platform URL, and not the same as the Apple URL
+  const isSameAsApple = podcast.apple_url && podcast.website &&
+    podcast.website.toLowerCase().trim() === podcast.apple_url.toLowerCase().trim();
+  if (isValidUrl(podcast.website) && !isPlatformUrl(podcast.website) && !isSameAsApple) {
     chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
   }
 
@@ -1021,7 +1023,7 @@ function buildMemberCard(m, featured = false) {
   const expandedBioHtml = bioLong
     ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.65;margin:14px 0 12px;">${esc(bioLong)}</p>`
     : m.is_me
-      ? `<p style="font-size:13px;color:#a78bfa;font-style:italic;margin:14px 0 12px;">Your bio is empty — add it in your profile so other members can get to know you.</p>`
+      ? `<p style="font-size:13px;color:#a78bfa;font-style:italic;margin:14px 0 12px;">Your bio is empty. Add it in your profile so other members can get to know you.</p>`
       : `<p style="font-size:13px;color:var(--text-tertiary);font-style:italic;margin:14px 0 12px;">This member hasn't added a bio yet.</p>`;
 
   const hasStats = (m.sent||0) + (m.booked||0) + (m.appeared||0) > 0;
@@ -1141,7 +1143,7 @@ async function loadWinsFeed() {
   try {
     const res = await apiFetch('/api/leaderboard/wins');
     if (!res?.success || !res.wins?.length) {
-      feed.innerHTML = `<p style="font-size:12px;color:var(--text-tertiary);padding:16px;text-align:center;">No wins yet — be the first to get booked!</p>`;
+      feed.innerHTML = `<p style="font-size:12px;color:var(--text-tertiary);padding:16px;text-align:center;">No wins yet. Be the first to get booked!</p>`;
       return;
     }
     feed.innerHTML = res.wins.map(w => {
@@ -1346,7 +1348,6 @@ function renderMatchCard(match) {
       <div class="inline-pitch-actions">
         <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
         <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send</button>
-        ${['new','dream'].includes(match.status) ? `<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsPitchedFromInline('${esc(match.id)}')">I Sent It Myself</button>` : ''}
       </div>
     </div>` : ''}
 
@@ -1361,9 +1362,9 @@ function renderMatchCard(match) {
       </div>
       <select id="followup-seq-${esc(match.id)}" class="inline-pitch-field" style="cursor:pointer;" onchange="applyFollowUpSequenceInline('${esc(match.id)}')">
         <option value="custom">Custom message…</option>
-        <option value="followup1">Follow-up 1 — Quick check-in</option>
-        <option value="followup2">Follow-up 2 — Add value angle</option>
-        <option value="followup3">Follow-up 3 — Last note</option>
+        <option value="followup1">Follow-up 1: Quick check-in</option>
+        <option value="followup2">Follow-up 2: Add value angle</option>
+        <option value="followup3">Follow-up 3: Last note</option>
       </select>
       <div class="inline-field-group">
         <label class="inline-field-label">Subject</label>
@@ -1462,7 +1463,7 @@ function renderMatchCard(match) {
       ).join('');
       return `
     <div class="social-dm-panel" id="dm-panel-${esc(match.id)}">
-      <div class="social-dm-header">DM Template — copy and send on social</div>
+      <div class="social-dm-header">DM Template: copy and send on social</div>
       <textarea class="social-dm-script inline-pitch-field inline-pitch-body-field" id="dm-script-${esc(match.id)}" style="min-height:140px;line-height:1.6;">${esc(buildDMScriptFromMatch(match))}</textarea>
       <div class="social-dm-platforms">
         <button class="btn btn-xs" style="background:#6366f1;color:#fff;font-weight:600;border:none;" onclick="copyDMScript('${esc(match.id)}')">Copy DM</button>
@@ -1474,7 +1475,7 @@ function renderMatchCard(match) {
     <!-- Content Boost episode link submission -->
     ${match.content_boost_status === 'ordered' ? `
     <div class="boost-link-section" id="boost-link-section-${esc(match.id)}" style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:16px 20px;background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);">
-      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">Content Boost — Submit Your Episode</p>
+      <p style="font-size:13px;font-weight:700;color:#6366f1;margin:0 0 6px;">Content Boost: Submit Your Episode</p>
       <p style="font-size:12px;color:#555;margin:0 0 12px;">Paste the link to your episode (Spotify, Apple, YouTube, etc.) so our team can download and start editing.</p>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="url" id="boost-url-${esc(match.id)}" class="form-input" placeholder="https://open.spotify.com/episode/..." style="flex:1;height:36px;padding:0 10px;border-radius:8px;border:1px solid #c4b5fd;font-size:13px;background:#fff;" />
@@ -1482,7 +1483,7 @@ function renderMatchCard(match) {
       </div>
     </div>` : match.content_boost_status === 'completed' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);">
-      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">Content Boost complete — check your inbox for your 30 days of content!</p>
+      <p style="font-size:13px;font-weight:700;color:#16a34a;margin:0;">Content Boost complete. Check your inbox for your 30 days of content!</p>
     </div>` : match.content_boost_status === 'requested' ? `
     <div style="border-top:1px solid var(--border-subtle,#f0f0f0);padding:12px 20px;background:#fffbeb;">
       <p style="font-size:13px;color:#92400e;margin:0;">Payment is processing. Once confirmed you'll be able to submit your episode link.</p>
@@ -1852,7 +1853,7 @@ async function approveMatch(matchId) {
       updateMatchInState(matchId, { approved_at: data.match?.approved_at });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Pitch ready — writing your personalised email now…', 'success');
+      showToast('Pitch ready. Writing your personalised email now...', 'success');
       // Poll for email content (written async on server)
       let attempts = 0;
       const poll = setInterval(async () => {
@@ -2056,7 +2057,7 @@ async function unbookMatch(matchId) {
       updateMatchInState(matchId, { status: 'sent', booked_at: null });
       updateCard(matchId);
       updateStatBadges();
-      showToast('Moved back to Pitched. Keep going — the next one is closer than you think.', 'info');
+      showToast('Moved back to Pitched. Keep going, the next one is closer than you think.', 'info');
     } else {
       showToast(data.error || 'Could not update.', 'error');
     }
@@ -2343,10 +2344,10 @@ function showInterviewPrepModal(matchId) {
             <div class="prep-section" style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;"><strong>⚠️ One thing to avoid</strong><p>${esc(prep.one_thing_to_avoid||'')}</p></div>`;
           updateMatchInState(matchId, { interview_prep: JSON.stringify(prep) });
         } else {
-          contentEl.innerHTML = `<p style="color:var(--danger);font-size:14px;">Could not generate prep — ${esc(data.error || 'please try again')}.</p>`;
+          contentEl.innerHTML = `<p style="color:var(--danger);font-size:14px;">Could not generate prep. ${esc(data.error || 'Please try again')}.</p>`;
         }
       }).catch(() => {
-        if (contentEl) contentEl.innerHTML = '<p style="color:var(--danger);font-size:14px;">Network error — please close and try again.</p>';
+        if (contentEl) contentEl.innerHTML = '<p style="color:var(--danger);font-size:14px;">Network error. Please close and try again.</p>';
       });
     }
   }
@@ -2800,7 +2801,7 @@ function copyDMScript(matchId) {
   const script = textarea ? textarea.value : buildDMScript(matchId);
   navigator.clipboard.writeText(script)
     .then(() => showToast('DM copied to clipboard.', 'success'))
-    .catch(() => showToast('Could not copy — please copy manually.', 'error'));
+    .catch(() => showToast('Could not copy. Please copy manually.', 'error'));
 }
 window.copyDMScript = copyDMScript;
 
@@ -2822,7 +2823,7 @@ async function regenerateDMScript(matchId) {
     // Fall back to client-side builder
     const match = state.matches.find(m => m.id === matchId);
     if (match) textarea.value = buildDMScriptFromMatch(match);
-    showToast('Used local template — AI unavailable.', 'info');
+    showToast('Used local template. AI unavailable.', 'info');
   }
   finally { if (btn) { btn.disabled = false; btn.textContent = 'Regenerate'; } }
 }
@@ -2838,7 +2839,7 @@ function openEmailModal(matchId) {
 
   const isAppeared = match.status === 'appeared';
   const titleEl = $('email-modal-title');
-  if (titleEl) titleEl.textContent = isAppeared ? `Thank You — ${podcast.title || 'Unknown Show'}` : `Pitch Email — ${podcast.title || 'Unknown Show'}`;
+  if (titleEl) titleEl.textContent = isAppeared ? `Thank You: ${podcast.title || 'Unknown Show'}` : `Pitch Email: ${podcast.title || 'Unknown Show'}`;
 
   const subjectEl  = $('modal-subject');
   const presetEl   = $('modal-subject-preset');
@@ -2961,7 +2962,7 @@ function copyEmailDraft() {
   const text    = `Subject: ${subject}\n\n${body}`;
   navigator.clipboard.writeText(text)
     .then(() => showToast('Email copied to clipboard!', 'success'))
-    .catch(() => showToast('Could not copy — please copy manually.', 'error'));
+    .catch(() => showToast('Could not copy. Please copy manually.', 'error'));
 }
 
 // ── Contact modal ─────────────────────────────────────────────────────
@@ -3151,7 +3152,7 @@ async function runPipeline() {
         btn.disabled = false;
         return;
       }
-      showToast(`Pipeline complete — checking for new matches…`, 'success');
+      showToast(`Pipeline complete. Checking for new matches...`, 'success');
       pollForNewMatches();
     } else {
       showToast('Pipeline run failed.', 'error');
@@ -3187,7 +3188,7 @@ function pollForNewMatches() {
     } catch { /* silent */ }
     if (attempts >= maxAttempts) {
       clearInterval(interval);
-      showToast('Your matches are up to date — no new podcasts found this run.', 'info');
+      showToast('Your matches are up to date. No new podcasts found this run.', 'info');
     }
   }, 3000);
 }
@@ -3247,7 +3248,7 @@ async function refreshPipeline() {
 
   // Remove banner, reload dashboard for clean data
   if (progressBanner) progressBanner.remove();
-  showToast(`Pipeline refreshed — ${done} card${done === 1 ? '' : 's'} updated. Reloading…`, 'success');
+  showToast(`Pipeline refreshed. ${done} card${done === 1 ? '' : 's'} updated. Reloading...`, 'success');
   setTimeout(() => window.location.reload(), 1200);
 }
 window.refreshPipeline = refreshPipeline;
@@ -3504,7 +3505,7 @@ async function saveTemplate() {
 function resetTemplate() {
   const ta = $('template-textarea');
   if (ta) ta.value = '';
-  showToast('Template cleared — your default pitch template will be used.', 'info');
+  showToast('Template cleared. Your default pitch template will be used.', 'info');
 }
 
 // ── Save as Template ──────────────────────────────────────────────────
@@ -3744,16 +3745,16 @@ window.shareToLinkedIn = shareToLinkedIn;
 // ── Follow-up sequence presets ────────────────────────────────────────
 const FOLLOWUP_SEQUENCES = {
   followup1: {
-    subject: (p) => `Quick follow-up — ${p} guest spot`,
-    body: (p) => `Hi [Host Name],\n\nJust wanted to follow up on my pitch to join you on ${p}.\n\nI know inboxes get busy — happy to send any extra info that would help make the decision easier.\n\nLooking forward to potentially connecting!\n\nBest,\n[Your Name]`,
+    subject: (p) => `Quick follow-up: ${p} guest spot`,
+    body: (p) => `Hi [Host Name],\n\nJust wanted to follow up on my pitch to join you on ${p}.\n\nI know inboxes get busy. Happy to send any extra info that would help make the decision easier.\n\nLooking forward to potentially connecting!\n\nBest,\n[Your Name]`,
   },
   followup2: {
-    subject: (p) => `One more thought — ${p}`,
+    subject: (p) => `One more thought: ${p}`,
     body: (p) => `Hi [Host Name],\n\nFollowing up once more on my pitch for ${p}. I wanted to share a quick thought that might be relevant for your audience:\n\n[Add a specific insight, stat, or story relevant to their show's topic]\n\nI think this angle could make for a really compelling episode. Would love to explore it with you.\n\nBest,\n[Your Name]`,
   },
   followup3: {
-    subject: (p) => `Last note — ${p} collaboration`,
-    body: (p) => `Hi [Host Name],\n\nI'll keep this short — last follow-up on my pitch to appear on ${p}.\n\nIf the timing isn't right, no worries at all. If you'd ever like to revisit it down the track, I'd love to hear from you.\n\nWishing you and the show continued success!\n\nBest,\n[Your Name]`,
+    subject: (p) => `Last note: ${p} collaboration`,
+    body: (p) => `Hi [Host Name],\n\nI'll keep this short. Last follow-up on my pitch to appear on ${p}.\n\nIf the timing isn't right, no worries at all. If you'd ever like to revisit it down the track, I'd love to hear from you.\n\nWishing you and the show continued success!\n\nBest,\n[Your Name]`,
   },
 };
 
@@ -3885,7 +3886,7 @@ function showFollowUpModal(matchId) {
   if (saved) {
     try { ({ subject, body } = JSON.parse(saved)); } catch { subject = null; }
   }
-  if (!subject) subject = `Following up — ${podcastName} guest appearance`;
+  if (!subject) subject = `Following up: ${podcastName} guest appearance`;
   if (!body) body = `Hi [Host Name],\n\nI wanted to follow up on my pitch to appear on ${podcastName}. I believe my experience with [topic] would genuinely resonate with your audience.\n\nHappy to send over any additional info that would help. Looking forward to hearing from you!\n\nBest,\n[Your Name]`;
 
   const subjectEl = $('followup-subject');
@@ -4051,7 +4052,7 @@ async function joinReferralWaitlist() {
   try {
     await apiPost('/api/referral-waitlist', { clientId: state.client?.id, email: state.client?.email, name: state.client?.name });
     if (btn) { btn.textContent = "You're on the list!"; btn.style.background = 'var(--success)'; }
-    showToast('You\'re on the waitlist — we\'ll email you when it launches.', 'success');
+    showToast('You\'re on the waitlist. We\'ll email you when it launches.', 'success');
   } catch {
     if (btn) { btn.textContent = 'Join the Waitlist'; btn.disabled = false; }
     showToast('Something went wrong. Try again.', 'error');
@@ -4101,7 +4102,7 @@ async function submitAddPodcast() {
         switchToFilter('new');
         return;
       }
-      showToast('Added! Scoring compatibility — ready in ~10 seconds.', 'info');
+      showToast('Added! Scoring compatibility. Ready in ~10 seconds.', 'info');
       // Add to state immediately as placeholder, then refresh to get real scores
       if (data.match && data.podcast) {
         state.matches.unshift({ ...data.match, podcasts: data.podcast });
@@ -4199,7 +4200,7 @@ async function refreshDashboard() {
       updateStatBadges();
       showToast('Dashboard refreshed.', 'success');
     } else {
-      showToast('Refresh failed — try again.', 'error');
+      showToast('Refresh failed. Try again.', 'error');
     }
   } catch {
     showToast('Could not reach server. Check your connection.', 'error');
@@ -4231,7 +4232,7 @@ function sendSupportEmail() {
   const name  = state.client?.name  || '';
   const email = state.client?.email || '';
   const body  = encodeURIComponent(`From: ${name} (${email})\n\n${message}`);
-  const subj  = encodeURIComponent(subject || 'Support Request — Find A Podcast');
+  const subj  = encodeURIComponent(subject || 'Support Request: Find A Podcast');
   window.open(`https://mail.google.com/mail/?view=cm&to=hi@findapodcast.io&su=${subj}&body=${body}`, '_blank');
   closeSupportModal();
   showToast('Opening Gmail with your message pre-filled.', 'success');
@@ -4289,7 +4290,7 @@ function init() {
     // Clean URL without reload
     window.history.replaceState({}, '', window.location.pathname);
   } else if (params.get('boost') === 'cancelled') {
-    showToast('No worries — you can upgrade anytime from your Booked tab.', 'info');
+    showToast('No worries. You can upgrade anytime from your Booked tab.', 'info');
     window.history.replaceState({}, '', window.location.pathname);
   }
 }

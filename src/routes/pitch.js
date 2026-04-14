@@ -339,46 +339,57 @@ router.post('/generate-thankyou', requireDashboardToken, async (req, res) => {
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(title, host_name, contact_email), clients(name, title, business_name)')
+      .select('*, podcasts(title, host_name, contact_email), clients(name, title, business_name, speaking_bio, target_audience, social_instagram, social_twitter, social_linkedin)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
 
     if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
 
-    const podcastTitle = match.podcasts?.title    || 'your show';
-    const hostName     = match.podcasts?.host_name || '';
-    const hostFirst    = hostName ? hostName.split(' ')[0] : null;
-    const clientName   = match.clients?.name || '';
-    const clientTitle  = match.clients?.title || '';
-    const clientBiz    = match.clients?.business_name || '';
-    const signature    = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
+    const podcastTitle  = match.podcasts?.title     || 'your show';
+    const hostName      = match.podcasts?.host_name  || '';
+    const hostFirst     = hostName ? hostName.split(' ')[0] : null;
+    const clientName    = match.clients?.name         || '';
+    const clientTitle   = match.clients?.title        || '';
+    const clientBiz     = match.clients?.business_name || '';
+    const speakingBio   = match.clients?.speaking_bio  || '';
+    const targetAud     = match.clients?.target_audience || '';
+    const hasSocial     = !!(match.clients?.social_instagram || match.clients?.social_twitter || match.clients?.social_linkedin);
+    const signature     = [clientName, clientTitle, clientBiz].filter(Boolean).join('\n');
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const message = await anthropic.messages.create({
       model:      'claude-haiku-4-5-20251001',
-      max_tokens: 350,
-      system: `You write short, warm thank you emails from a podcast guest to a host, sent after the episode airs.
+      max_tokens: 450,
+      system: `You write short, warm, human thank you emails from a podcast guest to a host, sent after the episode airs.
+
+Structure (3 short paragraphs):
+1. Genuine thanks — reference something specific about the conversation or the show's angle. One sentence.
+2. What you hope the audience gets from it — connect to the guest's expertise and the listeners' world. One or two sentences.
+3. ${hasSocial ? 'Offer to share the episode with your own audience and leave the door open for a return appearance.' : 'Leave the door open for a return appearance or any way you can add value to their audience.'}
 
 Rules:
-- ALWAYS open with a greeting: "Hi ${hostFirst || '[Host]'},"
-- Body: 50–70 words max (not counting greeting, sign-off)
-- Thank them genuinely — not sycophantically
-- Reference something specific about the conversation or what the audience might get from it
-- Offer to stay in touch or return if useful
-- Close with "Kind regards," then the full signature provided
+- Open with "Hi ${hostFirst || '[Host]'},"
+- 80-110 words in the body (not counting greeting or sign-off)
+- Warm but not gushing. Real, not performative.
+- Close with "Best," then the full signature on a new line
 - No bullet points. No exclamation marks. No em dashes. First person only.
-- Subject line: "Thank you — [podcast title]" format
+- Subject line format: "Thank you: [podcast title]"
 
 Return ONLY valid JSON: {"subject": "...", "body": "..."}
 The body must include the greeting at the top and full signature at the bottom.`,
       messages: [{ role: 'user', content: JSON.stringify({
-        podcast_title: podcastTitle,
+        podcast_title:   podcastTitle,
         host_first_name: hostFirst || '',
-        sender_name: clientName,
+        sender_name:     clientName,
+        sender_title:    clientTitle,
+        sender_business: clientBiz,
+        speaking_bio:    speakingBio,
+        target_audience: targetAud,
+        pitch_angle:     match.best_pitch_angle || '',
+        why_you_fit:     match.why_you_fit || '',
         signature,
-        pitch_angle: match.best_pitch_angle || '',
       }) }],
     });
 

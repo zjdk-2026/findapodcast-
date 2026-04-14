@@ -86,7 +86,7 @@ function buildDigestHtml(client, matches, dashboardUrl) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your Find A Podcast — ${date}</title>
+  <title>Your Find A Podcast: ${date}</title>
 </head>
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
@@ -172,7 +172,7 @@ async function sendDigestEmail(client, matches) {
   const payload = {
     from:    fromEmail,
     to:      [client.email],
-    subject: `Your Find A Podcast — ${date}`,
+    subject: `Your Find A Podcast: ${date}`,
     html,
   };
 

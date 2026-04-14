@@ -4,7 +4,7 @@ const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { sendDraft, createDraft } = require('../services/gmailService');
-const { writeEmail, buildLinkRow } = require('../services/emailWriter');
+const { writeEmail } = require('../services/emailWriter');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
@@ -50,7 +50,7 @@ router.post('/approve', async (req, res) => {
           if (match.clients?.gmail_refresh_token) {
             const contactEmail = match.podcasts?.contact_email || null;
             if (contactEmail?.includes('@')) {
-              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body, email.linkRow || null).catch(() => null);
+              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body, null).catch(() => null);
             }
           }
           await supabase.from('podcast_matches').update({
@@ -175,26 +175,20 @@ router.post('/send', async (req, res) => {
         // No draft yet but we have email content — create one now
         const emailSubject = match.email_subject_edited || match.email_subject || '';
         const emailBody    = match.email_body_edited    || match.email_body    || '';
-        if (!draftId && emailBody) {
-          const contactEmail = match.podcasts?.contact_email || null;
-          if (contactEmail?.includes('@')) {
-            draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, emailSubject, emailBody, buildLinkRow(match.clients)).catch(() => null);
-          }
+        const contactEmail = match.podcasts?.contact_email || null;
+        if (!contactEmail?.includes('@')) {
+          return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
         }
-        if (draftId) {
-          const sentMsg = await sendDraft(match.clients.gmail_refresh_token, draftId);
-          logger.info('Gmail draft sent', { matchId, draftId });
-          // Save thread ID so we can check for replies later
-          if (sentMsg?.threadId) {
-            await supabase.from('podcast_matches').update({ gmail_thread_id: sentMsg.threadId }).eq('id', matchId);
-          }
-        } else {
-          const contactEmail = match.podcasts?.contact_email || null;
-          if (!contactEmail?.includes('@')) {
-            return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
-          }
-          logger.warn('No draft to send — email body missing', { matchId });
+        if (!draftId && emailBody) {
+          draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, emailSubject, emailBody, null);
+        }
+        if (!draftId) {
           return res.status(400).json({ success: false, error: 'Pitch email not ready. Write your pitch first then try again.' });
+        }
+        const sentMsg = await sendDraft(match.clients.gmail_refresh_token, draftId);
+        logger.info('Gmail draft sent', { matchId, draftId });
+        if (sentMsg?.threadId) {
+          await supabase.from('podcast_matches').update({ gmail_thread_id: sentMsg.threadId }).eq('id', matchId);
         }
       } catch (gmailErr) {
         logger.warn('Gmail send failed', { matchId, error: gmailErr.message });
@@ -244,7 +238,7 @@ router.post('/send-thankyou', async (req, res) => {
     const contactEmail = match.podcasts?.contact_email || null;
     if (!contactEmail?.includes('@')) return res.status(400).json({ success: false, error: 'No contact email found for this podcast.' });
 
-    const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject, body, buildLinkRow(match.clients)).catch(() => null);
+    const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject, body, null).catch(() => null);
     if (!draftId) return res.status(500).json({ success: false, error: 'Could not create draft. Try again.' });
 
     await sendDraft(match.clients.gmail_refresh_token, draftId);
@@ -496,7 +490,7 @@ router.post('/send-followup', async (req, res) => {
       const contactEmail = match.podcasts?.contact_email || null;
       if (contactEmail?.includes('@')) {
         try {
-          const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject || `Following up — ${match.podcasts?.title || 'your show'}`, body);
+          const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject || `Following up: ${match.podcasts?.title || 'your show'}`, body);
           await sendDraft(match.clients.gmail_refresh_token, draftId);
           gmailSent = true;
           logger.info('Follow-up email sent', { matchId });
