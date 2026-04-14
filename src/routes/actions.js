@@ -162,7 +162,7 @@ router.post('/send', async (req, res) => {
   try {
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(contact_email), clients(gmail_refresh_token, outlook_refresh_token, name)')
+      .select('*, podcasts(contact_email), clients(gmail_refresh_token, name)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
