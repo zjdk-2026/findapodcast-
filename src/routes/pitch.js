@@ -153,7 +153,8 @@ Rules:
 - Tone: warm, peer-level, slightly bolder than the first email. Not apologetic. Not pushy.
 - Subject line: use "Re: [original_subject]" format
 - No bullet points. No exclamation marks. No em dashes. First person only.
-- Sign off format: "Kind regards,\n[sender full name]\n[title if provided]\n[business if provided]" — use the exact signature provided
+- Sign off format: "Best,\n[sender full name]\n[title if provided]\n[business if provided]" — use the exact signature provided
+- NEVER add em dashes (—) anywhere in the email
 
 Return ONLY valid JSON: {"subject": "...", "body": "..."}
 The body field must include the greeting at the top and the full signature at the bottom.`,
