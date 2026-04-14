@@ -143,6 +143,10 @@ app.get('/admin/review', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'admin-review.html'));
 });
 
+app.get('/pitch-deck', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'pitch-deck.html'));
+});
+
 // Operator page
 app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));
