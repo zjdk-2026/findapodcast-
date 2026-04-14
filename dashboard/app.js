@@ -174,6 +174,21 @@ function statusBadgeHtml(status) {
 }
 
 // ── HTML escape ───────────────────────────────────────────────────────
+// Normalize @handle or bare username to full profile URL
+function normalizeHandle(val, baseUrl) {
+  if (!val) return '';
+  if (val.startsWith('http')) return val;
+  const handle = val.replace(/^@/, '').trim();
+  return handle ? baseUrl + handle : '';
+}
+// Normalize LinkedIn — accept full URL or /in/name
+function normalizeProfileUrl(val, baseUrl) {
+  if (!val) return '';
+  if (val.startsWith('http')) return val;
+  const slug = val.replace(/^\/in\//, '').replace(/^@/, '').trim();
+  return slug ? baseUrl + slug : '';
+}
+
 function esc(str) {
   if (!str) return '';
   return String(str)
@@ -1014,36 +1029,16 @@ function buildMemberCard(m, featured = false) {
   return `
     <div id="${cardId}" style="background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card);${m.is_me ? 'border:2px solid #6366f1;' : 'border:1.5px solid var(--border-subtle);'}overflow:hidden;min-width:0;width:100%;box-sizing:border-box;">
       <!-- Collapsed row — always visible, click to expand -->
-      <div onclick="toggleMemberCard('${cardId}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;min-width:0;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;min-width:0;overflow:hidden;">
         ${avatar48}
         <div style="flex:1;min-width:0;overflow:hidden;">
           <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${youBadge}</div>
           ${headlineHtml}
         </div>
-        ${socials ? `<div style="display:flex;gap:10px;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">${socials}</div>` : ''}
-        <svg id="${cardId}-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--text-tertiary);transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <!-- Expanded section — hidden by default -->
-      <div id="${cardId}-expanded" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border-subtle);">
-        ${expandedBioHtml}
-        ${hasStats ? `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          ${statBadge(m.sent||0, 'Pitched', '#6366f1')}
-          ${statBadge(m.booked||0, 'Booked', '#f59e0b')}
-          ${statBadge(m.appeared||0, 'Aired', '#22c55e')}
-        </div>` : ''}
+        ${socials ? `<div style="display:flex;gap:10px;align-items:center;flex-shrink:0;">${socials}</div>` : ''}
       </div>
     </div>`;
 }
-
-function toggleMemberCard(cardId) {
-  const expanded = document.getElementById(`${cardId}-expanded`);
-  const chevron  = document.getElementById(`${cardId}-chevron`);
-  if (!expanded) return;
-  const isOpen = expanded.style.display !== 'none';
-  expanded.style.display = isOpen ? 'none' : 'block';
-  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
-}
-window.toggleMemberCard = toggleMemberCard;
 
 async function loadLeaderboard() {
   const card   = $('leaderboard-card');
@@ -3419,9 +3414,9 @@ async function saveProfile() {
     title:            $('profile-title').value.trim(),
     business_name:    $('profile-business').value.trim(),
     website:          $('profile-website').value.trim(),
-    social_instagram: $('profile-instagram').value.trim(),
-    social_linkedin:  $('profile-linkedin').value.trim(),
-    social_twitter:   $('profile-twitter').value.trim(),
+    social_instagram: normalizeHandle($('profile-instagram').value.trim(), 'https://instagram.com/'),
+    social_linkedin:  normalizeProfileUrl($('profile-linkedin').value.trim(), 'https://linkedin.com/in/'),
+    social_twitter:   normalizeHandle($('profile-twitter').value.trim(), 'https://twitter.com/'),
     social_facebook:        $('profile-facebook').value.trim(),
     social_youtube:         ($('profile-youtube')?.value || '').trim(),
     extra_links:            $('profile-extra-links').value.trim(),

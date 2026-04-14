@@ -448,11 +448,20 @@
 
         <!-- Links -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div><label class="field-label">Website</label><input type="text" id="profile-website" class="email-edit-field" /></div>
-          <div><label class="field-label">Instagram</label><input type="text" id="profile-instagram" class="email-edit-field" /></div>
-          <div><label class="field-label">LinkedIn</label><input type="text" id="profile-linkedin" class="email-edit-field" /></div>
-          <div><label class="field-label">Twitter / X</label><input type="text" id="profile-twitter" class="email-edit-field" /></div>
-          <div><label class="field-label">Facebook</label><input type="text" id="profile-facebook" class="email-edit-field" /></div>
+          <div><label class="field-label">Website</label><input type="text" id="profile-website" class="email-edit-field" placeholder="https://yourwebsite.com" /></div>
+          <div>
+            <label class="field-label">Instagram <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">handle only, e.g. @zacdeane</span></label>
+            <input type="text" id="profile-instagram" class="email-edit-field" placeholder="@yourhandle" />
+          </div>
+          <div>
+            <label class="field-label">LinkedIn <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">full URL, e.g. https://linkedin.com/in/yourname</span></label>
+            <input type="text" id="profile-linkedin" class="email-edit-field" placeholder="https://linkedin.com/in/yourname" />
+          </div>
+          <div>
+            <label class="field-label">Twitter / X <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">handle only, e.g. @zacdeane</span></label>
+            <input type="text" id="profile-twitter" class="email-edit-field" placeholder="@yourhandle" />
+          </div>
+          <div><label class="field-label">Facebook</label><input type="text" id="profile-facebook" class="email-edit-field" placeholder="https://facebook.com/yourpage" /></div>
           <div><label class="field-label">YouTube</label><input type="text" id="profile-youtube" class="email-edit-field" placeholder="https://youtube.com/@yourchannel" /></div>
         </div>
         <div><label class="field-label">Any Other Links</label><input type="text" id="profile-extra-links" class="email-edit-field" placeholder="Podcast, press features, media kit. Separate with commas." /></div>

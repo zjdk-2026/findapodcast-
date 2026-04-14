@@ -1443,6 +1443,64 @@ async function enrichPodcast(podcastData) {
     }
 
     // ──────────────────────────────────────────────────
+    // Layer 4: Website HEAD verification
+    // ──────────────────────────────────────────────────
+    if (enriched.website) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(enriched.website, {
+          method: 'HEAD',
+          signal: controller.signal,
+          redirect: 'follow',
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0; +https://findapodcast.io)' },
+        });
+        clearTimeout(timer);
+        // Check final URL didn't redirect into a social/platform domain
+        const finalUrl = res.url || enriched.website;
+        const _websiteBlockedDomains = ['instagram.com','facebook.com','twitter.com','x.com','youtube.com','tiktok.com','spotify.com','podcasts.apple.com','itunes.apple.com','linktr.ee','linktree.com'];
+        const isSocialRedirect = _websiteBlockedDomains.some(d => finalUrl.toLowerCase().includes(d));
+        const isPlatformRedirect = false; // already covered above
+        if (![200, 301, 302, 303].includes(res.status) || isSocialRedirect) {
+          logger.warn('Website failed HEAD verification, clearing', { website: enriched.website, status: res.status, finalUrl });
+          enriched.website = null;
+        } else {
+          // Store the resolved URL if redirect changed it significantly
+          try {
+            const finalHost = new URL(finalUrl).host;
+            const origHost  = new URL(enriched.website).host;
+            if (finalHost && finalHost !== origHost && !isSocialRedirect && !isPlatformRedirect) {
+              enriched.website = finalUrl;
+            }
+          } catch (_) {}
+        }
+      } catch (err) {
+        // Timeout or network error — keep the URL (don't penalise slow sites)
+        logger.debug('Website HEAD check failed (keeping URL)', { website: enriched.website, error: err.message });
+      }
+    }
+
+    // ──────────────────────────────────────────────────
+    // Layer 5: Apple Podcasts URL verification
+    // ──────────────────────────────────────────────────
+    if (enriched.apple_url) {
+      const lowerApple = enriched.apple_url.toLowerCase();
+      const looksLikeApple = lowerApple.includes('podcasts.apple.com') || lowerApple.includes('itunes.apple.com');
+      const hasIdOrPath = /\/podcast\/|\/id\d{5,}/.test(lowerApple);
+      if (!looksLikeApple || !hasIdOrPath) {
+        logger.warn('Apple URL failed format check, clearing', { apple_url: enriched.apple_url });
+        enriched.apple_url = null;
+      } else {
+        // HEAD verify it exists
+        const verified = await verifySocialUrl(enriched.apple_url);
+        if (!verified) {
+          logger.warn('Apple URL failed HEAD verification, clearing', { apple_url: enriched.apple_url });
+          enriched.apple_url = null;
+        }
+      }
+    }
+
+    // ──────────────────────────────────────────────────
     // 3. Rephonic — estimated monthly listeners
     //    Search by podcast title, scrape the first result's listener count.
     //    Only runs if we don't already have this data.
