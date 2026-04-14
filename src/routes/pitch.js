@@ -373,7 +373,7 @@ Rules:
 - Open with "Hi ${hostFirst || '[Host]'},"
 - 80-110 words in the body (not counting greeting or sign-off)
 - Warm but not gushing. Real, not performative.
-- Close with "Best," then the full signature on a new line
+- End the body immediately after the P.S. line. Do NOT add any closing word, "Best,", or the sender's name — the signature is appended automatically.
 - No bullet points. No exclamation marks. No em dashes. First person only.
 - Subject line format: "Thank you: [podcast title]"
 

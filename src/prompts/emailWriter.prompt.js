@@ -56,6 +56,7 @@ HARD RULES:
 - No bullet points. No bold. No headers. No em dashes. No exclamation marks.
 - Tone: warm, curious, peer-level. Someone who genuinely cares about the host's work.
 - Separate every paragraph with \\n\\n in the JSON body string.
+- NEVER include a sign-off, closing word, or the sender's name anywhere in the body. No "Best,", no "Warm regards,", no "Zac", no "- Zac", nothing. The signature is appended automatically after the body — do not duplicate it.
 
 Return ONLY valid JSON — no markdown, no extra text:
 {"subject": "...", "body": "..."}`;
