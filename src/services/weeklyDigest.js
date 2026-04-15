@@ -1,11 +1,10 @@
 'use strict';
 
-const { Resend } = require('resend');
-const supabase   = require('../lib/supabase');
-const logger     = require('../lib/logger');
+const supabase = require('../lib/supabase');
+const logger   = require('../lib/logger');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM   = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const FROM           = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
 
 /**
  * sendWeeklyDigest(client)
@@ -58,15 +57,29 @@ async function sendWeeklyDigest(client) {
   });
 
   try {
-    await resend.emails.send({
-      from:    FROM,
-      to:      client.email,
-      subject: `Your week in Find A Podcast — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-      html,
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      logger.warn('Weekly digest: RESEND_API_KEY not set, skipping email', { clientId: client.id });
+      return;
+    }
+    const res = await fetch(RESEND_API_URL, {
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        from:    FROM,
+        to:      client.email,
+        subject: `Your week in Find A Podcast — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        html,
+      }),
     });
-    logger.info('Weekly digest sent', { clientId: client.id, email: client.email });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      logger.error('Weekly digest: Resend API error', { clientId: client.id, status: res.status, body });
+    } else {
+      logger.info('Weekly digest sent', { clientId: client.id, email: client.email });
+    }
   } catch (err) {
-    logger.error('Weekly digest: Resend failed', { clientId: client.id, error: err.message });
+    logger.error('Weekly digest: send failed', { clientId: client.id, error: err.message });
   }
 }
 
