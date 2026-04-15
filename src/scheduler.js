@@ -116,16 +116,18 @@ async function runPipelineForClient(client) {
         await supabase
           .from('podcast_matches')
           .update({
-            email_subject:  email.subject,
-            email_body:     email.body,
-            gmail_draft_id: gmailDraftId,
+            email_subject:    email.subject,
+            email_subject_b:  email.subject_b || null,
+            email_body:       email.body,
+            gmail_draft_id:   gmailDraftId,
           })
           .eq('id', savedMatch.id);
 
         emailsWritten++;
-        savedMatch.email_subject  = email.subject;
-        savedMatch.email_body     = email.body;
-        savedMatch.gmail_draft_id = gmailDraftId;
+        savedMatch.email_subject    = email.subject;
+        savedMatch.email_subject_b  = email.subject_b || null;
+        savedMatch.email_body       = email.body;
+        savedMatch.gmail_draft_id   = gmailDraftId;
       } catch (innerErr) {
         logger.error('Scheduler: podcast processing error', { error: innerErr.message });
       }

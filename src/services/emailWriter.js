@@ -154,16 +154,22 @@ async function writeEmail(client, match, podcast) {
         rawText: rawText.slice(0, 500),
       });
       return {
-        subject: `Guest idea for ${podcast.title}`,
-        body:    rawText.trim() || 'Email generation failed — please write manually.',
+        subject:   `Guest idea for ${podcast.title}`,
+        subject_b: null,
+        body:      rawText.trim() || 'Email generation failed — please write manually.',
       };
     }
 
-    if (!result.subject || !result.body) {
+    // Support both legacy {"subject":...} and new {"subject_a":..., "subject_b":...}
+    const subjectA = result.subject_a || result.subject || `Guest idea for ${podcast.title}`;
+    const subjectB = result.subject_b || null;
+
+    if (!subjectA || !result.body) {
       logger.warn('Email writer returned incomplete fields', { podcastTitle: podcast.title });
       return {
-        subject: result.subject || `Guest idea for ${podcast.title}`,
-        body:    result.body    || '',
+        subject:   subjectA,
+        subject_b: subjectB,
+        body:      result.body || '',
       };
     }
 
@@ -178,7 +184,7 @@ async function writeEmail(client, match, podcast) {
     const bodyParts = [humanizedBody];
     if (signature) bodyParts.push(signature);
     // linkRow is NOT stored in body — it's injected at send time as HTML only
-    return { subject: result.subject, body: bodyParts.join('\n\n'), linkRow: buildLinkRow(client) };
+    return { subject: subjectA, subject_b: subjectB, body: bodyParts.join('\n\n'), linkRow: buildLinkRow(client) };
   } catch (err) {
     logger.error('Claude email writer API call failed', {
       clientId: client.id,

@@ -46,17 +46,22 @@ router.post('/approve', async (req, res) => {
       (async () => {
         try {
           const email = await writeEmail(match.clients, match, match.podcasts);
+          // A/B: randomly assign which subject variant to use for this draft
+          const useVariantB = email.subject_b && Math.random() < 0.5;
+          const chosenSubject = useVariantB ? email.subject_b : email.subject;
           let gmailDraftId = null;
           if (match.clients?.gmail_refresh_token) {
             const contactEmail = match.podcasts?.contact_email || null;
             if (contactEmail?.includes('@')) {
-              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, email.subject, email.body, null).catch(() => null);
+              gmailDraftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, chosenSubject, email.body, null).catch(() => null);
             }
           }
           await supabase.from('podcast_matches').update({
-            email_subject: email.subject,
-            email_body: email.body,
-            gmail_draft_id: gmailDraftId,
+            email_subject:          email.subject,
+            email_subject_b:        email.subject_b || null,
+            email_subject_variant:  useVariantB ? 'b' : 'a',
+            email_body:             email.body,
+            gmail_draft_id:         gmailDraftId,
           }).eq('id', matchId);
           logger.info('Email written on approve', { matchId });
         } catch (err) {

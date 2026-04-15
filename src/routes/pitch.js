@@ -90,7 +90,7 @@ router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
 
     const { error: updateError } = await supabase
       .from('podcast_matches')
-      .update({ email_subject: saveSubject, email_body: saveBody })
+      .update({ email_subject: saveSubject, email_subject_b: email.subject_b || null, email_body: saveBody })
       .eq('id', matchId);
 
     if (updateError) {
@@ -99,7 +99,7 @@ router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
     }
 
     logger.info('Pitch regenerated', { matchId });
-    return res.json({ success: true, subject: email.subject, body: email.body });
+    return res.json({ success: true, subject: email.subject, subject_b: email.subject_b || null, body: email.body });
   } catch (err) {
     logger.error('generate-pitch route error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });

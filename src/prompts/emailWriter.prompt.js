@@ -12,7 +12,7 @@ Rules:
 - Fill in any [SHOW_NAME], [HOST_NAME], [PITCH_ANGLE], [TOPIC] placeholders with real data
 - Keep it under 120 words
 - Write in first person as the client
-- Return ONLY valid JSON: {"subject": "...", "body": "..."}`;
+- Return ONLY valid JSON: {"subject_a": "...", "subject_b": "...", "body": "..."}`;
   }
 
   return `You are a podcast pitch writer. Your job is to write a short, curious, host-first email from the client to a podcast host. The goal is not to sell the client — it is to genuinely enter the host's world, understand their vision, and ask if the client might add value to their audience.
@@ -42,13 +42,14 @@ Paragraph 4 — Closing question. Do NOT make this identical every time. Vary th
 Paragraph 5 — P.S. line. One sentence. State a specific, concrete outcome or insight their audience would walk away with after the episode. Make it about the listener's result, not the guest's credentials. Example: "P.S. Most guests leave your audience with a framework — mine is the one decision that collapsed five years of struggle into six months."
 
 SUBJECT LINE:
-- Under 8 words
-- Frame it as a question or observation rooted in the audience's world — not the client's identity
-- NEVER use the client's name
-- NEVER write "Guest pitch" or "Guest inquiry"
-- NEVER use an em dash or exclamation mark
-- Use best_pitch_angle or show_summary to make it specific to this show
-- Good examples: "What are your listeners building toward?", "A question about your next season", "Are your listeners navigating this shift?"
+Write TWO distinct subject line variants (subject_a and subject_b). Each under 8 words. They must take different angles — not just synonyms of each other.
+- Variant A: a question rooted in the host's audience or mission
+- Variant B: a curious observation or unexpected framing of the client's angle
+- NEVER use the client's name in either
+- NEVER write "Guest pitch" or "Guest inquiry" in either
+- NEVER use an em dash or exclamation mark in either
+- Good examples A: "What are your listeners building toward?", "Are your listeners navigating this shift?"
+- Good examples B: "The decision that collapsed five years into six months", "One shift most founders miss entirely"
 
 HARD RULES:
 - 90–120 words in the body. Every word must earn its place.
@@ -59,7 +60,7 @@ HARD RULES:
 - NEVER include a sign-off, closing word, or the sender's name anywhere in the body. No "Best,", no "Warm regards,", no "Zac", no "- Zac", nothing. The signature is appended automatically after the body — do not duplicate it.
 
 Return ONLY valid JSON — no markdown, no extra text:
-{"subject": "...", "body": "..."}`;
+{"subject_a": "...", "subject_b": "...", "body": "..."}`;
 }
 
 module.exports = { getEmailWriterPrompt };
