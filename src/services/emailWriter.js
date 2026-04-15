@@ -23,6 +23,39 @@ RULES:
 - Keep it under 130 words total
 - Return ONLY the cleaned email body — no explanation, no JSON, no extra text`;
 
+/**
+ * Fetch the 3 most recent episode titles from an RSS feed.
+ * Returns an array of strings. Never throws.
+ */
+async function fetchRecentEpisodeTitles(rssUrl) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(rssUrl, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0)' },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const titles = [];
+    const itemRegex = /<item[\s\S]*?<\/item>/gi;
+    const titleRegex = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i;
+    let match;
+    while ((match = itemRegex.exec(xml)) !== null && titles.length < 3) {
+      const itemXml = match[0];
+      const titleMatch = itemXml.match(titleRegex);
+      if (titleMatch) {
+        const title = titleMatch[1].trim().replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+        if (title) titles.push(title);
+      }
+    }
+    return titles;
+  } catch (_) {
+    return [];
+  }
+}
+
 function buildLinkRow(client) {
   const links = [];
   if (client.website)          links.push(`<a href="${client.website}" style="color:#6366f1;text-decoration:none;">Website</a>`);
@@ -76,15 +109,24 @@ async function writeEmail(client, match, podcast) {
     preferred_tone:  client.preferred_tone,
   };
 
+  // Fetch recent episode titles from RSS for richer pitch personalisation
+  let recentEpisodeTitles = [];
+  if (podcast.rss_feed_url) {
+    try {
+      recentEpisodeTitles = await fetchRecentEpisodeTitles(podcast.rss_feed_url);
+    } catch (_) { /* non-blocking */ }
+  }
+
   const podcastForEmail = {
-    title:                podcast.title,
-    host_name:            podcast.host_name,
-    description:          podcast.description,
-    website:              podcast.website,
-    contact_email:        podcast.contact_email,
-    best_pitch_angle:     match.best_pitch_angle     || null,
-    why_this_client_fits: match.why_this_client_fits || null,
-    show_summary:         match.show_summary         || null,
+    title:                  podcast.title,
+    host_name:              podcast.host_name,
+    description:            podcast.description,
+    website:                podcast.website,
+    contact_email:          podcast.contact_email,
+    best_pitch_angle:       match.best_pitch_angle     || null,
+    why_this_client_fits:   match.why_this_client_fits || null,
+    show_summary:           match.show_summary         || null,
+    recent_episode_titles:  recentEpisodeTitles.length > 0 ? recentEpisodeTitles : null,
   };
 
   const userMessage = JSON.stringify({ client: clientForEmail, podcast: podcastForEmail });
