@@ -14,6 +14,7 @@ const { writeEmail }        = require('./services/emailWriter');
 const { createDraft }       = require('./services/gmailService');
 const { sendDigestEmail }   = require('./services/digestEmail');
 const { sendFollowUps }     = require('./services/followUp');
+const { sendWeeklyDigest }  = require('./services/weeklyDigest');
 
 // Keep track of per-client cron jobs so we can reschedule dynamically
 const activeJobs = new Map(); // clientId → cron.ScheduledTask
@@ -253,6 +254,21 @@ function initScheduler() {
   cron.schedule('0 0 * * *', () => {
     logger.info('Daily scheduler refresh — reloading client list');
     loadAndScheduleClients();
+  }, { timezone: 'UTC', scheduled: true });
+
+  // Weekly digest — every Monday at 8am UTC
+  cron.schedule('0 8 * * 1', async () => {
+    logger.info('Weekly digest — sending to all active clients');
+    const { data: clients, error } = await supabase
+      .from('clients')
+      .select('id, name, email, dashboard_token')
+      .eq('active', true)
+      .not('onboarded_at', 'is', null);
+    if (error) { logger.error('Weekly digest: failed to load clients', { error: error.message }); return; }
+    for (const client of clients || []) {
+      try { await sendWeeklyDigest(client); } catch (err) { logger.warn('Weekly digest failed for client', { clientId: client.id, error: err.message }); }
+    }
+    logger.info('Weekly digest complete', { count: (clients || []).length });
   }, { timezone: 'UTC', scheduled: true });
 
   logger.info('Scheduler initialised');
