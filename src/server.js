@@ -103,6 +103,9 @@ app.use(require('./routes/upload'));
 // ── Public static files (served before catch-alls) ───────────────────
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// ── LinkedIn OAuth Routes ────────────────────────────────────────────
+app.use('/', require('./routes/linkedin'));
+
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);
 

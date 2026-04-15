@@ -279,17 +279,31 @@ async function submitForm() {
 async function uploadPhotos(token) {
   if (!token) return;
   const photoInput = document.getElementById('f-photo');
-  if (!photoInput?.files?.[0]) return;
 
-  try {
-    const fd = new FormData();
-    fd.append('photo', photoInput.files[0]);
-    await fetch('/api/upload-photo', {
-      method: 'POST',
-      headers: { 'x-dashboard-token': token },
-      body: fd,
-    });
-  } catch (_) { /* non-blocking */ }
+  // If user selected a file manually, use that
+  if (photoInput?.files?.[0]) {
+    try {
+      const fd = new FormData();
+      fd.append('photo', photoInput.files[0]);
+      await fetch('/api/upload-photo', {
+        method: 'POST',
+        headers: { 'x-dashboard-token': token },
+        body: fd,
+      });
+    } catch (_) { /* non-blocking */ }
+    return;
+  }
+
+  // Otherwise use LinkedIn photo if available
+  if (window._linkedInPhotoUrl) {
+    try {
+      await fetch('/api/upload-photo-url', {
+        method: 'POST',
+        headers: { 'x-dashboard-token': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: window._linkedInPhotoUrl }),
+      });
+    } catch (_) { /* non-blocking */ }
+  }
 }
 
 // ── Show success screen ───────────────────────────────────────
@@ -428,9 +442,71 @@ async function detectSocialsFromWebsite() {
   }
 }
 
+// ── LinkedIn import handler ───────────────────────────────────
+function handleLinkedInReturn() {
+  const params = new URLSearchParams(window.location.search);
+
+  const error = params.get('linkedin_error');
+  if (error) {
+    const el = document.getElementById('linkedin-import-error');
+    if (el) {
+      const messages = {
+        denied:          'LinkedIn connection was cancelled.',
+        not_configured:  'LinkedIn import is not set up yet.',
+        token_failed:    'Could not connect to LinkedIn. Please try again.',
+        profile_failed:  'Could not load your LinkedIn profile. Please fill in manually.',
+        invalid_state:   'Session expired. Please try again.',
+        server_error:    'Something went wrong. Please fill in manually.',
+      };
+      el.textContent = messages[error] || 'LinkedIn import failed. Please fill in manually.';
+      el.style.display = 'block';
+    }
+    // Clean URL
+    window.history.replaceState({}, '', '/onboard');
+    return;
+  }
+
+  const name    = params.get('li_name');
+  const email   = params.get('li_email');
+  const picture = params.get('li_picture');
+
+  if (!name && !email) return;
+
+  // Pre-fill fields if they're empty
+  if (name) {
+    const nameEl = document.getElementById('f-name');
+    if (nameEl && !nameEl.value.trim()) nameEl.value = name;
+  }
+  if (email) {
+    const emailEl = document.getElementById('f-email');
+    if (emailEl && !emailEl.value.trim()) emailEl.value = email;
+  }
+
+  // If we got a profile photo URL, show a preview and store for upload
+  if (picture) {
+    window._linkedInPhotoUrl = picture;
+    // Show small preview next to the import button
+    const btn = document.getElementById('linkedin-import-btn');
+    if (btn) {
+      const img = document.createElement('img');
+      img.src = picture;
+      img.style.cssText = 'width:36px;height:36px;border-radius:50%;object-fit:cover;margin-left:10px;vertical-align:middle;border:2px solid #6366f1;';
+      btn.insertAdjacentElement('afterend', img);
+    }
+  }
+
+  // Show success banner
+  const successEl = document.getElementById('linkedin-import-success');
+  if (successEl) successEl.style.display = 'block';
+
+  // Clean URL
+  window.history.replaceState({}, '', '/onboard');
+}
+
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
+  handleLinkedInReturn();
 
   // Clear errors on input
   ['f-name','f-email','f-bio-short'].forEach((id) => {

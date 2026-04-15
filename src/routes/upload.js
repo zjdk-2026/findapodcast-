@@ -66,4 +66,55 @@ router.post('/api/upload-photo', upload.single('photo'), async (req, res) => {
   }
 });
 
+/**
+ * POST /api/upload-photo-url
+ * Fetches a photo from a URL (e.g. LinkedIn profile pic) and uploads to Supabase Storage.
+ */
+router.post('/api/upload-photo-url', async (req, res) => {
+  try {
+    const token = req.headers['x-dashboard-token'] || '';
+    if (!token) return res.status(400).json({ success: false, error: 'Missing token.' });
+
+    const { url } = req.body || {};
+    if (!url) return res.status(400).json({ success: false, error: 'Missing url.' });
+
+    const { data: client } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('dashboard_token', token)
+      .single();
+    if (!client) return res.status(401).json({ success: false, error: 'Invalid token.' });
+
+    // Fetch photo from URL
+    const imgRes = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!imgRes.ok) return res.status(400).json({ success: false, error: 'Could not fetch photo.' });
+
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+    const ext = contentType.includes('png') ? 'png' : 'jpg';
+    const storagePath = `photos/${client.id}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('client-assets')
+      .upload(storagePath, buffer, { contentType, upsert: true });
+
+    if (uploadError) {
+      logger.error('LinkedIn photo upload failed', { clientId: client.id, error: uploadError.message });
+      return res.status(500).json({ success: false, error: 'Storage upload failed.' });
+    }
+
+    const { data: urlData } = supabase.storage.from('client-assets').getPublicUrl(storagePath);
+    const photo_url = urlData?.publicUrl;
+    if (!photo_url) return res.status(500).json({ success: false, error: 'Could not get public URL.' });
+
+    await supabase.from('clients').update({ photo_url }).eq('id', client.id);
+
+    logger.info('LinkedIn photo uploaded', { clientId: client.id });
+    return res.json({ success: true, photo_url });
+  } catch (err) {
+    logger.error('Photo URL upload error', { error: err.message });
+    return res.status(500).json({ success: false, error: 'Upload failed.' });
+  }
+});
+
 module.exports = router;
