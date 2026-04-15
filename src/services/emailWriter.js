@@ -84,6 +84,43 @@ async function humanize(body) {
 }
 
 /**
+ * Fetch a short bio snippet from a LinkedIn public profile page.
+ * Uses the og:description / meta description — no login required for public profiles.
+ * Returns a string or null. Never throws.
+ */
+async function fetchHostLinkedInBio(linkedinUrl) {
+  if (!linkedinUrl || !linkedinUrl.includes('linkedin.com')) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(linkedinUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const html = await res.text();
+    // Try og:description first (usually has the headline + summary)
+    const ogMatch = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]{20,500})"/i)
+      || html.match(/<meta[^>]+content="([^"]{20,500})"[^>]+property="og:description"/i);
+    if (ogMatch) {
+      return ogMatch[1].replace(/&#?\w+;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+    }
+    // Fallback: meta description
+    const metaMatch = html.match(/<meta[^>]+name="description"[^>]+content="([^"]{20,500})"/i);
+    if (metaMatch) {
+      return metaMatch[1].replace(/&#?\w+;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * writeEmail(client, match, podcast)
  * Calls Claude to write a personalised pitch email for the client → podcast match.
  * Returns { subject, body } on success.
@@ -109,13 +146,11 @@ async function writeEmail(client, match, podcast) {
     preferred_tone:  client.preferred_tone,
   };
 
-  // Fetch recent episode titles from RSS for richer pitch personalisation
-  let recentEpisodeTitles = [];
-  if (podcast.rss_feed_url) {
-    try {
-      recentEpisodeTitles = await fetchRecentEpisodeTitles(podcast.rss_feed_url);
-    } catch (_) { /* non-blocking */ }
-  }
+  // Fetch recent episode titles + host LinkedIn bio in parallel for richer personalisation
+  const [recentEpisodeTitles, hostLinkedInBio] = await Promise.all([
+    podcast.rss_feed_url ? fetchRecentEpisodeTitles(podcast.rss_feed_url).catch(() => []) : Promise.resolve([]),
+    podcast.linkedin_page_url ? fetchHostLinkedInBio(podcast.linkedin_page_url).catch(() => null) : Promise.resolve(null),
+  ]);
 
   const podcastForEmail = {
     title:                  podcast.title,
@@ -127,6 +162,7 @@ async function writeEmail(client, match, podcast) {
     why_this_client_fits:   match.why_this_client_fits || null,
     show_summary:           match.show_summary         || null,
     recent_episode_titles:  recentEpisodeTitles.length > 0 ? recentEpisodeTitles : null,
+    host_linkedin_bio:      hostLinkedInBio || null,
   };
 
   const userMessage = JSON.stringify({ client: clientForEmail, podcast: podcastForEmail });

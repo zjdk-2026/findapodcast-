@@ -14,7 +14,8 @@ const { writeEmail }        = require('./services/emailWriter');
 const { createDraft }       = require('./services/gmailService');
 const { sendDigestEmail }   = require('./services/digestEmail');
 const { sendFollowUps }     = require('./services/followUp');
-const { sendWeeklyDigest }  = require('./services/weeklyDigest');
+const { sendWeeklyDigest }      = require('./services/weeklyDigest');
+const { notifyClientNewMatches } = require('./services/pushNotifier');
 
 // Keep track of per-client cron jobs so we can reschedule dynamically
 const activeJobs = new Map(); // clientId → cron.ScheduledTask
@@ -136,6 +137,11 @@ async function runPipelineForClient(client) {
     await sendDigestEmail(client, savedMatches);
     await sendFollowUps(client);
     await markLastRun(client.id);
+
+    // Push notification if new matches were found
+    if (savedMatches.length > 0) {
+      notifyClientNewMatches(client.id, savedMatches.length).catch(() => {});
+    }
 
     logger.info('Scheduled pipeline run complete', {
       clientId:     client.id,

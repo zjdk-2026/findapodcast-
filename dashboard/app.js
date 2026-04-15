@@ -4300,6 +4300,7 @@ function init() {
   loadDashboard();
   startReplyPolling();
   loadLeaderboard();
+  initPushNotifications();
 
   // Handle Stripe redirect back to dashboard
   const params = new URLSearchParams(window.location.search);
@@ -4311,6 +4312,47 @@ function init() {
     showToast('No worries. You can upgrade anytime from your Booked tab.', 'info');
     window.history.replaceState({}, '', window.location.pathname);
   }
+}
+
+// ── Push Notifications ────────────────────────────────────────
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!state.token) return;
+
+  try {
+    // Fetch VAPID public key
+    const keyRes = await fetch('/api/push/vapid-key');
+    const keyData = await keyRes.json();
+    if (!keyData.success || !keyData.publicKey) return; // not configured yet
+
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+
+    // Check existing subscription
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      // Only ask for permission if not already denied
+      if (Notification.permission === 'denied') return;
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly:      true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
+      });
+    }
+
+    // Register with backend
+    await fetch('/api/push/subscribe', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-token': state.token },
+      body:    JSON.stringify({ subscription: sub.toJSON() }),
+    });
+  } catch (_) { /* non-blocking */ }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
 if (document.readyState === 'loading') {
