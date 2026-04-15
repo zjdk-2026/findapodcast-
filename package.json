@@ -21,7 +21,8 @@
     "googleapis": "^144.0.0",
     "multer": "^2.1.1",
     "node-cron": "^3.0.3",
-    "stripe": "^22.0.0"
+    "stripe": "^22.0.0",
+    "web-push": "^3.6.7"
   },
   "license": "MIT",
   "devDependencies": {
