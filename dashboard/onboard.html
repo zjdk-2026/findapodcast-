@@ -179,7 +179,7 @@
       <!-- ─── Step 1: About You ─────────────────────────────── -->
       <div class="step-panel active" id="step-1">
         <h2 class="step-title">Let's build your profile</h2>
-        <p class="step-desc">This goes directly into every pitch email. A strong profile gets 3x more replies from hosts.</p>
+        <p class="step-desc">This goes directly into every pitch email. Takes 3 minutes. The more detail you give us, the better your pitches will be.</p>
 
         <!-- LinkedIn import -->
         <div style="margin-bottom:24px;">
@@ -203,35 +203,48 @@
           <div class="form-group">
             <label class="form-label" for="f-email">Email Address <span class="req">*</span></label>
             <input type="email" id="f-email" class="form-input" placeholder="jane@example.com" autocomplete="email" />
-            <p class="form-hint">Your dashboard link and matches are sent here.</p>
+            <p class="form-hint">Your dashboard and all matches are sent here.</p>
             <p class="field-error" id="err-email">Please enter a valid email.</p>
           </div>
         </div>
 
         <div class="form-row" style="align-items:start;">
           <div class="form-group">
-            <label class="form-label" for="f-title">How do you introduce yourself?</label>
-            <input type="text" id="f-title" class="form-input" placeholder="e.g. Anxiety Coach &amp; Author, CEO &amp; Speaker" />
-            <p class="form-hint">Used as your title in pitch emails. Keep it clear and credible.</p>
+            <label class="form-label" for="f-title">Your title <span class="req">*</span></label>
+            <input type="text" id="f-title" class="form-input" placeholder="e.g. Business Coach &amp; Author, CEO &amp; Speaker" />
+            <p class="form-hint">How you introduce yourself in one line. Goes into every pitch.</p>
+            <p class="field-error" id="err-title">Please enter your title.</p>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-business">Business / Brand Name</label>
             <input type="text" id="f-business" class="form-input" placeholder="e.g. The Anxiety Reset" />
-            <p class="form-hint">&nbsp;</p>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-bio-short">LinkedIn Headline <span class="req">*</span></label>
-          <input type="text" id="f-bio-short" class="form-input" placeholder="e.g. Founder & CEO | Helping B2B companies scale from $1M to $10M" />
-          <p class="form-hint">The short blurb at the top of your LinkedIn profile.</p>
-          <p class="field-error" id="err-bio-short">Please enter your LinkedIn headline (at least 10 characters).</p>
+          <label class="form-label" for="f-bio-short">Your one-liner <span class="req">*</span></label>
+          <input type="text" id="f-bio-short" class="form-input" placeholder="e.g. I help faith-driven founders scale to 7 figures without burning out" />
+          <p class="form-hint">One sentence. Who you help and what result you get them. This is the core of every pitch.</p>
+          <p class="field-error" id="err-bio-short">Please enter your one-liner (at least 10 characters).</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-bio-long">LinkedIn About Section</label>
-          <textarea id="f-bio-long" class="form-textarea" rows="6" placeholder="Paste your full LinkedIn About section here."></textarea>
-          <p class="form-hint">The longer bio on your LinkedIn profile. Helps us write better pitches and builds your community profile.</p>
+          <label class="form-label" for="f-credential">Your biggest result or credential <span class="req">*</span></label>
+          <input type="text" id="f-credential" class="form-input" placeholder="e.g. Helped 200+ clients hit 7 figures, $0 to $1.2M in 11 months, TEDx speaker, bestselling author" />
+          <p class="form-hint">One specific, concrete proof point. This goes in the P.S. line of every pitch — it's what makes hosts say yes.</p>
+          <p class="field-error" id="err-credential">Please enter your biggest result or credential.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-bio-long">Your full bio <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">(optional but recommended)</span></label>
+          <textarea id="f-bio-long" class="form-textarea" rows="5" placeholder="Paste your LinkedIn About section, website bio, or speaker bio here. The more context we have, the more your pitches sound like you wrote them."></textarea>
+          <p class="form-hint">We use this to write pitches in your voice. Paste from LinkedIn, your website, or a speaker bio.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-past-podcasts">Have you been on podcasts before?</label>
+          <input type="text" id="f-past-podcasts" class="form-input" placeholder="e.g. The Tim Ferriss Show, Entrepreneur on Fire — or 'No, this is my first time'" />
+          <p class="form-hint">Even one good appearance helps. We mention it in your pitch to show you're a proven guest.</p>
         </div>
 
         <div class="form-nav">
@@ -243,11 +256,11 @@
       <!-- ─── Step 2: Your Expertise ────────────────────────── -->
       <div class="step-panel" id="step-2">
         <h2 class="step-title">Your Expertise</h2>
-        <p class="step-desc">The more specific you are here, the more shows we can match you with and the stronger every pitch will be.</p>
+        <p class="step-desc">This is how we find the right shows. The more specific you are, the better your matches.</p>
 
         <div class="form-group">
           <label class="form-label">What topics do you speak about? <span class="req">*</span></label>
-          <p class="form-hint" style="margin-top:0;margin-bottom:10px;">Click any that apply, then add your own niche keywords below.</p>
+          <p class="form-hint" style="margin-top:0;margin-bottom:10px;">Select all that apply, then add your own niche keywords below.</p>
           <div class="topic-dropdown-wrap" id="topic-dropdown-wrap">
             <div class="topic-dropdown-trigger" id="topic-dropdown-trigger" onclick="toggleTopicDropdown()">
               <span id="topic-trigger-label">Select topics that apply to you</span>
@@ -323,25 +336,35 @@
             </div>
             <div class="topic-selected-pills" id="topic-selected-pills"></div>
           </div>
-          <label class="form-label" style="margin-top:12px;">Go deeper. The more niche, the more podcasts we find for you.</label>
-          <textarea id="f-topics" class="form-textarea" rows="2" placeholder="Add your niche keywords here (faith-based entrepreneurship, burnout recovery, legacy building)"></textarea>
+          <label class="form-label" style="margin-top:12px;">Add your niche keywords</label>
+          <textarea id="f-topics" class="form-textarea" rows="2" placeholder="e.g. faith-based entrepreneurship, burnout recovery for high-achievers, scaling without a team"></textarea>
+          <p class="form-hint">The more niche the better. These are what we search for when finding shows.</p>
           <p class="field-error" id="err-topics">Please select at least one topic or add your own.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-audience">Who is your ideal listener?</label>
-          <input type="text" id="f-audience" class="form-input" placeholder="Faith-driven entrepreneurs aged 30 to 50, high-achievers dealing with burnout" />
-          <p class="form-hint">We use this to match you with shows whose audiences would genuinely buy from you.</p>
+          <label class="form-label" for="f-audience">Who is your ideal listener? <span class="req">*</span></label>
+          <input type="text" id="f-audience" class="form-input" placeholder="e.g. Female entrepreneurs aged 30-50 struggling with burnout while scaling their business" />
+          <p class="form-hint">Be specific — age, gender, situation, struggle. We use this to only match you with shows whose audiences would actually buy from you.</p>
+          <p class="field-error" id="err-audience">Please describe your ideal listener.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-angles">What's your most powerful talking point or controversial take?</label>
-          <textarea id="f-angles" class="form-textarea" rows="3" placeholder="Most business advice keeps people small. My framework helps faith-driven founders scale without losing themselves. I talk about why hustle culture is destroying marriages and how I went from $0 to 7 figures by working less."></textarea>
-          <p class="form-hint">This becomes your pitch hook. The more specific and story-driven, the higher your reply rate. Think: what do hosts always want you to talk about?</p>
+          <label class="form-label" for="f-angles">What's your most powerful talking point — your hot take or signature idea? <span class="req">*</span></label>
+          <textarea id="f-angles" class="form-textarea" rows="4" placeholder="e.g. Most business coaches tell you to hustle harder — I teach the opposite. My clients hit 7 figures by cutting their hours in half. I can speak to why overworking is the #1 reason faith-driven founders plateau, and the 3-step framework that breaks the cycle."></textarea>
+          <p class="form-hint">This becomes the hook of every pitch. The more story-driven and specific, the higher your reply rate. What do hosts always ask you to talk about?</p>
+          <p class="field-error" id="err-angles">Please enter your talking point or hot take.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-country">Target Country</label>
+          <label class="form-label" for="f-offer">What do you want listeners to do after hearing you? <span class="req">*</span></label>
+          <input type="text" id="f-offer" class="form-input" placeholder="e.g. Book a free discovery call, buy my book, join my mastermind, download my free guide" />
+          <p class="form-hint">Your CTA. We use this to match you with shows whose audiences are ready to take action — not just listen.</p>
+          <p class="field-error" id="err-offer">Please enter your offer or call to action.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-country">Target country</label>
           <select id="f-country" class="form-select">
             <option value="Any">Any / English (Global)</option>
             <option value="Australia">Australia</option>
@@ -373,12 +396,12 @@
       <!-- ─── Step 3: Pitch Setup ───────────────────────────── -->
       <div class="step-panel" id="step-3">
         <h2 class="step-title">Pitch Setup</h2>
-        <p class="step-desc">We embed these into every pitch. A complete profile gets significantly higher reply rates.</p>
+        <p class="step-desc">This is how we write your emails. The more you give us here, the more every pitch sounds like you.</p>
 
         <div class="form-group">
-          <label class="form-label" for="f-pitch-style">What does your ideal pitch to a podcast host sound like? <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">(optional)</span></label>
-          <textarea id="f-pitch-style" class="form-textarea" rows="4" placeholder="Tell us what you want the host to read. What angle do you want us to lead with? What makes you the perfect guest for their show? Any specific stories, credentials, or talking points you always want included? We use this to craft every pitch in your voice."></textarea>
-          <p class="form-hint">The more direction you give us here, the more your pitches sound like you wrote them yourself.</p>
+          <label class="form-label" for="f-pitch-style">Any specific angles, stories or talking points you always want in your pitches?</label>
+          <textarea id="f-pitch-style" class="form-textarea" rows="4" placeholder="e.g. Always lead with the story of how I lost everything at 32 and rebuilt from zero. I want every pitch to reference my framework — the 3-step Legacy Method. Mention I've been featured in Forbes. Never mention my divorce."></textarea>
+          <p class="form-hint">Think of this as your briefing notes to us. We'll work these into every pitch — specific stories, credentials to always include, things to avoid.</p>
         </div>
 
         <div class="form-group">
@@ -394,7 +417,7 @@
             </div>
             <div class="pace-option" data-value="20" onclick="selectPace(this)">
               <div class="pace-label">All-in</div>
-              <div class="pace-sub">15+ bookings/mo</div>
+              <div class="pace-sub">As many as you can handle</div>
             </div>
           </div>
           <input type="hidden" id="f-daily-target" value="10" />
@@ -441,24 +464,24 @@
           </div>
         </div>
 
-        <p class="form-section-label" style="margin-top:8px;">ANY OTHER LINKS <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">podcast, YouTube, press features, media kit, anything you want hosts to see</span></p>
+        <p class="form-section-label" style="margin-top:8px;">ANY OTHER LINKS <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">podcast, YouTube, press features, media kit — anything you want hosts to see</span></p>
         <div class="form-group">
           <input type="text" id="f-extra-links" class="form-input" placeholder="Paste any extra links here, separated by commas" />
         </div>
 
-        <p class="form-section-label" style="margin-top:8px;">EMAIL SIGNATURE <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">appended to the bottom of every pitch email we send on your behalf</span></p>
+        <p class="form-section-label" style="margin-top:8px;">EMAIL SIGNATURE <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">appended to the bottom of every pitch email</span></p>
         <div class="form-group">
-          <textarea id="f-email-signature" class="form-input" rows="5" style="resize:vertical;font-family:inherit;line-height:1.6;" placeholder="Kind regards,
+          <textarea id="f-email-signature" class="form-input" rows="5" style="resize:vertical;font-family:inherit;line-height:1.6;" placeholder="Best,
 Your Name
 Your Title — Your Business
 yourwebsite.com
-linkedin.com/in/you | instagram.com/you"></textarea>
-          <p style="font-size:12px;color:#999;margin-top:4px;">Paste exactly how you want it to appear. Hosts will see this at the bottom of every email.</p>
+instagram.com/you | linkedin.com/in/you"></textarea>
+          <p style="font-size:12px;color:#999;margin-top:4px;">Paste exactly how you want it to appear at the bottom of every email you send.</p>
         </div>
 
         <div class="form-nav">
           <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
-          <button class="btn btn-primary" onclick="goToStep(4)">Next: Add Photos →</button>
+          <button class="btn btn-primary" onclick="goToStep(4)">Next: Final Step →</button>
         </div>
       </div>
 

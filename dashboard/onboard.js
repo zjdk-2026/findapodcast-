@@ -150,9 +150,11 @@ function validateStep(step) {
   }
 
   if (step === 1) {
-    check('f-name',      'err-name',      (v) => v.length > 0);
-    check('f-email',     'err-email',     (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-    check('f-bio-short', 'err-bio-short', (v) => v.length > 10);
+    check('f-name',       'err-name',       (v) => v.length > 0);
+    check('f-email',      'err-email',      (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+    check('f-title',      'err-title',      (v) => v.length > 0);
+    check('f-credential', 'err-credential', (v) => v.length > 0);
+    check('f-bio-short',  'err-bio-short',  (v) => v.length > 10);
   }
 
   if (step === 2) {
@@ -162,6 +164,10 @@ function validateStep(step) {
     const errEl = document.getElementById('err-topics');
     if (errEl) errEl.classList.toggle('show', !hasTopics);
     if (!hasTopics) valid = false;
+
+    check('f-audience', 'err-audience', (v) => v.length > 0);
+    check('f-angles',   'err-angles',   (v) => v.length > 0);
+    check('f-offer',    'err-offer',    (v) => v.length > 0);
   }
 
   return valid;
@@ -179,11 +185,14 @@ function collectFormData() {
     email:            val('f-email'),
     business_name:    val('f-business')     || undefined,
     title:            val('f-title')        || undefined,
+    credential:       val('f-credential')   || undefined,
+    past_podcasts:    val('f-past-podcasts')|| undefined,
     bio_short:        val('f-bio-short'),
-    bio_long:         val('f-bio-long') || undefined,
+    bio_long:         val('f-bio-long')     || undefined,
     topics:           topicsStr ? topicsStr.split(',').map((s) => s.trim()).filter(Boolean) : [],
     speaking_angles:  anglesRaw ? anglesRaw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean) : [],
     target_audience:  val('f-audience')     || undefined,
+    offer:            val('f-offer')        || undefined,
     website:          val('f-website')      || undefined,
     booking_link:     val('f-booking')      || undefined,
     lead_magnet:      val('f-lead-magnet')  || undefined,
