@@ -31,7 +31,7 @@ router.get('/leaderboard', async (req, res) => {
         .eq('is_active', true);
       if (fallbackError) throw fallbackError;
       if (!fallbackClients?.length) return res.json({ success: true, rows: [], community: [] });
-      clients = fallbackClients.map(c => ({ ...c, share_with_community: true, bio_short: null, bio_long: null, created_at: null // onboarded_at not available in fallback }));
+      clients = fallbackClients.map(c => ({ ...c, share_with_community: true, bio_short: null, bio_long: null, created_at: null }));
     }
     if (!clients?.length) return res.json({ success: true, rows: [], community: [] });
 
