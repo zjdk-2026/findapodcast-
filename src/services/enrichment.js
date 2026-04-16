@@ -105,6 +105,158 @@ async function verifySMTP(email) {
   }
 }
 
+// ── CATCHALL DOMAIN DETECTION ────────────────────────────────────────────────
+/**
+ * Test if a domain accepts all email addresses (catchall).
+ * If true, SMTP verification is unreliable — skip email inference for this domain.
+ */
+async function isCatchallDomain(domain) {
+  if (!domain) return false;
+  const fakeEmail = `xyzfakeaddr${Date.now()}z@${domain}`;
+  try {
+    let mxRecords;
+    try { mxRecords = await dns.resolveMx(domain); } catch { return false; }
+    if (!mxRecords || mxRecords.length === 0) return false;
+    mxRecords.sort((a, b) => a.priority - b.priority);
+    const mxHost = mxRecords[0].exchange;
+
+    return await new Promise((resolve) => {
+      const timeout = setTimeout(() => { socket.destroy(); resolve(false); }, 5000);
+      const socket = net.createConnection(25, mxHost);
+      let step = 0;
+      let buffer = '';
+      socket.on('error', () => { clearTimeout(timeout); resolve(false); });
+      socket.on('data', (data) => {
+        buffer += data.toString();
+        const lines = buffer.split('\r\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          const code = line.slice(0, 3);
+          if (step === 0 && code === '220') { socket.write('HELO findapodcast.io\r\n'); step = 1; }
+          else if (step === 1 && (code === '250' || code === '220')) { socket.write('MAIL FROM:<verify@findapodcast.io>\r\n'); step = 2; }
+          else if (step === 2 && code === '250') { socket.write(`RCPT TO:<${fakeEmail}>\r\n`); step = 3; }
+          else if (step === 3) {
+            clearTimeout(timeout); socket.write('QUIT\r\n'); socket.destroy();
+            // If fake address accepted = catchall
+            resolve(code === '250' || code === '251');
+          }
+        }
+      });
+      socket.on('close', () => { clearTimeout(timeout); if (step < 3) resolve(false); });
+    });
+  } catch { return false; }
+}
+
+// ── EMAIL PATTERN INFERENCE ───────────────────────────────────────────────────
+/**
+ * Hunter.io-style: if we know the host's name and website domain,
+ * try common email patterns and SMTP-verify each.
+ * Returns the first valid email, or null.
+ * Never runs on catchall domains.
+ */
+async function inferEmailFromHostName(hostName, websiteUrl) {
+  if (!hostName || !websiteUrl) return null;
+  try {
+    const u = new URL(websiteUrl);
+    const domain = u.hostname.replace(/^www\./, '');
+    if (!domain || domain.length < 4) return null;
+
+    // Don't infer on generic/platform domains
+    if (WEBSITE_EXCLUDE_DOMAINS.some(d => domain.includes(d))) return null;
+
+    // Check catchall first — if domain accepts anything, SMTP is unreliable
+    const catchall = await isCatchallDomain(domain);
+    if (catchall) {
+      logger.debug('inferEmailFromHostName: catchall domain, skipping', { domain });
+      return null;
+    }
+
+    const parts = hostName.trim().split(/\s+/);
+    const first = (parts[0] || '').toLowerCase().replace(/[^a-z]/g, '');
+    const last  = (parts[parts.length - 1] || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (!first || first === last || first.length < 2 || last.length < 2) return null;
+
+    const candidates = [
+      `${first}@${domain}`,
+      `${first}.${last}@${domain}`,
+      `${first}${last}@${domain}`,
+      `${first[0]}${last}@${domain}`,
+      `${first[0]}.${last}@${domain}`,
+    ];
+
+    for (const email of candidates) {
+      if (!email.includes('@') || isGenericEmail(email) || isPlatformEmail(email) || isOperatorOwned(email)) continue;
+      const valid = await verifySMTP(email);
+      if (valid) {
+        logger.info('inferEmailFromHostName: inferred valid email', { email, hostName });
+        return email;
+      }
+    }
+  } catch (err) {
+    logger.debug('inferEmailFromHostName: failed', { hostName, error: err.message });
+  }
+  return null;
+}
+
+// ── YOUTUBE ABOUT TAB EMAIL EXTRACTION ───────────────────────────────────────
+/**
+ * Scrape the YouTube channel /about page for a business contact email.
+ * Many podcasters list their booking email exclusively on YouTube.
+ */
+async function fetchYouTubeAboutEmail(youtubeUrl) {
+  if (!youtubeUrl) return null;
+  try {
+    const aboutUrl = youtubeUrl.replace(/\/?$/, '') + '/about';
+    const html = await fetchHtml(aboutUrl);
+    if (!html) return null;
+    const email = extractEmail(html);
+    if (email && !isOperatorOwned(email) && !isPlatformEmail(email)) {
+      logger.info('fetchYouTubeAboutEmail: found email on YouTube About tab', { youtubeUrl, email });
+      return email;
+    }
+    // Also try regex scan on raw HTML (YouTube sometimes renders email in JS data)
+    const matches = html.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
+    for (const m of matches) {
+      const lower = m.toLowerCase();
+      if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !isPlatformEmail(lower)) {
+        logger.info('fetchYouTubeAboutEmail: found email via regex on YouTube About tab', { youtubeUrl, email: lower });
+        return lower;
+      }
+    }
+  } catch (err) {
+    logger.debug('fetchYouTubeAboutEmail: failed', { youtubeUrl, error: err.message });
+  }
+  return null;
+}
+
+// ── INSTAGRAM BIO EMAIL EXTRACTION ───────────────────────────────────────────
+/**
+ * Attempt to extract an email address from an Instagram profile bio.
+ * Reads the og:description meta tag which contains the bio text on public pages.
+ */
+async function extractInstagramBioEmail(instagramUrl) {
+  if (!instagramUrl) return null;
+  try {
+    const html = await fetchHtml(instagramUrl);
+    if (!html) return null;
+    // Bio appears in og:description
+    const bioMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+    const bioText = bioMatch ? bioMatch[1] : '';
+    const emailMatches = bioText.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
+    for (const m of emailMatches) {
+      const lower = m.toLowerCase();
+      if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !isPlatformEmail(lower)) {
+        logger.info('extractInstagramBioEmail: found email in Instagram bio', { instagramUrl, email: lower });
+        return lower;
+      }
+    }
+  } catch (err) {
+    logger.debug('extractInstagramBioEmail: failed', { instagramUrl, error: err.message });
+  }
+  return null;
+}
+
 // ── LAYER 1: Listen Notes API ─────────────────────────────────────────────────
 /**
  * Fetch podcast data from Listen Notes API.
@@ -990,9 +1142,15 @@ async function fetchRssFeed(rssUrl) {
     const $ = cheerio.load(xml, { xmlMode: true });
     const result = {};
 
-    // Contact email from itunes:email
+    // Owner email from <itunes:owner><itunes:email> — most authoritative (submitted directly to Apple)
+    const ownerEmail = $('itunes\\:owner itunes\\:email').first().text().trim();
+    if (ownerEmail && ownerEmail.includes('@') && !isOperatorOwned(ownerEmail) && !isPlatformEmail(ownerEmail)) {
+      result.contact_email = ownerEmail.toLowerCase();
+    }
+
+    // Channel-level contact email from itunes:email (fallback if no owner email)
     const itunesEmail = $('itunes\\:email').first().text().trim();
-    if (itunesEmail && itunesEmail.includes('@') && !isOperatorOwned(itunesEmail) && !isPlatformEmail(itunesEmail)) result.contact_email = itunesEmail.toLowerCase();
+    if (itunesEmail && itunesEmail.includes('@') && !isOperatorOwned(itunesEmail) && !isPlatformEmail(itunesEmail) && !result.contact_email) result.contact_email = itunesEmail.toLowerCase();
 
     // Host name from itunes:author
     const itunesAuthor = $('itunes\\:author').first().text().trim();
@@ -1056,6 +1214,32 @@ async function fetchRssFeed(rssUrl) {
         result.last_episode_date = parsed.toISOString().split('T')[0];
       }
     }
+
+    // Interview-format detection from episode titles
+    // If many episodes have "with [Name]" or "featuring" patterns → likely interview show
+    const items = $('item');
+    const episodeTitles = [];
+    items.each((_, el) => {
+      const t = $(el).find('title').first().text().trim();
+      if (t) episodeTitles.push(t);
+    });
+    if (episodeTitles.length >= 3) {
+      const interviewPatterns = [/\bwith\b/i, /\bfeaturing\b/i, /\bft\.?\b/i, /\binterview\b/i, /\bguest\b/i, /\bep(?:isode)?\s*\d+.*:/i];
+      const interviewCount = episodeTitles.filter(t => interviewPatterns.some(p => p.test(t))).length;
+      result.is_interview_format = interviewCount / episodeTitles.length >= 0.4;
+    }
+
+    // Episode velocity: episodes published in last 30 days
+    let recentEpisodes = 0;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    items.each((_, el) => {
+      const pub = $(el).find('pubDate').first().text().trim();
+      if (pub) {
+        const d = new Date(pub);
+        if (!isNaN(d) && d >= thirtyDaysAgo) recentEpisodes++;
+      }
+    });
+    if (recentEpisodes > 0) result.episodes_last_30_days = recentEpisodes;
 
     // Always store the feed URL itself
     result.rss_feed_url = rssUrl;
@@ -1289,6 +1473,27 @@ async function enrichPodcast(podcastData) {
           logger.info('Show website found via Apple Podcasts page', { title: podcastData.title, website: enriched.website });
         }
 
+        // 2b. Extract Apple Podcasts rating and review count (quality/popularity signal)
+        $ap('script[type="application/ld+json"]').each((_, el) => {
+          try {
+            const json = JSON.parse($ap(el).html() || '{}');
+            const entries = Array.isArray(json) ? json : [json];
+            for (const entry of entries) {
+              if (entry.aggregateRating && !enriched.apple_rating) {
+                const rating = parseFloat(entry.aggregateRating.ratingValue);
+                const count  = parseInt(entry.aggregateRating.reviewCount || entry.aggregateRating.ratingCount || 0, 10);
+                if (!isNaN(rating) && rating > 0) enriched.apple_rating = rating;
+                if (count > 0) enriched.apple_review_count = count;
+              }
+            }
+          } catch { /* ignore */ }
+        });
+        // Fallback: look for rating in page HTML (Apple sometimes renders it as text)
+        if (!enriched.apple_review_count) {
+          const ratingMatch = appleHtml.match(/"ratingCount"\s*:\s*"?(\d+)"?/);
+          if (ratingMatch) enriched.apple_review_count = parseInt(ratingMatch[1], 10);
+        }
+
         // 3. Additional: Extract social links from Apple Podcasts JSON-LD and page links
         //    Apple is authoritative — podcasters submit these links themselves.
         const _apTitle = podcastData.title || '';
@@ -1416,6 +1621,24 @@ async function enrichPodcast(podcastData) {
         );
       }
 
+      // Booking provider detection — SpeakPipe, Podmatch, Calendly, etc.
+      // These are strong signals the show actively books guests
+      if (!enriched.speakpipe_url) {
+        const spLink = homeHrefs.find(h => h.toLowerCase().includes('speakpipe.com'));
+        if (spLink) { enriched.speakpipe_url = spLink; enriched.has_guest_intake = true; }
+      }
+      if (!enriched.podmatch_url) {
+        const pmLink = homeHrefs.find(h => h.toLowerCase().includes('podmatch.com'));
+        if (pmLink) { enriched.podmatch_url = pmLink; enriched.has_guest_intake = true; }
+      }
+      if (!enriched.booking_page_url) {
+        const calLink = homeHrefs.find(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('calendly.com') || hl.includes('cal.com') || hl.includes('acuityscheduling.com') || hl.includes('tidycal.com');
+        });
+        if (calLink) { enriched.booking_page_url = calLink; enriched.has_guest_intake = true; }
+      }
+
       // Detect guest history from homepage content
       const lowerHtml = homepageHtml.toLowerCase();
       if (!enriched.has_guest_history) {
@@ -1459,17 +1682,30 @@ async function enrichPodcast(podcastData) {
     }
 
     // ──────────────────────────────────────────────────
-    // 3. YouTube subscriber count
+    // 3. YouTube subscriber count + About tab email
     // ──────────────────────────────────────────────────
-    if (enriched.youtube_url && !enriched.youtube_subscribers) {
+    if (enriched.youtube_url) {
       try {
         const ytHtml = await fetchHtml(enriched.youtube_url);
         if (ytHtml) {
-          enriched.youtube_subscribers = extractYoutubeSubscribers(ytHtml);
+          if (!enriched.youtube_subscribers) enriched.youtube_subscribers = extractYoutubeSubscribers(ytHtml);
         }
       } catch {
         // YouTube fetch failed, skip
       }
+      // About tab — many podcasters list business/booking email exclusively here
+      if (!enriched.contact_email) {
+        const ytEmail = await fetchYouTubeAboutEmail(enriched.youtube_url);
+        if (ytEmail) enriched.contact_email = ytEmail;
+      }
+    }
+
+    // ──────────────────────────────────────────────────
+    // 3b. Instagram bio email extraction
+    // ──────────────────────────────────────────────────
+    if (enriched.instagram_url && !enriched.contact_email) {
+      const igEmail = await extractInstagramBioEmail(enriched.instagram_url);
+      if (igEmail) enriched.contact_email = igEmail;
     }
 
     // ──────────────────────────────────────────────────
@@ -1558,6 +1794,22 @@ async function enrichPodcast(podcastData) {
       if (!valid) {
         logger.warn('Email failed SMTP verification, clearing', { email: enriched.contact_email, title: podcastData.title });
         enriched.contact_email = null;
+      }
+    }
+
+    // ──────────────────────────────────────────────────
+    // Layer 3b: Email pattern inference (last resort)
+    // If still no email after all sources, try Hunter.io-style pattern inference
+    // using the host name + website domain. Only runs if we know the host's name.
+    // ──────────────────────────────────────────────────
+    if (!enriched.contact_email && (enriched.host_name || podcastData.host_name) && (enriched.website || siteUrl)) {
+      const inferredEmail = await inferEmailFromHostName(
+        enriched.host_name || podcastData.host_name,
+        enriched.website || siteUrl,
+      );
+      if (inferredEmail) {
+        enriched.contact_email = inferredEmail;
+        logger.info('Email inferred from host name pattern', { email: inferredEmail, title: podcastData.title });
       }
     }
 
