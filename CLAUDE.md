@@ -9,6 +9,20 @@ SaaS at C:\Users\zjdkf\podcast-pipeline. Domain: findapodcast.io. Stack: Node/Ex
 - Prefer editing existing files over creating new ones
 - No comments, docstrings, or type annotations on unchanged code
 - No backwards-compat shims or unused exports
+- NEVER use require('resend') — not installed. Use fetch() to Resend REST API.
+- PowerShell: NEVER chain git commands with &&. Run each separately.
+
+## Enrichment System — enrichment.js (9.5/10 — DO NOT WEAKEN)
+Full architecture in memory/enrichment_architecture.md. Critical rules:
+1. Confidence threshold is 90 — do not change
+2. RSS social URLs: atom:link ONLY (no full XML scan — prevents sponsor contamination)
+3. ALWAYS run social URLs through validateSocialWithConfidence before storing
+4. itunes:owner email has priority over channel-level itunes:email
+5. isCatchallDomain() MUST gate inferEmailFromHostName() — never skip this check
+6. Listen Notes social URLs MUST be confidence-validated (LN cross-contaminates)
+7. Operator blocklists (OPERATOR_EMAILS, OPERATOR_DOMAINS, OPERATOR_SOCIALS) are permanent
+8. keep guest@, booking@, contact@ — these are valid podcast contacts (not generic)
+9. New fields: is_interview_format, episodes_last_30_days, speakpipe_url, podmatch_url, has_guest_intake, apple_rating, apple_review_count — run SQL migrations if not yet added
 
 ## Server
 Start: `cd C:\Users\zjdkf\podcast-pipeline && node src/server.js`
