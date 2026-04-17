@@ -270,7 +270,7 @@ function initScheduler() {
     const { data: clients, error } = await supabase
       .from('clients')
       .select('id, name, email, dashboard_token')
-      .eq('active', true)
+      .eq('is_active', true)
       .not('onboarded_at', 'is', null);
     if (error) { logger.error('Weekly digest: failed to load clients', { error: error.message }); return; }
     for (const client of clients || []) {
