@@ -154,6 +154,10 @@ app.get('/podcast-tour-overview', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'pitch-deck.html'));
 });
 
+app.get('/self-managed-overview', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'self-managed-overview.html'));
+});
+
 // Operator page
 app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));

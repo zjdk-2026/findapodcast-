@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Find A Podcast — Self-Managed Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --bg: #09090f;
+    --surface: #13131f;
+    --surface2: #1c1c2e;
+    --border: rgba(255,255,255,0.08);
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --faint: #334155;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 80px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    transform: translateX(40px);
+  }
+  .slide.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+  .slide.out-left { transform: translateX(-40px); }
+
+  .nav-dots {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 100;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--faint); cursor: pointer; transition: all 0.2s;
+  }
+  .dot.active { background: var(--accent); width: 22px; border-radius: 3px; }
+
+  .arrow {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100; transition: background 0.2s; color: var(--muted);
+  }
+  .arrow:hover { background: var(--accent); color: #fff; }
+  .arrow.left  { left: 24px; }
+  .arrow.right { right: 24px; }
+
+  .slide-counter {
+    position: fixed; top: 24px; right: 32px;
+    font-size: 13px; color: var(--muted); z-index: 100; font-weight: 500;
+  }
+
+  .logo-badge {
+    position: fixed; top: 22px; left: 32px;
+    display: flex; align-items: center; gap: 8px; z-index: 100;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-name { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  }
+  .title-xl {
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 900; line-height: 1.05; letter-spacing: -0.03em;
+  }
+  .title-lg {
+    font-size: clamp(32px, 4.5vw, 54px);
+    font-weight: 900; line-height: 1.08; letter-spacing: -0.025em;
+  }
+  .title-md {
+    font-size: clamp(22px, 2.8vw, 36px);
+    font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;
+  }
+  .subtitle {
+    font-size: clamp(15px, 1.6vw, 19px);
+    color: var(--muted); line-height: 1.65; font-weight: 400; max-width: 620px;
+  }
+  .accent-text { color: var(--accent); }
+  .green-text  { color: var(--green); }
+  .yellow-text { color: var(--yellow); }
+  .grad { background: linear-gradient(135deg, #e0e7ff 0%, var(--accent) 60%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 60px; align-items: center; width: 100%; max-width: 1100px;
+  }
+  .col-text { display: flex; flex-direction: column; gap: 20px; }
+  .center-col { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; width: 100%; }
+
+  .graphic-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px;
+    display: flex; align-items: center; justify-content: center; min-height: 320px;
+  }
+
+  .feat-list { display: flex; flex-direction: column; gap: 12px; }
+  .feat-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; border-radius: 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .feat-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feat-icon.purple { background: rgba(99,102,241,0.15); }
+  .feat-icon.green  { background: rgba(16,185,129,0.15); }
+  .feat-icon.yellow { background: rgba(245,158,11,0.15); }
+  .feat-text .feat-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .feat-text .feat-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  .cover-inner { text-align: center; max-width: 860px; }
+  .cover-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 999px; padding: 6px 16px; margin-bottom: 32px;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+  }
+
+  .stat-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; }
+  .stat-pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 20px; text-align: center;
+  }
+  .stat-pill .num { font-size: 28px; font-weight: 900; color: var(--accent); }
+  .stat-pill .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 900px; margin-top: 8px; }
+  .problem-card {
+    background: var(--surface); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 16px; padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .problem-card .p-icon { font-size: 28px; }
+  .problem-card .p-title { font-size: 15px; font-weight: 800; }
+  .problem-card .p-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  .step-flow { display: flex; align-items: center; gap: 0; width: 100%; max-width: 900px; }
+  .step-node { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .step-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--surface2); border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 900; color: var(--accent);
+  }
+  .step-arrow { flex: 0 0 40px; display: flex; align-items: center; justify-content: center; color: var(--faint); padding-bottom: 32px; }
+  .step-label { font-size: 13px; font-weight: 700; text-align: center; }
+  .step-sub { font-size: 11px; color: var(--muted); text-align: center; }
+
+  .pipeline-mock { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .pipe-card {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+  }
+  .pipe-avatar {
+    width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+  }
+  .pipe-title { font-size: 13px; font-weight: 700; }
+  .pipe-sub { font-size: 11px; color: var(--muted); }
+  .pipe-tag {
+    margin-left: auto; padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .tag-new    { background: rgba(99,102,241,0.15); color: var(--accent); }
+  .tag-sent   { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .tag-booked { background: rgba(16,185,129,0.15); color: var(--green); }
+
+  .lb-rows { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .lb-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+  }
+  .lb-rank { font-size: 16px; width: 24px; text-align: center; }
+  .lb-name { font-size: 13px; font-weight: 700; flex: 1; }
+  .lb-stat { font-size: 12px; color: var(--muted); }
+  .lb-bar-wrap { width: 80px; height: 6px; background: var(--faint); border-radius: 3px; overflow: hidden; }
+  .lb-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-size: 17px; font-weight: 800;
+    padding: 18px 40px; border-radius: 16px;
+    text-decoration: none; box-shadow: 0 8px 32px rgba(99,102,241,0.4);
+    letter-spacing: -0.01em;
+  }
+  .social-proof {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center;
+    font-size: 13px; color: var(--muted);
+  }
+  .sp-dot { width: 4px; height: 4px; background: var(--faint); border-radius: 50%; }
+
+  .stat-block {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-block .stat-num { font-size: 36px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; }
+  .stat-block .stat-label { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .stat-block .stat-source { font-size: 11px; color: var(--faint); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="logo-badge">
+  <div class="logo-icon">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" x2="12" y1="19" y2="22"/>
+    </svg>
+  </div>
+  <span class="logo-name">Find A Podcast</span>
+</div>
+
+<div class="slide-counter" id="slide-counter">1 / 7</div>
+
+<div class="arrow left" onclick="prevSlide()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+</div>
+<div class="arrow right" onclick="nextSlide()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</div>
+
+<div class="nav-dots" id="nav-dots"></div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide active" id="slide-1">
+    <div class="cover-inner">
+      <div class="cover-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+        Self-Managed Plan
+      </div>
+      <div class="title-xl" style="margin-bottom:24px;">
+        The system does the work.<br><span class="grad">You make the calls.</span>
+      </div>
+      <p class="subtitle" style="margin:0 auto 36px;">Every show found. Every pitch written. Every follow-up queued. You review, approve, and send. You stay in control of every decision while the platform handles every hour of work that would otherwise eat your week.</p>
+      <div class="stat-row" style="justify-content:center;">
+        <div class="stat-pill"><div class="num">$997</div><div class="lbl">First month</div></div>
+        <div class="stat-pill"><div class="num">$497</div><div class="lbl">Per month after that</div></div>
+        <div class="stat-pill"><div class="num">Cancel</div><div class="lbl">Anytime. No questions.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: WHY PODCASTS -->
+  <div class="slide" id="slide-2">
+    <div class="center-col">
+      <div class="eyebrow">Why Podcasts</div>
+      <div class="title-lg" style="max-width:760px;">The highest-trust channel most people completely ignore.</div>
+      <p class="subtitle">Podcast listeners finish episodes. They trust the host. When the host vouches for you, that trust transfers. No ad can buy that. No post can create it. It has to be earned in a real conversation.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:100%;max-width:900px;margin-top:4px;">
+        <div class="stat-block">
+          <div class="stat-num">80%</div>
+          <div class="stat-label">of podcast listeners say they have bought something after hearing it recommended on a show they trust</div>
+          <div class="stat-source">Edison Research, Infinite Dial</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num">4x</div>
+          <div class="stat-label">more likely to remember a brand they heard in a podcast conversation than one they saw in a display ad</div>
+          <div class="stat-source">Nielsen Podcast Ad Effectiveness</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num">AI search</div>
+          <div class="stat-label">is now surfacing podcast guests as credible experts. Being a regular guest builds the kind of digital footprint AI tools use to recommend people</div>
+          <div class="stat-source">Emerging GEO research, 2025</div>
+        </div>
+      </div>
+      <div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px 28px;font-size:14px;color:var(--muted);max-width:760px;line-height:1.7;">
+        One good podcast appearance can do more for your reputation in 45 minutes than six months of social media posts. The problem is most people never get consistent at doing it.
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: THE PROBLEM -->
+  <div class="slide" id="slide-3">
+    <div class="center-col">
+      <div class="eyebrow">The Problem</div>
+      <div class="title-lg" style="max-width:700px;">Doing this properly by yourself is a <span class="accent-text">full-time job.</span></div>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="p-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+          </div>
+          <div class="p-title">Finding shows takes forever</div>
+          <div class="p-desc">Searching directories, checking if shows are still active, verifying they take guests, finding a contact email. Most people spend a full day to find three decent shows. Then they do nothing with them.</div>
+        </div>
+        <div class="problem-card">
+          <div class="p-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div class="p-title">Writing pitches is a grind</div>
+          <div class="p-desc">A good pitch takes 20 to 30 minutes per show. You have to listen to recent episodes, understand the audience, write something that does not sound like a template, and still sound like yourself. It is exhausting to do at scale.</div>
+        </div>
+        <div class="problem-card">
+          <div class="p-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          </div>
+          <div class="p-title">Nobody follows up</div>
+          <div class="p-desc">Most bookings come from the second or third contact. Hosts are busy. They miss emails. A polite follow-up a week later is often all it takes. Almost nobody sends it because they forget or feel awkward.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: THE SOLUTION -->
+  <div class="slide" id="slide-4">
+    <div class="two-col">
+      <div class="col-text">
+        <div class="eyebrow">How It Works</div>
+        <div class="title-lg">The heavy work is done. <span class="accent-text">You just decide.</span></div>
+        <p class="subtitle">Every morning, fresh shows are waiting in your pipeline. Every pitch is already written, personalised to the host, and ready to send. You read it, tweak it if you want, and hit send. That is the whole job.</p>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-icon purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+            </div>
+            <div class="feat-text"><div class="feat-name">Shows found every day</div><div class="feat-desc">Matched to your niche, scored for fit, verified as active. New ones waiting each morning.</div></div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </div>
+            <div class="feat-text"><div class="feat-name">Pitch written for each one</div><div class="feat-desc">Personalised to that show. Written in your voice. You edit or send as is. Your call.</div></div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon green">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="feat-text"><div class="feat-name">Sent from your real inbox</div><div class="feat-desc">Connects to your Gmail in 30 seconds. Hosts see your name and your email address. Not a tool. Not a service. You.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="graphic-panel">
+        <div class="pipeline-mock">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Your pipeline this morning</div>
+          <div class="pipe-card">
+            <div class="pipe-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">GM</div>
+            <div><div class="pipe-title">Growth Mindset Podcast</div><div class="pipe-sub">entrepreneurship · 34k listeners · pitch ready</div></div>
+            <div class="pipe-tag tag-new">Review</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">FP</div>
+            <div><div class="pipe-title">Finding Peak</div><div class="pipe-sub">mindset · 28k listeners · pitch ready</div></div>
+            <div class="pipe-tag tag-new">Review</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-avatar" style="background:linear-gradient(135deg,#10b981,#0891b2);">SC</div>
+            <div><div class="pipe-title">Scale Smart</div><div class="pipe-sub">business growth · 45k listeners</div></div>
+            <div class="pipe-tag tag-sent">Pitched</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-avatar" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);">TH</div>
+            <div><div class="pipe-title">The High Achiever</div><div class="pipe-sub">leadership · 19k listeners</div></div>
+            <div class="pipe-tag tag-booked">Booked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: FEATURES -->
+  <div class="slide" id="slide-5">
+    <div class="center-col" style="gap:20px;">
+      <div>
+        <div class="eyebrow">Everything You Get</div>
+        <div class="title-lg">Built for people who want to <span class="accent-text">run their own outreach.</span></div>
+      </div>
+      <div style="width:100%;max-width:1000px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="feat-item">
+          <div class="feat-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Daily podcast matches</div><div class="feat-desc">Fresh shows every morning matched to your niche, scored for audience fit, recency and whether they actually take guests.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">AI pitch writing per show</div><div class="feat-desc">Every pitch is written specifically for that host. References their show. Sounds like you. Edit it or send it straight away.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Gmail send from your real inbox</div><div class="feat-desc">One-time 30-second connect. Pitches go from your address. Hosts see your name, not a tool name. That matters.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Automated follow-up</div><div class="feat-desc">If a host does not reply in 7 days, a follow-up goes out automatically. Most bookings come from this one step alone.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Full pipeline dashboard</div><div class="feat-desc">New, Pitched, Replied, Booked, Aired. Every opportunity in one place. One tab per stage. One click per action.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Wish List tab</div><div class="feat-desc">See a show you love but are not ready to pitch yet? Save it. Come back when the timing is right.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Interview prep notes</div><div class="feat-desc">Before every recording, you get a prep brief on the show, the host, and the audience so you show up ready.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Community leaderboard</div><div class="feat-desc">See how you rank against other members by bookings, pitches sent and episodes aired. It turns a solo effort into a competition you actually want to win.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Weekly progress digest</div><div class="feat-desc">Every Monday you get a summary of your pitches sent, replies received and bookings locked. Keeps you honest and moving.</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="feat-text"><div class="feat-name">Mobile friendly</div><div class="feat-desc">Review pitches, approve sends and check your pipeline from anywhere. The whole thing works on your phone.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: LEADERBOARD + PROOF -->
+  <div class="slide" id="slide-6">
+    <div class="two-col">
+      <div class="col-text">
+        <div class="eyebrow">You Are Not Doing This Alone</div>
+        <div class="title-md">A room of people all doing the same thing. <span class="accent-text">That changes everything.</span></div>
+        <p class="subtitle">Solo outreach dies because nobody is watching. The leaderboard fixes that. When you can see exactly where you rank, you send the pitch you were about to skip. You follow up on the one you forgot about. Small things become habits because the board keeps score.</p>
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px 20px;margin-top:4px;">
+          <div style="font-size:12px;font-weight:800;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">What Gets Tracked</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Pitches sent this month
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Bookings confirmed
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Episodes aired
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="graphic-panel" style="flex-direction:column;gap:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">This Month</div>
+        <div class="lb-rows">
+          <div class="lb-row">
+            <div class="lb-rank">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+            </div>
+            <div class="lb-name">Sarah M.</div>
+            <div class="lb-stat">11 booked</div>
+            <div class="lb-bar-wrap"><div class="lb-bar" style="width:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank" style="color:#94a3b8;font-weight:700;font-size:14px;">2</div>
+            <div class="lb-name">David K.</div>
+            <div class="lb-stat">8 booked</div>
+            <div class="lb-bar-wrap"><div class="lb-bar" style="width:73%;"></div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank" style="color:#94a3b8;font-weight:700;font-size:14px;">3</div>
+            <div class="lb-name">Marcus T.</div>
+            <div class="lb-stat">7 booked</div>
+            <div class="lb-bar-wrap"><div class="lb-bar" style="width:64%;"></div></div>
+          </div>
+          <div class="lb-row" style="border-color:rgba(99,102,241,0.4);background:rgba(99,102,241,0.05);">
+            <div class="lb-rank" style="color:var(--accent);font-weight:700;font-size:14px;">4</div>
+            <div class="lb-name" style="color:var(--accent);">You</div>
+            <div class="lb-stat" style="color:var(--accent);">5 booked</div>
+            <div class="lb-bar-wrap"><div class="lb-bar" style="width:45%;"></div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank" style="color:#94a3b8;font-weight:700;font-size:14px;">5</div>
+            <div class="lb-name">Claire B.</div>
+            <div class="lb-stat">3 booked</div>
+            <div class="lb-bar-wrap"><div class="lb-bar" style="width:27%;"></div></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);text-align:center;padding-top:4px;">First name and last initial only. Your privacy is kept.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PRICING + CTA -->
+  <div class="slide" id="slide-7">
+    <div class="center-col" style="gap:28px;max-width:680px;">
+      <div>
+        <div class="eyebrow">Get Started Today</div>
+        <div class="title-xl">
+          Your outreach engine.<br><span class="grad">Running by tomorrow.</span>
+        </div>
+      </div>
+      <p class="subtitle" style="text-align:center;">Sign up today, connect your Gmail, set your niche, and your first batch of shows and pitches will be waiting in the morning. No setup calls. No onboarding weeks. It just works.</p>
+      <div style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:28px 32px;display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Self-Managed Plan</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <div style="font-size:52px;font-weight:900;letter-spacing:-0.04em;color:var(--text);">$997</div>
+              <div style="font-size:16px;color:var(--muted);">first month</div>
+            </div>
+            <div style="font-size:15px;color:var(--muted);margin-top:4px;">then $497 per month. Cancel whenever you want.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Daily show discovery
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              AI pitch writing per show
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Gmail integration and auto follow-up
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Full pipeline dashboard
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Community leaderboard
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Interview prep notes and weekly digest
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <a href="https://buy.stripe.com/dRm9AT7Dq7W5aJf4V18IU0O" class="cta-btn" style="width:100%;justify-content:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
+            Start Today for $997
+          </a>
+          <div style="font-size:13px;color:var(--muted);">Questions? Email <span style="color:var(--accent);">hi@zacdeane.com</span></div>
+        </div>
+      </div>
+      <div class="social-proof">
+        <span>Shows found daily</span>
+        <div class="sp-dot"></div>
+        <span>Pitches written for you</span>
+        <div class="sp-dot"></div>
+        <span>You review and send</span>
+        <div class="sp-dot"></div>
+        <span>Cancel anytime</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL = 7;
+  let current = 1;
+
+  function buildDots() {
+    const container = document.getElementById('nav-dots');
+    for (let i = 1; i <= TOTAL; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 1 ? ' active' : '');
+      d.onclick = () => goTo(i);
+      container.appendChild(d);
+    }
+  }
+
+  function goTo(n) {
+    if (n < 1 || n > TOTAL || n === current) return;
+    const prev = document.getElementById('slide-' + current);
+    const next = document.getElementById('slide-' + n);
+    prev.classList.remove('active');
+    prev.classList.add(n > current ? 'out-left' : '');
+    setTimeout(() => prev.classList.remove('out-left'), 400);
+    next.style.transform = n > current ? 'translateX(40px)' : 'translateX(-40px)';
+    requestAnimationFrame(() => {
+      next.classList.add('active');
+      next.style.transform = '';
+    });
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === n));
+    document.getElementById('slide-counter').textContent = n + ' / ' + TOTAL;
+    current = n;
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); prevSlide(); }
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(); }
+  });
+
+  buildDots();
+</script>
+</body>
+</html>
