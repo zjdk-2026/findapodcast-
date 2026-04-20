@@ -698,10 +698,29 @@
     }
     .plan-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.09); }
     .plan-card.featured {
-      background: #0f172a;
+      background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 55%, #0b1120 100%);
       border: 2px solid #6366f1;
-      box-shadow: 0 0 48px rgba(99,102,241,0.15);
+      box-shadow: 0 20px 60px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
     }
+    .plan-card.featured::before {
+      content: '';
+      position: absolute;
+      top: -40%; right: -20%;
+      width: 70%; height: 70%;
+      background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .plan-card.featured::after {
+      content: '';
+      position: absolute;
+      bottom: -30%; left: -10%;
+      width: 60%; height: 60%;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .plan-card.featured > * { position: relative; z-index: 1; }
     .plan-badge {
       position: absolute;
       top: -14px; left: 50%;
@@ -716,11 +735,11 @@
       white-space: nowrap;
     }
     .plan-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
-    .plan-card.featured .plan-label { color: #a5b4fc; }
+    .plan-card.featured .plan-label { color: #c7d2fe; }
     .plan-name { font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 8px; }
     .plan-card.featured .plan-name { color: #ffffff; }
     .plan-desc { font-size: 15px; color: #6e6e73; line-height: 1.65; margin-bottom: 28px; flex: 1; }
-    .plan-card.featured .plan-desc { color: #94a3b8; }
+    .plan-card.featured .plan-desc { color: #cbd5e1; }
     .plan-features {
       list-style: none;
       padding: 0;
@@ -1519,7 +1538,7 @@
             <li>1x private strategy call with our team per month</li>
             <li>Personal onboarding call to get your pipeline live fast</li>
           </ul>
-          <a href="/self-managed-overview" class="btn-plan">See the full breakdown →</a>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
         </div>
 
         <!-- PODCAST TOUR -->
@@ -1536,7 +1555,7 @@
             <li>Unlimited 1:1 strategy calls with our team</li>
             <li>Priority access to top-tier shows</li>
           </ul>
-          <a href="/podcast-tour-overview" class="btn-plan">See the full breakdown →</a>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
         </div>
 
       </div>
@@ -1550,7 +1569,7 @@
     <div class="boost-inner">
       <div>
         <div class="boost-label">After you appear</div>
-        <div class="boost-title">One episode.<br>30 days of content.</div>
+        <div class="boost-title">One episode.<br>2 weeks of content.</div>
         <div class="boost-body">After you record, our team turns your appearance into short-form video clips, LinkedIn posts, email copy, and audiograms so the episode keeps working long after it airs. Available as an add-on for any aired episode, directly from your dashboard.</div>
         <div class="boost-items">
           <div class="boost-item">
