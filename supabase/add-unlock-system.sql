@@ -56,6 +56,6 @@ WHERE contact_confidence IS NULL;
 
 -- ── 5. Mark existing enriched podcasts as already-unlocked (so live customers don't see a regression)
 UPDATE public.podcasts
-SET contact_unlocked_at = COALESCE(deep_enriched_at, enriched_at, updated_at, created_at, now())
+SET contact_unlocked_at = COALESCE(deep_enriched_at, enriched_at, created_at, now())
 WHERE contact_unlocked_at IS NULL
   AND (contact_email IS NOT NULL OR instagram_url IS NOT NULL);
