@@ -778,36 +778,71 @@ function buildFallbackTipsClient(podcast) {
 }
 
 // ── Unlock button handler ───────────────────────────────────────────────
+// Deep search can take 20-40s. If the fetch stalls/times out, the server may
+// still have completed successfully — so on error we poll the dashboard API
+// to confirm whether contact_unlocked_at has been set. Fires a page reload
+// either way once we confirm success.
 async function unlockContact(event, podcastId) {
   event.preventDefault();
   event.stopPropagation();
   const btn = event.currentTarget;
-  const wrap = btn.closest('[data-unlock-wrap]');
   const orig = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Searching…`;
+
+  const flashSuccessAndReload = () => {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Unlocked`;
+    btn.style.background = '#10b981';
+    setTimeout(() => window.location.reload(), 600);
+  };
+
+  const pollForUnlock = async (attempts = 6) => {
+    const tok = state?.token || location.pathname.split('/').pop();
+    for (let i = 0; i < attempts; i++) {
+      await new Promise(r => setTimeout(r, 2500));
+      try {
+        const r = await fetch(`/api/dashboard/${encodeURIComponent(tok)}`);
+        if (!r.ok) continue;
+        const d = await r.json();
+        const match = (d.matches || []).find(m => m.podcasts?.id === podcastId);
+        if (match?.podcasts?.contact_unlocked_at) return true;
+      } catch { /* try again */ }
+    }
+    return false;
+  };
+
   try {
     const res = await fetch(`/api/unlock/${encodeURIComponent(podcastId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clientId: (typeof state !== 'undefined' && state.client?.id) || window.__clientId || null }),
     });
-    const data = await res.json();
-    if (!data.ok) {
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      showToast('Could not unlock right now. Try again in a moment.');
+    const data = await res.json().catch(() => null);
+    if (data?.ok) {
+      flashSuccessAndReload();
       return;
     }
-    // Success — show brief confirm flash then full page refresh so every
-    // render path picks up the unlocked data (collapsed rows, expanded panes, etc.)
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Unlocked`;
-    btn.style.background = '#10b981';
-    setTimeout(() => window.location.reload(), 600);
-  } catch (err) {
+    // Maybe server is still processing and hit an edge timeout — poll for truth
+    const finished = await pollForUnlock();
+    if (finished) {
+      flashSuccessAndReload();
+      return;
+    }
     btn.disabled = false;
     btn.innerHTML = orig;
-    showToast('Network error. Try again.');
+    btn.style.background = '';
+    showToast('Could not unlock right now. Try again in a moment.');
+  } catch (err) {
+    // Network/timeout — still poll, server may have succeeded
+    const finished = await pollForUnlock();
+    if (finished) {
+      flashSuccessAndReload();
+      return;
+    }
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    btn.style.background = '';
+    showToast('Network hiccup — try again in a moment.');
   }
 }
 

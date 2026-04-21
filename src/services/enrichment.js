@@ -598,6 +598,19 @@ function isPodcastPlatformUrl(url) {
 const OPERATOR_EMAILS    = ['hi@zacdeane.com', 'zac@zacdeane.com', 'hi@findapodcast.io'];
 const OPERATOR_DOMAINS   = ['zacdeane.com', 'findapodcast.io'];
 const OPERATOR_SOCIALS   = ['instagram.com/zacdeane', 'linkedin.com/in/zacdeane', 'instagram.com/zac_deane'];
+
+// Generic platform handles that keep showing up as hallucinations — never attribute to any podcast.
+// Matched with exact-handle semantics (endsWith after normalising), not substring, so a legitimate
+// handle like "podcasts_fan_show" still passes.
+const BLOCKED_GENERIC_SOCIALS = [
+  'twitter.com/podcasts',     // Twitter's own corporate podcasts account
+  'x.com/podcasts',
+  'instagram.com/notsalmon',  // Karen Salmansohn's brand, keeps slipping through
+  'instagram.com/tiktok',
+  'twitter.com/youtube',
+  'twitter.com/instagram',
+];
+
 // Operator-owned podcast external_ids — never overwrite host_name or contact_email for these
 const OPERATOR_PODCAST_IDS = ['breakthrough-moment-zac-deane'];
 
@@ -607,6 +620,9 @@ function isOperatorOwned(value) {
   if (OPERATOR_EMAILS.some(e => v === e)) return true;
   if (OPERATOR_DOMAINS.some(d => v.includes(`@${d}`))) return true;
   if (OPERATOR_SOCIALS.some(s => v.includes(s))) return true;
+  // Generic-platform exact-handle check — normalize, then endsWith
+  const normalized = v.split('?')[0].replace(/\/$/, '');
+  if (BLOCKED_GENERIC_SOCIALS.some(bad => normalized.endsWith('/' + bad) || normalized.endsWith(bad) || normalized === `https://${bad}` || normalized === `http://${bad}`)) return true;
   return false;
 }
 
