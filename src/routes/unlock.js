@@ -6,20 +6,23 @@ const { unlockPodcast } = require('../lib/strict-unlock');
 const { buildFallbackTips } = require('../lib/contact-likelihood');
 const logger = require('../lib/logger');
 const supabase = require('../lib/supabase');
+const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST /api/unlock/:podcastId
+// POST /unlock/:podcastId  (mounted at /api — final path /api/unlock/:id)
 //
-// Body: { clientId?: uuid }
+// Requires dashboard token (header x-dashboard-token or pp_session cookie).
+// clientId is taken from the authenticated session, not the request body.
+//
 // Response:
 //   200 { ok: true, podcast, cached: bool, fallback_tips: [...] | null }
 //   404 { ok: false, error: 'podcast_not_found' }
 //   500 { ok: false, error: string }
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.post('/api/unlock/:podcastId', async (req, res) => {
+router.post('/unlock/:podcastId', requireDashboardToken, async (req, res) => {
   const { podcastId } = req.params;
-  const clientId = req.body?.clientId || null;
+  const clientId = req.clientId || req.body?.clientId || null;
 
   if (!podcastId) return res.status(400).json({ ok: false, error: 'podcastId required' });
 
