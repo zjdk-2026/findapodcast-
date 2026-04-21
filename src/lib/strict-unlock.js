@@ -58,9 +58,20 @@ async function unlockPodcast(podcastId, clientId) {
       logEntry.was_cached = true;
       logEntry.result_found = hasAnyContact(podcast);
       logEntry.fields_found = listPopulatedFields(podcast);
-      await supabase.from('podcasts').update({ unlock_count: (podcast.unlock_count || 0) + 1 }).eq('id', podcastId);
+
+      // If sources receipt is empty (backfilled row), reconstruct a best-effort one
+      // so the customer-visible "Verified via…" label still populates.
+      let sourcesPatch = null;
+      if (!podcast.contact_sources || Object.keys(podcast.contact_sources).length === 0) {
+        const inferred = inferSourcesFromData(podcast);
+        if (Object.keys(inferred).length > 0) sourcesPatch = inferred;
+      }
+
+      const update = { unlock_count: (podcast.unlock_count || 0) + 1 };
+      if (sourcesPatch) update.contact_sources = sourcesPatch;
+      await supabase.from('podcasts').update(update).eq('id', podcastId);
       await writeLog(logEntry, startedAt);
-      return { ok: true, podcast, cached: true };
+      return { ok: true, podcast: { ...podcast, ...(sourcesPatch ? { contact_sources: sourcesPatch } : {}) }, cached: true };
     }
 
     // ── 2. Run the existing enrichment pipeline to get baseline ────────────
@@ -334,6 +345,39 @@ function buildSources(enriched, original) {
       sources[field] = 'verified';
     }
   }
+
+  return sources;
+}
+
+// ── Infer sources for legacy/cached rows without a receipt ──────────────────
+// Best-effort reconstruction so customers always see a "Verified via…" label.
+// Never invents provenance that can't be defended by the stored URL pattern.
+function inferSourcesFromData(p) {
+  const sources = {};
+  let siteHost = null;
+  if (p.website) {
+    try { siteHost = new URL(p.website.startsWith('http') ? p.website : 'https://' + p.website).host.replace(/^www\./, ''); } catch {}
+  }
+
+  if (p.contact_email) {
+    const emailDomain = p.contact_email.split('@')[1] || '';
+    if (siteHost && (emailDomain === siteHost || emailDomain.endsWith('.' + siteHost) || siteHost.endsWith('.' + emailDomain))) {
+      sources.contact_email = 'cross_verified';
+    } else {
+      sources.contact_email = 'legacy_enrichment';
+    }
+  }
+
+  const socialFields = ['instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url', 'youtube_url'];
+  for (const f of socialFields) {
+    if (p[f]) sources[f] = 'legacy_enrichment';
+  }
+
+  if (p.host_instagram_url) sources.host_instagram_url = 'bio_mention';
+  if (p.host_linkedin_url)  sources.host_linkedin_url  = 'bio_mention';
+  if (p.host_twitter_url)   sources.host_twitter_url   = 'bio_mention';
+
+  if (p.website) sources.website = 'verified';
 
   return sources;
 }

@@ -603,12 +603,31 @@ const OPERATOR_SOCIALS   = ['instagram.com/zacdeane', 'linkedin.com/in/zacdeane'
 // Matched with exact-handle semantics (endsWith after normalising), not substring, so a legitimate
 // handle like "podcasts_fan_show" still passes.
 const BLOCKED_GENERIC_SOCIALS = [
-  'twitter.com/podcasts',     // Twitter's own corporate podcasts account
-  'x.com/podcasts',
-  'instagram.com/notsalmon',  // Karen Salmansohn's brand, keeps slipping through
+  // Generic platform-handle accounts (corporate / platform-owned)
+  'twitter.com/podcasts', 'x.com/podcasts',
+  'twitter.com/youtube',  'x.com/youtube',
+  'twitter.com/instagram','x.com/instagram',
+  'twitter.com/tiktok',   'x.com/tiktok',
+  'twitter.com/facebook', 'x.com/facebook',
+  'twitter.com/apple',    'x.com/apple',
+  'twitter.com/spotify',  'x.com/spotify',
+  'instagram.com/notsalmon', // Karen Salmansohn's brand, keeps slipping through as hallucination
   'instagram.com/tiktok',
-  'twitter.com/youtube',
-  'twitter.com/instagram',
+  'instagram.com/facebook',
+  'instagram.com/youtube',
+  'instagram.com/spotify',
+  'facebook.com/podcast', 'facebook.com/podcasts',
+  'facebook.com/art19',   // podcast hosting platform, not a show
+  'facebook.com/tiktok',
+  'facebook.com/youtube',
+  'facebook.com/instagram',
+  'facebook.com/twitter',
+  'facebook.com/apple',
+  'facebook.com/spotify',
+  'facebook.com/libsyn',  // hosting platforms that show up in RSS footers
+  'facebook.com/buzzsprout',
+  'facebook.com/anchor',
+  'facebook.com/megaphone',
 ];
 
 // Operator-owned podcast external_ids — never overwrite host_name or contact_email for these
