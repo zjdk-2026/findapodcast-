@@ -799,19 +799,11 @@ async function unlockContact(event, podcastId) {
       showToast('Could not unlock right now. Try again in a moment.');
       return;
     }
-    // Merge the new podcast into the match in the in-memory model so re-render works
-    const p = data.podcast;
-    if (data.fallback_tips) p._fallback_tips = data.fallback_tips;
-    // Patch any matches referencing this podcast
-    if (Array.isArray(window.__currentMatches)) {
-      for (const m of window.__currentMatches) {
-        if (m.podcasts?.id === podcastId) m.podcasts = { ...m.podcasts, ...p };
-      }
-    }
-    // Re-render just this card's contact section if we can; else full refresh
-    if (wrap) {
-      wrap.outerHTML = contactChipsHtml({ ...p, _fallback_tips: p._fallback_tips });
-    }
+    // Success — show brief confirm flash then full page refresh so every
+    // render path picks up the unlocked data (collapsed rows, expanded panes, etc.)
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Unlocked`;
+    btn.style.background = '#10b981';
+    setTimeout(() => window.location.reload(), 600);
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = orig;
