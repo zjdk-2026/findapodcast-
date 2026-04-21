@@ -24,6 +24,21 @@ Full architecture in memory/enrichment_architecture.md. Critical rules:
 8. keep guest@, booking@, contact@ — these are valid podcast contacts (not generic)
 9. New fields: is_interview_format, episodes_last_30_days, speakpipe_url, podmatch_url, has_guest_intake, apple_rating, apple_review_count — run SQL migrations if not yet added
 
+## Unlock System — zero hallucination contact reveal (shipped April 2026)
+Full architecture: `unlock_system_architecture` project memory. Runbook: `findapodcast-unlock-maintenance` skill. The law: `findapodcast-zero-hallucination` skill.
+
+Flow: customer clicks Unlock on card → `POST /api/unlock/:podcastId` (requires dashboard token) → `src/lib/strict-unlock.js :: unlockPodcast` → 30d shared cache check → runs enrichPodcast + host socials deep search (Google CSE + bio mention verify) + Claude haiku-4.5 email verification → builds `contact_sources` receipt → saves.
+
+Critical rules:
+1. Contact pills HIDDEN on customer cards unless `contact_unlocked_at` is set (dashboard/app.js :: contactChipsHtml)
+2. Pitch/DM buttons gated on same (actionButtonsHtml)
+3. `src/lib/deep-enricher.js` background auto-trigger is DISABLED in pipeline.js — wrote weak-signal data silently. Do not re-enable.
+4. `src/routes/dashboard.js` SELECT MUST include: `contact_unlocked_at, contact_confidence, contact_sources, host_instagram_url, host_linkedin_url, host_twitter_url, unlock_count`
+5. `podcasts` has NO `updated_at` column — COALESCE backfills use `created_at` instead
+6. Migration file: `supabase/add-unlock-system.sql` — idempotent, uses IF NOT EXISTS throughout
+7. On hallucination found → two cleanup levels in unlock-maintenance skill (targeted vs full cache invalidation)
+8. New tables: `unlock_events` (every click logged with was_cached, result_found, fields_found, duration_ms)
+
 ## Server
 Start: `cd C:\Users\zjdkf\podcast-pipeline && node src/server.js`
 Restart: kill PID on port 3000, then start again
@@ -32,13 +47,17 @@ Restart: kill PID on port 3000, then start again
 - Dashboard: GET /dashboard/:token
 - Onboard: GET /onboard
 - Operator: GET /operator (key: pipeline2026)
+- Pitch decks: GET /self-managed-overview, /podcast-tour-overview
 - API: /api/onboard, /api/run/:clientId, /api/approve, /api/dismiss, /api/send, /api/book, /api/unbook, /api/notes, /api/email/edit, /api/template
+- POST /api/unlock/:podcastId (zero-hallucination deep contact reveal — requires dashboard token)
 - PATCH /api/onboard/:clientId (profile update)
 - Gmail OAuth: /auth/gmail, /auth/gmail/callback
 
 ## Supabase
 URL: https://ldyocadmkwesdwcnojjf.supabase.co
-Tables: clients, podcasts, podcast_matches
+Tables: clients, podcasts, podcast_matches, unlock_events
+Run DDL via SQL editor: https://supabase.com/dashboard/project/ldyocadmkwesdwcnojjf/sql/new
+Data-only ops (DELETE, UPDATE, INSERT) can run via PostgREST using SUPABASE_SERVICE_KEY as both `apikey` and `Authorization: Bearer` headers.
 
 ## GitHub
 Repo: https://github.com/zjdk-2026/findapodcast-.git (branch: master)
