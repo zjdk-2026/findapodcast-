@@ -68,7 +68,14 @@ router.get('/dashboard/:token', async (req, res) => {
           country,
           language,
           listen_score,
-          enriched_at
+          enriched_at,
+          contact_unlocked_at,
+          contact_confidence,
+          contact_sources,
+          host_instagram_url,
+          host_linkedin_url,
+          host_twitter_url,
+          unlock_count
         )
         ,
         client_notes,
