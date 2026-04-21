@@ -16,6 +16,7 @@ const { sendDigestEmail }   = require('./services/digestEmail');
 const { sendFollowUps }     = require('./services/followUp');
 const { sendWeeklyDigest }      = require('./services/weeklyDigest');
 const { notifyClientNewMatches } = require('./services/pushNotifier');
+const { computeContactLikelihood } = require('./lib/contact-likelihood');
 
 // Keep track of per-client cron jobs so we can reschedule dynamically
 const activeJobs = new Map(); // clientId → cron.ScheduledTask
@@ -329,6 +330,7 @@ function buildPodcastRecord(enriched) {
     tiktok_url:                enriched.tiktok_url         || null,
     linkedin_page_url:         enriched.linkedin_page_url  || null,
     enriched_at:               enriched.enriched_at        || new Date().toISOString(),
+    contact_confidence:        computeContactLikelihood(enriched),
   };
 }
 

@@ -9,6 +9,7 @@ const { scorePodcast }      = require('../services/scoring');
 const { writeEmail }        = require('../services/emailWriter');
 const { createDraft }       = require('../services/gmailService');
 const { sendDigestEmail }   = require('../services/digestEmail');
+const { computeContactLikelihood } = require('../lib/contact-likelihood');
 
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 const router = express.Router();
@@ -207,14 +208,10 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
     // ── 7. Update last_run_at ─────────────────────────────────
     await updateLastRun(clientId);
 
-    // Fire-and-forget deep enrichment for new podcasts (reachable shows only)
-    const newPodcastIds = savedMatches.map((m) => m.podcast_id || m.podcasts?.id).filter(Boolean);
-    if (newPodcastIds.length > 0) {
-      const { deepEnrichNewPodcasts } = require('../lib/deep-enricher');
-      deepEnrichNewPodcasts(newPodcastIds).catch((err) =>
-        logger.warn('Deep enrichment background error', { error: err.message })
-      );
-    }
+    // NOTE: Auto-triggered deep enrichment disabled in the unlock-first launch.
+    // Contact data is now revealed via the strict-unlock flow (POST /api/unlock/:id).
+    // The zero-hallucination skill forbids silent background writes that bypass
+    // the Claude verification pass + source-receipt rules.
 
     logger.info('Pipeline run complete', {
       clientId,
@@ -317,6 +314,7 @@ function buildPodcastRecord(enriched) {
     language:                enriched.language        || 'English',
     listen_score:            toInt(enriched.listen_score),
     enriched_at:             enriched.enriched_at     || new Date().toISOString(),
+    contact_confidence:      computeContactLikelihood(enriched),
   };
 }
 

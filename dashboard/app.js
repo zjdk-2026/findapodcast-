@@ -643,14 +643,6 @@ function isValidSocialProfile(url, platform) {
 }
 
 function contactChipsHtml(podcast) {
-  const chips = [];
-
-  // Email (always first if present — skip anchor.fm auto-generated addresses)
-  const isAutoEmail = podcast.contact_email && /podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email);
-  if (podcast.contact_email && !isAutoEmail) {
-    chips.push(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
-  }
-
   // Helper: is this URL a podcast platform URL (not a real website)?
   const PLATFORM_DOMAINS = ['apple.com', 'podcasts.apple.com', 'itunes.apple.com', 'itunes.', 'spotify.com', 'anchor.fm',
     'youtube.com', 'soundcloud.com', 'stitcher.com', 'podbean.com', 'buzzsprout.com',
@@ -661,6 +653,36 @@ function contactChipsHtml(podcast) {
     return PLATFORM_DOMAINS.some(d => lower.includes(d));
   }
 
+  const publicChips = [];
+  // Always show these public preview links so customer can sanity-check the show
+  if (isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com')) {
+    publicChips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>Listen on Apple</a>`);
+  }
+  if (isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com')) {
+    publicChips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
+  }
+
+  // ── UNLOCK GATE ────────────────────────────────────────────────────────
+  const isUnlocked = !!podcast.contact_unlocked_at;
+  const podcastId = podcast.id;
+
+  if (!isUnlocked) {
+    // Show confidence badge + Unlock CTA
+    const confidence = podcast.contact_confidence || 'medium';
+    const badge = confidenceBadgeHtml(confidence);
+    const cta = `<button class="btn btn-xs btn-unlock" onclick="unlockContact(event,'${esc(podcastId)}')" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Unlock Contact</button>`;
+    return `<div class="contact-section" data-unlock-wrap="${esc(podcastId)}"><div class="contact-chips" style="align-items:center;">${publicChips.join('')}${badge}${cta}</div></div>`;
+  }
+
+  // ── UNLOCKED — show the pills ─────────────────────────────────────────
+  const chips = [...publicChips];
+
+  // Email (skip anchor.fm auto-generated addresses)
+  const isAutoEmail = podcast.contact_email && /podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email);
+  if (podcast.contact_email && !isAutoEmail) {
+    chips.unshift(`<a class="contact-chip contact-chip-primary" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>`);
+  }
+
   // Website — only show if it's a real website, not a platform URL, and not the same as the Apple URL
   const isSameAsApple = podcast.apple_url && podcast.website &&
     podcast.website.toLowerCase().trim() === podcast.apple_url.toLowerCase().trim();
@@ -668,18 +690,143 @@ function contactChipsHtml(podcast) {
     chips.push(`<a class="contact-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener">Website</a>`);
   }
 
-  // Apple Podcasts link
-  if (isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com')) chips.push(`<a class="contact-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>`);
-
-  // Spotify link
-  if (isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com')) chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
-
-  // Instagram only
+  // Instagram
   if (isValidSocialProfile(podcast.instagram_url, 'instagram')) chips.push(`<a class="contact-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
 
-  return chips.length > 0
-    ? `<div class="contact-section"><div class="contact-chips">${chips.join('')}</div></div>`
-    : `<div class="contact-section"><span style="font-size:12px;color:var(--text-tertiary);">No contact info found yet.</span></div>`;
+  // Host personal socials (new)
+  if (isValidSocialProfile(podcast.host_instagram_url, 'instagram')) {
+    chips.push(`<a class="contact-chip" href="${esc(podcast.host_instagram_url)}" target="_blank" rel="noopener" title="Host's personal Instagram">Host IG</a>`);
+  }
+  if (isValidSocialProfile(podcast.host_linkedin_url, 'linkedin')) {
+    chips.push(`<a class="contact-chip" href="${esc(podcast.host_linkedin_url)}" target="_blank" rel="noopener" title="Host's personal LinkedIn">Host LinkedIn</a>`);
+  }
+  if (isValidSocialProfile(podcast.host_twitter_url, 'twitter')) {
+    chips.push(`<a class="contact-chip" href="${esc(podcast.host_twitter_url)}" target="_blank" rel="noopener" title="Host's personal Twitter">Host X</a>`);
+  }
+
+  // Has any contact at all?
+  const hasAnyContact = !!(podcast.contact_email || podcast.instagram_url || podcast.website ||
+    podcast.host_instagram_url || podcast.host_linkedin_url || podcast.host_twitter_url);
+
+  if (!hasAnyContact) {
+    return `<div class="contact-section" data-unlock-wrap="${esc(podcastId)}"><div class="contact-chips">${chips.join('')}</div>${fallbackTipsHtml(podcast)}</div>`;
+  }
+
+  // Verified-via receipt (tiny text under chips)
+  const receipt = verifiedViaHtml(podcast);
+
+  return `<div class="contact-section" data-unlock-wrap="${esc(podcastId)}"><div class="contact-chips">${chips.join('')}</div>${receipt}</div>`;
+}
+
+// ── Contact-likelihood badge ────────────────────────────────────────────
+function confidenceBadgeHtml(confidence) {
+  const map = {
+    high:   { dot: '#10b981', label: 'Likely to unlock' },
+    medium: { dot: '#f59e0b', label: 'Might unlock' },
+    low:    { dot: '#9ca3af', label: 'Unlikely to unlock' },
+    none:   { dot: '#9ca3af', label: 'Unlikely to unlock' },
+  };
+  const m = map[confidence] || map.medium;
+  return `<span class="contact-chip" style="background:#fafafa;border:1px solid #eee;color:#666;font-size:11px;padding:4px 10px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${m.dot};margin-right:5px;vertical-align:1px;"></span>${m.label}</span>`;
+}
+
+// ── Verified-via receipt (shown after unlock) ───────────────────────────
+function verifiedViaHtml(podcast) {
+  const sources = podcast.contact_sources || {};
+  const vals = Object.values(sources).filter(Boolean);
+  if (vals.length === 0) return '';
+  const sourceLabels = {
+    rss_owner:      'RSS feed owner',
+    website_link:   'show website',
+    apple_sameAs:   'Apple Podcasts',
+    cross_verified: 'multiple sources',
+    bio_mention:    'profile bio',
+    rss_or_apple:   'RSS or Apple',
+    verified:       'verified',
+  };
+  const uniqueSources = [...new Set(vals.map(v => sourceLabels[v] || v))].slice(0, 3).join(', ');
+  const days = podcast.contact_unlocked_at
+    ? Math.max(1, Math.floor((Date.now() - new Date(podcast.contact_unlocked_at).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const when = days === 0 ? 'just now' : days === 1 ? '1 day ago' : `${days} days ago`;
+  return `<div style="font-size:11px;color:#888;margin-top:6px;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Verified via ${uniqueSources} · ${when}</div>`;
+}
+
+// ── Fallback tips — shown when unlock returns no contact data ──────────
+function fallbackTipsHtml(podcast) {
+  const tips = podcast._fallback_tips || buildFallbackTipsClient(podcast);
+  if (!tips.length) return '';
+  return `<div style="margin-top:10px;padding:12px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:12.5px;color:#7c2d12;">
+    <div style="font-weight:700;margin-bottom:6px;">No verified public contact — try one of these:</div>
+    ${tips.map(t => `<div style="margin-top:4px;"><a href="${esc(t.url)}" target="_blank" rel="noopener" style="color:#c2410c;font-weight:600;text-decoration:underline;">${esc(t.label)} →</a><span style="color:#9a3412;"> ${esc(t.reason)}</span></div>`).join('')}
+  </div>`;
+}
+
+// Client-side duplicate of buildFallbackTips (used when server didn't bundle them)
+function buildFallbackTipsClient(podcast) {
+  const tips = [];
+  const host = (podcast?.host_name || '').trim();
+  const title = (podcast?.title || '').trim();
+  if (host) {
+    tips.push({ label: `DM ${host} on Instagram`, url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(host)}`, reason: '— hosts often reply to warm DMs' });
+    tips.push({ label: `Find ${host} on LinkedIn`, url: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(host + (title ? ' ' + title : ''))}`, reason: '— LinkedIn requests with a show note often land' });
+  }
+  if (title) {
+    tips.push({ label: 'Search Google', url: `https://www.google.com/search?q=${encodeURIComponent('"' + title + '"' + (host ? ' "' + host + '"' : '') + ' contact email')}`, reason: '— may list contact on a page we missed' });
+  }
+  return tips;
+}
+
+// ── Unlock button handler ───────────────────────────────────────────────
+async function unlockContact(event, podcastId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const btn = event.currentTarget;
+  const wrap = btn.closest('[data-unlock-wrap]');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Searching…`;
+  try {
+    const res = await fetch(`/api/unlock/${encodeURIComponent(podcastId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: (typeof state !== 'undefined' && state.client?.id) || window.__clientId || null }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      showToast('Could not unlock right now. Try again in a moment.');
+      return;
+    }
+    // Merge the new podcast into the match in the in-memory model so re-render works
+    const p = data.podcast;
+    if (data.fallback_tips) p._fallback_tips = data.fallback_tips;
+    // Patch any matches referencing this podcast
+    if (Array.isArray(window.__currentMatches)) {
+      for (const m of window.__currentMatches) {
+        if (m.podcasts?.id === podcastId) m.podcasts = { ...m.podcasts, ...p };
+      }
+    }
+    // Re-render just this card's contact section if we can; else full refresh
+    if (wrap) {
+      wrap.outerHTML = contactChipsHtml({ ...p, _fallback_tips: p._fallback_tips });
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    showToast('Network error. Try again.');
+  }
+}
+
+function showToast(msg) {
+  try {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,0.3);';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch { /* no-op */ }
 }
 
 // ── Social chips HTML (legacy, kept for compatibility) ─────────────────
@@ -751,11 +898,13 @@ function actionButtonsHtml(match) {
   const podcast = match.podcasts || {};
   const buttons = [];
 
-  const hasContactEmail = !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
-  const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
+  // Pitch/DM buttons only light up when contact has been unlocked — zero hallucination policy
+  const isUnlockedForActions = !!podcast.contact_unlocked_at;
+  const hasContactEmail = isUnlockedForActions && !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
+  const hasSocial = isUnlockedForActions && (isValidSocialProfile(podcast.instagram_url, 'instagram') ||
                     isValidSocialProfile(podcast.twitter_url, 'twitter') ||
                     isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
-                    isValidSocialProfile(podcast.facebook_url, 'facebook');
+                    isValidSocialProfile(podcast.facebook_url, 'facebook'));
 
   // ── Pitch button (Write Pitch Email / DM Template) shown on NEW and WISH LIST ──
   const pitchStatuses = ['new', 'dream'];
@@ -2684,6 +2833,8 @@ window.sendThankYouFromPanel = sendThankYouFromPanel;
 
 function showNoEmailWarning(matchId) {
   const match = state.matches.find(m => m.id === matchId);
+  const podcast = match?.podcasts || {};
+  const isUnlocked = !!podcast.contact_unlocked_at;
   const hasSocial = match && (
     isValidSocialProfile(match.podcasts?.instagram_url, 'instagram') ||
     isValidSocialProfile(match.podcasts?.twitter_url, 'twitter') ||
@@ -2696,24 +2847,34 @@ function showNoEmailWarning(matchId) {
   const modal = document.createElement('div');
   modal.id = 'no-email-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;';
+
+  const title = isUnlocked ? 'No email found' : 'Unlock contact first';
+  const body = isUnlocked
+    ? `No contact email found for this one. ${hasSocial ? 'Try the <strong>DM Template</strong> below to reach out on social instead.' : 'You may need to find their contact info directly on their website.'}`
+    : `We haven't searched for contact details yet. Click <strong>Unlock Contact</strong> on the card and we'll do a deep verified search — only showing results we can 100% confirm.`;
+  const primaryBtn = !isUnlocked && podcast.id
+    ? `<button class="btn btn-xs" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;font-weight:700;" onclick="document.getElementById('no-email-modal').remove();unlockContact({preventDefault:()=>{},stopPropagation:()=>{},currentTarget:document.querySelector('[data-unlock-wrap=\\'${esc(podcast.id)}\\'] .btn-unlock')}, '${esc(podcast.id)}')">Unlock Contact</button>`
+    : (hasSocial ? `<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="document.getElementById('no-email-modal').remove();toggleSocialDM('${matchId}')">Open DM Template</button>` : '');
+
   modal.innerHTML = `
     <div style="background:var(--bg-card);border-radius:16px;padding:28px 28px 24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div style="width:36px;height:36px;border-radius:8px;background:${isUnlocked ? '#fef3c7' : '#e0e7ff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${isUnlocked ? '#d97706' : '#6366f1'}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-        <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">No email found</h3>
+        <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">${title}</h3>
       </div>
-      <p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6;">No contact email found for this one. ${hasSocial ? 'Try the <strong>DM Template</strong> below to reach out on social instead.' : 'You may need to find their contact info directly on their website.'}</p>
+      <p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6;">${body}</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('no-email-modal').remove()">Close</button>
-        ${hasSocial ? `<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;font-weight:600;" onclick="document.getElementById('no-email-modal').remove();toggleSocialDM('${matchId}')">Open DM Template</button>` : ''}
+        ${primaryBtn}
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 window.showNoEmailWarning = showNoEmailWarning;
+window.unlockContact = unlockContact;
 
 function toggleSocialDM(matchId) {
   const panel = $(`dm-panel-${matchId}`);
