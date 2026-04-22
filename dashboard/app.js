@@ -1390,14 +1390,6 @@ function renderMatchCard(match) {
   const isBooked   = match.status === 'booked';
   const bookedClass = isBooked ? 'card-booked-highlight' : '';
 
-  const redFlagsClean = match.red_flags && match.red_flags !== 'none' && !match.red_flags.startsWith('API error') && !match.red_flags.startsWith('Scoring');
-  const redFlagsHtml = redFlagsClean
-    ? `<div class="why-fits-box">
-        <p class="why-fits-label">Red Flags</p>
-        <p class="red-flags-text">${esc(match.red_flags)}</p>
-       </div>`
-    : '';
-
   const episodeHtml = '';
 
   const socialHtml = '';
@@ -1514,7 +1506,6 @@ function renderMatchCard(match) {
             <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
           </div>` : ''}
       ${episodeHtml}
-      ${redFlagsHtml}
     </div>
 
     <!-- Meta tags -->
