@@ -31,7 +31,7 @@ router.get('/api/agency/:token', async (req, res) => {
 
   const { data: clients } = await supabase
     .from('clients')
-    .select('id,name,email,dashboard_token,created_at,last_run_at,gmail_connected,onboarded_at')
+    .select('id,name,email,dashboard_token,created_at,last_run_at,gmail_refresh_token,gmail_email,onboarded_at,is_active')
     .eq('agency_id', agency.id)
     .order('created_at', { ascending: false });
 
@@ -47,7 +47,7 @@ router.get('/api/agency/:token', async (req, res) => {
       if (m.status === 'booked' || m.status === 'aired') totals.booked++;
       if (m.status === 'aired') totals.aired++;
     });
-    return { ...c, stats: totals };
+    return { ...c, stats: totals, gmail_connected: !!c.gmail_refresh_token };
   }));
 
   res.json({ ok: true, agency: { id: agency.id, name: agency.name, contact_email: agency.contact_email, status: agency.status }, clients: stats });
