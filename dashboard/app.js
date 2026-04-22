@@ -1489,8 +1489,8 @@ function renderMatchCard(match) {
       </div>
       <div class="pitch-preview-strip" id="pitch-preview-${esc(match.id)}"></div>
       <div class="inline-pitch-actions">
-        <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
         <button class="btn btn-action-send btn-xs" onclick="sendFromInline('${esc(match.id)}')">Send</button>
+        <button id="inline-rewrite-${esc(match.id)}" class="btn btn-xs" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteInlinePitch('${esc(match.id)}')">Rewrite Pitch</button>
       </div>
     </div>` : ''}
 
