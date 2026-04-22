@@ -100,6 +100,7 @@ app.use('/api', require('./routes/vision-board'));
 app.use('/api', require('./routes/leaderboard'));
 app.use('/api', require('./routes/push'));
 app.use('/api', require('./routes/unlock'));
+app.use('/', require('./routes/agency'));
 app.use(require('./routes/upload'));
 
 // ── Public static files (served before catch-alls) ───────────────────
