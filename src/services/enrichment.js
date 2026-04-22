@@ -611,24 +611,83 @@ const BLOCKED_GENERIC_SOCIALS = [
   'twitter.com/facebook', 'x.com/facebook',
   'twitter.com/apple',    'x.com/apple',
   'twitter.com/spotify',  'x.com/spotify',
-  'instagram.com/notsalmon', // Karen Salmansohn's brand, keeps slipping through as hallucination
-  'instagram.com/tiktok',
-  'instagram.com/facebook',
-  'instagram.com/youtube',
-  'instagram.com/spotify',
+  // Podcast-hosting platform socials (rss, art19, libsyn, etc.) — NEVER the show's
+  'twitter.com/rss',      'x.com/rss',
+  'twitter.com/art19',    'x.com/art19',
+  'twitter.com/libsyn',   'x.com/libsyn',
+  'twitter.com/anchor',   'x.com/anchor',
+  'twitter.com/spreaker', 'x.com/spreaker',
+  'twitter.com/buzzsprout','x.com/buzzsprout',
+  'twitter.com/acast',    'x.com/acast',
+  'twitter.com/podbean',  'x.com/podbean',
+  'twitter.com/megaphone','x.com/megaphone',
+  'twitter.com/transistor','x.com/transistor',
+  'twitter.com/simplecast','x.com/simplecast',
+  'twitter.com/omny',     'x.com/omny',
+  // Generic single-word handles that keep grabbing matches falsely
+  'twitter.com/mental',   'x.com/mental',
+  'twitter.com/shows',    'x.com/shows',
+  'twitter.com/small',    'x.com/small',
+  'twitter.com/founders', 'x.com/founders',
+  'twitter.com/podcast',  'x.com/podcast',
+  'twitter.com/support',  'x.com/support',
+  'twitter.com/help',     'x.com/help',
+  // Instagram platform/hosting accounts
+  'instagram.com/notsalmon',
+  'instagram.com/tiktok', 'instagram.com/facebook', 'instagram.com/youtube', 'instagram.com/spotify',
+  'instagram.com/rss', 'instagram.com/art19', 'instagram.com/libsyn', 'instagram.com/anchor',
+  'instagram.com/spreaker', 'instagram.com/buzzsprout', 'instagram.com/acast',
+  'instagram.com/podbean', 'instagram.com/megaphone', 'instagram.com/transistor',
+  'instagram.com/simplecast', 'instagram.com/omny',
+  'instagram.com/shapedfurniture', // repeat offender
+  // Facebook platform/hosting pages
   'facebook.com/podcast', 'facebook.com/podcasts',
-  'facebook.com/art19',   // podcast hosting platform, not a show
-  'facebook.com/tiktok',
-  'facebook.com/youtube',
-  'facebook.com/instagram',
-  'facebook.com/twitter',
-  'facebook.com/apple',
-  'facebook.com/spotify',
-  'facebook.com/libsyn',  // hosting platforms that show up in RSS footers
-  'facebook.com/buzzsprout',
-  'facebook.com/anchor',
-  'facebook.com/megaphone',
+  'facebook.com/art19', 'facebook.com/rss',
+  'facebook.com/tiktok', 'facebook.com/youtube', 'facebook.com/instagram',
+  'facebook.com/twitter', 'facebook.com/apple', 'facebook.com/spotify',
+  'facebook.com/libsyn', 'facebook.com/buzzsprout', 'facebook.com/anchor',
+  'facebook.com/megaphone', 'facebook.com/acast', 'facebook.com/spreaker',
+  'facebook.com/podbean', 'facebook.com/simplecast',
 ];
+
+// Podcast hosting platforms — their URLs are NEVER the show's own website.
+// If the `website` field ends up pointing here, reject it.
+const PODCAST_HOSTING_HOSTS = [
+  'rss.com', 'art19.com', 'libsyn.com', 'buzzsprout.com', 'anchor.fm',
+  'spreaker.com', 'acast.com', 'podbean.com', 'megaphone.fm',
+  'transistor.fm', 'simplecast.com', 'omny.fm', 'captivate.fm',
+  'castbox.fm', 'podcastpage.io', 'podigee.com', 'fusebox.fm',
+  'redcircle.com', 'pinecast.com', 'zencast.fm', 'fireside.fm',
+  'blubrry.com', 'podbean.com', 'sounder.fm', 'castos.com',
+];
+
+function isPodcastHostingUrl(url) {
+  if (!url) return false;
+  try {
+    const host = new URL(url.startsWith('http') ? url : 'https://' + url).host.replace(/^www\./, '').toLowerCase();
+    return PODCAST_HOSTING_HOSTS.some((h) => host === h || host.endsWith('.' + h));
+  } catch { return false; }
+}
+
+// Common generic email local-parts from hosting platforms — not the show's real contact
+const GENERIC_HOSTING_EMAIL_PATTERNS = [
+  /^support@(rss|anchor|libsyn|spreaker|acast|buzzsprout|podbean|transistor|simplecast|megaphone|omny|art19|captivate|redcircle|castos)\.(com|fm|io)$/i,
+  /^info@(rss|anchor|libsyn|spreaker|acast|buzzsprout|podbean|transistor|simplecast|megaphone|omny|art19|captivate|redcircle|castos)\.(com|fm|io)$/i,
+  /^hello@(rss|anchor|libsyn|spreaker|acast|buzzsprout|podbean|transistor|simplecast|megaphone|omny|art19|captivate|redcircle|castos)\.(com|fm|io)$/i,
+];
+
+// Sanitise email — reject HTML entities, unicode escapes, and generic hosting addresses
+function sanitiseEmail(email) {
+  if (!email || typeof email !== 'string') return null;
+  const cleaned = email.trim().toLowerCase();
+  // Reject HTML-escape artefacts — these mean we scraped corrupt text
+  if (/\\u[0-9a-f]{4}|&amp;|&lt;|&gt;|u003e|u003c|u0026/i.test(cleaned)) return null;
+  // Reject if email contains whitespace or >
+  if (/\s|[<>]/.test(cleaned)) return null;
+  // Reject generic hosting emails
+  if (GENERIC_HOSTING_EMAIL_PATTERNS.some((re) => re.test(cleaned))) return null;
+  return cleaned;
+}
 
 // Operator-owned podcast external_ids — never overwrite host_name or contact_email for these
 const OPERATOR_PODCAST_IDS = ['breakthrough-moment-zac-deane'];
@@ -1070,6 +1129,18 @@ function extractEmail(html) {
   if (!html) return null;
   const $ = cheerio.load(html);
 
+  const passes = (email) => {
+    if (!email) return false;
+    const lower = email.toLowerCase();
+    return !isGenericEmail(lower)
+      && isValidEmailDomain(lower)
+      && !isOperatorOwned(lower)
+      && !isPlatformEmail(lower)
+      && !lower.includes('example.com')
+      && !lower.includes('yourdomain')
+      && !!sanitiseEmail(lower); // rejects u003e, generic hosting addresses, etc.
+  };
+
   // 1. Try mailto: links first
   const mailtoEmails = [];
   $('a[href^="mailto:"]').each((_, el) => {
@@ -1079,16 +1150,14 @@ function extractEmail(html) {
   });
 
   for (const email of mailtoEmails) {
-    if (!isGenericEmail(email) && isValidEmailDomain(email) && !isOperatorOwned(email) && !isPlatformEmail(email)) return email;
+    if (passes(email)) return sanitiseEmail(email);
   }
 
   // 2. Regex scan full HTML
   const matches = html.match(EMAIL_REGEX) || [];
   for (const email of matches) {
     const lower = email.toLowerCase();
-    if (!isGenericEmail(lower) && isValidEmailDomain(lower) && !isOperatorOwned(lower) && !isPlatformEmail(lower) && !lower.includes('example.com') && !lower.includes('yourdomain')) {
-      return lower;
-    }
+    if (passes(lower)) return sanitiseEmail(lower);
   }
 
   return null;
@@ -1865,9 +1934,10 @@ async function enrichPodcast(podcastData) {
         // Check final URL didn't redirect into a social/platform domain
         const finalUrl = res.url || enriched.website;
         const isSocialRedirect = isPodcastPlatformUrl(finalUrl);
+        const isHostingPage = isPodcastHostingUrl(finalUrl) || isPodcastHostingUrl(enriched.website);
         const isPlatformRedirect = false; // already covered above
-        if (![200, 301, 302, 303].includes(res.status) || isSocialRedirect) {
-          logger.warn('Website failed HEAD verification, clearing', { website: enriched.website, status: res.status, finalUrl });
+        if (![200, 301, 302, 303].includes(res.status) || isSocialRedirect || isHostingPage) {
+          logger.warn('Website failed verification, clearing', { website: enriched.website, status: res.status, finalUrl, isHostingPage });
           enriched.website = null;
         } else {
           // Store the resolved URL if redirect changed it significantly
