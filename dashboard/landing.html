@@ -734,7 +734,10 @@
       border-radius: 999px;
       letter-spacing: 0.06em;
       white-space: nowrap;
+      z-index: 2;
     }
+    /* Override the > * rule specifically for the badge so it stays absolutely positioned */
+    .plan-card.featured > .plan-badge { position: absolute; }
     .plan-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
     .plan-card.featured .plan-label { color: #c7d2fe; }
     .plan-name { font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 8px; }
