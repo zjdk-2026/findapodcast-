@@ -164,7 +164,7 @@
       <!-- Filter bar — row 2: action buttons + score/email far right -->
       <div style="display:flex;align-items:center;gap:8px;padding:6px 24px 0;max-width:1400px;margin:0 auto;">
         <button class="filter-action-btn" onclick="openAddPodcastModal()">+ Add a Podcast</button>
-        <button class="filter-action-btn" id="leaderboard-tab" onclick="showLeaderboardView()">Community</button>
+        <button class="filter-action-btn" id="leaderboard-tab" disabled title="Community unlocks once we hit 50 members" style="opacity:0.55;cursor:not-allowed;display:inline-flex;align-items:center;gap:6px;">Community <span style="font-size:10px;font-weight:800;letter-spacing:0.05em;background:#f59e0b;color:#fff;padding:2px 6px;border-radius:999px;">COMING SOON</span></button>
         <button class="filter-action-btn" id="refresh-pipeline-btn" onclick="refreshPipeline()" title="Re-enrich and re-score all podcast cards with the latest data">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Refresh Pipeline
@@ -703,6 +703,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260422-noredflags"></script>
+  <script src="/dashboard/app.js?v=20260422-revert-unlock"></script>
 </body>
 </html>
