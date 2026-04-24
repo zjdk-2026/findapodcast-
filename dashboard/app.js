@@ -4289,6 +4289,82 @@ window.openAddPodcastModal  = openAddPodcastModal;
 window.closeAddPodcastModal = closeAddPodcastModal;
 window.submitAddPodcast     = submitAddPodcast;
 
+// ── Find a Stage (Coming Soon waitlist modal) ─────────────────────────────
+function openFindAStageModal() {
+  const existing = document.getElementById('stage-waitlist-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'stage-waitlist-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  const clientEmail = (state.client && state.client.email) || '';
+
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;padding:36px 32px 28px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.12));color:#6366f1;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:0.06em;margin-bottom:16px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l2.4 7.4H22l-6.2 4.6 2.4 7.4L12 16.8 5.8 21.4l2.4-7.4L2 9.4h7.6z"/></svg>
+        FIND A STAGE · COMING SOON
+      </div>
+      <h2 style="font-size:22px;font-weight:900;letter-spacing:-0.02em;margin-bottom:8px;">Every Call-for-Speakers in your area.</h2>
+      <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">Same zero-hallucination pipeline as Find A Podcast — pointed at conferences, summits, and keynote opportunities in your city. Launching in 90 days. Join the waitlist to get early access.</p>
+      <form id="stage-waitlist-form" onsubmit="submitStageWaitlist(event)">
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Email</label>
+          <input type="email" name="email" required value="${esc(clientEmail)}" placeholder="you@example.com" style="padding:10px 14px;border:1.5px solid rgba(0,0,0,0.1);border-radius:10px;font-size:14px;font-family:inherit;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Your city</label>
+          <input type="text" name="city" placeholder="e.g. Austin, TX" style="padding:10px 14px;border:1.5px solid rgba(0,0,0,0.1);border-radius:10px;font-size:14px;font-family:inherit;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Industry / niche</label>
+          <input type="text" name="industry" placeholder="e.g. SaaS, fitness coaching, personal finance" style="padding:10px 14px;border:1.5px solid rgba(0,0,0,0.1);border-radius:10px;font-size:14px;font-family:inherit;" />
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+          <button type="button" onclick="document.getElementById('stage-waitlist-modal').remove()" style="background:#fff;border:1.5px solid rgba(0,0,0,0.1);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Close</button>
+          <button type="submit" id="stage-waitlist-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Join Waitlist</button>
+        </div>
+      </form>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function submitStageWaitlist(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('stage-waitlist-btn');
+  btn.disabled = true;
+  btn.textContent = 'Joining…';
+  try {
+    const r = await fetch('/api/stages/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email.value.trim(),
+        city: form.city.value.trim(),
+        industry: form.industry.value.trim(),
+        clientToken: state.token || location.pathname.split('/').pop(),
+      }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    document.getElementById('stage-waitlist-modal').innerHTML = `
+      <div style="background:#fff;border-radius:18px;padding:40px 32px;max-width:440px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
+        <div style="font-size:44px;margin-bottom:10px;">🎤</div>
+        <h2 style="font-size:22px;font-weight:900;margin-bottom:10px;">You're on the list.</h2>
+        <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">We'll email you the moment we open Find a Stage to your niche. Expect early access within 90 days.</p>
+        <button onclick="document.getElementById('stage-waitlist-modal').remove()" style="background:#0f172a;color:#fff;border:none;padding:10px 26px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Got it</button>
+      </div>`;
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Join Waitlist';
+    alert('Could not save — try again.');
+  }
+}
+window.openFindAStageModal = openFindAStageModal;
+window.submitStageWaitlist = submitStageWaitlist;
+
 // ── Check for host replies ─────────────────────────────────────────────
 async function checkForReplies() {
   if (!state.token) return;
