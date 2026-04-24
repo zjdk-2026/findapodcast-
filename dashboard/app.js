@@ -1518,8 +1518,8 @@ function renderMatchCard(match) {
         <textarea id="followup-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your follow-up message…"></textarea>
       </div>
       <div class="inline-pitch-actions">
-        <button class="btn btn-xs" id="followup-rewrite-btn-${esc(match.id)}" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteFollowUp('${esc(match.id)}')">Generate</button>
         <button class="btn btn-action-followup btn-xs" id="followup-send-btn-${esc(match.id)}" onclick="sendFollowUpFromPanel('${esc(match.id)}')">Send Follow Up</button>
+        <button class="btn btn-xs" id="followup-rewrite-btn-${esc(match.id)}" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteFollowUp('${esc(match.id)}')">Generate</button>
       </div>
     </div>` : ''}
 
@@ -4307,7 +4307,7 @@ function openFindAStageModal() {
         FIND A STAGE · COMING SOON
       </div>
       <h2 style="font-size:22px;font-weight:900;letter-spacing:-0.02em;margin-bottom:8px;">Every Call-for-Speakers in your area.</h2>
-      <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">Same zero-hallucination pipeline as Find A Podcast — pointed at conferences, summits, and keynote opportunities in your city. Launching in 90 days. Join the waitlist to get early access.</p>
+      <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">Same verified-contact pipeline as Find A Podcast — pointed at conferences, summits, and keynote stages in your city. Drop your details below to get early access the moment it opens.</p>
       <form id="stage-waitlist-form" onsubmit="submitStageWaitlist(event)">
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
           <label style="font-size:11px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Email</label>
@@ -4323,7 +4323,7 @@ function openFindAStageModal() {
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
           <button type="button" onclick="document.getElementById('stage-waitlist-modal').remove()" style="background:#fff;border:1.5px solid rgba(0,0,0,0.1);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Close</button>
-          <button type="submit" id="stage-waitlist-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Join Waitlist</button>
+          <button type="submit" id="stage-waitlist-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Get Early Access</button>
         </div>
       </form>
     </div>`;
@@ -4352,13 +4352,13 @@ async function submitStageWaitlist(e) {
     document.getElementById('stage-waitlist-modal').innerHTML = `
       <div style="background:#fff;border-radius:18px;padding:40px 32px;max-width:440px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
         <div style="font-size:44px;margin-bottom:10px;">🎤</div>
-        <h2 style="font-size:22px;font-weight:900;margin-bottom:10px;">You're on the list.</h2>
-        <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">We'll email you the moment we open Find a Stage to your niche. Expect early access within 90 days.</p>
+        <h2 style="font-size:22px;font-weight:900;margin-bottom:10px;">You're in.</h2>
+        <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin-bottom:22px;">We'll email you the moment Find a Stage opens for your niche. You'll be first in line.</p>
         <button onclick="document.getElementById('stage-waitlist-modal').remove()" style="background:#0f172a;color:#fff;border:none;padding:10px 26px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;">Got it</button>
       </div>`;
   } catch (err) {
     btn.disabled = false;
-    btn.textContent = 'Join Waitlist';
+    btn.textContent = 'Get Early Access';
     alert('Could not save — try again.');
   }
 }
