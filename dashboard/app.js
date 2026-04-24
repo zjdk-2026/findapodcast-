@@ -931,7 +931,6 @@ function actionButtonsHtml(match) {
   // ── FOLLOWED UP tab ──
   } else if (status === 'followed_up') {
     buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Follow Up Again</button>`);
-    buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsFollowedUpManually('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
 
