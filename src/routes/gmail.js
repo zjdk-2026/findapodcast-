@@ -237,9 +237,10 @@ router.post('/api/gmail/check-replies', async (req, res) => {
       }
 
       // Strategy 2: search inbox for any inbound message from that address AFTER the pitch was sent.
-      // The after: filter prevents false positives from historic emails.
+      // v2: also tries the email's domain + subject-line match to catch replies from a different
+      // address at the same company OR replies that started a new thread.
       if (!hasReply && contactEmail) {
-        hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at);
+        hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at, m.email_subject);
         if (hasReply && storedCount === 0) isNewReply = true;
       }
 
@@ -319,7 +320,7 @@ router.post('/api/mark-reply-seen', async (req, res) => {
  * Searches Gmail inbox for any message received from fromEmail.
  * Returns true if at least one such message exists.
  */
-async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt) {
+async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt, subject) {
   try {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -329,22 +330,40 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt) {
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    // Build after: filter from sent_at so we only match replies AFTER the pitch was sent.
-    // This prevents false positives from historic emails or self-addressed test matches.
     let afterClause = '';
     if (sentAt) {
       const epochSeconds = Math.floor(new Date(sentAt).getTime() / 1000);
       afterClause = ` after:${epochSeconds}`;
     }
 
-    // Search all mail (not just inbox) — replies can land in Spam, archived folders, or custom labels.
-    // The after: epoch filter already prevents false positives from pre-pitch emails.
-    const res = await gmail.users.messages.list({
-      userId: 'me',
-      q: `from:${fromEmail}${afterClause}`,
-      maxResults: 1,
-    });
-    return (res.data.messages?.length || 0) > 0;
+    // Strategy 2a: exact email match
+    const tries = [`from:${fromEmail}${afterClause}`];
+
+    // Strategy 2b (NEW): broaden to the email's domain — catches replies from any sender at acme.com
+    // when the pitch went to podcast@acme.com but Sarah replied from sarah@acme.com.
+    const domain = (fromEmail.split('@')[1] || '').trim();
+    if (domain && domain.split('.').length >= 2 && !['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com'].includes(domain.toLowerCase())) {
+      tries.push(`from:@${domain}${afterClause}`);
+    }
+
+    // Strategy 2c (NEW): subject-line match — catches replies that started a new thread
+    // (e.g. host changed the subject after our pitch).
+    if (subject) {
+      const cleanSubject = subject.replace(/^Re:\s*/i, '').replace(/["'`]/g, '').slice(0, 80).trim();
+      if (cleanSubject.length >= 8) {
+        tries.push(`subject:"${cleanSubject}"${afterClause} -from:me`);
+      }
+    }
+
+    for (const q of tries) {
+      try {
+        const res = await gmail.users.messages.list({ userId: 'me', q, maxResults: 1 });
+        if ((res.data.messages?.length || 0) > 0) return true;
+      } catch (innerErr) {
+        logger.debug('reply check try failed', { q, error: innerErr.message });
+      }
+    }
+    return false;
   } catch (err) {
     logger.warn('checkInboxForReplyFromEmail failed', { fromEmail, error: err.message });
     return false;

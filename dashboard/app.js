@@ -559,6 +559,65 @@ function renderStats(stats) {
   set('stat-avg',      stats.avgScore ?? '—');
   set('stat-sent',     stats.pitched ?? 0);
   set('stat-booked',   stats.booked);
+  renderPipelineHealth(stats);
+}
+
+// ── Pipeline health card — momentum + next-action signal ──────────────
+function renderPipelineHealth(stats) {
+  const el = $('pipeline-health');
+  if (!el || !state.matches) return;
+
+  const matches  = state.matches;
+  const total    = matches.length;
+  const newCount = matches.filter(m => m.status === 'new').length;
+  const sent     = matches.filter(m => ['sent','followed_up','replied','booked','aired'].includes(m.status)).length;
+  const replied  = matches.filter(m => ['replied','booked','aired'].includes(m.status)).length;
+  const booked   = matches.filter(m => ['booked','aired'].includes(m.status)).length;
+  const aired    = matches.filter(m => m.status === 'aired').length;
+
+  const replyRate = sent > 0 ? Math.round((replied / sent) * 100) : 0;
+  const bookRate  = sent > 0 ? Math.round((booked / sent) * 100) : 0;
+
+  // Behavioral nudge based on stage
+  let nudge, nudgeColor, icon;
+  if (total === 0) {
+    nudge = 'Click "Find a Podcast" up top to discover your first 50 matches.';
+    nudgeColor = '#6366f1'; icon = '🚀';
+  } else if (sent === 0) {
+    nudge = `${newCount} matches waiting. Send your first pitch — average client books #1 within 7 sends.`;
+    nudgeColor = '#f59e0b'; icon = '✉️';
+  } else if (sent < 5) {
+    nudge = `You've sent ${sent}. The math: ~${Math.max(7 - sent, 1)} more sends to hit the average first-booking threshold.`;
+    nudgeColor = '#f59e0b'; icon = '📈';
+  } else if (replied === 0) {
+    nudge = `${sent} pitches out, no replies yet. Industry average is 14-18% reply rate — you're due. Try the Check Replies button up top.`;
+    nudgeColor = '#6366f1'; icon = '⏳';
+  } else if (booked === 0) {
+    nudge = `${replied} repl${replied === 1 ? 'y' : 'ies'} in! Book the call before they cool — reply windows are 48 hours.`;
+    nudgeColor = '#10b981'; icon = '🔥';
+  } else if (aired === 0) {
+    nudge = `${booked} booked! Once aired, hit "Send a Thank You" to seed referrals — every aired episode unlocks Content Boost.`;
+    nudgeColor = '#10b981'; icon = '🎤';
+  } else {
+    nudge = `${aired} aired, ${booked} booked, ${replyRate}% reply rate. Keep the cadence — Refresh Pipeline weekly for fresh shows.`;
+    nudgeColor = '#10b981'; icon = '🏆';
+  }
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border:1px solid rgba(99,102,241,0.18);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:24px;line-height:1;">${icon}</div>
+      <div style="flex:1;min-width:240px;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${nudgeColor};margin-bottom:3px;">Your Pipeline Right Now</div>
+        <div style="font-size:14px;color:var(--text-primary);line-height:1.5;font-weight:600;">${esc(nudge)}</div>
+      </div>
+      <div style="display:flex;gap:18px;">
+        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
+        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply rate</div></div>
+        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book rate</div></div>
+      </div>
+    </div>
+  `;
 }
 
 // ── Score tooltips ────────────────────────────────────────────────────
@@ -4363,6 +4422,36 @@ async function submitStageWaitlist(e) {
 }
 window.openFindAStageModal = openFindAStageModal;
 window.submitStageWaitlist = submitStageWaitlist;
+
+// ── Manual reply check (bypasses visibility gate, shows feedback) ─────
+async function checkRepliesNow(event) {
+  if (event) event.preventDefault();
+  const btn = event?.currentTarget;
+  const orig = btn?.innerHTML;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Checking…';
+  }
+  try {
+    const data = await apiPost('/api/gmail/check-replies', { token: state.token });
+    if (!data.gmailConnected) { showToast('Connect Gmail first.', 'error'); return; }
+    const updated = (data.updated || []).length;
+    if (updated > 0) {
+      showToast(`Found ${updated} new repl${updated === 1 ? 'y' : 'ies'} — refreshing…`, 'success');
+      const fresh = await apiFetch(`/api/dashboard/${state.token}`);
+      if (fresh?.matches) state.matches = fresh.matches;
+      data.updated.forEach((id) => updateMatchInState(id, { status: 'replied' }));
+      renderGrid();
+    } else {
+      showToast('Checked — no new replies in your inbox.', 'success');
+    }
+  } catch {
+    showToast('Could not check right now. Try again in a moment.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+window.checkRepliesNow = checkRepliesNow;
 
 // ── Check for host replies ─────────────────────────────────────────────
 async function checkForReplies() {

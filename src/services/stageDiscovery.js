@@ -29,7 +29,7 @@ async function discoverStagesForClient(clientId, city) {
   const clientTopics = (client.topics || []).slice(0, 3).join(', ') || 'business';
   const cityLower = city.toLowerCase();
 
-  // ── 10 parallel sources, each tagged ────────────────────────────────────
+  // ── 11 parallel sources, each tagged ────────────────────────────────────
   const sourceResults = await Promise.allSettled([
     sourceGoogleCSE(city, clientTopics),
     sourceSessionize(city, clientTopics),
@@ -41,11 +41,12 @@ async function discoverStagesForClient(clientId, city) {
     sourceCreativeMornings(city),
     sourceInstagramNetworking(city, clientTopics),
     sourceFacebookGroups(city, clientTopics),
+    sourceToastmasters(city),
   ]);
 
   const candidates = [];
   const sourceLog = {};
-  const sourceNames = ['google_cse','sessionize','eventbrite','papercall','tedx','startup_grind','founders_live','creative_mornings','instagram','facebook_group'];
+  const sourceNames = ['google_cse','sessionize','eventbrite','papercall','tedx','startup_grind','founders_live','creative_mornings','instagram','facebook_group','toastmasters'];
   sourceNames.forEach((name, i) => {
     const r = sourceResults[i];
     if (r.status === 'fulfilled') {
@@ -402,6 +403,56 @@ async function sourceFacebookGroups(city, topics) {
     } catch { /* skip */ }
   }
   return out;
+}
+
+// ── Source 11: Toastmasters — 16,800 clubs in 145 countries ────────────────
+// Their public club-finder API: GET https://www.toastmasters.org/api/sitecore/findaclub/Search?<...>
+// Returns JSON list. Each speaker should target VP Education at each club for booking.
+async function sourceToastmasters(city) {
+  try {
+    const cityEnc = encodeURIComponent(city);
+    // Known endpoint pattern (subject to change — failure mode is empty array, safe)
+    const url = `https://www.toastmasters.org/api/sitecore/findaclub/Search?city=${cityEnc}&country=&radius=25&advanced=1`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+    });
+    if (!res.ok) return [];
+    let json;
+    try { json = await res.json(); } catch { return []; }
+    const clubs = Array.isArray(json?.Clubs) ? json.Clubs : Array.isArray(json) ? json : [];
+    if (!clubs.length) return [];
+
+    return clubs.slice(0, 5).map((c, i) => ({
+      link: c.WebSite || `https://www.toastmasters.org/Find-a-Club/${c.ClubNumber || i}`,
+      title: c.Name || `Toastmasters Club ${city}`,
+      snippet: c.MeetingNotes || '',
+      source: 'toastmasters',
+      external_id: 'tm_' + (c.ClubNumber || hashString((c.Name || '') + city)),
+      preExtracted: {
+        valid: true,
+        name: `Toastmasters — ${c.Name || city + ' Club'}`,
+        cfp_url: c.WebSite || `https://www.toastmasters.org/Find-a-Club/${c.ClubNumber || ''}`,
+        location_city: c.City || city,
+        location_country: c.Country || null,
+        is_virtual: false,
+        organizer_name: c.Name || `Toastmasters ${city}`,
+        organizer_email: c.Email || null,
+        organizer_url: c.WebSite || null,
+        description: `Toastmasters International club. Weekly speaking practice + speaker slots. ${c.MeetingNotes || 'Members rotate roles weekly — guests welcome to deliver speeches and gain feedback.'}`,
+        industry_tags: ['speaking', 'professional development', 'networking', 'local'],
+        estimated_attendees: 25,
+        payment_model: 'unpaid',
+        recurring: true,
+        meeting_frequency: 'weekly',
+        event_type: 'org_chapter',
+        chapter_org: 'toastmasters',
+      },
+    }));
+  } catch (err) {
+    logger.warn('toastmasters fetch failed', { error: err.message });
+    return [];
+  }
 }
 
 // ── Source 4: Papercall.io public CFPs (often global / virtual) ────────────
