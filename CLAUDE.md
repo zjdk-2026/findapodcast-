@@ -48,6 +48,8 @@ Restart: kill PID on port 3000, then start again
 - Onboard: GET /onboard
 - Operator: GET /operator (key: pipeline2026)
 - Pitch decks: GET /self-managed-overview, /podcast-tour-overview
+- Agency: GET /agency/:token (multi-client workspace), GET /api/agency/:token, POST /api/agency/:token/request-client
+- Stages: GET /stages/:token (preview), GET /api/stages/:token, POST /api/stages/waitlist, POST /api/stages/discover
 - API: /api/onboard, /api/run/:clientId, /api/approve, /api/dismiss, /api/send, /api/book, /api/unbook, /api/notes, /api/email/edit, /api/template
 - POST /api/unlock/:podcastId (zero-hallucination deep contact reveal — requires dashboard token)
 - PATCH /api/onboard/:clientId (profile update)
@@ -55,9 +57,15 @@ Restart: kill PID on port 3000, then start again
 
 ## Supabase
 URL: https://ldyocadmkwesdwcnojjf.supabase.co
-Tables: clients, podcasts, podcast_matches, unlock_events
+Tables: clients, podcasts, podcast_matches, unlock_events, agencies, agency_client_requests, stages, stage_matches, stage_waitlist
 Run DDL via SQL editor: https://supabase.com/dashboard/project/ldyocadmkwesdwcnojjf/sql/new
 Data-only ops (DELETE, UPDATE, INSERT) can run via PostgREST using SUPABASE_SERVICE_KEY as both `apikey` and `Authorization: Bearer` headers.
+
+## Agency system (Apr 22 2026)
+Full architecture: `agency_system_architecture` project memory. $1,500 setup + $497/mo, multi-client workspaces. First customer Jesse Tevelow Agency. SQL ran but with simpler schema than file (no contact_name/notes columns on `agencies`).
+
+## Find A Stage system (Apr 24 2026, COMING SOON)
+Full architecture: `find_a_stage_architecture` project memory. Speaker-opportunity sibling product to Find A Podcast. SQL `supabase/add-stages-system.sql` NOT YET RUN. Once run, execute `node scripts/seed-stages-demo.js` + `node scripts/seed-dubai-stages.js` to populate Zac's preview at `/stages/c1e62c5c-c2a4-4cca-9411-66f0571e704a`. Customer-facing tab is COMING SOON only — opens waitlist modal.
 
 ## GitHub
 Repo: https://github.com/zjdk-2026/findapodcast-.git (branch: master)
