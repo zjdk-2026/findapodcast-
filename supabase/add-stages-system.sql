@@ -113,7 +113,17 @@ ALTER TABLE public.stages
   ADD COLUMN IF NOT EXISTS event_type        TEXT,
   ADD COLUMN IF NOT EXISTS chapter_org       TEXT,
   ADD COLUMN IF NOT EXISTS recurring         BOOLEAN DEFAULT false,
-  ADD COLUMN IF NOT EXISTS meeting_frequency TEXT;
+  ADD COLUMN IF NOT EXISTS meeting_frequency TEXT,
+  ADD COLUMN IF NOT EXISTS instagram_url     TEXT,
+  ADD COLUMN IF NOT EXISTS twitter_url       TEXT,
+  ADD COLUMN IF NOT EXISTS facebook_url      TEXT,
+  ADD COLUMN IF NOT EXISTS facebook_event_url TEXT,
+  ADD COLUMN IF NOT EXISTS linkedin_url      TEXT,
+  ADD COLUMN IF NOT EXISTS youtube_url       TEXT,
+  ADD COLUMN IF NOT EXISTS tiktok_url        TEXT,
+  ADD COLUMN IF NOT EXISTS what_to_expect    TEXT,
+  ADD COLUMN IF NOT EXISTS who_attends       TEXT,
+  ADD COLUMN IF NOT EXISTS speaker_format    TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_stages_event_type   ON public.stages(event_type);
 CREATE INDEX IF NOT EXISTS idx_stages_chapter_org  ON public.stages(chapter_org);

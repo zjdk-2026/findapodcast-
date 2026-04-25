@@ -322,8 +322,15 @@ function renderCard(m) {
   if (daysUntil !== null && daysUntil >= 0 && daysUntil < 14) pills.push(`<span class="inline-pill deadline">⏰ ${esc(deadlineTxt)}</span>`);
 
   const contactChips = [];
-  if (s.url)             contactChips.push(`<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener">Event page</a>`);
-  if (s.organizer_email) contactChips.push(`<a class="card-link-chip" href="mailto:${esc(s.organizer_email)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${esc(s.organizer_email)}</a>`);
+  if (s.url)                contactChips.push(`<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener">Event page</a>`);
+  if (s.facebook_event_url) contactChips.push(`<a class="card-link-chip" href="${esc(s.facebook_event_url)}" target="_blank" rel="noopener" title="Facebook Event — follow + message attendees" style="color:#1877f2;border-color:rgba(24,119,242,0.3);">FB Event</a>`);
+  if (s.instagram_url)      contactChips.push(`<a class="card-link-chip" href="${esc(s.instagram_url)}" target="_blank" rel="noopener">Instagram</a>`);
+  if (s.facebook_url)       contactChips.push(`<a class="card-link-chip" href="${esc(s.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+  if (s.linkedin_url)       contactChips.push(`<a class="card-link-chip" href="${esc(s.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+  if (s.twitter_url)        contactChips.push(`<a class="card-link-chip" href="${esc(s.twitter_url)}" target="_blank" rel="noopener">X</a>`);
+  if (s.youtube_url)        contactChips.push(`<a class="card-link-chip" href="${esc(s.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`);
+  if (s.tiktok_url)         contactChips.push(`<a class="card-link-chip" href="${esc(s.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>`);
+  if (s.organizer_email)    contactChips.push(`<a class="card-link-chip" href="mailto:${esc(s.organizer_email)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${esc(s.organizer_email)}</a>`);
 
   return `
     <article class="match-card status-${esc(m.status)} score-tier-${tier}" data-status="${esc(m.status)}" data-score="${fit}" data-expanded="false" style="margin-bottom:14px;">
@@ -355,8 +362,23 @@ function renderCard(m) {
           ${m.why_this_client_fits ? `<div class="why-fits-box"><p class="why-fits-label">Why You Fit</p><p>${esc(m.why_this_client_fits)}</p></div>` : ''}
           ${m.best_pitch_angle ? `<div class="why-fits-box"><p class="why-fits-label">Best Pitch Angle</p><p>${esc(m.best_pitch_angle)}</p></div>` : ''}
           ${s.description ? `<div class="why-fits-box"><p class="why-fits-label">About this event</p><p>${esc(s.description)}</p></div>` : ''}
+          ${s.what_to_expect ? `<div class="why-fits-box"><p class="why-fits-label">What to expect</p><p>${esc(s.what_to_expect)}</p></div>` : ''}
+          ${s.who_attends ? `<div class="why-fits-box"><p class="why-fits-label">Who attends</p><p>${esc(s.who_attends)}</p></div>` : ''}
+          ${s.speaker_format ? `<div class="why-fits-box"><p class="why-fits-label">Speaker format</p><p>${esc(s.speaker_format)}</p></div>` : ''}
+          ${(s.payment_model && s.payment_model !== 'unknown') || s.recurring || s.estimated_attendees ? `
+            <div class="why-fits-box">
+              <p class="why-fits-label">Quick stats</p>
+              <p>
+                ${s.payment_model && s.payment_model !== 'unknown' ? `<strong>Payment:</strong> ${paymentLabel(s.payment_model)} · ` : ''}
+                ${s.recurring ? `<strong>Recurring:</strong> ${esc(s.meeting_frequency || 'yes')} · ` : ''}
+                ${s.estimated_attendees ? `<strong>Attendees:</strong> ~${formatNum(s.estimated_attendees)} · ` : ''}
+                ${dl ? `<strong>Apply by:</strong> ${dl.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : ''}
+              </p>
+            </div>
+          ` : ''}
           <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
             ${s.url    ? `<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener" style="font-weight:600;">View Event</a>` : ''}
+            ${s.facebook_event_url ? `<a class="card-link-chip" href="${esc(s.facebook_event_url)}" target="_blank" rel="noopener" style="font-weight:600;color:#1877f2;border-color:rgba(24,119,242,0.3);">Follow on Facebook</a>` : ''}
           </div>
         </div>
       </div>
@@ -423,6 +445,7 @@ function emptyError(msg) {
 
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 function formatNum(n) { if (n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M'; if (n>=1000) return Math.round(n/1000)+'K'; return String(n); }
+function paymentLabel(p) { return ({premium:'Premium ($10k+)',paid:'Paid',honorarium:'Honorarium',travel_covered:'Travel covered',unpaid:'Unpaid',unknown:'Unknown'})[p] || p; }
 
 load();
 </script>
