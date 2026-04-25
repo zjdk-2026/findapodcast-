@@ -5,6 +5,7 @@ const router = express.Router();
 const path = require('path');
 const supabase = require('../lib/supabase');
 const logger = require('../lib/logger');
+const { discoverStagesForClient } = require('../services/stageDiscovery');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIND A STAGE — speaker opportunity routes
@@ -70,6 +71,21 @@ router.post('/api/stages/waitlist', async (req, res) => {
     return res.status(500).json({ ok: false, error: 'save_failed' });
   }
   res.json({ ok: true });
+});
+
+// POST /api/stages/discover — live discovery via Google Custom Search + Claude extract
+router.post('/api/stages/discover', async (req, res) => {
+  const { token, city } = req.body || {};
+  if (!token || !city) return res.status(400).json({ ok: false, error: 'token_and_city_required' });
+  const { data: client } = await supabase.from('clients').select('id').eq('dashboard_token', token).single();
+  if (!client) return res.status(404).json({ ok: false, error: 'client_not_found' });
+  try {
+    const result = await discoverStagesForClient(client.id, city);
+    res.json(result);
+  } catch (err) {
+    logger.error('stage discover failed', { error: err.message });
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
 });
 
 module.exports = router;

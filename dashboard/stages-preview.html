@@ -4,267 +4,348 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Find a Stage · Preview</title>
+<link rel="stylesheet" href="/dashboard/style.css?v=20260422-stages-match" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #fafafa; --surface: #ffffff;
-    --border: rgba(0,0,0,0.08); --text: #1d1d1f; --muted: #6e6e73; --faint: #aeaeb2;
-    --accent: #6366f1; --accent2: #8b5cf6; --green: #10b981; --yellow: #f59e0b;
+  /* Minimal additions that complement style.css */
+  .stage-tabs {
+    display: flex; gap: 6px; padding: 14px 24px 0; max-width: 1400px; margin: 0 auto;
+    border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap;
   }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.5; }
-  a { color: inherit; text-decoration: none; }
+  .stage-tab {
+    background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 600;
+    color: var(--text-secondary); padding: 10px 18px; border-radius: 12px 12px 0 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; position: relative; bottom: -1px;
+    border-bottom: 2px solid transparent; transition: color 0.15s, background 0.15s;
+  }
+  .stage-tab:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+  .stage-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--bg-secondary); }
+  .stage-tab .count {
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 22px; text-align: center;
+  }
+  .stage-tab.active .count { background: var(--accent); color: #fff; }
 
-  .topbar {
-    background: #fff; border-bottom: 1px solid var(--border);
-    padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+  .topbar-preview {
+    background: #fff; border-bottom: 1px solid var(--border-subtle); padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .brand-row { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
   .brand-icon {
     width: 32px; height: 32px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
     display: flex; align-items: center; justify-content: center;
   }
-  .breadcrumb { color: var(--muted); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .crumb { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
 
-  .banner {
+  .preview-banner {
     background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(139,92,246,0.12));
     border-bottom: 1px solid rgba(245,158,11,0.25);
-    padding: 14px 32px; font-size: 13.5px; color: #7c2d12;
+    padding: 10px 24px; font-size: 13px; color: #7c2d12;
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    font-weight: 600;
+    font-weight: 600; text-align: center;
   }
-  .banner .pill { background: #f59e0b; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; }
+  .preview-banner .pill { background: #f59e0b; color: #fff; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; }
 
-  .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
-  .hero { margin-bottom: 28px; }
-  .hero h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.025em; margin-bottom: 6px; }
-  .hero p { color: var(--muted); font-size: 15px; max-width: 740px; }
-
-  .stats { display: flex; gap: 14px; margin: 24px 0 0; flex-wrap: wrap; }
-  .stat { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; min-width: 120px; flex: 1; }
-  .stat-num { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
-  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-top: 4px; }
-
-  .filters { display: flex; gap: 10px; margin: 24px 0 20px; flex-wrap: wrap; }
-  .chip {
-    background: #fff; border: 1.5px solid var(--border); color: var(--text);
-    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s;
+  .hero-row {
+    max-width: 1400px; margin: 0 auto; padding: 24px 28px 12px;
   }
-  .chip:hover { border-color: var(--accent); color: var(--accent); }
-  .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .hero-row h1 { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .hero-row p { color: var(--text-secondary); font-size: 14px; }
 
-  .stage-card {
-    background: #fff; border: 1px solid var(--border); border-radius: 16px;
-    padding: 20px 24px; margin-bottom: 14px; display: flex; gap: 20px; align-items: flex-start;
-    transition: box-shadow 0.15s, transform 0.1s;
-  }
-  .stage-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+  .content-area { max-width: 1400px; margin: 0 auto; padding: 16px 24px 40px; }
 
-  .stage-main { flex: 1; min-width: 0; }
-  .stage-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .stage-meta { color: var(--muted); font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
-  .stage-meta span { display: inline-flex; align-items: center; gap: 4px; }
-  .stage-desc { font-size: 13.5px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
-  .stage-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag { background: #f0ebff; color: var(--accent); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
-  .tag.location { background: #ecfdf5; color: var(--green); }
-  .tag.paid { background: #fef3c7; color: #b45309; }
-  .tag.virtual { background: #e0e7ff; color: #4338ca; }
-  .tag.deadline { background: #fee2e2; color: #b91c1c; }
-
-  .stage-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 120px; }
-  .fit { text-align: right; }
-  .fit-num { font-size: 26px; font-weight: 900; color: var(--green); letter-spacing: -0.02em; }
-  .fit-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
-  .btn-apply {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff; border: none; padding: 9px 18px; border-radius: 999px;
-    font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  .stage-card-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .stage-apply-btn {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; border: none;
+    padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
     transition: transform 0.15s;
   }
-  .btn-apply:hover { transform: translateY(-1px); }
-  .btn-apply:disabled { opacity: 0.6; cursor: not-allowed; }
+  .stage-apply-btn:hover { transform: translateY(-1px); }
 
-  .empty { text-align: center; padding: 80px 32px; color: var(--muted); background: #fff; border-radius: 16px; border: 1px dashed var(--border); }
-  .empty h3 { color: var(--text); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-
-  @media (max-width: 700px) {
-    .container { padding: 20px 14px; }
-    .stage-card { flex-direction: column; }
-    .stage-side { align-items: flex-start; flex-direction: row; gap: 16px; min-width: 0; }
+  .why-fits-label { font-size: 11px; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .why-fits-box {
+    background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 12px 14px; margin-top: 10px;
   }
+  .why-fits-box p { font-size: 13.5px; color: var(--text-primary); line-height: 1.6; }
+
+  .score-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .score-bar-item { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+  .score-bar-label { color: var(--text-tertiary); width: 90px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .score-bar-track { flex: 1; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .score-bar-value { min-width: 28px; text-align: right; font-weight: 800; color: var(--text-primary); }
+
+  .inline-pill {
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .inline-pill.deadline { background: rgba(239,68,68,0.1); color: #dc2626; }
+  .inline-pill.paid     { background: rgba(245,158,11,0.12); color: #b45309; }
+  .inline-pill.virtual  { background: rgba(99,102,241,0.12); color: var(--accent); }
+  .inline-pill.local    { background: rgba(16,185,129,0.12); color: #059669; }
+
+  .empty-state {
+    text-align: center; padding: 80px 32px; color: var(--text-secondary);
+    background: #fff; border-radius: 16px; border: 1px dashed var(--border-medium);
+  }
+  .empty-state h3 { color: var(--text-primary); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
+<!-- Top bar -->
+<div class="topbar-preview">
+  <div class="brand-row">
     <div class="brand-icon">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
       </svg>
     </div>
     <span>Find A Podcast</span>
-    <span style="color:var(--faint);margin:0 6px;">/</span>
-    <span class="breadcrumb">Find a Stage</span>
+    <span style="color:var(--text-tertiary);margin:0 6px;">/</span>
+    <span class="crumb">Find a Stage (preview)</span>
   </div>
-  <div style="font-size:13px;color:var(--muted);">Operator preview · <a href="mailto:hi@zacdeane.com" style="color:var(--accent);font-weight:600;">hi@zacdeane.com</a></div>
+  <a href="javascript:history.back()" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">← Back to dashboard</a>
 </div>
 
-<div class="banner">
+<div class="preview-banner">
   <span class="pill">COMING SOON</span>
-  This is an early preview. Customers see a "Find a Stage — Coming Soon" tab. Full launch: 90 days.
+  Operator preview — this is what customers will see when Find a Stage goes live. Launches in 90 days.
 </div>
 
-<div class="container">
-  <div class="hero">
-    <h1 id="hero-title">Find a Stage</h1>
-    <p>Every open Call-for-Speakers in your area. Live conferences. Virtual summits. Industry keynotes. Curated to your niche, scored for fit, with a verified CFP deadline you can trust.</p>
-    <div class="stats" id="stats"></div>
+<div class="hero-row">
+  <h1 id="hero-title">Find a Stage</h1>
+  <p>Live conferences, virtual summits, keynote stages and local speaking opportunities — scored for fit, filtered by distance from your city.</p>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center;max-width:640px;">
+    <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border-medium);border-radius:12px;padding:10px 14px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <input id="city-input" type="text" placeholder="Your city — e.g. Dubai, Melbourne, London" style="flex:1;border:none;outline:none;font-size:14px;font-family:inherit;background:transparent;" />
+    </div>
+    <button id="discover-btn" onclick="discover()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+      Discover Stages
+    </button>
   </div>
-
-  <div class="filters" id="filters">
-    <button class="chip active" data-filter="all">All</button>
-    <button class="chip" data-filter="local">In your city</button>
-    <button class="chip" data-filter="regional">Regional</button>
-    <button class="chip" data-filter="virtual">Virtual</button>
-    <button class="chip" data-filter="paid">Paid gigs</button>
-    <button class="chip" data-filter="deadline">Deadline &lt; 14 days</button>
-  </div>
-
-  <div id="stages-list"></div>
+  <div id="discover-status" style="margin-top:10px;font-size:13px;color:var(--text-secondary);"></div>
 </div>
+
+<!-- Pipeline tabs -->
+<div class="stage-tabs" id="stage-tabs"></div>
+
+<!-- Filter bar -->
+<div style="display:flex;align-items:center;gap:8px;padding:8px 24px 0;max-width:1400px;margin:0 auto;">
+  <div style="flex:1;"></div>
+  <label class="filter-label">
+    Fit ≥
+    <input type="range" id="min-fit-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
+    <span id="min-fit-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
+  </label>
+  <label class="filter-label" title="Only show events where we verified the organiser's contact details">
+    <input type="checkbox" id="filter-has-contact" style="accent-color:var(--accent);" />
+    Verified contact
+  </label>
+</div>
+
+<!-- Stage cards -->
+<div class="content-area" id="cards-area"></div>
 
 <script>
 const token = location.pathname.split('/').filter(Boolean).pop();
 let allMatches = [];
-let activeFilter = 'all';
-let clientProfile = null;
+let currentStatus = 'new';
+let minFit = 0;
+let hasContactOnly = false;
+
+const TABS = [
+  { key: 'new',       label: 'New' },
+  { key: 'applied',   label: 'Applied' },
+  { key: 'responded', label: 'Responded' },
+  { key: 'accepted',  label: 'Accepted' },
+  { key: 'spoke',     label: 'Spoke' },
+  { key: 'dream',     label: 'Wish List' },
+  { key: 'declined',  label: 'Not a Fit' },
+];
 
 async function load() {
   try {
     const r = await fetch('/api/stages/' + encodeURIComponent(token));
     const d = await r.json();
-    if (!d.ok) return empty(d.error === 'client_not_found' ? 'Client not found for this token.' : 'Could not load.');
-    clientProfile = d.client;
+    if (!d.ok) {
+      if (d.error === 'client_not_found') return emptyError('Client not found for this token. Check the URL.');
+      return emptyError('Stages tables not initialised yet. Paste supabase/add-stages-system.sql into Supabase SQL editor and refresh.');
+    }
     allMatches = d.matches || [];
-    document.getElementById('hero-title').textContent = 'Stage opportunities for ' + (d.client.name || 'you');
-    renderStats();
-    renderList();
+    document.getElementById('hero-title').textContent = (d.client?.name ? 'Stages for ' + d.client.name : 'Find a Stage');
+    renderTabs();
+    renderCards();
   } catch {
-    empty('Network error.');
+    emptyError('Network error.');
   }
 }
 
-function renderStats() {
-  const total = allMatches.length;
-  const virtual = allMatches.filter(m => m.stages?.is_virtual).length;
-  const local = allMatches.filter(m => !m.stages?.is_virtual && m.distance_score >= 80).length;
-  const paid = allMatches.filter(m => ['paid','premium','honorarium'].includes(m.stages?.payment_model)).length;
-  const urgent = allMatches.filter(m => {
-    const dl = m.stages?.cfp_deadline;
-    if (!dl) return false;
-    const days = (new Date(dl).getTime() - Date.now()) / (1000*60*60*24);
-    return days > 0 && days < 14;
-  }).length;
-  document.getElementById('stats').innerHTML = `
-    <div class="stat"><div class="stat-num">${total}</div><div class="stat-label">Total matches</div></div>
-    <div class="stat"><div class="stat-num" style="color:#10b981;">${local}</div><div class="stat-label">In your area</div></div>
-    <div class="stat"><div class="stat-num" style="color:#4338ca;">${virtual}</div><div class="stat-label">Virtual</div></div>
-    <div class="stat"><div class="stat-num" style="color:#b45309;">${paid}</div><div class="stat-label">Paid gigs</div></div>
-    <div class="stat"><div class="stat-num" style="color:#b91c1c;">${urgent}</div><div class="stat-label">Closing soon</div></div>
-  `;
+function renderTabs() {
+  const tabsEl = document.getElementById('stage-tabs');
+  tabsEl.innerHTML = TABS.map(t => {
+    const count = allMatches.filter(m => m.status === t.key).length;
+    const active = currentStatus === t.key ? 'active' : '';
+    return `<button class="stage-tab ${active}" onclick="setStatus('${t.key}')">${t.label} <span class="count">${count}</span></button>`;
+  }).join('');
 }
 
-function renderList() {
-  const list = document.getElementById('stages-list');
-  let filtered = [...allMatches];
-  if (activeFilter === 'local')    filtered = filtered.filter(m => !m.stages?.is_virtual && (m.distance_score || 0) >= 80);
-  if (activeFilter === 'regional') filtered = filtered.filter(m => !m.stages?.is_virtual && (m.distance_score || 0) >= 50 && (m.distance_score || 0) < 80);
-  if (activeFilter === 'virtual')  filtered = filtered.filter(m => m.stages?.is_virtual);
-  if (activeFilter === 'paid')     filtered = filtered.filter(m => ['paid','premium','honorarium'].includes(m.stages?.payment_model));
-  if (activeFilter === 'deadline') filtered = filtered.filter(m => {
-    const dl = m.stages?.cfp_deadline;
-    if (!dl) return false;
-    const days = (new Date(dl).getTime() - Date.now()) / (1000*60*60*24);
-    return days > 0 && days < 14;
-  });
+function setStatus(s) { currentStatus = s; renderTabs(); renderCards(); }
+window.setStatus = setStatus;
 
-  if (!filtered.length) {
-    list.innerHTML = `<div class="empty"><h3>No matches in this filter</h3><p>Switch to "All" to see every stage we've surfaced for you.</p></div>`;
+document.getElementById('min-fit-slider').addEventListener('input', (e) => {
+  minFit = parseInt(e.target.value, 10) || 0;
+  document.getElementById('min-fit-value').textContent = minFit;
+  renderCards();
+});
+document.getElementById('filter-has-contact').addEventListener('change', (e) => {
+  hasContactOnly = e.target.checked;
+  renderCards();
+});
+
+function renderCards() {
+  const area = document.getElementById('cards-area');
+  let list = allMatches.filter(m => m.status === currentStatus);
+  if (minFit > 0) list = list.filter(m => (m.fit_score || 0) >= minFit);
+  if (hasContactOnly) list = list.filter(m => m.stages?.organizer_email || m.stages?.cfp_url);
+
+  if (!list.length) {
+    area.innerHTML = `<div class="empty-state"><h3>No stages in ${esc(labelFor(currentStatus))} yet</h3><p>Switch tabs or widen your Fit filter to see more.</p></div>`;
     return;
   }
 
-  list.innerHTML = filtered.map(renderCard).join('');
+  list.sort((a,b) => (b.fit_score||0) - (a.fit_score||0));
+  area.innerHTML = list.map(renderCard).join('');
 }
+
+function labelFor(k) { const t = TABS.find(x => x.key === k); return t ? t.label : k; }
 
 function renderCard(m) {
   const s = m.stages || {};
   const fit = m.fit_score || 0;
-  const fitColor = fit >= 80 ? '#10b981' : fit >= 60 ? '#f59e0b' : '#9ca3af';
+  const tier = fit >= 80 ? 'high' : fit >= 60 ? 'mid' : 'low';
+  const tierColor = fit >= 80 ? '#22c55e' : fit >= 60 ? '#f59e0b' : '#ef4444';
+
   const dl = s.cfp_deadline ? new Date(s.cfp_deadline) : null;
-  const daysUntilDeadline = dl ? Math.floor((dl.getTime() - Date.now()) / (1000*60*60*24)) : null;
-  const deadlineLabel = daysUntilDeadline !== null
-    ? (daysUntilDeadline < 0 ? 'Closed' : daysUntilDeadline === 0 ? 'Closes today' : daysUntilDeadline === 1 ? 'Closes tomorrow' : `${daysUntilDeadline}d to apply`)
+  const daysUntil = dl ? Math.floor((dl.getTime() - Date.now()) / 86400000) : null;
+  const deadlineTxt = daysUntil !== null
+    ? (daysUntil < 0 ? 'Closed' : daysUntil === 0 ? 'Closes today' : daysUntil === 1 ? 'Closes tomorrow' : `${daysUntil}d to apply`)
     : null;
+
   const eventDate = s.event_start ? new Date(s.event_start).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : null;
   const location = s.is_virtual ? 'Virtual' : [s.location_city, s.location_country].filter(Boolean).join(', ') || 'TBD';
 
-  const tags = [];
-  if (s.is_virtual) tags.push('<span class="tag virtual">Virtual</span>');
-  else if (s.location_city) tags.push(`<span class="tag location">${esc(s.location_city)}</span>`);
-  if (['paid','premium'].includes(s.payment_model)) tags.push('<span class="tag paid">Paid</span>');
-  else if (s.payment_model === 'honorarium') tags.push('<span class="tag paid">Honorarium</span>');
-  else if (s.payment_model === 'travel_covered') tags.push('<span class="tag paid">Travel covered</span>');
-  if (daysUntilDeadline !== null && daysUntilDeadline >= 0 && daysUntilDeadline < 14) {
-    tags.push(`<span class="tag deadline">${esc(deadlineLabel)}</span>`);
-  }
-  (s.industry_tags || []).slice(0,3).forEach(t => tags.push(`<span class="tag">${esc(t)}</span>`));
+  const pills = [];
+  if (s.total_episodes) pills.push(`<span class="inline-pill">${s.total_episodes} eps</span>`);
+  if (eventDate) pills.push(`<span class="inline-pill">📅 ${eventDate}</span>`);
+  if (s.estimated_attendees) pills.push(`<span class="inline-pill">👥 ${formatNum(s.estimated_attendees)}</span>`);
+  if (s.is_virtual) pills.push(`<span class="inline-pill virtual">Virtual</span>`);
+  else if (s.location_city) pills.push(`<span class="inline-pill local">${esc(s.location_city)}</span>`);
+  if (['paid','premium'].includes(s.payment_model)) pills.push(`<span class="inline-pill paid">Paid</span>`);
+  else if (s.payment_model === 'honorarium') pills.push(`<span class="inline-pill paid">Honorarium</span>`);
+  else if (s.payment_model === 'travel_covered') pills.push(`<span class="inline-pill paid">Travel covered</span>`);
+  if (daysUntil !== null && daysUntil >= 0 && daysUntil < 14) pills.push(`<span class="inline-pill deadline">⏰ ${esc(deadlineTxt)}</span>`);
+
+  const contactChips = [];
+  if (s.url)             contactChips.push(`<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener">Event page</a>`);
+  if (s.cfp_url)         contactChips.push(`<a class="card-link-chip" href="${esc(s.cfp_url)}" target="_blank" rel="noopener">Apply to Speak</a>`);
+  if (s.organizer_url)   contactChips.push(`<a class="card-link-chip" href="${esc(s.organizer_url)}" target="_blank" rel="noopener">Organiser</a>`);
+  if (s.organizer_email) contactChips.push(`<a class="card-link-chip" href="mailto:${esc(s.organizer_email)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${esc(s.organizer_email)}</a>`);
 
   return `
-    <div class="stage-card">
-      <div class="stage-main">
-        <div class="stage-title">${esc(s.name || 'Event')}</div>
-        <div class="stage-meta">
-          ${eventDate ? `<span>📅 ${eventDate}</span>` : ''}
-          <span>📍 ${esc(location)}</span>
-          ${s.estimated_attendees ? `<span>👥 ~${s.estimated_attendees.toLocaleString()} attendees</span>` : ''}
-          ${deadlineLabel && daysUntilDeadline >= 14 ? `<span>⏰ ${esc(deadlineLabel)}</span>` : ''}
+    <article class="match-card status-${esc(m.status)} score-tier-${tier}" data-status="${esc(m.status)}" data-score="${fit}" data-expanded="false" style="margin-bottom:14px;">
+      <div class="card-row" onclick="toggleExpand(this)">
+        <div class="card-row-left">
+          <div class="card-row-title">
+            ${esc(s.name || 'Event')}
+            ${pills.join('')}
+          </div>
+          ${s.organizer_name ? `<div class="card-row-host">Hosted by ${esc(s.organizer_name)}</div>` : ''}
+          <div class="card-row-links" onclick="event.stopPropagation()">
+            ${contactChips.join('')}
+          </div>
         </div>
-        ${s.description ? `<div class="stage-desc">${esc(s.description)}</div>` : ''}
-        ${m.why_this_client_fits ? `<div class="stage-desc" style="background:#f9fafb;border-left:3px solid #6366f1;padding:10px 12px;border-radius:4px;margin-top:8px;"><strong style="color:#6366f1;">Why you fit:</strong> ${esc(m.why_this_client_fits)}</div>` : ''}
-        <div class="stage-tags">${tags.join('')}</div>
-      </div>
-      <div class="stage-side">
-        <div class="fit">
-          <div class="fit-num" style="color:${fitColor};">${fit}</div>
-          <div class="fit-label">Fit Score</div>
+        <div class="card-row-right">
+          <span class="status-badge" style="background:${tierColor};color:#fff;font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px;">${fit} fit</span>
+          <span class="card-chevron">▸</span>
         </div>
-        ${s.cfp_url
-          ? `<a class="btn-apply" href="${esc(s.cfp_url)}" target="_blank" rel="noopener">Apply to Speak →</a>`
-          : s.url
-          ? `<a class="btn-apply" href="${esc(s.url)}" target="_blank" rel="noopener">View Event →</a>`
-          : '<button class="btn-apply" disabled>Check back soon</button>'}
       </div>
-    </div>
+      <div class="card-expanded">
+        <div class="card-expanded-inner">
+          <div class="score-bars">
+            ${scoreBar('Relevance',  m.relevance_score)}
+            ${scoreBar('Audience',   m.audience_score)}
+            ${scoreBar('Distance',   m.distance_score)}
+            ${scoreBar('Payment',    m.payment_score)}
+            ${scoreBar('Recency',    m.recency_score)}
+          </div>
+          ${m.why_this_client_fits ? `<div class="why-fits-box"><p class="why-fits-label">Why You Fit</p><p>${esc(m.why_this_client_fits)}</p></div>` : ''}
+          ${m.best_pitch_angle ? `<div class="why-fits-box"><p class="why-fits-label">Best Pitch Angle</p><p>${esc(m.best_pitch_angle)}</p></div>` : ''}
+          ${s.description ? `<div class="why-fits-box"><p class="why-fits-label">About this event</p><p>${esc(s.description)}</p></div>` : ''}
+          <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+            ${s.cfp_url ? `<a class="stage-apply-btn" href="${esc(s.cfp_url)}" target="_blank" rel="noopener">Apply to Speak →</a>` : ''}
+            ${s.url    ? `<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener" style="font-weight:600;">View Event</a>` : ''}
+          </div>
+        </div>
+      </div>
+    </article>
   `;
 }
 
-document.getElementById('filters').addEventListener('click', (e) => {
-  if (e.target.classList.contains('chip')) {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
-    activeFilter = e.target.dataset.filter;
-    renderList();
-  }
-});
-
-function empty(msg) {
-  document.getElementById('stages-list').innerHTML = `<div class="empty"><h3>${esc(msg)}</h3></div>`;
+function scoreBar(label, value) {
+  const v = value || 0;
+  const color = v >= 75 ? '#22c55e' : v >= 50 ? '#f59e0b' : '#ef4444';
+  return `<div class="score-bar-item">
+    <span class="score-bar-label">${esc(label)}</span>
+    <div class="score-bar-track"><div class="score-bar-fill" style="width:${v}%;background:${color};"></div></div>
+    <span class="score-bar-value" style="color:${color};">${v}</span>
+  </div>`;
 }
+
+function toggleExpand(el) {
+  const card = el.closest('.match-card');
+  card.dataset.expanded = card.dataset.expanded === 'true' ? 'false' : 'true';
+}
+window.toggleExpand = toggleExpand;
+
+async function discover() {
+  const city = document.getElementById('city-input').value.trim();
+  if (!city) { document.getElementById('discover-status').textContent = 'Type a city first.'; return; }
+  const btn = document.getElementById('discover-btn');
+  const status = document.getElementById('discover-status');
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Searching…';
+  status.textContent = `Scanning Google, extracting events with AI, verifying CFP status… up to 60 seconds.`;
+  try {
+    const r = await fetch('/api/stages/discover', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, city }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    status.innerHTML = `<span style="color:#10b981;font-weight:700;">Found ${d.discovered} new stage${d.discovered === 1 ? '' : 's'} in ${esc(city)}.</span>`;
+    await load();
+  } catch {
+    status.innerHTML = '<span style="color:#dc2626;">Discovery failed — try again or a simpler city name.</span>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg> Discover Stages';
+  }
+}
+window.discover = discover;
+
+function emptyError(msg) {
+  document.getElementById('cards-area').innerHTML = `<div class="empty-state"><h3>${esc(msg)}</h3></div>`;
+}
+
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function formatNum(n) { if (n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M'; if (n>=1000) return Math.round(n/1000)+'K'; return String(n); }
 
 load();
 </script>
