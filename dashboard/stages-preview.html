@@ -323,8 +323,6 @@ function renderCard(m) {
 
   const contactChips = [];
   if (s.url)             contactChips.push(`<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener">Event page</a>`);
-  if (s.cfp_url)         contactChips.push(`<a class="card-link-chip" href="${esc(s.cfp_url)}" target="_blank" rel="noopener">Apply to Speak</a>`);
-  if (s.organizer_url)   contactChips.push(`<a class="card-link-chip" href="${esc(s.organizer_url)}" target="_blank" rel="noopener">Organiser</a>`);
   if (s.organizer_email) contactChips.push(`<a class="card-link-chip" href="mailto:${esc(s.organizer_email)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${esc(s.organizer_email)}</a>`);
 
   return `
@@ -358,7 +356,6 @@ function renderCard(m) {
           ${m.best_pitch_angle ? `<div class="why-fits-box"><p class="why-fits-label">Best Pitch Angle</p><p>${esc(m.best_pitch_angle)}</p></div>` : ''}
           ${s.description ? `<div class="why-fits-box"><p class="why-fits-label">About this event</p><p>${esc(s.description)}</p></div>` : ''}
           <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
-            ${s.cfp_url ? `<a class="stage-apply-btn" href="${esc(s.cfp_url)}" target="_blank" rel="noopener">Apply to Speak →</a>` : ''}
             ${s.url    ? `<a class="card-link-chip" href="${esc(s.url)}" target="_blank" rel="noopener" style="font-weight:600;">View Event</a>` : ''}
           </div>
         </div>
