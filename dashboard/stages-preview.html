@@ -190,6 +190,10 @@ function toggleTheme() {
 window.toggleTheme = toggleTheme;
 
 const token = location.pathname.split('/').filter(Boolean).pop();
+
+// Persist last-searched city across page loads
+function getSavedCity() { try { return localStorage.getItem('fap-stages-city') || ''; } catch { return ''; } }
+function saveCity(c) { try { localStorage.setItem('fap-stages-city', c || ''); } catch {} }
 let allMatches = [];
 let currentStatus = 'new';
 let minFit = 0;
@@ -207,14 +211,24 @@ const TABS = [
 
 async function load() {
   try {
-    const r = await fetch('/api/stages/' + encodeURIComponent(token));
+    const cityInput = document.getElementById('city-input');
+    const city = cityInput?.value?.trim() || '';
+    const url = '/api/stages/' + encodeURIComponent(token) + (city ? '?city=' + encodeURIComponent(city) : '');
+    const r = await fetch(url);
     const d = await r.json();
     if (!d.ok) {
       if (d.error === 'client_not_found') return emptyError('Client not found for this token. Check the URL.');
       return emptyError('Stages tables not initialised yet. Paste supabase/add-stages-system.sql into Supabase SQL editor and refresh.');
     }
     allMatches = d.matches || [];
+    const total = d.filter?.total_in_db ?? allMatches.length;
+    const shown = d.filter?.shown ?? allMatches.length;
+    const subtitle = d.filter?.city
+      ? `Showing ${shown} stage${shown === 1 ? '' : 's'} in or near <strong>${esc(d.filter.city)}</strong> (of ${total} total in your pipeline)`
+      : `${shown} stage${shown === 1 ? '' : 's'} in your pipeline`;
     document.getElementById('hero-title').textContent = (d.client?.name ? 'Stages for ' + d.client.name : 'Find a Stage');
+    const heroP = document.querySelector('.hero-row p');
+    if (heroP) heroP.innerHTML = subtitle;
     renderTabs();
     renderCards();
   } catch {
@@ -233,6 +247,26 @@ function renderTabs() {
 
 function setStatus(s) { currentStatus = s; renderTabs(); renderCards(); }
 window.setStatus = setStatus;
+
+// Pre-fill city input from localStorage so search persists across reloads
+(function preFillCity() {
+  const input = document.getElementById('city-input');
+  if (!input) return;
+  const saved = getSavedCity();
+  if (saved) input.value = saved;
+  // Debounced reload on city input change so filter responds live
+  let cityDebounce;
+  input.addEventListener('input', () => {
+    clearTimeout(cityDebounce);
+    cityDebounce = setTimeout(() => {
+      saveCity(input.value.trim());
+      load();
+    }, 350);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); discover(); }
+  });
+})();
 
 document.getElementById('min-fit-slider').addEventListener('input', (e) => {
   minFit = parseInt(e.target.value, 10) || 0;
@@ -352,6 +386,7 @@ window.toggleExpand = toggleExpand;
 async function discover() {
   const city = document.getElementById('city-input').value.trim();
   if (!city) { document.getElementById('discover-status').textContent = 'Type a city first.'; return; }
+  saveCity(city);
   const btn = document.getElementById('discover-btn');
   const status = document.getElementById('discover-status');
   btn.disabled = true;

@@ -17,9 +17,50 @@ router.get('/stages/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'dashboard', 'stages-preview.html'));
 });
 
-// GET /api/stages/:token — returns client + all stage_matches (sorted by fit desc)
+// City → country aliases for region-based matching when searching by city.
+// Dubai search should also match Abu Dhabi (same country, ~75min drive).
+// Sydney search should NOT match Dubai. Etc.
+const CITY_TO_COUNTRY = {
+  'dubai': 'uae', 'abu dhabi': 'uae', 'sharjah': 'uae', 'ajman': 'uae',
+  'sydney': 'australia', 'melbourne': 'australia', 'brisbane': 'australia', 'perth': 'australia', 'gold coast': 'australia',
+  'london': 'uk', 'manchester': 'uk', 'birmingham': 'uk', 'edinburgh': 'uk',
+  'new york': 'usa', 'brooklyn': 'usa', 'manhattan': 'usa', 'nyc': 'usa',
+  'los angeles': 'usa', 'san francisco': 'usa', 'silicon valley': 'usa', 'palo alto': 'usa',
+  'austin': 'usa', 'miami': 'usa', 'chicago': 'usa', 'dallas': 'usa', 'boston': 'usa',
+  'singapore': 'singapore',
+  'hong kong': 'hong kong',
+  'toronto': 'canada', 'vancouver': 'canada', 'montreal': 'canada',
+  'berlin': 'germany', 'munich': 'germany',
+  'paris': 'france',
+  'amsterdam': 'netherlands',
+  'mumbai': 'india', 'bangalore': 'india', 'delhi': 'india',
+};
+
+// Stage matches the searched city if same city, same country (50-mile-radius approx via region), or virtual.
+function stageMatchesCity(stage, searchCity) {
+  if (!searchCity) return true;
+  if (!stage) return false;
+  if (stage.is_virtual) return true;
+
+  const sc = searchCity.toLowerCase().trim();
+  const stCity = (stage.location_city || '').toLowerCase().trim();
+  const stCountry = (stage.location_country || '').toLowerCase().trim();
+
+  if (stCity && (stCity === sc || stCity.includes(sc) || sc.includes(stCity))) return true;
+
+  const searchCountry = CITY_TO_COUNTRY[sc];
+  if (searchCountry && stCountry) {
+    const stCountryNorm = stCountry.replace(/^the /, '').replace(/^united /, '');
+    if (stCountryNorm === searchCountry || stCountry === searchCountry) return true;
+  }
+
+  return false;
+}
+
+// GET /api/stages/:token?city=Dubai — returns client + filtered matches (city OR same country OR virtual)
 router.get('/api/stages/:token', async (req, res) => {
   const { token } = req.params;
+  const cityFilter = (req.query.city || '').trim();
   if (!token || token.length < 8) return res.status(400).json({ ok: false, error: 'invalid_token' });
 
   try {
@@ -38,7 +79,15 @@ router.get('/api/stages/:token', async (req, res) => {
       return res.status(500).json({ ok: false, error: mErr.message });
     }
 
-    res.json({ ok: true, client, matches: matches || [] });
+    const all = matches || [];
+    const filtered = cityFilter ? all.filter(m => stageMatchesCity(m.stages, cityFilter)) : all;
+
+    res.json({
+      ok: true,
+      client,
+      matches: filtered,
+      filter: { city: cityFilter || null, total_in_db: all.length, shown: filtered.length },
+    });
   } catch (err) {
     logger.error('/api/stages/:token error', { error: err.message });
     res.status(500).json({ ok: false, error: 'internal_error' });
