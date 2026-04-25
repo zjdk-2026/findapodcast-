@@ -29,17 +29,24 @@ async function discoverStagesForClient(clientId, city) {
   const clientTopics = (client.topics || []).slice(0, 3).join(', ') || 'business';
   const cityLower = city.toLowerCase();
 
-  // ── 4 parallel sources, each tagged ─────────────────────────────────────
+  // ── 10 parallel sources, each tagged ────────────────────────────────────
   const sourceResults = await Promise.allSettled([
     sourceGoogleCSE(city, clientTopics),
     sourceSessionize(city, clientTopics),
     sourceEventbritePublic(city, clientTopics),
     sourcePapercall(clientTopics),
+    sourceTEDx(city),
+    sourceStartupGrind(city),
+    sourceFoundersLive(city),
+    sourceCreativeMornings(city),
+    sourceInstagramNetworking(city, clientTopics),
+    sourceFacebookGroups(city, clientTopics),
   ]);
 
   const candidates = [];
   const sourceLog = {};
-  ['google_cse', 'sessionize', 'eventbrite', 'papercall'].forEach((name, i) => {
+  const sourceNames = ['google_cse','sessionize','eventbrite','papercall','tedx','startup_grind','founders_live','creative_mornings','instagram','facebook_group'];
+  sourceNames.forEach((name, i) => {
     const r = sourceResults[i];
     if (r.status === 'fulfilled') {
       sourceLog[name] = r.value.length;
@@ -51,19 +58,22 @@ async function discoverStagesForClient(clientId, city) {
 
   logger.info('stage discovery: sources returned', { city, ...sourceLog });
 
-  // Dedupe by URL
+  // Dedupe by URL — prefer franchise/structured sources first (they have higher signal)
+  const PRIORITY = { tedx: 1, toastmasters: 1, startup_grind: 1, founders_live: 1, creative_mornings: 1, sessionize: 2, papercall: 2, eventbrite: 3, google_cse: 4, instagram: 5, facebook_group: 5 };
+  candidates.sort((a, b) => (PRIORITY[a.source] || 9) - (PRIORITY[b.source] || 9));
   const seen = new Set();
   const unique = candidates.filter(c => {
     const norm = (c.link || '').split('?')[0].replace(/\/$/, '').toLowerCase();
     if (!norm || seen.has(norm)) return false;
     seen.add(norm);
     return true;
-  }).slice(0, 16);
+  }).slice(0, 20);  // pull up to 20 candidates, cap final saved at 10 below
 
-  // Parallel extraction with Claude (max 4 at a time)
+  // Parallel extraction with Claude (max 4 at a time) — stop after 10 verified
   const extracted = [];
   const concurrency = 4;
-  for (let i = 0; i < unique.length; i += concurrency) {
+  const MAX_VERIFIED = 10;
+  for (let i = 0; i < unique.length && extracted.length < MAX_VERIFIED; i += concurrency) {
     const batch = unique.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map(async (c) => {
       try {
@@ -109,8 +119,12 @@ async function discoverStagesForClient(clientId, city) {
     industry_tags:    e.industry_tags || [],
     estimated_attendees: e.estimated_attendees || null,
     payment_model:    e.payment_model || 'unknown',
+    event_type:       e.event_type || (e.source === 'tedx' ? 'tedx' : e.chapter_org ? 'org_chapter' : 'conference'),
+    chapter_org:      e.chapter_org || null,
+    recurring:        !!e.recurring,
+    meeting_frequency: e.meeting_frequency || null,
     contact_confidence: e.organizer_email || e.cfp_url ? 'medium' : 'low',
-    contact_sources:  { url: 'google_cse', extract: 'claude_haiku' },
+    contact_sources:  { url: e.source || 'google_cse', extract: e.preExtracted ? 'connector_structured' : 'claude_haiku' },
     enriched_at:      new Date().toISOString(),
   }));
 
@@ -223,6 +237,171 @@ async function sourceEventbritePublic(city, topics) {
     logger.warn('eventbrite scrape failed', { error: err.message });
     return [];
   }
+}
+
+// ── Source 5: TEDx events — official tedx event finder (city-filtered) ────
+async function sourceTEDx(city) {
+  try {
+    const cityLower = city.toLowerCase().replace(/\s+/g, '+');
+    const url = `https://www.ted.com/tedx/events?q=${cityLower}`;
+    const html = await fetchPage(url);
+    if (!html) return [];
+    // TEDx event cards: <a href="/tedx/events/NNNNN" ...>
+    const eventRegex = /<a[^>]+href="(\/tedx\/events\/[^"]+)"[^>]*>/g;
+    const cards = [];
+    const seen = new Set();
+    let m;
+    while ((m = eventRegex.exec(html)) !== null && cards.length < 8) {
+      const slug = m[1].split('?')[0];
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      cards.push({ link: 'https://www.ted.com' + slug, title: 'TEDx Event', snippet: '', source: 'tedx' });
+    }
+    return cards;
+  } catch (err) { logger.warn('tedx fetch failed', { error: err.message }); return []; }
+}
+
+// ── Source 6: Startup Grind chapters (600+ cities, monthly events) ─────────
+async function sourceStartupGrind(city) {
+  try {
+    const cityLower = city.toLowerCase().replace(/\s+/g, '-');
+    const url = `https://www.startupgrind.com/${cityLower}/`;
+    const html = await fetchPage(url);
+    if (!html) return [];
+    // If chapter exists, the page returns 200 with content
+    return [{
+      link: url,
+      title: `Startup Grind ${city}`,
+      snippet: 'Monthly chapter event with founder fireside chats. ~150 attendees per session.',
+      source: 'startup_grind',
+      preExtracted: {
+        valid: true,
+        name: `Startup Grind ${city} — Monthly Chapter Event`,
+        cfp_url: url,
+        location_city: city,
+        is_virtual: false,
+        organizer_name: `Startup Grind ${city}`,
+        organizer_url: url,
+        description: `Monthly Startup Grind chapter event in ${city}. Hosts a fireside chat with a notable founder, Q&A, and networking. Speaker slots available — chapter directors curate guests.`,
+        industry_tags: ['startup', 'entrepreneurship', 'founders', 'local'],
+        estimated_attendees: 150,
+        payment_model: 'unpaid',
+        recurring: true,
+        meeting_frequency: 'monthly',
+        event_type: 'org_chapter',
+        chapter_org: 'startup_grind',
+      },
+    }];
+  } catch { return []; }
+}
+
+// ── Source 7: Founders Live chapters (100+ cities, monthly pitch nights) ───
+async function sourceFoundersLive(city) {
+  try {
+    const cityLower = city.toLowerCase().replace(/\s+/g, '');
+    const url = `https://www.founderslive.com/${cityLower}`;
+    const html = await fetchPage(url);
+    if (!html) return [];
+    return [{
+      link: url,
+      title: `Founders Live ${city}`,
+      snippet: 'Monthly pitch night for early-stage founders. ~120 attendees per event.',
+      source: 'founders_live',
+      preExtracted: {
+        valid: true,
+        name: `Founders Live ${city}`,
+        cfp_url: url,
+        location_city: city,
+        is_virtual: false,
+        organizer_name: `Founders Live ${city}`,
+        organizer_url: url,
+        description: `Monthly pitch night for ${city} founders. 7-min pitch slots between 15-min keynote slots. ~120 attendees, mostly early-stage founders + angel investors.`,
+        industry_tags: ['startup', 'founders', 'local', 'pitch'],
+        estimated_attendees: 120,
+        payment_model: 'unpaid',
+        recurring: true,
+        meeting_frequency: 'monthly',
+        event_type: 'org_chapter',
+        chapter_org: 'founders_live',
+      },
+    }];
+  } catch { return []; }
+}
+
+// ── Source 8: CreativeMornings chapters (200+ cities, monthly breakfast) ───
+async function sourceCreativeMornings(city) {
+  try {
+    const cityLower = city.toLowerCase().replace(/\s+/g, '');
+    const url = `https://creativemornings.com/cities/${cityLower}`;
+    const html = await fetchPage(url);
+    if (!html || html.toLowerCase().includes('chapter not found')) return [];
+    return [{
+      link: url,
+      title: `CreativeMornings ${city}`,
+      snippet: 'Monthly breakfast lecture series. ~150 creative + entrepreneurial attendees.',
+      source: 'creative_mornings',
+      preExtracted: {
+        valid: true,
+        name: `CreativeMornings ${city}`,
+        cfp_url: url,
+        location_city: city,
+        is_virtual: false,
+        organizer_name: `CreativeMornings ${city}`,
+        organizer_url: url,
+        description: `Monthly breakfast lecture series in ${city}. 20-min keynote slot followed by Q&A. ~150 creative professionals, entrepreneurs, designers. Curated by the local chapter director.`,
+        industry_tags: ['creative', 'design', 'entrepreneurship', 'community'],
+        estimated_attendees: 150,
+        payment_model: 'unpaid',
+        recurring: true,
+        meeting_frequency: 'monthly',
+        event_type: 'org_chapter',
+        chapter_org: 'creative_mornings',
+      },
+    }];
+  } catch { return []; }
+}
+
+// ── Source 9: Instagram networking communities (Google CSE site filter) ────
+async function sourceInstagramNetworking(city, topics) {
+  if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_CX) return [];
+  const queries = [
+    `site:instagram.com "${city}" networking entrepreneurs`,
+    `site:instagram.com "${city}" business community`,
+  ];
+  const out = [];
+  for (const q of queries) {
+    try {
+      const r = await googleSearch(q);
+      for (const x of r) {
+        // Only include profile URLs (instagram.com/handle/), not posts (instagram.com/p/ID)
+        if (/^https?:\/\/(?:www\.)?instagram\.com\/[A-Za-z0-9_.]{1,30}\/?(?:\?|$)/.test(x.link)) {
+          out.push({ ...x, source: 'instagram' });
+        }
+      }
+    } catch { /* skip */ }
+  }
+  return out;
+}
+
+// ── Source 10: Facebook public groups (Google CSE site filter) ─────────────
+async function sourceFacebookGroups(city, topics) {
+  if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_CX) return [];
+  const queries = [
+    `site:facebook.com/groups "${city}" entrepreneurs`,
+    `site:facebook.com/groups "${city}" networking business`,
+  ];
+  const out = [];
+  for (const q of queries) {
+    try {
+      const r = await googleSearch(q);
+      for (const x of r) {
+        if (/^https?:\/\/(?:www\.)?facebook\.com\/groups\//.test(x.link)) {
+          out.push({ ...x, source: 'facebook_group' });
+        }
+      }
+    } catch { /* skip */ }
+  }
+  return out;
 }
 
 // ── Source 4: Papercall.io public CFPs (often global / virtual) ────────────

@@ -8,8 +8,12 @@
 
 CREATE TABLE IF NOT EXISTS public.stages (
   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  external_id            TEXT UNIQUE,              -- sessionize:NNNN, papercall:NN, eventbrite:NNN, google:hash
-  source                 TEXT,                      -- sessionize | papercall | eventbrite | 10times | google_cse | manual
+  external_id            TEXT UNIQUE,              -- sessionize:NNNN, papercall:NN, tedx:NNN, toastmasters:NNN, etc.
+  source                 TEXT,                      -- sessionize | papercall | eventbrite | google_cse | tedx | toastmasters | startup_grind | founders_live | creative_mornings | one_million_cups | instagram | facebook_group | manual | seed
+  event_type             TEXT,                      -- conference | summit | virtual_summit | networking | org_chapter | tedx | meetup | mastermind | community
+  chapter_org            TEXT,                      -- toastmasters | tedx | startup_grind | founders_live | creative_mornings | bni | rotary | eo | ypo | vistage | one_million_cups | null
+  recurring              BOOLEAN DEFAULT false,     -- true for weekly/monthly chapter meetings
+  meeting_frequency      TEXT,                      -- weekly | biweekly | monthly | quarterly | annual | one_off
   name                   TEXT NOT NULL,
   url                    TEXT,
   cfp_url                TEXT,
@@ -103,3 +107,13 @@ CREATE TABLE IF NOT EXISTS public.stage_waitlist (
 
 CREATE INDEX IF NOT EXISTS idx_stage_waitlist_email      ON public.stage_waitlist(email);
 CREATE INDEX IF NOT EXISTS idx_stage_waitlist_client_id  ON public.stage_waitlist(client_id);
+
+-- ── Idempotent column additions (safe even if you ran an earlier version) ──
+ALTER TABLE public.stages
+  ADD COLUMN IF NOT EXISTS event_type        TEXT,
+  ADD COLUMN IF NOT EXISTS chapter_org       TEXT,
+  ADD COLUMN IF NOT EXISTS recurring         BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS meeting_frequency TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_stages_event_type   ON public.stages(event_type);
+CREATE INDEX IF NOT EXISTS idx_stages_chapter_org  ON public.stages(chapter_org);
