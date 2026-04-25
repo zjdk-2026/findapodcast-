@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light-mode">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Find a Stage · Preview</title>
-<link rel="stylesheet" href="/dashboard/style.css?v=20260422-stages-match" />
+<link rel="stylesheet" href="/dashboard/style.css?v=20260424-stages-themes" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <style>
+  /* Inherit theme from style.css — body uses --bg-primary, text uses --text-primary */
+  body { background: var(--bg-primary); color: var(--text-primary); }
   /* Minimal additions that complement style.css */
   .stage-tabs {
     display: flex; gap: 6px; padding: 14px 24px 0; max-width: 1400px; margin: 0 auto;
@@ -27,9 +29,22 @@
   .stage-tab.active .count { background: var(--accent); color: #fff; }
 
   .topbar-preview {
-    background: #fff; border-bottom: 1px solid var(--border-subtle); padding: 14px 28px;
+    background: var(--bg-card); border-bottom: 1px solid var(--border-subtle); padding: 14px 28px;
     display: flex; align-items: center; justify-content: space-between;
   }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+  .theme-btn {
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 1px solid var(--border-subtle); border-radius: 999px;
+    width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .theme-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .theme-btn .icon-sun { display: none; }
+  html.light-mode .theme-btn .icon-sun  { display: none; }
+  html.light-mode .theme-btn .icon-moon { display: inline-block; }
+  html:not(.light-mode) .theme-btn .icon-sun  { display: inline-block; }
+  html:not(.light-mode) .theme-btn .icon-moon { display: none; }
   .brand-row { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
   .brand-icon {
     width: 32px; height: 32px; border-radius: 8px;
@@ -90,7 +105,7 @@
 
   .empty-state {
     text-align: center; padding: 80px 32px; color: var(--text-secondary);
-    background: #fff; border-radius: 16px; border: 1px dashed var(--border-medium);
+    background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-medium);
   }
   .empty-state h3 { color: var(--text-primary); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 </style>
@@ -109,7 +124,13 @@
     <span style="color:var(--text-tertiary);margin:0 6px;">/</span>
     <span class="crumb">Find a Stage (preview)</span>
   </div>
-  <a href="javascript:history.back()" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">← Back to dashboard</a>
+  <div class="topbar-actions">
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <a href="javascript:history.back()" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">← Back to dashboard</a>
+  </div>
 </div>
 
 <div class="preview-banner">
@@ -121,9 +142,9 @@
   <h1 id="hero-title">Find a Stage</h1>
   <p>Live conferences, virtual summits, keynote stages and local speaking opportunities — scored for fit, filtered by distance from your city.</p>
   <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center;max-width:640px;">
-    <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border-medium);border-radius:12px;padding:10px 14px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      <input id="city-input" type="text" placeholder="Your city — e.g. Dubai, Melbourne, London" style="flex:1;border:none;outline:none;font-size:14px;font-family:inherit;background:transparent;" />
+    <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--bg-card);border:1.5px solid var(--border-medium);border-radius:12px;padding:10px 14px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <input id="city-input" type="text" placeholder="Your city — e.g. Dubai, Melbourne, London" style="flex:1;border:none;outline:none;font-size:14px;font-family:inherit;background:transparent;color:var(--text-primary);" />
     </div>
     <button id="discover-btn" onclick="discover()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
@@ -154,6 +175,20 @@
 <div class="content-area" id="cards-area"></div>
 
 <script>
+// ── Theme: read from localStorage (shared with dashboard) ─────────────
+(function initTheme() {
+  try {
+    const saved = localStorage.getItem('pp-theme');
+    if (saved === 'dark') document.documentElement.classList.remove('light-mode');
+    else document.documentElement.classList.add('light-mode');
+  } catch { /* default light */ }
+})();
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light-mode');
+  try { localStorage.setItem('pp-theme', isLight ? 'light' : 'dark'); } catch {}
+}
+window.toggleTheme = toggleTheme;
+
 const token = location.pathname.split('/').filter(Boolean).pop();
 let allMatches = [];
 let currentStatus = 'new';
@@ -328,11 +363,21 @@ async function discover() {
       body: JSON.stringify({ token, city }),
     });
     const d = await r.json();
-    if (!d.ok) throw new Error(d.error);
+    if (!d.ok) {
+      const reason = d.error === 'save_failed' ? 'Database tables not initialised — run supabase/add-stages-system.sql first.'
+                    : d.error === 'client_not_found' ? 'Client not found for this token.'
+                    : `Server error: ${d.error}`;
+      status.innerHTML = `<span style="color:#dc2626;">Discovery failed — ${esc(reason)}</span>`;
+      return;
+    }
+    if (d.discovered === 0) {
+      status.innerHTML = `<span style="color:#f59e0b;">${esc(d.message || 'No verifiable opportunities found via Google for ' + city + '. Try a broader city or wait for Sessionize/Eventbrite sources to come online.')}</span>`;
+      return;
+    }
     status.innerHTML = `<span style="color:#10b981;font-weight:700;">Found ${d.discovered} new stage${d.discovered === 1 ? '' : 's'} in ${esc(city)}.</span>`;
     await load();
-  } catch {
-    status.innerHTML = '<span style="color:#dc2626;">Discovery failed — try again or a simpler city name.</span>';
+  } catch (err) {
+    status.innerHTML = `<span style="color:#dc2626;">Discovery failed — ${esc(err.message || 'network error')}</span>`;
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg> Discover Stages';

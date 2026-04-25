@@ -27,22 +27,29 @@ async function discoverStagesForClient(clientId, city) {
   if (cErr || !client) return { ok: false, error: 'client_not_found' };
 
   const clientTopics = (client.topics || []).slice(0, 3).join(', ') || 'business';
-  const queries = [
-    `"call for speakers" ${city} 2026`,
-    `business networking event ${city} 2026`,
-    `entrepreneur conference ${city} 2026`,
-    `${clientTopics} summit ${city} 2026`,
-  ];
+  const cityLower = city.toLowerCase();
+
+  // ── 4 parallel sources, each tagged ─────────────────────────────────────
+  const sourceResults = await Promise.allSettled([
+    sourceGoogleCSE(city, clientTopics),
+    sourceSessionize(city, clientTopics),
+    sourceEventbritePublic(city, clientTopics),
+    sourcePapercall(clientTopics),
+  ]);
 
   const candidates = [];
-  for (const q of queries) {
-    try {
-      const results = await googleSearch(q);
-      for (const r of results) candidates.push({ ...r, query: q });
-    } catch (err) {
-      logger.warn('stage discovery: google search failed', { q, error: err.message });
+  const sourceLog = {};
+  ['google_cse', 'sessionize', 'eventbrite', 'papercall'].forEach((name, i) => {
+    const r = sourceResults[i];
+    if (r.status === 'fulfilled') {
+      sourceLog[name] = r.value.length;
+      candidates.push(...r.value);
+    } else {
+      sourceLog[name] = 'err: ' + r.reason?.message;
     }
-  }
+  });
+
+  logger.info('stage discovery: sources returned', { city, ...sourceLog });
 
   // Dedupe by URL
   const seen = new Set();
@@ -51,27 +58,36 @@ async function discoverStagesForClient(clientId, city) {
     if (!norm || seen.has(norm)) return false;
     seen.add(norm);
     return true;
-  }).slice(0, 12);
+  }).slice(0, 16);
 
-  logger.info('stage discovery: unique candidates', { count: unique.length, city });
-
-  // Extract each with Claude
+  // Parallel extraction with Claude (max 4 at a time)
   const extracted = [];
-  for (const c of unique) {
-    try {
-      const page = await fetchPage(c.link);
-      if (!page) continue;
-      const stageData = await claudeExtractStage({ url: c.link, html: page, snippet: c.snippet, title: c.title, city });
-      if (stageData && stageData.valid) {
-        extracted.push({ ...stageData, source: 'google_cse', url: c.link, external_id: 'gcse_' + hashString(c.link) });
-      }
-    } catch (err) {
-      logger.debug('stage extract failed', { url: c.link, error: err.message });
-    }
+  const concurrency = 4;
+  for (let i = 0; i < unique.length; i += concurrency) {
+    const batch = unique.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(batch.map(async (c) => {
+      try {
+        // Sessionize / Papercall sources already have structured data — skip Claude
+        if (c.preExtracted) return { ...c.preExtracted, source: c.source, url: c.link, external_id: c.external_id || 'src_' + c.source + '_' + hashString(c.link) };
+        const page = await fetchPage(c.link);
+        if (!page) return null;
+        const stageData = await claudeExtractStage({ url: c.link, html: page, snippet: c.snippet, title: c.title, city });
+        if (!stageData || !stageData.valid) return null;
+        return { ...stageData, source: c.source || 'google_cse', url: c.link, external_id: 'gcse_' + hashString(c.link) };
+      } catch { return null; }
+    }));
+    for (const r of batchResults) if (r.status === 'fulfilled' && r.value) extracted.push(r.value);
   }
 
   if (!extracted.length) {
-    return { ok: true, discovered: 0, matched: 0, message: 'No verifiable stage opportunities found via Google — try a broader city search or add seeded results.' };
+    const sourceTotal = candidates.length;
+    return {
+      ok: true, discovered: 0, matched: 0,
+      message: sourceTotal === 0
+        ? `No results from any source for "${city}". Google CSE quota may be exhausted.`
+        : `Found ${sourceTotal} candidate event(s) but none passed strict verification. Try a larger city like London or Sydney.`,
+      sources: sourceLog,
+    };
   }
 
   // Upsert stages + create matches
@@ -133,6 +149,105 @@ async function googleSearch(query) {
   if (!res.ok) return [];
   const j = await res.json();
   return (j.items || []).map(i => ({ link: i.link, title: i.title, snippet: i.snippet }));
+}
+
+// ── Source 1: Google Custom Search (multiple keyword angles) ───────────────
+async function sourceGoogleCSE(city, topics) {
+  const queries = [
+    `"call for speakers" ${city} 2026`,
+    `"speaker applications" ${city} 2026`,
+    `business networking event ${city} 2026`,
+    `entrepreneur conference ${city} 2026`,
+    `${topics} summit ${city} 2026`,
+  ];
+  const results = [];
+  for (const q of queries) {
+    try {
+      const r = await googleSearch(q);
+      for (const x of r) results.push({ ...x, source: 'google_cse', query: q });
+    } catch { /* skip */ }
+  }
+  return results;
+}
+
+// ── Source 2: Sessionize public CFPs (free, structured) ────────────────────
+async function sourceSessionize(city) {
+  try {
+    const url = 'https://sessionize.com/community/cfp';
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const cards = [];
+    // Sessionize CFP listing cards have predictable JSON-LD or sessionize-card classes
+    const eventRegex = /<a[^>]+href="(https?:\/\/sessionize\.com\/[^"]+)"[^>]*>[\s\S]*?<\/a>/g;
+    let m;
+    const seen = new Set();
+    while ((m = eventRegex.exec(html)) !== null && cards.length < 20) {
+      const link = m[1].split('?')[0];
+      if (seen.has(link)) continue;
+      seen.add(link);
+      cards.push({ link, title: 'Sessionize CFP', snippet: '', source: 'sessionize' });
+    }
+    return cards;
+  } catch (err) {
+    logger.warn('sessionize fetch failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Source 3: Eventbrite public search (geo-filtered) ──────────────────────
+async function sourceEventbritePublic(city, topics) {
+  try {
+    const q = encodeURIComponent(`speaker call for speakers ${topics}`);
+    const c = encodeURIComponent(city);
+    const url = `https://www.eventbrite.com/d/${c}/--${q}/`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0)' },
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    // Eventbrite search results have <a class="event-card-link" href="https://www.eventbrite.com/e/...">
+    const eventRegex = /href="(https:\/\/www\.eventbrite\.com\/e\/[^"]+)"/g;
+    const cards = [];
+    const seen = new Set();
+    let m;
+    while ((m = eventRegex.exec(html)) !== null && cards.length < 12) {
+      const link = m[1].split('?')[0];
+      if (seen.has(link)) continue;
+      seen.add(link);
+      cards.push({ link, title: 'Eventbrite event', snippet: '', source: 'eventbrite' });
+    }
+    return cards;
+  } catch (err) {
+    logger.warn('eventbrite scrape failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Source 4: Papercall.io public CFPs (often global / virtual) ────────────
+async function sourcePapercall(topics) {
+  try {
+    const url = 'https://www.papercall.io/cfps';
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+    if (!res.ok) return [];
+    const html = await res.text();
+    // Papercall lists CFPs with anchor links matching /events/<slug>
+    const eventRegex = /<a[^>]+href="(\/events\/[^"]+)"[^>]*>([^<]+)<\/a>/g;
+    const cards = [];
+    const seen = new Set();
+    let m;
+    while ((m = eventRegex.exec(html)) !== null && cards.length < 12) {
+      const slug = m[1].split('?')[0];
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      cards.push({ link: 'https://www.papercall.io' + slug, title: m[2].trim(), snippet: '', source: 'papercall' });
+    }
+    return cards;
+  } catch (err) {
+    logger.warn('papercall fetch failed', { error: err.message });
+    return [];
+  }
 }
 
 async function fetchPage(url) {
