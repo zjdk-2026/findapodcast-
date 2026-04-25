@@ -83,6 +83,12 @@ app.get('/health', async (req, res) => {
 });
 
 // ── API Routes ───────────────────────────────────────────────────────
+// Mount NON-auth-requiring routers FIRST so they handle their own paths
+// before actionsRouter's requireDashboardToken middleware blanket-401s them.
+app.use('/', require('./routes/agency'));
+app.use('/', require('./routes/stages'));
+app.use('/', require('./routes/referral'));
+
 app.use('/api/auth', authRouter);
 app.use('/api', onboardRouter);
 app.use('/api', pipelineRouter);
@@ -100,9 +106,6 @@ app.use('/api', require('./routes/vision-board'));
 app.use('/api', require('./routes/leaderboard'));
 app.use('/api', require('./routes/push'));
 app.use('/api', require('./routes/unlock'));
-app.use('/', require('./routes/agency'));
-app.use('/', require('./routes/stages'));
-app.use('/', require('./routes/referral'));
 app.use(require('./routes/upload'));
 
 // ── Public static files (served before catch-alls) ───────────────────
