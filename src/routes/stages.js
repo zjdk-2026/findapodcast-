@@ -48,11 +48,28 @@ function stageMatchesCity(stage, searchCity) {
 
   if (stCity && (stCity === sc || stCity.includes(sc) || sc.includes(stCity))) return true;
 
+  // Normalise common ISO/full-name variants for country matching
+  const COUNTRY_ALIASES = {
+    'ae': 'uae', 'united arab emirates': 'uae', 'emirates': 'uae',
+    'gb': 'uk', 'united kingdom': 'uk', 'britain': 'uk', 'great britain': 'uk',
+    'us': 'usa', 'united states': 'usa', 'america': 'usa',
+    'au': 'australia',
+    'sg': 'singapore',
+    'hk': 'hong kong',
+    'ca': 'canada',
+    'de': 'germany', 'deutschland': 'germany',
+    'fr': 'france',
+    'nl': 'netherlands', 'holland': 'netherlands',
+    'in': 'india',
+  };
+  const normaliseCountry = (c) => {
+    if (!c) return c;
+    const k = c.toLowerCase().trim().replace(/^the /, '').replace(/^united /, '');
+    return COUNTRY_ALIASES[k] || COUNTRY_ALIASES[c.toLowerCase()] || k;
+  };
+
   const searchCountry = CITY_TO_COUNTRY[sc];
-  if (searchCountry && stCountry) {
-    const stCountryNorm = stCountry.replace(/^the /, '').replace(/^united /, '');
-    if (stCountryNorm === searchCountry || stCountry === searchCountry) return true;
-  }
+  if (searchCountry && stCountry && normaliseCountry(stCountry) === searchCountry) return true;
 
   return false;
 }
