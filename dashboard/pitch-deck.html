@@ -852,12 +852,13 @@
 
   function goTo(n) {
     if (n < 1 || n > TOTAL || n === current) return;
+    const forward = n > current;
     const prev = document.getElementById('slide-' + current);
     const next = document.getElementById('slide-' + n);
     prev.classList.remove('active');
-    prev.classList.add(n > current ? 'out-left' : '');
+    if (forward) prev.classList.add('out-left');
     setTimeout(() => prev.classList.remove('out-left'), 400);
-    next.style.transform = n > current ? 'translateX(40px)' : 'translateX(-40px)';
+    next.style.transform = forward ? 'translateX(40px)' : 'translateX(-40px)';
     requestAnimationFrame(() => {
       next.classList.add('active');
       next.style.transform = '';
