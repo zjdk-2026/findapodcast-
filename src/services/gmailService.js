@@ -110,16 +110,25 @@ function toBase64Url(str) {
 }
 
 /**
- * Build an RFC 2822 MIME message string.
+ * Wraps a base64 string at 76 chars per line as required by RFC 2045.
  */
-function buildRfc2822Message({ to, subject, body, from, linkRow }) {
-  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
-  const boundary = `----=_Part_${Date.now()}`;
+function wrapBase64(b64) {
+  return b64.match(/.{1,76}/g).join('\r\n');
+}
 
-  // Plain text version — just the body as-is
+/**
+ * Build an RFC 2822 MIME message string.
+ *
+ * audioAttachment (optional): { filename, mime, buffer } — Buffer of the audio file.
+ * When provided, the message becomes multipart/mixed wrapping the multipart/alternative
+ * body, plus the audio as an attachment part.
+ */
+function buildRfc2822Message({ to, subject, body, from, linkRow, audioAttachment }) {
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
+  const altBoundary = `----=_Alt_${Date.now()}`;
+
   const plainText = body;
 
-  // HTML version — convert \n\n to paragraphs, append clickable link row
   const htmlParagraphs = body
     .split(/\n\n+/)
     .map(p => `<p style="margin:0 0 16px;font-family:sans-serif;font-size:15px;line-height:1.6;color:#222;">${p.replace(/\n/g, '<br>')}</p>`)
@@ -130,7 +139,7 @@ function buildRfc2822Message({ to, subject, body, from, linkRow }) {
   const htmlBody = `<!DOCTYPE html><html><body style="margin:0;padding:20px;">${htmlParagraphs}${linkRowHtml}</body></html>`;
 
   const plainPart = [
-    `--${boundary}`,
+    `--${altBoundary}`,
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
@@ -138,12 +147,48 @@ function buildRfc2822Message({ to, subject, body, from, linkRow }) {
   ].join('\r\n');
 
   const htmlPart = [
-    `--${boundary}`,
+    `--${altBoundary}`,
     'Content-Type: text/html; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
     Buffer.from(htmlBody, 'utf8').toString('base64'),
-    `--${boundary}--`,
+    `--${altBoundary}--`,
+  ].join('\r\n');
+
+  if (!audioAttachment || !audioAttachment.buffer) {
+    const headers = [
+      `From: ${from || 'me'}`,
+      `To: ${to}`,
+      `Subject: ${encodedSubject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+      '',
+      plainPart,
+      htmlPart,
+    ];
+    return headers.join('\r\n');
+  }
+
+  const mixedBoundary = `----=_Mixed_${Date.now()}`;
+  const altWrapper = [
+    `--${mixedBoundary}`,
+    `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+    '',
+    plainPart,
+    htmlPart,
+  ].join('\r\n');
+
+  const audioMime = audioAttachment.mime || 'audio/webm';
+  const audioFilename = audioAttachment.filename || 'voice-intro.webm';
+  const audioBase64 = wrapBase64(audioAttachment.buffer.toString('base64'));
+  const audioPart = [
+    `--${mixedBoundary}`,
+    `Content-Type: ${audioMime}; name="${audioFilename}"`,
+    `Content-Disposition: attachment; filename="${audioFilename}"`,
+    'Content-Transfer-Encoding: base64',
+    '',
+    audioBase64,
+    `--${mixedBoundary}--`,
   ].join('\r\n');
 
   const headers = [
@@ -151,10 +196,10 @@ function buildRfc2822Message({ to, subject, body, from, linkRow }) {
     `To: ${to}`,
     `Subject: ${encodedSubject}`,
     'MIME-Version: 1.0',
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
     '',
-    plainPart,
-    htmlPart,
+    altWrapper,
+    audioPart,
   ];
   return headers.join('\r\n');
 }
@@ -164,7 +209,7 @@ function buildRfc2822Message({ to, subject, body, from, linkRow }) {
  * Creates a Gmail draft via the Gmail API.
  * Returns the draft id string.
  */
-async function createDraft(refreshToken, to, subject, body, linkRow = null) {
+async function createDraft(refreshToken, to, subject, body, linkRow = null, audioAttachment = null) {
   try {
     const oauth2Client = buildOAuth2Client();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
@@ -180,7 +225,7 @@ async function createDraft(refreshToken, to, subject, body, linkRow = null) {
       // Fall through — Gmail API accepts 'me' as a special value
     }
 
-    const rawMessage = buildRfc2822Message({ to, subject, body, from: fromEmail, linkRow });
+    const rawMessage = buildRfc2822Message({ to, subject, body, from: fromEmail, linkRow, audioAttachment });
     const encodedMessage = toBase64Url(rawMessage);
 
     const response = await gmail.users.drafts.create({

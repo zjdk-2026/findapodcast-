@@ -293,6 +293,31 @@
           <label class="field-label" for="modal-body-text">Body</label>
           <textarea id="modal-body-text" rows="12" class="email-edit-field" style="min-height:240px;"></textarea>
         </div>
+
+        <!-- Voice intro (per-host audio attachment) -->
+        <div id="voice-intro-section" style="border:1px solid var(--border-subtle);border-radius:12px;padding:14px 16px;background:rgba(99,102,241,0.04);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Voice intro <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">(optional, attached to email)</span></div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Hosts get 100 cold pitches a week. A 30-second voice note from you cuts through.</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" id="voice-record-btn" class="btn btn-outline btn-xs" style="font-size:12px;">● Record</button>
+              <label class="btn btn-outline btn-xs" style="font-size:12px;cursor:pointer;margin:0;">Upload<input type="file" id="voice-upload-input" accept="audio/*" style="display:none;" /></label>
+            </div>
+          </div>
+          <div id="voice-recording-status" style="display:none;align-items:center;font-size:12px;color:#dc2626;font-weight:600;margin-bottom:6px;">
+            <span id="voice-recording-dot" style="display:inline-block;width:8px;height:8px;background:#dc2626;border-radius:50%;margin-right:6px;animation:vintro-pulse 1s infinite;"></span>
+            Recording... <span id="voice-recording-time" style="margin-left:4px;">0:00</span>
+            <button type="button" id="voice-stop-btn" class="btn btn-xs" style="margin-left:8px;background:#dc2626;color:#fff;border:none;font-size:11px;">Stop</button>
+          </div>
+          <div id="voice-attached-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+            <audio id="voice-player" controls style="height:32px;flex:1;min-width:200px;"></audio>
+            <span id="voice-meta" style="font-size:11px;color:var(--text-secondary);"></span>
+            <button type="button" id="voice-delete-btn" class="btn btn-outline btn-xs" style="font-size:11px;color:#dc2626;border-color:#fecaca;">Remove</button>
+          </div>
+          <style>@keyframes vintro-pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }</style>
+        </div>
       </div>
       <div class="modal-footer" style="flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -711,6 +736,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260424-tier1-shipped"></script>
+  <script src="/dashboard/app.js?v=20260425-voice-intro"></script>
 </body>
 </html>

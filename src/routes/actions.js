@@ -187,8 +187,31 @@ router.post('/send', async (req, res) => {
         if (!contactEmail?.includes('@')) {
           return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
         }
-        if (!draftId && emailBody) {
-          draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, emailSubject, emailBody, null);
+
+        let audioAttachment = null;
+        if (match.audio_attachment_path) {
+          try {
+            const { data: audioBlob, error: dlErr } = await supabase.storage
+              .from('pitch-audio')
+              .download(match.audio_attachment_path);
+            if (!dlErr && audioBlob) {
+              const buffer = Buffer.from(await audioBlob.arrayBuffer());
+              audioAttachment = {
+                buffer,
+                mime:     match.audio_attachment_mime || 'audio/webm',
+                filename: match.audio_attachment_filename || 'voice-intro.webm',
+              };
+            } else if (dlErr) {
+              logger.warn('Could not fetch pitch audio for send', { matchId, error: dlErr.message });
+            }
+          } catch (audioErr) {
+            logger.warn('Audio fetch error during send', { matchId, error: audioErr.message });
+          }
+        }
+
+        // If audio is attached, always create a fresh draft so the attachment is included
+        if (audioAttachment || (!draftId && emailBody)) {
+          draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, emailSubject, emailBody, null, audioAttachment);
         }
         if (!draftId) {
           return res.status(400).json({ success: false, error: 'Pitch email not ready. Write your pitch first then try again.' });

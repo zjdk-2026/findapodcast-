@@ -3140,6 +3140,11 @@ function openEmailModal(matchId) {
   $('email-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
+  // Hide voice intro section for thank-you mode (only for cold pitches)
+  const voiceSection = $('voice-intro-section');
+  if (voiceSection) voiceSection.style.display = isAppeared ? 'none' : 'block';
+  voiceIntro.loadForMatch(matchId);
+
   // Auto-generate pitch if no real pitch exists yet
   if (isFallback && !isAppeared && ['new','dream'].includes(match.status)) {
     setTimeout(() => $('email-rewrite-btn')?.click(), 100);
@@ -3150,7 +3155,193 @@ function closeEmailModal() {
   $('email-modal').style.display = 'none';
   document.body.style.overflow = '';
   state.modalMatchId = null;
+  voiceIntro.cleanupOnClose();
 }
+
+// ── Voice intro (per-host audio attachment) ────────────────────────────
+const voiceIntro = (() => {
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordingTimer = null;
+  let recordingStartedAt = 0;
+
+  function showAttached({ signedUrl, filename, mime, bytes }) {
+    const row = $('voice-attached-row');
+    const player = $('voice-player');
+    const meta = $('voice-meta');
+    if (!row || !player) return;
+    if (signedUrl) player.src = signedUrl;
+    if (meta) {
+      const kb = bytes ? Math.round(bytes / 1024) : 0;
+      meta.textContent = (filename || 'voice-intro') + (kb ? ` · ${kb} KB` : '');
+    }
+    row.style.display = 'flex';
+    const recBtn = $('voice-record-btn');
+    if (recBtn) recBtn.style.display = 'none';
+    const uploadLabel = $('voice-upload-input')?.parentElement;
+    if (uploadLabel) uploadLabel.style.display = 'none';
+  }
+
+  function hideAttached() {
+    const row = $('voice-attached-row');
+    const player = $('voice-player');
+    if (row) row.style.display = 'none';
+    if (player) { player.pause(); player.removeAttribute('src'); player.load(); }
+    const recBtn = $('voice-record-btn');
+    if (recBtn) recBtn.style.display = 'inline-flex';
+    const uploadLabel = $('voice-upload-input')?.parentElement;
+    if (uploadLabel) uploadLabel.style.display = 'inline-flex';
+  }
+
+  async function loadForMatch(matchId) {
+    hideAttached();
+    if (!matchId) return;
+    try {
+      const res = await fetch(`/api/audio-url/${matchId}`, { headers: { 'x-dashboard-token': state.token } });
+      const data = await res.json();
+      if (data?.success && data.signedUrl) {
+        showAttached(data);
+      }
+    } catch (err) {
+      console.warn('voice intro load failed', err);
+    }
+  }
+
+  async function uploadBlob(blob, filename) {
+    const matchId = state.modalMatchId;
+    if (!matchId) return;
+    const fd = new FormData();
+    fd.append('audio', blob, filename || 'voice-intro.webm');
+    fd.append('matchId', matchId);
+    try {
+      const res = await fetch('/api/upload-audio', {
+        method:  'POST',
+        headers: { 'x-dashboard-token': state.token },
+        body:    fd,
+      });
+      const data = await res.json();
+      if (data?.success) {
+        showAttached(data);
+        toast('Voice intro attached. It will be sent with this pitch.');
+      } else {
+        alert(data?.error || 'Upload failed.');
+      }
+    } catch (err) {
+      console.error('voice upload error', err);
+      alert('Upload failed.');
+    }
+  }
+
+  async function deleteAttached() {
+    const matchId = state.modalMatchId;
+    if (!matchId) return;
+    if (!confirm('Remove the voice intro from this pitch?')) return;
+    try {
+      const res = await fetch(`/api/upload-audio/${matchId}`, {
+        method:  'DELETE',
+        headers: { 'x-dashboard-token': state.token },
+      });
+      const data = await res.json();
+      if (data?.success) {
+        hideAttached();
+        toast('Voice intro removed.');
+      }
+    } catch (err) {
+      console.error('voice delete error', err);
+    }
+  }
+
+  async function startRecording() {
+    if (mediaRecorder) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert('Recording is not supported in this browser. Use Upload instead.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferredMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+      mediaRecorder = preferredMime ? new MediaRecorder(stream, { mimeType: preferredMime }) : new MediaRecorder(stream);
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data?.size) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        const type = mediaRecorder?.mimeType || 'audio/webm';
+        const ext = type.includes('mp4') ? 'm4a' : 'webm';
+        const blob = new Blob(recordedChunks, { type });
+        recordedChunks = [];
+        stream.getTracks().forEach(t => t.stop());
+        mediaRecorder = null;
+        showRecordingUI(false);
+        await uploadBlob(blob, `voice-intro.${ext}`);
+      };
+      mediaRecorder.start();
+      recordingStartedAt = Date.now();
+      showRecordingUI(true);
+      recordingTimer = setInterval(updateTimer, 250);
+    } catch (err) {
+      console.error('mic error', err);
+      alert('Could not access the microphone. Check browser permissions.');
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder?.state === 'recording') {
+      mediaRecorder.stop();
+    }
+  }
+
+  function showRecordingUI(active) {
+    const status = $('voice-recording-status');
+    const recBtn = $('voice-record-btn');
+    if (status) status.style.display = active ? 'flex' : 'none';
+    if (recBtn) recBtn.style.display = active ? 'none' : 'inline-flex';
+    if (!active) {
+      clearInterval(recordingTimer);
+      recordingTimer = null;
+      const t = $('voice-recording-time');
+      if (t) t.textContent = '0:00';
+    }
+  }
+
+  function updateTimer() {
+    const elapsed = Math.floor((Date.now() - recordingStartedAt) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    const t = $('voice-recording-time');
+    if (t) t.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    if (elapsed >= 180) stopRecording(); // hard cap at 3 min
+  }
+
+  function cleanupOnClose() {
+    if (mediaRecorder?.state === 'recording') {
+      try { mediaRecorder.stop(); } catch {}
+    }
+    clearInterval(recordingTimer);
+    recordingTimer = null;
+    showRecordingUI(false);
+  }
+
+  function init() {
+    $('voice-record-btn')?.addEventListener('click', startRecording);
+    $('voice-stop-btn')?.addEventListener('click', stopRecording);
+    $('voice-delete-btn')?.addEventListener('click', deleteAttached);
+    $('voice-upload-input')?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert('Audio file is too large (max 5MB).'); return; }
+      await uploadBlob(file, file.name);
+      e.target.value = '';
+    });
+  }
+
+  function toast(msg) {
+    if (typeof window.showToast === 'function') return window.showToast(msg);
+    console.log(msg);
+  }
+
+  return { init, loadForMatch, cleanupOnClose };
+})();
 
 async function saveEmailDraft() {
   const matchId = state.modalMatchId;
@@ -3822,6 +4013,7 @@ function initModals() {
   $('email-modal-close')?.addEventListener('click', closeEmailModal);
   $('email-modal-close-btn')?.addEventListener('click', closeEmailModal);
   emailModal?.addEventListener('click', (e) => { if (e.target === emailModal) closeEmailModal(); });
+  voiceIntro.init();
 
   $('email-reenrich-btn')?.addEventListener('click', async () => {
     if (!state.modalMatchId) return;
