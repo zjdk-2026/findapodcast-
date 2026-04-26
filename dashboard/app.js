@@ -613,17 +613,10 @@ function renderPipelineHealth(stats) {
 
   el.style.display = 'block';
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border:1px solid rgba(99,102,241,0.18);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-      <div style="font-size:24px;line-height:1;">${icon}</div>
-      <div style="flex:1;min-width:240px;">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${nudgeColor};margin-bottom:3px;">Your Pipeline Right Now</div>
-        <div style="font-size:14px;color:var(--text-primary);line-height:1.5;font-weight:600;">${esc(nudge)}</div>
-      </div>
-      <div style="display:flex;gap:18px;">
-        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
-        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply rate</div></div>
-        <div style="text-align:center;"><div style="font-size:18px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book rate</div></div>
-      </div>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border:1px solid rgba(99,102,241,0.18);border-radius:14px;padding:14px 22px;display:flex;align-items:center;justify-content:flex-end;gap:28px;flex-wrap:wrap;">
+      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
+      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply rate</div></div>
+      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book rate</div></div>
     </div>
   `;
 }
