@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS public.credit_transactions (
 
 CREATE INDEX IF NOT EXISTS idx_ct_client_recent ON public.credit_transactions(client_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ct_action        ON public.credit_transactions(action);
-CREATE INDEX IF NOT EXISTS idx_ct_month         ON public.credit_transactions(date_trunc('month', created_at));
+-- (Removed idx_ct_month: date_trunc(timestamptz) is not IMMUTABLE so can't index on it.
+--  Monthly queries use range filters on created_at instead — already covered by idx_ct_client_recent.)
 
 -- ── Monthly leaderboard archive ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.monthly_leaderboard (
