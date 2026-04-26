@@ -4,6 +4,7 @@ const express  = require('express');
 const multer   = require('multer');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
+const { awardPoints } = require('../lib/credits');
 
 const router  = express.Router();
 const upload  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -175,6 +176,10 @@ router.post('/api/upload-audio', uploadAudio.single('audio'), async (req, res) =
       .createSignedUrl(storagePath, 60 * 60);
 
     logger.info('Pitch audio uploaded', { matchId, bytes: req.file.size, mime });
+
+    // Award voice intro effort points (+2, no credit cost). Fire-and-forget.
+    awardPoints(client.id, 'voice_intro_attached', { matchId, mime, bytes: req.file.size }).catch(() => {});
+
     return res.json({ success: true, filename, mime, bytes: req.file.size, signedUrl: signed?.signedUrl || null });
   } catch (err) {
     logger.error('Audio upload error', { error: err.message, stack: err.stack });

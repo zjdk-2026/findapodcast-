@@ -280,6 +280,14 @@ function initScheduler() {
     logger.info('Weekly digest complete', { count: (clients || []).length });
   }, { timezone: 'UTC', scheduled: true });
 
+  // Monthly credits reset + leaderboard snapshot + leader bonus — 1st of month, 00:05 UTC
+  cron.schedule('5 0 1 * *', async () => {
+    try {
+      const { runMonthlyReset } = require('./services/creditsMonthlyReset');
+      await runMonthlyReset();
+    } catch (err) { logger.error('Monthly credits reset failed', { error: err.message }); }
+  }, { timezone: 'UTC', scheduled: true });
+
   logger.info('Scheduler initialised');
 }
 

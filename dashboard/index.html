@@ -26,6 +26,12 @@
       <span class="brand-name">Find A Podcast</span>
     </div>
     <div class="navbar-right" id="navbar-right" style="display:flex;align-items:center;gap:10px;">
+      <!-- Credits counter (populated by loadCredits() in app.js) -->
+      <button id="credits-counter" onclick="openCreditsModal()" title="Your monthly credit balance" style="display:none;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));border:1.5px solid rgba(99,102,241,0.3);color:var(--text-primary);font-size:13px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;line-height:1.3;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="credits-counter-value">—</span>
+        <span id="credits-counter-label" style="font-size:11px;font-weight:500;color:var(--text-tertiary);">credits</span>
+      </button>
       <img id="header-avatar" src="" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border-medium);display:none;flex-shrink:0;" />
       <!-- Injected by JS -->
     </div>

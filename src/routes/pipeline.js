@@ -10,6 +10,7 @@ const { writeEmail }        = require('../services/emailWriter');
 const { createDraft }       = require('../services/gmailService');
 const { sendDigestEmail }   = require('../services/digestEmail');
 const { computeContactLikelihood } = require('../lib/contact-likelihood');
+const { chargeCredits } = require('../lib/credits');
 
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 const router = express.Router();
@@ -23,6 +24,15 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
   const clientId = req.clientId; // from middleware — verified token owner
 
   logger.info('Pipeline run started', { clientId });
+
+  // Credit gate: each "Find a Podcast" search batch costs 10 credits (returns ~10 podcasts)
+  const charge = await chargeCredits(clientId, 'search_batch', { trigger: 'manual_run' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
 
   try {
     // ── 1. Fetch client ───────────────────────────────────────

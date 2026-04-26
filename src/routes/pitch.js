@@ -6,6 +6,7 @@ const supabase   = require('../lib/supabase');
 const logger     = require('../lib/logger');
 const { writeEmail, humanize } = require('../services/emailWriter');
 const { createDraft }          = require('../services/gmailService');
+const { chargeCredits }        = require('../lib/credits');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
@@ -57,7 +58,16 @@ router.post('/save-pitch', requireDashboardToken, async (req, res) => {
  * POST /api/generate-pitch
  * Regenerates the pitch email for a given match and saves it back to the DB.
  */
-router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
+router.post('/generate-pitch', requireDashboardToken, async (req, res, next) => {
+  const charge = await chargeCredits(req.clientId, 'ai_generate_pitch', { route: 'generate-pitch' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+  next();
+}, async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
@@ -111,7 +121,16 @@ router.post('/generate-pitch', requireDashboardToken, async (req, res) => {
  * Generates an AI follow-up email using the same Claude prompt as the scheduler,
  * runs it through the humanizer, and returns { subject, body } — does NOT send.
  */
-router.post('/generate-followup', requireDashboardToken, async (req, res) => {
+router.post('/generate-followup', requireDashboardToken, async (req, res, next) => {
+  const charge = await chargeCredits(req.clientId, 'ai_generate_followup', { route: 'generate-followup' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+  next();
+}, async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
@@ -195,6 +214,15 @@ router.post('/interview-prep', requireDashboardToken, async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
+  // Credit gate: 1 credit per interview prep generation
+  const charge = await chargeCredits(req.clientId, 'interview_prep', { matchId });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
@@ -257,7 +285,16 @@ router.post('/interview-prep', requireDashboardToken, async (req, res) => {
  * POST /api/generate-dm
  * Generates a short, first-person social DM for a given match using Claude Haiku.
  */
-router.post('/generate-dm', requireDashboardToken, async (req, res) => {
+router.post('/generate-dm', requireDashboardToken, async (req, res, next) => {
+  const charge = await chargeCredits(req.clientId, 'ai_generate_dm', { route: 'generate-dm' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+  next();
+}, async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
@@ -335,7 +372,16 @@ Return ONLY the plain text DM — no JSON, no markdown, no explanation.`,
  * POST /api/generate-thankyou
  * Generates an AI thank you email after an episode airs.
  */
-router.post('/generate-thankyou', requireDashboardToken, async (req, res) => {
+router.post('/generate-thankyou', requireDashboardToken, async (req, res, next) => {
+  const charge = await chargeCredits(req.clientId, 'ai_generate_thankyou', { route: 'generate-thankyou' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+  next();
+}, async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 

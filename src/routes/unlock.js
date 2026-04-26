@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { unlockPodcast } = require('../lib/strict-unlock');
 const { buildFallbackTips } = require('../lib/contact-likelihood');
+const { chargeCredits } = require('../lib/credits');
 const logger = require('../lib/logger');
 const supabase = require('../lib/supabase');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
@@ -25,6 +26,17 @@ router.post('/unlock/:podcastId', requireDashboardToken, async (req, res) => {
   const clientId = req.clientId || req.body?.clientId || null;
 
   if (!podcastId) return res.status(400).json({ ok: false, error: 'podcastId required' });
+
+  // Credit gate: 1 credit per unlock (skipped for unlimited Tour customers)
+  if (clientId) {
+    const charge = await chargeCredits(clientId, 'unlock', { podcastId });
+    if (!charge.ok) {
+      if (charge.error === 'insufficient_credits') {
+        return res.status(402).json({ ok: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+      }
+      return res.status(500).json({ ok: false, error: 'credit_charge_failed' });
+    }
+  }
 
   try {
     const result = await unlockPodcast(podcastId, clientId);

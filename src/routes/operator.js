@@ -289,4 +289,128 @@ router.post('/bulk-reenrich', requireOperatorKey, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/operator/leaderboard
+ * Live leaderboard ranked by monthly_points DESC. Operator-only.
+ * Customer dashboard does NOT show this — points are invisible to them until launch.
+ */
+router.get('/leaderboard', requireOperatorKey, async (req, res) => {
+  try {
+    const { data: clients, error } = await supabase
+      .from('clients')
+      .select('id, name, email, credits_remaining, unlimited_credits, monthly_points, lifetime_points, last_action_at, is_active')
+      .order('monthly_points', { ascending: false });
+
+    if (error) {
+      logger.error('Operator leaderboard fetch failed', { error: error.message });
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    // Compute ranks (handles ties — same rank for tied scores)
+    let lastPoints = null;
+    let lastRank = 0;
+    const ranked = (clients || []).map((c, idx) => {
+      if (c.monthly_points !== lastPoints) {
+        lastRank = idx + 1;
+        lastPoints = c.monthly_points;
+      }
+      return { ...c, rank: lastRank };
+    });
+
+    // Recent transactions for context (last 50)
+    const { data: recent } = await supabase
+      .from('credit_transactions')
+      .select('client_id, action, credits_delta, points_delta, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    res.json({ ok: true, clients: ranked, recent_transactions: recent || [] });
+  } catch (err) {
+    logger.error('Operator leaderboard error', { error: err.message });
+    res.status(500).json({ success: false, error: 'internal_error' });
+  }
+});
+
+/**
+ * GET /api/operator/leaderboard.html
+ * Renders a simple HTML leaderboard page for operator viewing.
+ */
+router.get('/leaderboard.html', requireOperatorKey, async (req, res) => {
+  try {
+    const { data: clients } = await supabase
+      .from('clients')
+      .select('id, name, email, credits_remaining, unlimited_credits, monthly_points, lifetime_points, last_action_at, is_active')
+      .order('monthly_points', { ascending: false });
+
+    let lastPoints = null;
+    let lastRank = 0;
+    const rows = (clients || []).map((c, idx) => {
+      if (c.monthly_points !== lastPoints) {
+        lastRank = idx + 1;
+        lastPoints = c.monthly_points;
+      }
+      const isLeader = lastRank === 1 && c.monthly_points > 0;
+      const last = c.last_action_at ? new Date(c.last_action_at).toLocaleString() : '—';
+      const credits = c.unlimited_credits ? 'UNLIMITED' : c.credits_remaining ?? 0;
+      const initials = (c.name || c.email || '?').split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
+      return `
+        <tr style="${isLeader ? 'background:rgba(245,158,11,0.08);' : ''}">
+          <td style="padding:10px 14px;font-weight:800;font-size:14px;${isLeader ? 'color:#f59e0b;' : ''}">${isLeader ? '🏆 ' : ''}${lastRank}</td>
+          <td style="padding:10px 14px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>
+              <div>
+                <div style="font-weight:700;font-size:14px;">${c.name || '(no name)'}</div>
+                <div style="font-size:11px;color:#6b7280;">${c.email || ''}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:10px 14px;font-weight:800;font-size:18px;color:#10b981;">${c.monthly_points ?? 0}</td>
+          <td style="padding:10px 14px;font-size:13px;color:#6b7280;">${c.lifetime_points ?? 0}</td>
+          <td style="padding:10px 14px;font-size:13px;${c.unlimited_credits ? 'color:#8b5cf6;font-weight:700;' : ''}">${credits}</td>
+          <td style="padding:10px 14px;font-size:11px;color:#6b7280;">${last}</td>
+          <td style="padding:10px 14px;font-size:11px;">${c.is_active ? '✅' : '⏸'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    res.send(`
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Operator Leaderboard</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0f0f17; color: #f1f5f9; padding: 32px; margin: 0; }
+  h1 { margin: 0 0 8px; font-size: 28px; font-weight: 900; }
+  .sub { color: #94a3b8; font-size: 14px; margin-bottom: 28px; }
+  table { width: 100%; max-width: 1200px; border-collapse: collapse; background: #1c1c2e; border-radius: 14px; overflow: hidden; }
+  th { text-align: left; padding: 12px 14px; background: #13131f; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  tr:hover { background: rgba(99,102,241,0.06); }
+  td { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .refresh { display: inline-block; margin-bottom: 18px; padding: 8px 16px; background: #6366f1; color: #fff; border-radius: 999px; text-decoration: none; font-size: 13px; font-weight: 600; }
+</style></head><body>
+  <h1>🏆 Operator Leaderboard</h1>
+  <p class="sub">Live points ranking. Customer-invisible. Refreshes on page load. Top of monthly_points wins +50 credits at month-end.</p>
+  <a href="?key=${OPERATOR_KEY}" class="refresh">⟳ Refresh</a>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Client</th>
+        <th>Monthly Pts</th>
+        <th>Lifetime Pts</th>
+        <th>Credits</th>
+        <th>Last Action</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody>${rows || '<tr><td colspan="7" style="padding:40px;text-align:center;color:#6b7280;">No clients yet.</td></tr>'}</tbody>
+  </table>
+</body></html>
+    `);
+  } catch (err) {
+    logger.error('Operator leaderboard HTML error', { error: err.message });
+    res.status(500).send('Internal error');
+  }
+});
+
 module.exports = router;

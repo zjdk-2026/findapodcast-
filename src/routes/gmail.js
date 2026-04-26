@@ -4,6 +4,7 @@ const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply, findThreadByContactEmail } = require('../services/gmailService');
+const { awardPoints } = require('../lib/credits');
 const { google } = require('googleapis');
 
 const router = express.Router();
@@ -258,6 +259,9 @@ router.post('/api/gmail/check-replies', async (req, res) => {
         }
         updated.push(m.id);
         logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
+
+        // Award reply outcome points (+10, no credit cost). Fire-and-forget.
+        awardPoints(m.client_id, 'reply_received', { matchId: m.id, contactEmail }).catch(() => {});
       } else if (hasReply && m.status === 'replied' && isNewReply) {
         // Already replied — but there's a NEW message in the thread since last check
         const updateFields = {

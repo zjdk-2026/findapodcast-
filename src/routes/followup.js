@@ -19,6 +19,7 @@ const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { createDraft, sendDraft } = require('../services/gmailService');
+const { chargeCredits } = require('../lib/credits');
 
 const router = express.Router();
 
@@ -84,6 +85,14 @@ router.post('/followup-check', async (req, res) => {
 
       try {
         if (client.gmail_refresh_token && podcast.contact_email?.includes('@')) {
+          // Credit gate per follow-up — skip this match silently if customer is out of credits
+          const charge = await chargeCredits(match.client_id, 'followup_send', { matchId: match.id, source: 'auto_cron' });
+          if (!charge.ok) {
+            logger.info('followup-check: skipped (no credits)', { matchId: match.id, error: charge.error, balance: charge.balance });
+            results.push({ matchId: match.id, sent: false, reason: 'insufficient_credits' });
+            continue;
+          }
+
           const draftId = await createDraft(
             client.gmail_refresh_token,
             podcast.contact_email,

@@ -111,7 +111,16 @@ async function apiPost(url, body) {
     },
     body: JSON.stringify(body),
   });
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  // Universal out-of-credits handler — any 402 fires the top-up modal
+  if (res.status === 402 && data.error === 'insufficient_credits') {
+    if (typeof handleInsufficientCredits === 'function') handleInsufficientCredits(data);
+  }
+  // Refresh credit counter after every successful charging action
+  if (res.ok && data.credits_balance !== undefined && typeof loadCredits === 'function') {
+    loadCredits();
+  }
+  return data;
 }
 
 async function apiPatch(url, body) {
@@ -1792,6 +1801,9 @@ function renderDashboard(data) {
   state.matches           = matches || [];
   state.stats             = stats   || {};
   state.communityGroupUrl = data.community_group_url || null;
+
+  // Fetch live credit balance (fire-and-forget so render isn't blocked)
+  loadCredits();
 
   // Show reply badge — only for replied matches not yet seen by user
   // Client header
@@ -4644,6 +4656,107 @@ async function checkRepliesNow(event) {
   }
 }
 window.checkRepliesNow = checkRepliesNow;
+
+// ── Credits counter (live monthly balance) ─────────────────────────────
+async function loadCredits() {
+  if (!state.token) return;
+  try {
+    const r = await fetch('/api/credits/balance', { headers: { 'x-dashboard-token': state.token } });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.ok) return;
+
+    const wrap = document.getElementById('credits-counter');
+    const val  = document.getElementById('credits-counter-value');
+    const lbl  = document.getElementById('credits-counter-label');
+    if (!wrap || !val || !lbl) return;
+
+    if (data.unlimited) {
+      val.textContent = '∞';
+      lbl.textContent = 'unlimited';
+      wrap.style.background = 'linear-gradient(135deg,rgba(139,92,246,0.18),rgba(99,102,241,0.12))';
+      wrap.style.borderColor = 'rgba(139,92,246,0.4)';
+    } else {
+      val.textContent = data.credits ?? 0;
+      lbl.textContent = 'credits';
+      // Color-code: green > 100, yellow 50-100, red < 50
+      if (data.credits >= 100) {
+        wrap.style.background = 'linear-gradient(135deg,rgba(16,185,129,0.10),rgba(99,102,241,0.08))';
+        wrap.style.borderColor = 'rgba(16,185,129,0.30)';
+      } else if (data.credits >= 50) {
+        wrap.style.background = 'linear-gradient(135deg,rgba(245,158,11,0.10),rgba(99,102,241,0.08))';
+        wrap.style.borderColor = 'rgba(245,158,11,0.35)';
+      } else {
+        wrap.style.background = 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(245,158,11,0.08))';
+        wrap.style.borderColor = 'rgba(239,68,68,0.4)';
+      }
+    }
+    state.credits = data;
+    wrap.style.display = 'inline-flex';
+  } catch {}
+}
+window.loadCredits = loadCredits;
+
+// ── Credits modal (history + top-up CTA) ───────────────────────────────
+function openCreditsModal() {
+  const credits   = state.credits?.credits ?? 0;
+  const unlimited = !!state.credits?.unlimited;
+  const resetsAt  = state.credits?.resets_at;
+  const resetText = resetsAt ? new Date(resetsAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : 'next month';
+
+  const html = `
+    <div style="background:var(--bg-secondary,#fff);border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;">Your Credits</div>
+          <div style="font-size:48px;font-weight:900;color:var(--accent,#6366f1);letter-spacing:-0.03em;line-height:1;margin-top:4px;">${unlimited ? '∞' : credits}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${unlimited ? 'Unlimited (Tour plan)' : `Resets ${resetText}`}</div>
+        </div>
+        <button onclick="closeCreditsModal()" style="background:none;border:none;font-size:24px;color:var(--text-tertiary);cursor:pointer;">×</button>
+      </div>
+      ${unlimited ? '' : `
+        <div style="background:var(--bg-tertiary,rgba(99,102,241,0.05));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">What credits cost</div>
+          <div style="font-size:13px;line-height:1.7;color:var(--text-secondary);">
+            <div>• Send pitch / follow-up: <strong style="color:var(--text-primary);">1 credit</strong></div>
+            <div>• Find more shows (10 podcasts): <strong style="color:var(--text-primary);">10 credits</strong></div>
+            <div>• Unlock contact info: <strong style="color:var(--text-primary);">1 credit</strong></div>
+            <div>• AI-generated pitch / interview prep: <strong style="color:var(--text-primary);">1 credit</strong></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-tertiary);text-align:center;line-height:1.6;">
+          Need more this month? Top-up packs coming soon.<br>Email <a href="mailto:hi@zacdeane.com?subject=Credit%20top-up" style="color:var(--accent);">hi@zacdeane.com</a> to add credits manually.
+        </div>
+      `}
+    </div>
+  `;
+
+  let modal = document.getElementById('credits-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'credits-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.onclick = (e) => { if (e.target === modal) closeCreditsModal(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = html;
+  modal.style.display = 'flex';
+}
+function closeCreditsModal() {
+  const modal = document.getElementById('credits-modal');
+  if (modal) modal.style.display = 'none';
+}
+window.openCreditsModal = openCreditsModal;
+window.closeCreditsModal = closeCreditsModal;
+
+// ── Out-of-credits handler — wired into apiPost wrapper ────────────────
+function handleInsufficientCredits(data) {
+  const balance = data.balance ?? 0;
+  const needed  = data.needed ?? 1;
+  showToast(`Out of credits (have ${balance}, need ${needed}). Top-up packs coming soon — email hi@zacdeane.com to add credits.`, 'error');
+  setTimeout(() => openCreditsModal(), 800);
+}
+window.handleInsufficientCredits = handleInsufficientCredits;
 
 // ── Check for host replies ─────────────────────────────────────────────
 async function checkForReplies() {

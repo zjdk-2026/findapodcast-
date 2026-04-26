@@ -5,6 +5,7 @@ const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { sendDraft, createDraft } = require('../services/gmailService');
 const { writeEmail } = require('../services/emailWriter');
+const { chargeCredits, awardPoints } = require('../lib/credits');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
 
 const router = express.Router();
@@ -164,6 +165,15 @@ router.post('/send', async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
+  // Credit gate: pitch send costs 1 credit (skipped for unlimited Tour customers)
+  const charge = await chargeCredits(req.clientId, 'pitch_send', { matchId });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+
   try {
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
@@ -239,8 +249,13 @@ router.post('/send', async (req, res) => {
 
     if (updateError) { logger.error('Failed to mark match as sent', { matchId, error: updateError.message }); return res.status(500).json({ success: false, error: 'Failed to update match status.' }); }
 
+    // Award voice-intro effort points if audio was attached (separate, +2 pts)
+    if (match.audio_attachment_path) {
+      awardPoints(req.clientId, 'voice_intro_attached', { matchId }).catch(() => {});
+    }
+
     logger.info('Match marked as sent', { matchId });
-    return res.json({ success: true, match: updated });
+    return res.json({ success: true, match: updated, credits_balance: charge.balance });
   } catch (err) {
     logger.error('Send route error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
@@ -254,6 +269,15 @@ router.post('/send', async (req, res) => {
 router.post('/send-thankyou', async (req, res) => {
   const { matchId, subject, body } = req.body;
   if (!matchId || !subject || !body) return res.status(400).json({ success: false, error: 'matchId, subject, and body are required.' });
+
+  // Credit gate: thank-you send costs 1 credit
+  const charge = await chargeCredits(req.clientId, 'thankyou_send', { matchId });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
 
   try {
     const { data: match, error: matchError } = await supabase
@@ -274,7 +298,7 @@ router.post('/send-thankyou', async (req, res) => {
 
     await sendDraft(match.clients.gmail_refresh_token, draftId);
     logger.info('Thank you email sent', { matchId });
-    return res.json({ success: true });
+    return res.json({ success: true, credits_balance: charge.balance });
   } catch (err) {
     logger.error('Send thank you error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
@@ -311,6 +335,9 @@ router.post('/book', async (req, res) => {
     if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
 
     logger.info('Match booked', { matchId });
+
+    // Award booking outcome points (+50, no credit cost)
+    awardPoints(req.clientId, 'booking_confirmed', { matchId, podcastId: matchFull.podcast_id }).catch(() => {});
 
     // Send congrats email via Resend (fire-and-forget)
     (async () => {
@@ -462,6 +489,10 @@ router.post('/appeared', async (req, res) => {
     if (error) return res.status(500).json({ success: false, error: 'Failed to update status.' });
     if (!data)  return res.status(404).json({ success: false, error: 'Match not found.' });
     logger.info('Match marked as appeared', { matchId });
+
+    // Award episode-aired outcome points (+200, no credit cost)
+    awardPoints(req.clientId, 'episode_aired', { matchId }).catch(() => {});
+
     return res.json({ success: true, match: data });
   } catch (err) {
     logger.error('Appeared route error', { matchId, error: err.message });
@@ -507,6 +538,16 @@ router.post('/send-followup', async (req, res) => {
   const { matchId, subject, body } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
   if (!body)    return res.status(400).json({ success: false, error: 'Email body is required.' });
+
+  // Credit gate: follow-up send costs 1 credit
+  const charge = await chargeCredits(req.clientId, 'followup_send', { matchId });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+
   try {
     const { data: match, error: fetchError } = await supabase
       .from('podcast_matches')
@@ -532,7 +573,7 @@ router.post('/send-followup', async (req, res) => {
     }
 
     await supabase.from('podcast_matches').update({ follow_up_sent: true, status: 'followed_up' }).eq('id', matchId).eq('client_id', req.clientId);
-    return res.json({ success: true, gmailSent });
+    return res.json({ success: true, gmailSent, credits_balance: charge.balance });
   } catch (err) {
     logger.error('Send-followup route error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });
