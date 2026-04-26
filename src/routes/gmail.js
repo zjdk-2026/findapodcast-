@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply, findThreadByContactEmail } = require('../services/gmailService');
+const { getAuthUrl, verifyState, exchangeCode, checkThreadForReply, findThreadByContactEmail, fetchThread } = require('../services/gmailService');
 const { awardPoints } = require('../lib/credits');
 const { google } = require('googleapis');
 
@@ -262,6 +262,53 @@ router.post('/api/gmail/check-replies', async (req, res) => {
 
         // Award reply outcome points (+10, no credit cost). Fire-and-forget.
         awardPoints(m.client_id, 'reply_received', { matchId: m.id, contactEmail }).catch(() => {});
+
+        // Capture full thread (all inbound + outbound messages) for the dashboard view.
+        // Fire-and-forget — if it fails the user still sees status='replied' and can poll later.
+        if (threadId) {
+          fetchThread(client.gmail_refresh_token, threadId).then(async (messages) => {
+            if (!messages || messages.length === 0) return;
+            const customerEmail = (client.gmail_email || '').toLowerCase();
+            for (const msg of messages) {
+              const fromLower = (msg.from || '').toLowerCase();
+              const isOutbound = customerEmail && fromLower.includes(customerEmail);
+              const direction = isOutbound ? 'outbound' : 'inbound';
+              try {
+                await supabase.from('match_thread_messages').insert({
+                  match_id:           m.id,
+                  gmail_message_id:   msg.gmail_message_id,
+                  gmail_thread_id:    msg.gmail_thread_id,
+                  direction,
+                  message_type:       isOutbound ? null : 'host_reply',
+                  from_email:         msg.from || null,
+                  to_email:           msg.to || null,
+                  subject:            msg.subject || null,
+                  body_text:          msg.body_text,
+                  body_html:          msg.body_html,
+                  rfc822_message_id:  msg.rfc822_message_id,
+                  in_reply_to:        msg.in_reply_to,
+                  sent_at:            msg.date_ms ? new Date(msg.date_ms).toISOString() : null,
+                  detected_at:        isOutbound ? null : new Date().toISOString(),
+                });
+              } catch (insertErr) {
+                // Likely a duplicate gmail_message_id — that's fine, idempotent
+              }
+            }
+            // Update unread count = inbound messages count (until customer opens the thread)
+            const inboundCount = messages.filter(msg => {
+              const fromLower = (msg.from || '').toLowerCase();
+              return !(customerEmail && fromLower.includes(customerEmail));
+            }).length;
+            await supabase.from('podcast_matches').update({
+              message_count:        messages.length,
+              unread_inbound_count: inboundCount,
+              last_message_at:      new Date().toISOString(),
+            }).eq('id', m.id).catch(() => {});
+            logger.info('Thread cached on first reply', { matchId: m.id, msgCount: messages.length, inboundCount });
+          }).catch((err) => {
+            logger.warn('Thread capture failed (non-fatal)', { matchId: m.id, error: err.message });
+          });
+        }
       } else if (hasReply && m.status === 'replied' && isNewReply) {
         // Already replied — but there's a NEW message in the thread since last check
         const updateFields = {

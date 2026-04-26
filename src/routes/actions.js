@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { sendDraft, createDraft } = require('../services/gmailService');
+const { sendDraft, createDraft, getMessageMetadata } = require('../services/gmailService');
 const { writeEmail } = require('../services/emailWriter');
 const { chargeCredits, awardPoints } = require('../lib/credits');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
@@ -228,7 +228,39 @@ router.post('/send', async (req, res) => {
         }
         const sentMsg = await sendDraft(match.clients.gmail_refresh_token, draftId);
         logger.info('Gmail draft sent', { matchId, draftId });
-        if (sentMsg?.threadId) {
+
+        // Capture full message metadata so the follow-up can thread properly via In-Reply-To
+        if (sentMsg?.id && sentMsg?.threadId) {
+          const meta = await getMessageMetadata(match.clients.gmail_refresh_token, sentMsg.id);
+          const updates = {
+            gmail_thread_id:        sentMsg.threadId,
+            gmail_pitch_message_id: sentMsg.id,
+            last_message_at:        new Date().toISOString(),
+            message_count:          (match.message_count || 0) + 1,
+          };
+          await supabase.from('podcast_matches').update(updates).eq('id', matchId);
+
+          // Insert outbound row in match_thread_messages (idempotent — ignores duplicate gmail_message_id)
+          try {
+            await supabase.from('match_thread_messages').insert({
+              match_id:           matchId,
+              gmail_message_id:   sentMsg.id,
+              gmail_thread_id:    sentMsg.threadId,
+              direction:          'outbound',
+              message_type:       'pitch',
+              from_email:         meta?.from || null,
+              to_email:           match.podcasts?.contact_email || meta?.to || null,
+              subject:            meta?.subject || (match.email_subject_edited || match.email_subject || null),
+              body_text:          match.email_body_edited || match.email_body || null,
+              rfc822_message_id:  meta?.rfc822MessageId || null,
+              audio_attached:     !!audioAttachment,
+              sent_at:            new Date().toISOString(),
+            });
+          } catch (logErr) {
+            logger.warn('match_thread_messages insert failed (table may not exist yet)', { matchId, error: logErr.message });
+          }
+        } else if (sentMsg?.threadId) {
+          // Fallback: at least save the threadId
           await supabase.from('podcast_matches').update({ gmail_thread_id: sentMsg.threadId }).eq('id', matchId);
         }
       } catch (gmailErr) {

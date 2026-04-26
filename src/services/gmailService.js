@@ -123,7 +123,7 @@ function wrapBase64(b64) {
  * When provided, the message becomes multipart/mixed wrapping the multipart/alternative
  * body, plus the audio as an attachment part.
  */
-function buildRfc2822Message({ to, subject, body, from, linkRow, audioAttachment }) {
+function buildRfc2822Message({ to, subject, body, from, linkRow, audioAttachment, inReplyTo, references }) {
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
   const altBoundary = `----=_Alt_${Date.now()}`;
 
@@ -155,11 +155,17 @@ function buildRfc2822Message({ to, subject, body, from, linkRow, audioAttachment
     `--${altBoundary}--`,
   ].join('\r\n');
 
+  // Threading headers — only present on follow-ups / replies (not initial pitches)
+  const threadingHeaders = [];
+  if (inReplyTo)  threadingHeaders.push(`In-Reply-To: ${inReplyTo}`);
+  if (references) threadingHeaders.push(`References: ${references}`);
+
   if (!audioAttachment || !audioAttachment.buffer) {
     const headers = [
       `From: ${from || 'me'}`,
       `To: ${to}`,
       `Subject: ${encodedSubject}`,
+      ...threadingHeaders,
       'MIME-Version: 1.0',
       `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
       '',
@@ -195,6 +201,7 @@ function buildRfc2822Message({ to, subject, body, from, linkRow, audioAttachment
     `From: ${from || 'me'}`,
     `To: ${to}`,
     `Subject: ${encodedSubject}`,
+    ...threadingHeaders,
     'MIME-Version: 1.0',
     `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
     '',
@@ -316,4 +323,134 @@ async function checkThreadForReply(refreshToken, threadId) {
   }
 }
 
-module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft, checkThreadForReply, findThreadByContactEmail };
+/**
+ * getMessageMetadata(refreshToken, messageId)
+ * Returns { rfc822MessageId, threadId, subject, from, to, dateMs } for a sent message,
+ * extracted from its Gmail headers. Used to capture the RFC-822 Message-ID after
+ * a pitch sends so we can use it as In-Reply-To when the follow-up fires.
+ */
+async function getMessageMetadata(refreshToken, messageId) {
+  try {
+    const oauth2Client = buildOAuth2Client();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.messages.get({
+      userId:  'me',
+      id:      messageId,
+      format:  'metadata',
+      metadataHeaders: ['Message-ID', 'From', 'To', 'Subject', 'Date'],
+    });
+    const headers = res.data.payload?.headers || [];
+    const get = (name) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || null;
+    return {
+      threadId:         res.data.threadId  || null,
+      rfc822MessageId:  get('Message-ID'),
+      from:             get('From'),
+      to:               get('To'),
+      subject:          get('Subject'),
+      dateMs:           res.data.internalDate ? Number(res.data.internalDate) : null,
+    };
+  } catch (err) {
+    logger.warn('getMessageMetadata failed', { messageId, error: err.message });
+    return null;
+  }
+}
+
+/**
+ * fetchThread(refreshToken, threadId)
+ * Returns the full thread with every message + headers + body for storage.
+ * Used to backfill match_thread_messages when a host reply is first detected.
+ */
+async function fetchThread(refreshToken, threadId) {
+  try {
+    const oauth2Client = buildOAuth2Client();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const res = await gmail.users.threads.get({ userId: 'me', id: threadId, format: 'full' });
+    const messages = res.data.messages || [];
+
+    return messages.map((m) => {
+      const headers = m.payload?.headers || [];
+      const get = (name) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || null;
+
+      // Recursively pull text/plain and text/html parts
+      let bodyText = '';
+      let bodyHtml = '';
+      const walk = (part) => {
+        if (!part) return;
+        const mime = part.mimeType || '';
+        const data = part.body?.data;
+        if (data) {
+          const decoded = Buffer.from(data, 'base64').toString('utf8');
+          if (mime === 'text/plain' && !bodyText) bodyText = decoded;
+          else if (mime === 'text/html' && !bodyHtml) bodyHtml = decoded;
+        }
+        (part.parts || []).forEach(walk);
+      };
+      walk(m.payload);
+
+      return {
+        gmail_message_id:  m.id,
+        gmail_thread_id:   m.threadId,
+        rfc822_message_id: get('Message-ID'),
+        in_reply_to:       get('In-Reply-To'),
+        from:              get('From'),
+        to:                get('To'),
+        subject:           get('Subject'),
+        date_ms:           m.internalDate ? Number(m.internalDate) : null,
+        body_text:         bodyText || null,
+        body_html:         bodyHtml || null,
+      };
+    });
+  } catch (err) {
+    logger.warn('fetchThread failed', { threadId, error: err.message });
+    return [];
+  }
+}
+
+/**
+ * sendThreadedReply({ refreshToken, to, subject, body, threadId, inReplyTo, references, audioAttachment })
+ * Sends an email that lands in the SAME Gmail thread as the original.
+ * - threadId    REQUIRED — Gmail enforces matching threadId or rejects the send
+ * - inReplyTo   the RFC-822 Message-ID of the message being replied to (e.g. "<abc@mail.gmail.com>")
+ * - references  optional, typically same as inReplyTo
+ * Returns { id (message id), threadId } on success.
+ */
+async function sendThreadedReply({ refreshToken, to, subject, body, threadId, inReplyTo, references, audioAttachment }) {
+  if (!threadId) throw new Error('sendThreadedReply: threadId is required');
+  try {
+    const oauth2Client = buildOAuth2Client();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    let fromEmail = 'me';
+    try {
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      fromEmail = profile.data.emailAddress || 'me';
+    } catch {}
+
+    const rawMessage = buildRfc2822Message({
+      to,
+      subject,
+      body,
+      from: fromEmail,
+      audioAttachment,
+      inReplyTo,
+      references: references || inReplyTo,
+    });
+    const encoded = toBase64Url(rawMessage);
+
+    // Send directly with threadId so Gmail threads it on our side too
+    const res = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw: encoded, threadId },
+    });
+    logger.info('Gmail threaded reply sent', { to, threadId, messageId: res.data.id });
+    return { id: res.data.id, threadId: res.data.threadId };
+  } catch (err) {
+    logger.error('sendThreadedReply failed', { to, threadId, error: err.message });
+    throw err;
+  }
+}
+
+module.exports = { getAuthUrl, verifyState, exchangeCode, getAccessToken, createDraft, sendDraft, checkThreadForReply, findThreadByContactEmail, getMessageMetadata, fetchThread, sendThreadedReply };

@@ -18,7 +18,7 @@
 
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { createDraft, sendDraft } = require('./gmailService');
+const { createDraft, sendDraft, sendThreadedReply, getMessageMetadata } = require('./gmailService');
 const { chargeCredits } = require('../lib/credits');
 const { getClient: getAnthropicClient } = require('../lib/anthropic');
 
@@ -94,7 +94,7 @@ async function runFollowupSweep() {
 
   const { data: matches, error } = await supabase
     .from('podcast_matches')
-    .select('*, podcasts(*), clients(id, name, email, bio_short, business_name, gmail_refresh_token)')
+    .select('id, client_id, status, sent_at, follow_up_sent, email_subject, email_subject_edited, best_pitch_angle, gmail_thread_id, gmail_pitch_message_id, message_count, podcasts(id, title, host_name, contact_email), clients(id, name, email, bio_short, business_name, gmail_refresh_token)')
     .eq('status', 'sent')
     .gte('sent_at', minAge.toISOString())
     .lte('sent_at', maxAge.toISOString());
@@ -132,18 +132,85 @@ async function runFollowupSweep() {
 
     try {
       const { subject, body } = await generateFollowUpBody({ client, podcast, match });
-      const draftId = await createDraft(client.gmail_refresh_token, podcast.contact_email, subject, body).catch(() => null);
-      if (!draftId) { failed++; continue; }
 
-      const sentMsg = await sendDraft(client.gmail_refresh_token, draftId).catch(() => null);
-      if (!sentMsg) { failed++; continue; }
+      let sentMsg = null;
+      // If we captured the original Message-ID + threadId on the initial pitch, send as a proper threaded reply
+      if (match.gmail_thread_id && match.gmail_pitch_message_id) {
+        // Look up the original RFC-822 Message-ID from match_thread_messages (or fetch from Gmail as fallback)
+        let rfcMessageId = null;
+        const { data: pitchRow } = await supabase
+          .from('match_thread_messages')
+          .select('rfc822_message_id')
+          .eq('match_id', match.id)
+          .eq('direction', 'outbound')
+          .eq('message_type', 'pitch')
+          .limit(1)
+          .single();
+        rfcMessageId = pitchRow?.rfc822_message_id || null;
+
+        if (!rfcMessageId) {
+          // Fallback: fetch from Gmail directly
+          const meta = await getMessageMetadata(client.gmail_refresh_token, match.gmail_pitch_message_id);
+          rfcMessageId = meta?.rfc822MessageId || null;
+        }
+
+        try {
+          sentMsg = await sendThreadedReply({
+            refreshToken: client.gmail_refresh_token,
+            to:           podcast.contact_email,
+            subject,
+            body,
+            threadId:     match.gmail_thread_id,
+            inReplyTo:    rfcMessageId || undefined,
+          });
+        } catch (threadErr) {
+          logger.warn('followup sweep: threaded reply failed, falling back to draft+send', { matchId: match.id, error: threadErr.message });
+        }
+      }
+
+      // Fallback path: no threadId stored (older matches) — send as a new email with Re: subject
+      if (!sentMsg) {
+        const draftId = await createDraft(client.gmail_refresh_token, podcast.contact_email, subject, body).catch(() => null);
+        if (!draftId) { failed++; continue; }
+        sentMsg = await sendDraft(client.gmail_refresh_token, draftId).catch(() => null);
+        if (!sentMsg) { failed++; continue; }
+      }
+
+      // Persist the follow-up message in the thread ledger
+      if (sentMsg?.id) {
+        const meta = await getMessageMetadata(client.gmail_refresh_token, sentMsg.id);
+        try {
+          await supabase.from('match_thread_messages').insert({
+            match_id:          match.id,
+            gmail_message_id:  sentMsg.id,
+            gmail_thread_id:   sentMsg.threadId || match.gmail_thread_id,
+            direction:         'outbound',
+            message_type:      'followup',
+            from_email:        meta?.from || null,
+            to_email:          podcast.contact_email,
+            subject,
+            body_text:         body,
+            rfc822_message_id: meta?.rfc822MessageId || null,
+            in_reply_to:       null,
+            sent_at:           new Date().toISOString(),
+          });
+        } catch (logErr) {
+          logger.warn('followup sweep: thread message insert failed', { matchId: match.id, error: logErr.message });
+        }
+      }
 
       await supabase.from('podcast_matches')
-        .update({ follow_up_sent: true, status: 'followed_up' })
+        .update({
+          follow_up_sent:           true,
+          status:                   'followed_up',
+          gmail_followup_message_id: sentMsg?.id || null,
+          last_message_at:          new Date().toISOString(),
+          message_count:            (match.message_count || 0) + 1,
+        })
         .eq('id', match.id);
 
       sent++;
-      logger.info('followup sweep: sent', { matchId: match.id, hostEmail: podcast.contact_email });
+      logger.info('followup sweep: sent', { matchId: match.id, hostEmail: podcast.contact_email, threaded: !!match.gmail_thread_id });
     } catch (err) {
       failed++;
       logger.warn('followup sweep: send failed', { matchId: match.id, error: err.message });
