@@ -202,7 +202,6 @@ function collectFormData() {
     social_facebook:  val('f-facebook')     || undefined,
     extra_links:      val('f-extra-links')  || undefined,
     email_signature:  val('f-email-signature') || undefined,
-    pitch_style:      val('f-pitch-style')  || undefined,
     preferred_tone:   val('f-tone')         || 'warm-professional',
     daily_target:     selectedPace || 10,
     ...countryToLangGeo(val('f-country') || 'Any'),
@@ -264,10 +263,12 @@ async function submitForm() {
     }
 
     if (!res.ok || !data.success) {
-      const msg = data.error
+      const baseMsg = data.error
         || (Array.isArray(data.errors) ? data.errors.join('. ') : null)
         || `Something went wrong (${res.status}). Please try again.`;
-      throw new Error(msg);
+      // Surface debug payload if backend included it (helps diagnose insert failures)
+      const debugMsg = data.debug?.message ? ` (${data.debug.message})` : '';
+      throw new Error(baseMsg + debugMsg);
     }
 
     // Upload photos if provided

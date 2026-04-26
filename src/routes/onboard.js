@@ -434,8 +434,12 @@ router.post('/onboard', async (req, res) => {
         }
         return res.status(409).json({ success: false, error: 'A client with this email address already exists.' });
       }
-      logger.error('Failed to insert client', { email, error: error.message });
-      return res.status(500).json({ success: false, error: 'Failed to create client record.' });
+      logger.error('Failed to insert client', { email, error: error.message, code: error.code, details: error.details, hint: error.hint });
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create client record.',
+        debug: { message: error.message, code: error.code, hint: error.hint || null },
+      });
     }
 
     const baseUrl   = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
