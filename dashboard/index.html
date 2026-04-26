@@ -129,6 +129,9 @@
       <!-- Stats strip (this month) — now renders hero section -->
       <div id="stats-strip" class="stats-strip" style="display:none;"></div>
 
+      <!-- Pipeline health card (moved above stats bar so the momentum signal hits first) -->
+      <div id="pipeline-health" style="display:none;max-width:1400px;margin:14px auto 0;padding:0 24px;"></div>
+
       <!-- Stats bar -->
       <section class="stats-bar" id="stats-bar">
         <button id="header-run-pipeline" onclick="runPipeline()" class="stat-card" style="cursor:pointer;align-items:center;justify-content:center;text-align:center;border:none;">
@@ -194,9 +197,6 @@
           Has Email
         </label>
       </div>
-
-      <!-- Pipeline health card (gamified momentum signal) -->
-      <div id="pipeline-health" style="display:none;max-width:1400px;margin:14px auto 0;padding:0 24px;"></div>
 
       <!-- Onboarding checklist (first-time users only) -->
       <div id="onboarding-checklist" style="display:none;"></div>
