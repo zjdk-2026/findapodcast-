@@ -1826,10 +1826,16 @@ function renderDashboard(data) {
       : '';
   }
 
-  // Navbar right: profile dropdown trigger
+  // Navbar right: credits counter + profile dropdown trigger
+  // Credits counter sits LEFT of Settings, populated by loadCredits() once balance is fetched.
   const navbarRight = $('navbar-right');
   if (navbarRight) {
     navbarRight.innerHTML = `
+      <button id="credits-counter" onclick="openCreditsModal()" title="Your monthly credit balance" style="display:none;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));border:1.5px solid rgba(99,102,241,0.3);color:var(--text-primary);font-size:13px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;line-height:1.3;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="credits-counter-value">—</span>
+        <span id="credits-counter-label" style="font-size:11px;font-weight:500;color:var(--text-tertiary);">credits</span>
+      </button>
       <button class="profile-trigger" id="profile-trigger" onclick="toggleProfileDropdown()">
         Settings <span style="opacity:0.5;font-size:11px;">▾</span>
       </button>`;
