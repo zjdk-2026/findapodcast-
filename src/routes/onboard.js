@@ -644,4 +644,120 @@ router.post('/detect-socials', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/onboard/prefill
+ * Body: { url: 'https://yoursite.com' }
+ *
+ * Fetches the website, extracts visible text + social links, then asks
+ * Claude haiku-4.5 to extract a structured profile. Returns whatever
+ * could be confidently determined; missing fields come back as null.
+ *
+ * Zero hallucination: every field returned must be derivable from the
+ * page text. Claude is explicitly instructed not to invent data.
+ */
+router.post('/prefill', async (req, res) => {
+  const { url } = req.body || {};
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return res.status(400).json({ ok: false, error: 'invalid_url' });
+  }
+
+  try {
+    // 1) Fetch the page
+    const fetchRes = await fetch(url, {
+      signal: AbortSignal.timeout(10000),
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0)' },
+    });
+    if (!fetchRes.ok) {
+      return res.json({ ok: false, error: 'fetch_failed', status: fetchRes.status });
+    }
+    const html = await fetchRes.text();
+
+    // 2) Strip tags + collapse whitespace + truncate to keep token cost down
+    const text = (html || '')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 8000);
+
+    // 3) Pull social links from the same HTML (zero-hallucination — only what's literally there)
+    const findLink = (re) => {
+      const m = html.match(re);
+      return m ? m[0].split(/['"<>]/)[0] : null;
+    };
+    const socials = {
+      instagram: findLink(/https?:\/\/(?:www\.)?instagram\.com\/[a-z0-9_.]{2,30}\/?/i),
+      linkedin:  findLink(/https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/(?:in|company)\/[a-z0-9\-_.]{2,}\/?/i),
+      twitter:   findLink(/https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[a-z0-9_]{1,15}\/?/i),
+      facebook:  findLink(/https?:\/\/(?:www\.)?facebook\.com\/[a-z0-9.\-]{3,}\/?/i),
+    };
+
+    // 4) Ask Claude to extract a structured profile (low temperature, JSON only)
+    const anthropic = getAnthropicClient();
+    const prompt = `You are extracting a public-speaker profile from a website. Reply with ONLY a JSON object.
+
+Page text (truncated):
+${text}
+
+Return:
+{
+  "name":        "Full name of the person, or null if not clearly stated",
+  "title":       "Their professional title (e.g. 'Business Coach & Author'), or null",
+  "business":    "Business / brand name, or null",
+  "bio_short":   "A one-sentence elevator description of what they do, in their own framing if possible. Under 25 words. Or null.",
+  "credential":  "Their single biggest result, accomplishment, or credential as stated on the page. Specific and verifiable. Or null.",
+  "bio_long":    "Their full About paragraph (2-4 sentences) lifted from the page if available. Or null.",
+  "audience":    "Who they typically work with (their ideal client), if stated. Or null.",
+  "topics":      ["array", "of", "topics"]  // up to 6 lowercase topic strings they speak about, e.g. ["leadership","mindset"]. Empty array if unclear.
+}
+
+Strict rules:
+- Every non-null field MUST be derivable from the page text. Do NOT guess or invent.
+- If a field is uncertain or missing, return null (or [] for topics).
+- Keep bio_short and credential under 200 characters each.
+- Topic strings must be SHORT (1-3 words), lowercase, common terms like 'entrepreneurship' or 'mental health'.`;
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 700,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const raw = msg.content?.[0]?.text || '';
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) {
+      logger.warn('prefill: claude did not return JSON', { url });
+      return res.json({ ok: true, profile: { ...socials } });
+    }
+
+    let parsed = {};
+    try { parsed = JSON.parse(m[0]); } catch { parsed = {}; }
+
+    const profile = {
+      name:       parsed.name        || null,
+      title:      parsed.title       || null,
+      business:   parsed.business    || null,
+      bio_short:  parsed.bio_short   || null,
+      credential: parsed.credential  || null,
+      bio_long:   parsed.bio_long    || null,
+      audience:   parsed.audience    || null,
+      topics:     Array.isArray(parsed.topics) ? parsed.topics.slice(0, 6) : [],
+      // Socials from anchor parsing (zero-hallucination)
+      instagram:  socials.instagram,
+      linkedin:   socials.linkedin,
+      twitter:    socials.twitter,
+      facebook:   socials.facebook,
+    };
+
+    logger.info('onboard prefill success', { url, hasProfile: !!profile.name });
+    return res.json({ ok: true, profile });
+  } catch (err) {
+    logger.warn('onboard prefill failed', { url, error: err.message });
+    return res.status(500).json({ ok: false, error: 'prefill_failed' });
+  }
+});
+
 module.exports = router;

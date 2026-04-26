@@ -451,71 +451,76 @@ async function detectSocialsFromWebsite() {
   }
 }
 
-// ── LinkedIn import handler ───────────────────────────────────
-function handleLinkedInReturn() {
-  const params = new URLSearchParams(window.location.search);
+// ── Auto-fill from website (Claude scrapes + pre-fills the form) ──────
+async function prefillFromWebsite() {
+  const urlEl = document.getElementById('f-website');
+  const btnEl = document.getElementById('prefill-btn');
+  const statusEl = document.getElementById('prefill-status');
+  if (!urlEl || !btnEl || !statusEl) return;
 
-  const error = params.get('linkedin_error');
-  if (error) {
-    const el = document.getElementById('linkedin-import-error');
-    if (el) {
-      const messages = {
-        denied:          'LinkedIn connection was cancelled.',
-        not_configured:  'LinkedIn import is not set up yet.',
-        token_failed:    'Could not connect to LinkedIn. Please try again.',
-        profile_failed:  'Could not load your LinkedIn profile. Please fill in manually.',
-        invalid_state:   'Session expired. Please try again.',
-        server_error:    'Something went wrong. Please fill in manually.',
-      };
-      el.textContent = messages[error] || 'LinkedIn import failed. Please fill in manually.';
-      el.style.display = 'block';
-    }
-    // Clean URL
-    window.history.replaceState({}, '', '/onboard');
+  const url = (urlEl.value || '').trim();
+  if (!url || !/^https?:\/\//i.test(url)) {
+    statusEl.style.cssText = 'display:block;background:#fff1f0;border:1px solid #fecaca;color:#991b1b;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+    statusEl.textContent = 'Please enter a valid URL (must start with https://).';
     return;
   }
 
-  const name    = params.get('li_name');
-  const email   = params.get('li_email');
-  const picture = params.get('li_picture');
+  btnEl.disabled = true;
+  btnEl.textContent = 'Reading your site…';
+  statusEl.style.cssText = 'display:block;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+  statusEl.textContent = 'Reading your website with AI… this takes ~10 seconds.';
 
-  if (!name && !email) return;
+  try {
+    const r = await fetch('/api/onboard/prefill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Prefill failed');
 
-  // Pre-fill fields if they're empty
-  if (name) {
-    const nameEl = document.getElementById('f-name');
-    if (nameEl && !nameEl.value.trim()) nameEl.value = name;
-  }
-  if (email) {
-    const emailEl = document.getElementById('f-email');
-    if (emailEl && !emailEl.value.trim()) emailEl.value = email;
-  }
+    // Fill in any empty fields with what Claude found
+    const setIf = (id, val) => {
+      if (!val) return;
+      const el = document.getElementById(id);
+      if (el && !el.value.trim()) el.value = val;
+    };
+    const p = data.profile || {};
+    setIf('f-name',        p.name);
+    setIf('f-title',       p.title);
+    setIf('f-business',    p.business);
+    setIf('f-bio-short',   p.bio_short);
+    setIf('f-credential',  p.credential);
+    setIf('f-bio-long',    p.bio_long);
+    setIf('f-audience',    p.audience);
+    setIf('f-instagram',   p.instagram);
+    setIf('f-linkedin',    p.linkedin);
+    setIf('f-twitter',     p.twitter);
+    setIf('f-facebook',    p.facebook);
 
-  // If we got a profile photo URL, show a preview and store for upload
-  if (picture) {
-    window._linkedInPhotoUrl = picture;
-    // Show small preview next to the import button
-    const btn = document.getElementById('linkedin-import-btn');
-    if (btn) {
-      const img = document.createElement('img');
-      img.src = picture;
-      img.style.cssText = 'width:36px;height:36px;border-radius:50%;object-fit:cover;margin-left:10px;vertical-align:middle;border:2px solid #6366f1;';
-      btn.insertAdjacentElement('afterend', img);
+    // Auto-tick any topic checkboxes Claude returned
+    if (Array.isArray(p.topics)) {
+      const wanted = new Set(p.topics.map(t => (t || '').toLowerCase().trim()));
+      document.querySelectorAll('.topic-option input[type="checkbox"]').forEach((cb) => {
+        if (wanted.has((cb.value || '').toLowerCase().trim())) cb.checked = true;
+      });
     }
+
+    statusEl.style.cssText = 'display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+    statusEl.textContent = `Pre-filled what we could find. Review the fields below and edit anything that's off.`;
+  } catch (err) {
+    statusEl.style.cssText = 'display:block;background:#fff1f0;border:1px solid #fecaca;color:#991b1b;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+    statusEl.textContent = 'Could not read that URL. Fill in the fields below manually.';
+  } finally {
+    btnEl.disabled = false;
+    btnEl.textContent = 'Auto-fill →';
   }
-
-  // Show success banner
-  const successEl = document.getElementById('linkedin-import-success');
-  if (successEl) successEl.style.display = 'block';
-
-  // Clean URL
-  window.history.replaceState({}, '', '/onboard');
 }
+window.prefillFromWebsite = prefillFromWebsite;
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
-  handleLinkedInReturn();
 
   // Clear errors on input
   ['f-name','f-email','f-bio-short'].forEach((id) => {

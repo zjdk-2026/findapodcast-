@@ -288,6 +288,16 @@ function initScheduler() {
     } catch (err) { logger.error('Monthly credits reset failed', { error: err.message }); }
   }, { timezone: 'UTC', scheduled: true });
 
+  // Daily auto follow-up sweep — 7am UTC
+  // Picks up matches sent ~7 days ago that haven't had a reply or follow-up yet,
+  // generates a personalised follow-up via Claude, charges 1 credit, sends via Gmail.
+  cron.schedule('0 7 * * *', async () => {
+    try {
+      const { runFollowupSweep } = require('./services/followupSweep');
+      await runFollowupSweep();
+    } catch (err) { logger.error('Daily follow-up sweep failed', { error: err.message }); }
+  }, { timezone: 'UTC', scheduled: true });
+
   logger.info('Scheduler initialised');
 }
 

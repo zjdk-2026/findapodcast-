@@ -113,7 +113,7 @@ app.use(require('./routes/upload'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── LinkedIn OAuth Routes ────────────────────────────────────────────
-app.use('/', require('./routes/linkedin'));
+// LinkedIn import route removed Apr 26 2026 — replaced with website auto-fill via Claude.
 
 // ── Gmail OAuth Routes ───────────────────────────────────────────────
 app.use('/', gmailRouter);
