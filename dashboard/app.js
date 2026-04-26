@@ -182,6 +182,47 @@ function statusBadgeHtml(status) {
   return `<span class="status-badge status-${esc(status)}">${labels[status] || esc(status)}</span>`;
 }
 
+// ── Next-action pill ──────────────────────────────────────────────────
+// Tells the user the SINGLE thing to do next on this card.
+function nextActionPillHtml(match) {
+  if (!match || !match.status) return '';
+  const status = match.status;
+  let label = '', color = '';
+
+  if (status === 'replied') {
+    label = '↪ Reply now';
+    color = '#ef4444';
+  } else if (status === 'new') {
+    label = '✉ Send pitch';
+    color = '#6366f1';
+  } else if (status === 'sent' && !match.follow_up_sent && match.sent_at) {
+    const days = (Date.now() - new Date(match.sent_at).getTime()) / 86400000;
+    if (days >= 7) { label = '⟳ Follow up'; color = '#f59e0b'; }
+    else { label = `⏳ ${Math.ceil(7 - days)}d for follow-up`; color = '#94a3b8'; }
+  } else if (status === 'sent' && match.follow_up_sent) {
+    label = '⏳ Awaiting host';
+    color = '#94a3b8';
+  } else if (status === 'followed_up') {
+    label = '⏳ Awaiting host';
+    color = '#94a3b8';
+  } else if (status === 'booked') {
+    label = '🎙 Record';
+    color = '#10b981';
+  } else if (status === 'appeared') {
+    label = '✨ Send thank-you';
+    color = '#8b5cf6';
+  } else if (status === 'dream') {
+    label = '⭐ Saved';
+    color = '#94a3b8';
+  } else if (status === 'dismissed') {
+    return '';
+  } else {
+    return '';
+  }
+
+  return `<span style="display:inline-flex;align-items:center;gap:4px;background:${color}1a;color:${color};border:1px solid ${color}40;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;">Next: ${esc(label)}</span>`;
+}
+
 // ── HTML escape ───────────────────────────────────────────────────────
 // Normalize @handle or bare username to full profile URL
 function normalizeHandle(val, baseUrl) {
@@ -287,6 +328,30 @@ function renderHeroSection() {
   const airedMatches   = state.matches.filter((m) => m.status === 'appeared');
   const lifetimeTotal  = airedMatches.reduce((t, m) => t + (estimateAudience(m.podcasts?.listen_score).low), 0);
 
+  // Streak: count consecutive days back from today where at least one pitch was sent
+  const sentDates = state.matches
+    .filter(m => m.sent_at)
+    .map(m => new Date(m.sent_at).toISOString().slice(0, 10));
+  const sentDaysSet = new Set(sentDates);
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (sentDaysSet.has(key)) streak++;
+    else if (i > 0) break;
+    else continue; // today with 0 sends: still allow streak if yesterday had one
+  }
+
+  // Pitches sent this week (Monday-anchored)
+  const startOfWeek = new Date();
+  startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  startOfWeek.setHours(0, 0, 0, 0);
+  const sentThisWeek = state.matches.filter(m => m.sent_at && new Date(m.sent_at) >= startOfWeek).length;
+  const weeklyTarget = 15;
+  const weekProgress = Math.min(100, Math.round((sentThisWeek / weeklyTarget) * 100));
+
   const photoUrl = state.client?.photo_url || '';
   const avatarHtml = photoUrl
     ? `<img src="${esc(photoUrl)}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0;" />`
@@ -298,11 +363,24 @@ function renderHeroSection() {
         ${avatarHtml}
         <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
-      ${lifetimeTotal > 0 ? `
-        <div class="hero-lifetime-reach">
-          <span class="hero-lifetime-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>
-          Your voice has reached an estimated <strong>${formatNumber(lifetimeTotal)} people</strong> across ${airedMatches.length} episode${airedMatches.length !== 1 ? 's' : ''}
-        </div>` : ''}
+      <div style="margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        ${streak > 0 ? `
+          <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.06));border:1.5px solid rgba(245,158,11,0.30);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;color:#d97706;">
+            🔥 Day ${streak} streak
+          </div>` : ''}
+        <div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface-card);border:1.5px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-secondary);">
+          <span style="color:var(--text-primary);font-weight:800;">${sentThisWeek}/${weeklyTarget}</span>
+          <span>pitches this week</span>
+          <div style="width:60px;height:5px;background:var(--border-light);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;background:${weekProgress >= 100 ? '#10b981' : '#6366f1'};width:${weekProgress}%;border-radius:3px;transition:width 0.4s;"></div>
+          </div>
+        </div>
+        ${lifetimeTotal > 0 ? `
+          <div style="display:inline-flex;align-items:baseline;gap:8px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(99,102,241,0.06));border:1.5px solid rgba(16,185,129,0.25);border-radius:999px;padding:6px 16px;">
+            <span style="font-size:18px;font-weight:900;letter-spacing:-0.02em;color:#10b981;line-height:1;">${formatNumber(lifetimeTotal)}</span>
+            <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">people heard you</span>
+          </div>` : ''}
+      </div>
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -571,6 +649,80 @@ function renderStats(stats) {
 }
 
 // ── Pipeline health card — momentum + next-action signal ──────────────
+function computeYourMove() {
+  const matches = state.matches || [];
+  const seenKey = `seen_replied_${state.token}`;
+  const seenIds = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
+
+  const unseenReplies = matches.filter(m => m.status === 'replied' && !seenIds.has(m.id));
+  const unbooked      = matches.filter(m => m.status === 'replied');
+  const stalePitches  = matches.filter(m => {
+    if (m.status !== 'sent' || m.follow_up_sent) return false;
+    if (!m.sent_at) return false;
+    const daysAgo = (Date.now() - new Date(m.sent_at).getTime()) / 86400000;
+    return daysAgo > 7;
+  });
+  const newReady = matches.filter(m => m.status === 'new');
+  const aired    = matches.filter(m => m.status === 'aired' || m.status === 'appeared');
+
+  // Priority: unseen reply > book the call > stale follow-up > new pitches > find more
+  if (unseenReplies.length > 0) {
+    const m = unseenReplies[0];
+    const hostFirst = (m.podcasts?.host_name || '').split(' ')[0] || 'the host';
+    const showName  = m.podcasts?.title || 'the show';
+    return {
+      label: 'Your move',
+      text:  `${hostFirst} at ${showName} replied. Open the thread and lock in the recording.`,
+      cta:   'Open reply',
+      action: `openMatchDetail(${JSON.stringify(m.id)})`,
+      tone: 'urgent',
+    };
+  }
+  if (unbooked.length > 0) {
+    return {
+      label: 'Your move',
+      text:  `${unbooked.length} host${unbooked.length > 1 ? 's' : ''} replied. Book the calls before the window closes — replies cool inside 48 hours.`,
+      cta:   'See replies',
+      action: `setFilter('replied')`,
+      tone: 'urgent',
+    };
+  }
+  if (stalePitches.length > 0) {
+    return {
+      label: 'Your move',
+      text:  `${stalePitches.length} pitch${stalePitches.length > 1 ? 'es' : ''} sat 7+ days with no reply. Follow up — most bookings come from touch 2.`,
+      cta:   'See stale pitches',
+      action: `setFilter('sent')`,
+      tone: 'warm',
+    };
+  }
+  if (newReady.length > 0) {
+    return {
+      label: 'Your move',
+      text:  `${newReady.length} fresh match${newReady.length > 1 ? 'es' : ''} waiting. Send your next pitch and stack momentum.`,
+      cta:   'Review new',
+      action: `setFilter('new')`,
+      tone: 'warm',
+    };
+  }
+  if (aired.length > 0) {
+    return {
+      label: 'Your move',
+      text:  `Pipeline is empty for now. Run Find a Podcast to discover 10 fresh shows in your niche (10 credits).`,
+      cta:   'Find a Podcast',
+      action: `runPipeline()`,
+      tone: 'cool',
+    };
+  }
+  return {
+    label: 'Get started',
+    text:  `Click Find a Podcast to discover your first 10 matches and start pitching today.`,
+    cta:   'Find a Podcast',
+    action: `runPipeline()`,
+    tone: 'cool',
+  };
+}
+
 function renderPipelineHealth(stats) {
   const el = $('pipeline-health');
   if (!el || !state.matches) return;
@@ -585,6 +737,14 @@ function renderPipelineHealth(stats) {
 
   const replyRate = sent > 0 ? Math.round((replied / sent) * 100) : 0;
   const bookRate  = sent > 0 ? Math.round((booked / sent) * 100) : 0;
+
+  const move = computeYourMove();
+  const toneColors = {
+    urgent: { bg: 'linear-gradient(135deg,rgba(239,68,68,0.10),rgba(245,158,11,0.06))', border: 'rgba(239,68,68,0.30)', label: '#ef4444' },
+    warm:   { bg: 'linear-gradient(135deg,rgba(245,158,11,0.10),rgba(99,102,241,0.05))', border: 'rgba(245,158,11,0.30)', label: '#f59e0b' },
+    cool:   { bg: 'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05))', border: 'rgba(99,102,241,0.18)', label: '#6366f1' },
+  };
+  const t = toneColors[move.tone] || toneColors.cool;
 
   // Behavioral nudge based on stage
   let nudge, nudgeColor, icon;
@@ -613,13 +773,33 @@ function renderPipelineHealth(stats) {
 
   el.style.display = 'block';
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border:1px solid rgba(99,102,241,0.18);border-radius:14px;padding:14px 22px;display:flex;align-items:center;justify-content:flex-end;gap:28px;flex-wrap:wrap;">
-      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
-      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply rate</div></div>
-      <div style="text-align:center;"><div style="font-size:22px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book rate</div></div>
+    <div style="background:${t.bg};border:1.5px solid ${t.border};border-radius:14px;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:260px;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${t.label};margin-bottom:4px;">${esc(move.label)}</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.5;">${esc(move.text)}</div>
+      </div>
+      <button onclick="${move.action}" style="background:${t.label};color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;">
+        ${esc(move.cta)}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <div style="display:flex;gap:22px;border-left:1px solid var(--border-light);padding-left:22px;">
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply</div></div>
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book</div></div>
+      </div>
     </div>
   `;
 }
+
+window.openMatchDetail = window.openMatchDetail || function(id) {
+  // Fallback: scroll to the card. Existing app.js may have a richer modal opener.
+  const card = document.querySelector(`[data-match-id="${id}"]`) || document.getElementById(`match-${id}`);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+window.setFilter = window.setFilter || function(status) {
+  const btn = document.querySelector(`.filter-tab[data-status="${status}"]`);
+  if (btn) btn.click();
+};
 
 // ── Score tooltips ────────────────────────────────────────────────────
 const SCORE_TOOLTIPS = {
@@ -1454,6 +1634,7 @@ function renderMatchCard(match) {
         </div>
       </div>
       <div class="card-row-right">
+        ${nextActionPillHtml(match)}
         ${statusBadgeHtml(match.status)}
         ${(() => {
           const hasUnseen = (match.reply_count > 0) &&
@@ -1778,12 +1959,84 @@ function renderGrid() {
   const filtered = getFilteredSorted();
 
   if (filtered.length === 0) {
-    grid.innerHTML = '';
-    if (noResults) noResults.style.display = 'block';
+    grid.innerHTML = renderEmptyTabState();
+    if (noResults) noResults.style.display = 'none';
   } else {
     if (noResults) noResults.style.display = 'none';
     grid.innerHTML = filtered.map(renderMatchCard).join('');
   }
+}
+
+// ── Empty-state CTAs per tab ──────────────────────────────────────────
+function renderEmptyTabState() {
+  const tab = state.currentFilter || 'new';
+  const messages = {
+    new: {
+      icon: '🎯',
+      title: 'No new matches in your queue.',
+      sub:   'Click Find a Podcast to discover 10 fresh shows in your niche (10 credits).',
+      cta:   'Find a Podcast',
+      action: 'runPipeline()',
+    },
+    sent: {
+      icon: '📭',
+      title: 'No pitches sent yet.',
+      sub:   'Head to the New tab, pick a match, and hit Send. Your first booking is usually 7 sends away.',
+      cta:   'Go to New',
+      action: `setFilter('new')`,
+    },
+    followed_up: {
+      icon: '⏳',
+      title: 'Nothing followed up yet.',
+      sub:   'The system auto-fires follow-ups at day 7 if a host hasn\'t replied. You\'ll see them here.',
+      cta:   '',
+      action: '',
+    },
+    replied: {
+      icon: '📬',
+      title: 'No replies yet.',
+      sub:   'Most replies arrive 2-7 days after the pitch. The Check Replies button up top force-polls Gmail right now.',
+      cta:   'Check Replies',
+      action: 'checkRepliesNow(event)',
+    },
+    booked: {
+      icon: '🎙',
+      title: 'Nothing booked yet.',
+      sub:   'Reply to a host quickly and lock in a recording — booking windows close inside 48 hours.',
+      cta:   'See replies',
+      action: `setFilter('replied')`,
+    },
+    appeared: {
+      icon: '✨',
+      title: 'No aired episodes yet.',
+      sub:   'Mark a recording as Aired once it goes live to track your reach + unlock Content Boost.',
+      cta:   'See bookings',
+      action: `setFilter('booked')`,
+    },
+    dream: {
+      icon: '⭐',
+      title: 'Wish List is empty.',
+      sub:   'Save shows you love but aren\'t ready to pitch yet. They wait here until the timing\'s right.',
+      cta:   'Browse new',
+      action: `setFilter('new')`,
+    },
+    dismissed: {
+      icon: '🗑',
+      title: 'No dismissed matches.',
+      sub:   'Shows you mark as Not a Fit show up here. Useful for cleaning your pipeline.',
+      cta:   '',
+      action: '',
+    },
+  };
+  const m = messages[tab] || messages.new;
+  return `
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;background:var(--surface-card);border:1.5px dashed var(--border-medium);border-radius:18px;margin-top:8px;">
+      <div style="font-size:48px;margin-bottom:14px;line-height:1;">${m.icon}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">${esc(m.title)}</div>
+      <p style="font-size:14px;color:var(--text-secondary);max-width:480px;line-height:1.6;margin-bottom:18px;">${esc(m.sub)}</p>
+      ${m.cta ? `<button onclick="${m.action}" style="background:var(--accent);color:#fff;border:none;border-radius:999px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">${esc(m.cta)} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>` : ''}
+    </div>
+  `;
 }
 
 // ── Render full dashboard ─────────────────────────────────────────────
@@ -2045,15 +2298,26 @@ function updateStatBadges() {
   if (tabs) {
     tabs.querySelectorAll('.filter-tab').forEach((t) => {
       const st = t.dataset.status;
-      // Remove old count badge
-      t.querySelectorAll('.tab-count').forEach((el) => el.remove());
+      // Remove old count badge + any pulsing dot
+      t.querySelectorAll('.tab-count, .tab-pulse-dot').forEach((el) => el.remove());
       const cnt = tabCounts[st] || 0;
       if (cnt > 0) {
         const badge = document.createElement('span');
         badge.className = 'tab-count';
         // Host Replied tab: use red/orange badge when there are unseen replies
         if (st === 'replied' && unseenRepliedCount > 0) {
-          badge.style.cssText = 'background:#ef4444;color:#fff;';
+          badge.style.cssText = 'background:#ef4444;color:#fff;font-weight:800;';
+          // Add a pulsing red dot to scream urgency
+          const dot = document.createElement('span');
+          dot.className = 'tab-pulse-dot';
+          dot.style.cssText = 'display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:6px;animation:tab-pulse 1.4s infinite;';
+          if (!document.getElementById('tab-pulse-style')) {
+            const style = document.createElement('style');
+            style.id = 'tab-pulse-style';
+            style.textContent = '@keyframes tab-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.4); } }';
+            document.head.appendChild(style);
+          }
+          t.appendChild(dot);
         }
         badge.textContent = cnt;
         t.appendChild(badge);
