@@ -191,6 +191,65 @@ router.post('/add-podcast', async (req, res) => {
 
     if (matchError) throw matchError;
 
+    // ── 5b. Pre-check Gmail for existing thread/reply with this contact ─────────
+    // If the customer has already emailed this address (or received from it),
+    // pull the threadId + status now so reply detection works immediately.
+    // Handles the manual-add-then-manually-emailed workflow that was missing replies.
+    if (podcast.contact_email && podcast.contact_email.includes('@')) {
+      const { data: clientPre } = await supabase.from('clients').select('gmail_refresh_token, email').eq('id', resolvedClientId).single();
+      if (clientPre?.gmail_refresh_token) {
+        try {
+          const { findThreadByContactEmail, checkThreadForReply, fetchThread } = require('../services/gmailService');
+          const tid = await findThreadByContactEmail(clientPre.gmail_refresh_token, podcast.contact_email, null);
+          if (tid) {
+            const hasReply = await checkThreadForReply(clientPre.gmail_refresh_token, tid);
+            const updates = { gmail_thread_id: tid };
+            if (hasReply) {
+              updates.status = 'replied';
+              updates.last_reply_at = new Date().toISOString();
+              updates.reply_count = 2;
+              updates.sent_at = new Date().toISOString();
+              logger.info('Manual-add: existing thread with reply detected, marking replied', { matchId: match.id, threadId: tid });
+            } else {
+              updates.status = 'sent';
+              updates.sent_at = new Date().toISOString();
+              logger.info('Manual-add: existing outbound thread detected, marking sent', { matchId: match.id, threadId: tid });
+            }
+            await supabase.from('podcast_matches').update(updates).eq('id', match.id);
+            // Cache thread messages for the dashboard thread view
+            try {
+              const messages = await fetchThread(clientPre.gmail_refresh_token, tid);
+              const customerEmail = (clientPre.email || '').toLowerCase();
+              for (const msg of (messages || [])) {
+                const fromLower = (msg.from || '').toLowerCase();
+                const isOutbound = customerEmail && fromLower.includes(customerEmail);
+                await supabase.from('match_thread_messages').insert({
+                  match_id:           match.id,
+                  gmail_message_id:   msg.gmail_message_id,
+                  gmail_thread_id:    msg.gmail_thread_id,
+                  direction:          isOutbound ? 'outbound' : 'inbound',
+                  message_type:       isOutbound ? 'pitch' : 'host_reply',
+                  from_email:         msg.from || null,
+                  to_email:           msg.to || null,
+                  subject:            msg.subject || null,
+                  body_text:          msg.body_text,
+                  body_html:          msg.body_html,
+                  rfc822_message_id:  msg.rfc822_message_id,
+                  in_reply_to:        msg.in_reply_to,
+                  sent_at:            msg.date_ms ? new Date(msg.date_ms).toISOString() : null,
+                  detected_at:        isOutbound ? null : new Date().toISOString(),
+                }).then(() => {}, () => {}); // ignore duplicate-id errors
+              }
+            } catch (cacheErr) {
+              logger.warn('Manual-add: thread caching failed (non-fatal)', { matchId: match.id, error: cacheErr.message });
+            }
+          }
+        } catch (preErr) {
+          logger.warn('Manual-add: Gmail pre-check failed (non-fatal)', { matchId: match.id, error: preErr.message });
+        }
+      }
+    }
+
     // ── 6. Score in background ────────────────────────────────────────────────
     const { data: client } = await supabase.from('clients').select('*').eq('id', resolvedClientId).single();
 

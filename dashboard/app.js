@@ -4952,6 +4952,10 @@ async function submitAddPodcast() {
           }
         } catch { /* silent */ }
       }, 10000);
+      // Also kick a reply scan now — covers the workflow where the customer
+      // already emailed this contact from Gmail before adding the podcast,
+      // so the new 'new' match flips to 'sent' or 'replied' immediately.
+      setTimeout(() => { try { checkForReplies(); } catch {} }, 1500);
     } else {
       showToast(data.error || 'Failed to add podcast.', 'error');
       if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
