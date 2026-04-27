@@ -198,13 +198,15 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     return res.json({ success: true, updated: [], gmailConnected: false });
   }
 
-  // Scan 'sent', 'followed_up', AND 'replied' matches — keep monitoring replied ones for new messages
-  // Include reply_count so we can compare against current thread message count
+  // Scan 'new', 'sent', 'followed_up', AND 'replied' matches.
+  // 'new' is included so manually-added podcasts (where the customer emailed the host
+  // directly from Gmail, bypassing the dashboard's Send button) still get their replies
+  // detected. We rely on inbox-search strategy for those (no thread_id to track yet).
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, email_subject, sent_at, status, reply_count, podcasts(contact_email, title)')
+    .select('id, gmail_thread_id, email_subject, sent_at, created_at, status, reply_count, podcasts(contact_email, title)')
     .eq('client_id', client.id)
-    .in('status', ['sent', 'followed_up', 'replied']);
+    .in('status', ['new', 'sent', 'followed_up', 'replied']);
 
   if (!matches?.length) return res.json({ success: true, updated: [], gmailConnected: true, checked: 0 });
 
@@ -240,16 +242,25 @@ router.post('/api/gmail/check-replies', async (req, res) => {
       // Strategy 2: search inbox for any inbound message from that address AFTER the pitch was sent.
       // v2: also tries the email's domain + subject-line match to catch replies from a different
       // address at the same company OR replies that started a new thread.
+      // v3: for 'new' matches with no sent_at, use created_at as the lower bound so we only
+      // pick up replies that arrived AFTER the customer added the podcast to their pipeline.
       if (!hasReply && contactEmail) {
-        hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, m.sent_at, m.email_subject);
+        const lowerBound = m.sent_at || m.created_at || null;
+        hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, lowerBound, m.email_subject);
         if (hasReply && storedCount === 0) isNewReply = true;
       }
 
       if (hasReply && m.status !== 'replied') {
-        // First reply for a sent/followed_up match — move to replied and record count
+        // First reply for a sent/followed_up/NEW match — move to replied and record count
         const replyFields = { status: 'replied', last_reply_at: new Date().toISOString() };
         if (currentThreadCount > 0) replyFields.reply_count = currentThreadCount;
         else replyFields.reply_count = 1;
+        // Backfill sent_at if the match was 'new' (manually-added + manually-sent path).
+        // Without this the dashboard timeline math (e.g. "X days ago", stale follow-up trigger)
+        // would be off. Use created_at as a reasonable proxy for when the customer reached out.
+        if (m.status === 'new' && !m.sent_at) {
+          replyFields.sent_at = m.created_at || new Date().toISOString();
+        }
         try {
           await supabase.from('podcast_matches').update(replyFields).eq('id', m.id);
         } catch (dbErr) {
