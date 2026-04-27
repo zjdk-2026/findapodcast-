@@ -83,58 +83,121 @@ function selectPace(el) {
   if (hidden) hidden.value = selectedPace;
 }
 
-// ── Topic dropdown ────────────────────────────────────────────
-function toggleTopicDropdown() {
-  const trigger = document.getElementById('topic-dropdown-trigger');
-  const list = document.getElementById('topic-dropdown-list');
-  const open = list.classList.toggle('open');
-  trigger.classList.toggle('open', open);
-}
+// ── Topic autocomplete tag widget ──────────────────────────────
+const TOPIC_SUGGESTIONS = [
+  'entrepreneurship','startup','small business','business growth','leadership','management',
+  'mindset','personal development','productivity','habits','sales','sales strategy','closing deals',
+  'marketing','digital marketing','social media marketing','content marketing','personal branding',
+  'public speaking','storytelling','health & wellness','fitness','nutrition','mental health','anxiety',
+  'burnout recovery','faith','christian living','faith-based business','finance','investing',
+  'wealth building','financial freedom','real estate','real estate investing','coaching','life coaching',
+  'business coaching','executive coaching','parenting','relationships','marriage','family','technology',
+  'ai & automation','software','content creation','podcasting','youtube','women in business',
+  'diversity & inclusion','ecommerce','amazon fba','dropshipping','consulting','freelancing',
+  'remote work','work-life balance','legacy building','purpose & meaning','spirituality','law',
+  'healthcare','education','non-profit','sustainability',
+];
 
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('topic-dropdown-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('topic-dropdown-list')?.classList.remove('open');
-    document.getElementById('topic-dropdown-trigger')?.classList.remove('open');
-  }
-});
+let _selectedTopics = []; // canonical store for selected tags
+let _activeSugIdx = -1;
 
-function getSelectedTopics() {
-  const selected = [];
-  document.querySelectorAll('#topic-dropdown-list input[type=checkbox]:checked').forEach((cb) => {
-    selected.push(cb.value);
+function renderTopicTags() {
+  const wrap = document.getElementById('topic-tag-wrap');
+  if (!wrap) return;
+  // Wipe existing pills (keep input + suggestions div)
+  wrap.querySelectorAll('.tag-pill').forEach(p => p.remove());
+  const input = document.getElementById('topic-tag-input');
+  _selectedTopics.forEach((t) => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${t}<button type="button" onclick="removeTopicTag(event,'${t.replace(/'/g, "\\'")}')">&times;</button>`;
+    wrap.insertBefore(pill, input);
   });
-  return selected;
+  // Save to localStorage for resume
+  saveOnboardDraft();
 }
 
-function updateTopicPills() {
-  const pills = document.getElementById('topic-selected-pills');
-  const label = document.getElementById('topic-trigger-label');
-  if (!pills) return;
-  const selected = getSelectedTopics();
-  pills.innerHTML = selected.map((t) =>
-    `<div class="topic-selected-pill">${t}<button type="button" onclick="removeTopicPill('${t}')">&times;</button></div>`
-  ).join('');
-  label.textContent = selected.length > 0 ? `${selected.length} selected` : 'Select topics that apply to you';
+function addTopicTag(value) {
+  const v = (value || '').trim().toLowerCase();
+  if (!v) return;
+  if (_selectedTopics.includes(v)) return;
+  _selectedTopics.push(v);
+  renderTopicTags();
+  const input = document.getElementById('topic-tag-input');
+  if (input) input.value = '';
+  closeTopicSuggestions();
+}
+window.addTopicTag = addTopicTag;
+
+function removeTopicTag(event, value) {
+  event?.stopPropagation();
+  _selectedTopics = _selectedTopics.filter(t => t !== value);
+  renderTopicTags();
+}
+window.removeTopicTag = removeTopicTag;
+
+function closeTopicSuggestions() {
+  const sug = document.getElementById('topic-tag-suggestions');
+  if (sug) { sug.classList.remove('open'); sug.innerHTML = ''; }
+  _activeSugIdx = -1;
 }
 
-function removeTopicPill(topic) {
-  const cb = document.querySelector(`#topic-dropdown-list input[value="${topic}"]`);
-  if (cb) { cb.checked = false; updateTopicPills(); }
+function showTopicSuggestions(query) {
+  const sug = document.getElementById('topic-tag-suggestions');
+  if (!sug) return;
+  const q = (query || '').trim().toLowerCase();
+  if (!q) { closeTopicSuggestions(); return; }
+  const matches = TOPIC_SUGGESTIONS.filter(t => t.includes(q) && !_selectedTopics.includes(t)).slice(0, 8);
+  const isCustom = !TOPIC_SUGGESTIONS.includes(q) && !_selectedTopics.includes(q);
+  const items = matches.map((t, i) => `<div class="tag-suggestion${i === _activeSugIdx ? ' active' : ''}" onclick="addTopicTag('${t.replace(/'/g, "\\'")}')">${t}</div>`).join('');
+  const customRow = isCustom ? `<div class="tag-suggestion tag-suggestion-add" onclick="addTopicTag('${q.replace(/'/g, "\\'")}')">+ Add "${q}"</div>` : '';
+  sug.innerHTML = items + customRow;
+  if (items || customRow) sug.classList.add('open');
+  else closeTopicSuggestions();
 }
 
 function buildTopicsValue() {
-  const chips = getSelectedTopics();
-  const typed = (document.getElementById('f-topics')?.value || '').trim();
-  const all = [...chips];
-  if (typed) {
-    typed.split(',').map((s) => s.trim()).filter(Boolean).forEach((t) => {
-      if (!all.includes(t)) all.push(t);
-    });
-  }
-  return all.join(', ');
+  return _selectedTopics.join(', ');
 }
+
+// Wire up the tag input + keyboard nav once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('topic-tag-input');
+  if (!input) return;
+  input.addEventListener('input', () => showTopicSuggestions(input.value));
+  input.addEventListener('focus',  () => showTopicSuggestions(input.value));
+  input.addEventListener('keydown', (e) => {
+    const sug = document.getElementById('topic-tag-suggestions');
+    const items = sug ? Array.from(sug.querySelectorAll('.tag-suggestion')) : [];
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (_activeSugIdx >= 0 && items[_activeSugIdx]) items[_activeSugIdx].click();
+      else if (input.value.trim()) addTopicTag(input.value.trim());
+    } else if (e.key === 'Backspace' && !input.value && _selectedTopics.length > 0) {
+      _selectedTopics.pop();
+      renderTopicTags();
+    } else if (e.key === ',' || e.key === 'Tab') {
+      if (input.value.trim()) {
+        e.preventDefault();
+        addTopicTag(input.value.trim());
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _activeSugIdx = Math.min(_activeSugIdx + 1, items.length - 1);
+      showTopicSuggestions(input.value);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _activeSugIdx = Math.max(_activeSugIdx - 1, -1);
+      showTopicSuggestions(input.value);
+    } else if (e.key === 'Escape') {
+      closeTopicSuggestions();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('topic-tag-wrap');
+    if (wrap && !wrap.contains(e.target)) closeTopicSuggestions();
+  });
+});
 
 // ── Validation ────────────────────────────────────────────────
 function validateStep(step) {
@@ -158,9 +221,8 @@ function validateStep(step) {
   }
 
   if (step === 2) {
-    // Valid if any chip selected OR text typed
-    const hasTopics = getSelectedTopics().length > 0
-      || (document.getElementById('f-topics')?.value || '').trim().length > 0;
+    // Valid if any topic tag has been added
+    const hasTopics = _selectedTopics.length > 0;
     const errEl = document.getElementById('err-topics');
     if (errEl) errEl.classList.toggle('show', !hasTopics);
     if (!hasTopics) valid = false;
@@ -318,6 +380,9 @@ async function uploadPhotos(token) {
 
 // ── Show success screen ───────────────────────────────────────
 function showSuccess(data) {
+  // Round 4A: clear saved draft once they're successfully onboarded
+  try { localStorage.removeItem(ONBOARD_DRAFT_KEY); } catch {}
+
   const token        = data.dashboardToken || data.dashboard_token || data.client?.dashboard_token || '';
   const clientId     = data.clientId || data.client_id || data.client?.id || '';
   const base         = window.location.origin;
@@ -501,10 +566,12 @@ async function prefillFromWebsite() {
 
     // Auto-tick any topic checkboxes Claude returned
     if (Array.isArray(p.topics)) {
-      const wanted = new Set(p.topics.map(t => (t || '').toLowerCase().trim()));
-      document.querySelectorAll('.topic-option input[type="checkbox"]').forEach((cb) => {
-        if (wanted.has((cb.value || '').toLowerCase().trim())) cb.checked = true;
+      // Add each AI-suggested topic to the selected tags
+      p.topics.forEach(t => {
+        const v = (t || '').toLowerCase().trim();
+        if (v && !_selectedTopics.includes(v)) _selectedTopics.push(v);
       });
+      renderTopicTags();
     }
 
     statusEl.style.cssText = 'display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
@@ -523,6 +590,25 @@ window.prefillFromWebsite = prefillFromWebsite;
 document.addEventListener('DOMContentLoaded', () => {
   showPaymentBanner();
 
+  // ── Round 4A: Resume saved draft if any ──────────────
+  const draft = loadOnboardDraft();
+  if (draft) {
+    applyOnboardDraft(draft);
+    showResumeBanner(draft);
+  }
+
+  // ── Round 4A: Auto-save on every input ──────────────
+  // Debounced 400ms so we don't hammer localStorage
+  let saveTimer = null;
+  const scheduleSave = () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveOnboardDraft, 400);
+  };
+  ONBOARD_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', scheduleSave);
+  });
+
   // Clear errors on input
   ['f-name','f-email','f-bio-short'].forEach((id) => {
     const el = document.getElementById(id);
@@ -534,23 +620,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Topic dropdown checkboxes
-  document.querySelectorAll('#topic-dropdown-list input[type=checkbox]').forEach((cb) => {
-    cb.addEventListener('change', () => {
-      updateTopicPills();
-      const hasAny = getSelectedTopics().length > 0
-        || (document.getElementById('f-topics')?.value || '').trim().length > 0;
-      if (hasAny) document.getElementById('err-topics')?.classList.remove('show');
-    });
-  });
+  // ── Round 4B: Email-domain smart prefill ────────────
+  const emailEl = document.getElementById('f-email');
+  if (emailEl) {
+    emailEl.addEventListener('blur', () => maybeFireDomainPrefill(emailEl.value));
+  }
 
-  // Also clear topic error when typing in the free-type box
-  const topicsInput = document.getElementById('f-topics');
-  if (topicsInput) {
-    topicsInput.addEventListener('input', () => {
-      if (topicsInput.value.trim().length > 0) {
-        document.getElementById('err-topics')?.classList.remove('show');
-      }
+  // Topic tags — clear error as soon as one is added
+  const topicInput = document.getElementById('topic-tag-input');
+  if (topicInput) {
+    topicInput.addEventListener('input', () => {
+      if (_selectedTopics.length > 0) document.getElementById('err-topics')?.classList.remove('show');
     });
   }
 
@@ -589,4 +669,170 @@ window.goToStep    = goToStep;
 window.submitForm  = submitForm;
 window.selectPace  = selectPace;
 window.toggleTopicDropdown = toggleTopicDropdown;
-window.removeTopicPill = removeTopicPill;
+// (removeTopicPill / getSelectedTopics / toggleTopicDropdown removed — replaced with autocomplete tag widget)
+
+// ── Inline ✨ Suggest from bio (Round 3D) ─────────────────────
+async function suggestField(field) {
+  const fieldMap = { audience: 'f-audience', angles: 'f-angles' };
+  const targetEl = document.getElementById(fieldMap[field]);
+  if (!targetEl) return;
+
+  const bio = (document.getElementById('f-bio-long')?.value || document.getElementById('f-bio-short')?.value || '').trim();
+  if (bio.length < 30) {
+    showToast('Add a bio first (Step 1) — we need ~30 characters minimum to generate a draft.', 'error');
+    return;
+  }
+
+  const btn = event?.target?.closest('.ai-suggest-btn');
+  const orig = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Drafting…'; }
+
+  try {
+    const r = await fetch('/api/onboard/suggest-field', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        field,
+        bio,
+        business: document.getElementById('f-business')?.value || '',
+        title:    document.getElementById('f-title')?.value || '',
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'suggest_failed');
+    targetEl.value = data.suggestion || '';
+    targetEl.focus();
+    targetEl.setSelectionRange(targetEl.value.length, targetEl.value.length);
+    showToast('Draft ready. Edit before submitting.', 'success');
+  } catch (err) {
+    showToast('Could not generate suggestion. Type it manually.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+window.suggestField = suggestField;
+
+// ── Save-and-resume (Round 4A) ────────────────────────────────
+// Auto-persists every form field to localStorage on every keystroke.
+// On page load: if a draft exists, show a resume banner. User can resume or reset.
+const ONBOARD_DRAFT_KEY = 'pp-onboard-draft-v2';
+const ONBOARD_FIELDS = [
+  'f-name','f-email','f-title','f-business','f-bio-short','f-credential','f-bio-long',
+  'f-website','f-instagram','f-linkedin','f-twitter','f-facebook','f-extra-links',
+  'f-audience','f-angles','f-offer','f-past-podcasts','f-country','f-tone','f-email-signature',
+];
+
+function saveOnboardDraft() {
+  try {
+    const draft = { topics: _selectedTopics, savedAt: Date.now() };
+    ONBOARD_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) draft[id] = el.value; });
+    localStorage.setItem(ONBOARD_DRAFT_KEY, JSON.stringify(draft));
+  } catch {}
+}
+window.saveOnboardDraft = saveOnboardDraft;
+
+function loadOnboardDraft() {
+  try {
+    const raw = localStorage.getItem(ONBOARD_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    // Drafts older than 30 days are stale
+    if (draft.savedAt && Date.now() - draft.savedAt > 30 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(ONBOARD_DRAFT_KEY);
+      return null;
+    }
+    return draft;
+  } catch { return null; }
+}
+
+function applyOnboardDraft(draft) {
+  if (!draft) return;
+  ONBOARD_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && draft[id]) el.value = draft[id];
+  });
+  if (Array.isArray(draft.topics)) {
+    _selectedTopics = draft.topics.filter(Boolean);
+    renderTopicTags();
+  }
+}
+
+function clearOnboardDraft() {
+  localStorage.removeItem(ONBOARD_DRAFT_KEY);
+  const banner = document.getElementById('resume-banner');
+  if (banner) banner.remove();
+}
+window.clearOnboardDraft = clearOnboardDraft;
+
+function showResumeBanner(draft) {
+  const ago = (() => {
+    const m = Math.floor((Date.now() - draft.savedAt) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m} min ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} hour${h > 1 ? 's' : ''} ago`;
+    const d = Math.floor(h / 24);
+    return `${d} day${d > 1 ? 's' : ''} ago`;
+  })();
+  const wrap = document.querySelector('.form-card');
+  if (!wrap || document.getElementById('resume-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'resume-banner';
+  banner.className = 'resume-banner';
+  banner.innerHTML = `
+    <div>
+      <strong>Welcome back.</strong> We saved your draft from ${ago}. Picking up where you left off.
+    </div>
+    <button onclick="if(confirm('Discard saved draft and start fresh?')){clearOnboardDraft();location.reload();}">Start fresh</button>
+  `;
+  wrap.insertBefore(banner, wrap.firstChild);
+}
+
+// ── Email-domain smart prefill (Round 4B) ──────────────────────
+// When user types email, extract domain, fire prefill on https://domain
+// IF website field is empty AND name field is empty (i.e. first time).
+let _domainPrefillFired = false;
+async function maybeFireDomainPrefill(email) {
+  if (_domainPrefillFired) return;
+  if (!email || !email.includes('@')) return;
+  const domain = email.split('@')[1]?.trim().toLowerCase();
+  if (!domain) return;
+  // Skip generic providers
+  const generic = ['gmail.com','outlook.com','hotmail.com','yahoo.com','icloud.com','me.com','aol.com','proton.me','protonmail.com','live.com','msn.com'];
+  if (generic.includes(domain)) return;
+  const websiteEl = document.getElementById('f-website');
+  const nameEl = document.getElementById('f-name');
+  if (websiteEl?.value || nameEl?.value) return; // user already typing — don't overwrite
+  _domainPrefillFired = true;
+  const url = `https://${domain}`;
+  if (websiteEl) websiteEl.value = url;
+  // Fire prefill in background
+  try {
+    const r = await fetch('/api/onboard/prefill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) return;
+    const setIf = (id, val) => { if (!val) return; const el = document.getElementById(id); if (el && !el.value.trim()) el.value = val; };
+    const p = data.profile || {};
+    setIf('f-name', p.name);
+    setIf('f-title', p.title);
+    setIf('f-business', p.business);
+    setIf('f-bio-short', p.bio_short);
+    setIf('f-credential', p.credential);
+    setIf('f-bio-long', p.bio_long);
+    setIf('f-audience', p.audience);
+    setIf('f-instagram', p.instagram);
+    setIf('f-linkedin', p.linkedin);
+    setIf('f-twitter', p.twitter);
+    setIf('f-facebook', p.facebook);
+    if (Array.isArray(p.topics)) {
+      p.topics.forEach(t => { const v = (t || '').toLowerCase().trim(); if (v && !_selectedTopics.includes(v)) _selectedTopics.push(v); });
+      renderTopicTags();
+    }
+    showToast(`Pre-filled from ${domain}. Review the fields below.`, 'success');
+    saveOnboardDraft();
+  } catch {}
+}

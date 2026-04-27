@@ -6,47 +6,84 @@
   <title>Find A Podcast — Get Started</title>
   <link rel="stylesheet" href="/dashboard/style.css" />
   <style>
-    /* ── Topic dropdown scroller ──────────────────────── */
-    .topic-dropdown-wrap { position:relative; margin-bottom:12px; }
-    .topic-dropdown-trigger {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 14px; border:2px solid var(--border-medium);
-      border-radius:10px; background:var(--surface-card);
-      cursor:pointer; font-size:14px; color:var(--text-secondary);
-      user-select:none; transition:border-color 0.15s;
+    /* ── Topic autocomplete tag widget ──────────────────── */
+    .tag-input-wrap {
+      position:relative; padding:8px 10px; border:2px solid var(--border-medium);
+      border-radius:10px; background:var(--surface-card); min-height:48px;
+      display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+      transition:border-color 0.15s;
     }
-    .topic-dropdown-trigger:hover, .topic-dropdown-trigger.open { border-color:var(--accent); color:var(--text-primary); }
-    .topic-dropdown-trigger svg { transition:transform 0.2s; flex-shrink:0; }
-    .topic-dropdown-trigger.open svg { transform:rotate(180deg); }
-    .topic-dropdown-list {
+    .tag-input-wrap:focus-within { border-color:var(--accent); }
+    .tag-pill {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 12px; border-radius:999px;
+      background:var(--accent); color:#fff; font-size:13px; font-weight:600;
+    }
+    .tag-pill button {
+      background:none; border:none; color:#fff; cursor:pointer;
+      padding:0; line-height:1; font-size:15px; opacity:0.85;
+    }
+    .tag-pill button:hover { opacity:1; }
+    .tag-input-field {
+      flex:1; min-width:160px; border:none; outline:none;
+      background:transparent; font-size:14px; padding:6px 4px;
+      font-family:inherit; color:var(--text-primary);
+    }
+    .tag-suggestions {
       display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
-      background:#fff; border:2px solid var(--accent);
+      background:var(--surface-card); border:1.5px solid var(--accent);
       border-radius:10px; max-height:260px; overflow-y:auto;
       z-index:9999; box-shadow:0 12px 40px rgba(0,0,0,0.18);
-      scrollbar-width:thin;
     }
-    .topic-dropdown-wrap { position:relative; margin-bottom:12px; z-index:9999; }
-    .topic-dropdown-list.open { display:block; }
-    .topic-option {
-      display:flex; align-items:center; gap:10px;
-      padding:10px 14px; cursor:pointer; font-size:14px;
+    .tag-suggestions.open { display:block; }
+    .tag-suggestion {
+      padding:9px 14px; cursor:pointer; font-size:14px;
       color:var(--text-primary); transition:background 0.1s;
       border-bottom:1px solid var(--border-light);
     }
-    .topic-option:last-child { border-bottom:none; }
-    .topic-option:hover { background:rgba(99,102,241,0.07); }
-    .topic-option input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; cursor:pointer; flex-shrink:0; }
-    .topic-selected-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; min-height:0; }
-    .topic-selected-pill {
+    .tag-suggestion:last-child { border-bottom:none; }
+    .tag-suggestion:hover, .tag-suggestion.active { background:rgba(99,102,241,0.10); }
+    .tag-suggestion-add { color:var(--accent); font-weight:600; }
+
+    /* ── Inline ✨ Suggest button (Round 3) ───────────── */
+    .ai-suggest-btn {
       display:inline-flex; align-items:center; gap:5px;
-      padding:4px 10px; border-radius:999px;
-      background:var(--accent); color:#fff; font-size:12px; font-weight:600;
+      background:linear-gradient(135deg,rgba(99,102,241,0.10),rgba(139,92,246,0.10));
+      border:1px solid rgba(99,102,241,0.25);
+      color:var(--accent); font-size:11px; font-weight:700;
+      padding:4px 10px; border-radius:999px; cursor:pointer;
+      margin-left:8px;
     }
-    .topic-selected-pill button {
-      background:none; border:none; color:#fff; cursor:pointer;
-      padding:0; line-height:1; font-size:14px; opacity:0.8;
+    .ai-suggest-btn:hover { background:rgba(99,102,241,0.18); }
+    .ai-suggest-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+    /* ── Collapsible Advanced (Round 3) ──────────────── */
+    .advanced-toggle {
+      display:flex; align-items:center; gap:8px; cursor:pointer;
+      padding:10px 14px; border-radius:10px;
+      background:var(--surface-page); border:1px dashed var(--border-medium);
+      font-size:13px; font-weight:600; color:var(--text-secondary);
+      user-select:none; margin-bottom:12px;
     }
-    .topic-selected-pill button:hover { opacity:1; }
+    .advanced-toggle:hover { border-color:var(--accent); color:var(--text-primary); }
+    .advanced-toggle svg { transition:transform 0.2s; }
+    .advanced-toggle.open svg { transform:rotate(90deg); }
+    .advanced-content { display:none; }
+    .advanced-content.open { display:block; }
+
+    /* ── Save-and-resume banner (Round 4) ────────────── */
+    .resume-banner {
+      background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(99,102,241,0.06));
+      border:1.5px solid rgba(16,185,129,0.25);
+      border-radius:12px; padding:12px 16px; margin-bottom:18px;
+      font-size:13px; color:var(--text-primary); display:flex;
+      align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    }
+    .resume-banner button {
+      background:none; border:1px solid var(--border-medium);
+      color:var(--text-secondary); border-radius:999px;
+      padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer;
+    }
 
     /* ── Pace selector ───────────────────────────────── */
     .pace-options { display:flex; gap:12px; margin-top:6px; }
@@ -164,10 +201,6 @@
         </div>
         <div class="progress-step" id="step-indicator-3">
           <div class="step-dot">3</div>
-          <span class="step-label">Pitch</span>
-        </div>
-        <div class="progress-step" id="step-indicator-4">
-          <div class="step-dot">4</div>
           <span class="step-label">Launch</span>
         </div>
       </div>
@@ -270,12 +303,6 @@
           <p class="form-hint">We use this to write pitches in your voice. Paste from your website or speaker bio.</p>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="f-past-podcasts">Have you been on podcasts before?</label>
-          <input type="text" id="f-past-podcasts" class="form-input" placeholder="e.g. The Tim Ferriss Show, Entrepreneur on Fire — or 'No, this is my first time'" />
-          <p class="form-hint">Even one good appearance helps. We mention it in your pitch to show you're a proven guest.</p>
-        </div>
-
         <div class="form-nav">
           <span></span>
           <button class="btn btn-primary" onclick="goToStep(2)">Next: Your Expertise →</button>
@@ -290,96 +317,23 @@
         <div class="form-group">
           <label class="form-label">What topics do you speak about? <span class="req">*</span></label>
           <p class="form-hint" style="margin-top:0;margin-bottom:10px;">Select all that apply, then add your own niche keywords below.</p>
-          <div class="topic-dropdown-wrap" id="topic-dropdown-wrap">
-            <div class="topic-dropdown-trigger" id="topic-dropdown-trigger" onclick="toggleTopicDropdown()">
-              <span id="topic-trigger-label">Select topics that apply to you</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div class="topic-dropdown-list" id="topic-dropdown-list">
-              <label class="topic-option"><input type="checkbox" value="entrepreneurship"> Entrepreneurship</label>
-              <label class="topic-option"><input type="checkbox" value="startup"> Startup</label>
-              <label class="topic-option"><input type="checkbox" value="small business"> Small Business</label>
-              <label class="topic-option"><input type="checkbox" value="business growth"> Business Growth</label>
-              <label class="topic-option"><input type="checkbox" value="leadership"> Leadership</label>
-              <label class="topic-option"><input type="checkbox" value="management"> Management</label>
-              <label class="topic-option"><input type="checkbox" value="mindset"> Mindset</label>
-              <label class="topic-option"><input type="checkbox" value="personal development"> Personal Development</label>
-              <label class="topic-option"><input type="checkbox" value="productivity"> Productivity</label>
-              <label class="topic-option"><input type="checkbox" value="habits"> Habits</label>
-              <label class="topic-option"><input type="checkbox" value="sales"> Sales</label>
-              <label class="topic-option"><input type="checkbox" value="sales strategy"> Sales Strategy</label>
-              <label class="topic-option"><input type="checkbox" value="closing deals"> Closing Deals</label>
-              <label class="topic-option"><input type="checkbox" value="marketing"> Marketing</label>
-              <label class="topic-option"><input type="checkbox" value="digital marketing"> Digital Marketing</label>
-              <label class="topic-option"><input type="checkbox" value="social media marketing"> Social Media Marketing</label>
-              <label class="topic-option"><input type="checkbox" value="content marketing"> Content Marketing</label>
-              <label class="topic-option"><input type="checkbox" value="personal branding"> Personal Branding</label>
-              <label class="topic-option"><input type="checkbox" value="public speaking"> Public Speaking</label>
-              <label class="topic-option"><input type="checkbox" value="storytelling"> Storytelling</label>
-              <label class="topic-option"><input type="checkbox" value="health & wellness"> Health &amp; Wellness</label>
-              <label class="topic-option"><input type="checkbox" value="fitness"> Fitness</label>
-              <label class="topic-option"><input type="checkbox" value="nutrition"> Nutrition</label>
-              <label class="topic-option"><input type="checkbox" value="mental health"> Mental Health</label>
-              <label class="topic-option"><input type="checkbox" value="anxiety"> Anxiety</label>
-              <label class="topic-option"><input type="checkbox" value="burnout recovery"> Burnout Recovery</label>
-              <label class="topic-option"><input type="checkbox" value="faith"> Faith</label>
-              <label class="topic-option"><input type="checkbox" value="christian living"> Christian Living</label>
-              <label class="topic-option"><input type="checkbox" value="faith-based business"> Faith-Based Business</label>
-              <label class="topic-option"><input type="checkbox" value="finance"> Finance</label>
-              <label class="topic-option"><input type="checkbox" value="investing"> Investing</label>
-              <label class="topic-option"><input type="checkbox" value="wealth building"> Wealth Building</label>
-              <label class="topic-option"><input type="checkbox" value="financial freedom"> Financial Freedom</label>
-              <label class="topic-option"><input type="checkbox" value="real estate"> Real Estate</label>
-              <label class="topic-option"><input type="checkbox" value="real estate investing"> Real Estate Investing</label>
-              <label class="topic-option"><input type="checkbox" value="coaching"> Coaching</label>
-              <label class="topic-option"><input type="checkbox" value="life coaching"> Life Coaching</label>
-              <label class="topic-option"><input type="checkbox" value="business coaching"> Business Coaching</label>
-              <label class="topic-option"><input type="checkbox" value="executive coaching"> Executive Coaching</label>
-              <label class="topic-option"><input type="checkbox" value="parenting"> Parenting</label>
-              <label class="topic-option"><input type="checkbox" value="relationships"> Relationships</label>
-              <label class="topic-option"><input type="checkbox" value="marriage"> Marriage</label>
-              <label class="topic-option"><input type="checkbox" value="family"> Family</label>
-              <label class="topic-option"><input type="checkbox" value="technology"> Technology</label>
-              <label class="topic-option"><input type="checkbox" value="ai & automation"> AI &amp; Automation</label>
-              <label class="topic-option"><input type="checkbox" value="software"> Software</label>
-              <label class="topic-option"><input type="checkbox" value="content creation"> Content Creation</label>
-              <label class="topic-option"><input type="checkbox" value="podcasting"> Podcasting</label>
-              <label class="topic-option"><input type="checkbox" value="youtube"> YouTube</label>
-              <label class="topic-option"><input type="checkbox" value="women in business"> Women in Business</label>
-              <label class="topic-option"><input type="checkbox" value="diversity & inclusion"> Diversity &amp; Inclusion</label>
-              <label class="topic-option"><input type="checkbox" value="ecommerce"> Ecommerce</label>
-              <label class="topic-option"><input type="checkbox" value="amazon fba"> Amazon FBA</label>
-              <label class="topic-option"><input type="checkbox" value="dropshipping"> Dropshipping</label>
-              <label class="topic-option"><input type="checkbox" value="consulting"> Consulting</label>
-              <label class="topic-option"><input type="checkbox" value="freelancing"> Freelancing</label>
-              <label class="topic-option"><input type="checkbox" value="remote work"> Remote Work</label>
-              <label class="topic-option"><input type="checkbox" value="work-life balance"> Work-Life Balance</label>
-              <label class="topic-option"><input type="checkbox" value="legacy building"> Legacy Building</label>
-              <label class="topic-option"><input type="checkbox" value="purpose & meaning"> Purpose &amp; Meaning</label>
-              <label class="topic-option"><input type="checkbox" value="spirituality"> Spirituality</label>
-              <label class="topic-option"><input type="checkbox" value="law"> Law</label>
-              <label class="topic-option"><input type="checkbox" value="healthcare"> Healthcare</label>
-              <label class="topic-option"><input type="checkbox" value="education"> Education</label>
-              <label class="topic-option"><input type="checkbox" value="non-profit"> Non-Profit</label>
-              <label class="topic-option"><input type="checkbox" value="sustainability"> Sustainability</label>
-            </div>
-            <div class="topic-selected-pills" id="topic-selected-pills"></div>
+          <div class="tag-input-wrap" id="topic-tag-wrap" onclick="document.getElementById('topic-tag-input')?.focus()">
+            <input type="text" id="topic-tag-input" class="tag-input-field" placeholder="Type to search topics or add your own (hit Enter)" autocomplete="off" />
+            <div class="tag-suggestions" id="topic-tag-suggestions"></div>
           </div>
-          <label class="form-label" style="margin-top:12px;">Add your niche keywords</label>
-          <textarea id="f-topics" class="form-textarea" rows="2" placeholder="e.g. faith-based entrepreneurship, burnout recovery for high-achievers, scaling without a team"></textarea>
-          <p class="form-hint">The more niche the better. These are what we search for when finding shows.</p>
-          <p class="field-error" id="err-topics">Please select at least one topic or add your own.</p>
+          <p class="form-hint">Add 3-8 topics. Specific niches work better than broad ones — "burnout recovery for high-achievers" beats "wellness".</p>
+          <p class="field-error" id="err-topics">Please add at least one topic.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-audience">Who is your ideal listener? <span class="req">*</span></label>
+          <label class="form-label" for="f-audience">Who is your ideal listener? <span class="req">*</span><button type="button" class="ai-suggest-btn" onclick="suggestField('audience')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Suggest from bio</button></label>
           <input type="text" id="f-audience" class="form-input" placeholder="e.g. Female entrepreneurs aged 30-50 struggling with burnout while scaling their business" />
           <p class="form-hint">Be specific — age, gender, situation, struggle. We use this to only match you with shows whose audiences would actually buy from you.</p>
           <p class="field-error" id="err-audience">Please describe your ideal listener.</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="f-angles">Your signature talking point + any stories or framework you always want in pitches <span class="req">*</span></label>
+          <label class="form-label" for="f-angles">Your signature talking point + any stories or framework you always want in pitches <span class="req">*</span><button type="button" class="ai-suggest-btn" onclick="suggestField('angles')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Suggest from bio</button></label>
           <textarea id="f-angles" class="form-textarea" rows="5" placeholder="Lead with your hot take, then add the stories or framework names you want referenced. Example: Most business coaches tell you to hustle harder — I teach the opposite. My clients hit 7 figures by cutting their hours in half. Always reference my 3-Step Legacy Method. I've been featured in Forbes. Never mention my divorce."></textarea>
           <p class="form-hint">This becomes the hook of every pitch. Include any stories, frameworks, or topics you always want mentioned (and any you want to avoid). The more specific, the better your reply rate.</p>
           <p class="field-error" id="err-angles">Please enter your talking point.</p>
@@ -390,6 +344,12 @@
           <input type="text" id="f-offer" class="form-input" placeholder="e.g. Book a free discovery call, buy my book, join my mastermind, download my free guide" />
           <p class="form-hint">Your CTA. We use this to match you with shows whose audiences are ready to take action — not just listen.</p>
           <p class="field-error" id="err-offer">Please enter your offer or call to action.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-past-podcasts">Have you been on podcasts before? <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">(optional)</span></label>
+          <input type="text" id="f-past-podcasts" class="form-input" placeholder="e.g. The Tim Ferriss Show, Entrepreneur on Fire — or 'No, this is my first time'" />
+          <p class="form-hint">Even one good appearance helps. We mention it in your pitch to show you're a proven guest.</p>
         </div>
 
         <div class="form-group">
@@ -425,39 +385,9 @@
       <!-- ─── Step 3: Pitch Setup ───────────────────────────── -->
       <div class="step-panel" id="step-3">
         <h2 class="step-title">Pitch Setup</h2>
-        <p class="step-desc">This is how we write your emails. The more you give us here, the more every pitch sounds like you.</p>
+        <p class="step-desc">Last step. Email signature, headshot, and you're live.</p>
 
-        <div class="form-group">
-          <label class="form-label">How fast do you want to grow?</label>
-          <div class="pace-options" id="pace-options">
-            <div class="pace-option" data-value="5" onclick="selectPace(this)">
-              <div class="pace-label">Steady</div>
-              <div class="pace-sub">4 to 6 bookings/mo</div>
-            </div>
-            <div class="pace-option selected" data-value="10" onclick="selectPace(this)">
-              <div class="pace-label">Active</div>
-              <div class="pace-sub">8 to 12 bookings/mo</div>
-            </div>
-            <div class="pace-option" data-value="20" onclick="selectPace(this)">
-              <div class="pace-label">All-in</div>
-              <div class="pace-sub">As many as you can handle</div>
-            </div>
-          </div>
-          <input type="hidden" id="f-daily-target" value="10" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="f-tone">Pitch email tone</label>
-          <select id="f-tone" class="form-select">
-            <option value="warm-professional">Warm &amp; Professional</option>
-            <option value="direct">Direct &amp; Confident</option>
-            <option value="casual">Casual &amp; Friendly</option>
-            <option value="formal">Formal &amp; Polished</option>
-          </select>
-          <p class="form-hint">How should your pitches sound? You can change this any time in your dashboard.</p>
-        </div>
-
-        <p class="form-section-label" style="margin-top:8px;">EMAIL SIGNATURE <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">appended to the bottom of every pitch email</span></p>
+        <p class="form-section-label" style="margin-top:0;">EMAIL SIGNATURE <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-tertiary)">appended to the bottom of every pitch email</span></p>
         <div class="form-group">
           <textarea id="f-email-signature" class="form-input" rows="5" style="resize:vertical;font-family:inherit;line-height:1.6;" placeholder="Best,
 Your Name
@@ -467,23 +397,47 @@ instagram.com/you | linkedin.com/in/you"></textarea>
           <p style="font-size:12px;color:#999;margin-top:4px;">Paste exactly how you want it to appear at the bottom of every email you send.</p>
         </div>
 
-        <div class="form-nav">
-          <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
-          <button class="btn btn-primary" onclick="goToStep(4)">Next: Final Step →</button>
-        </div>
-      </div>
-
-      <!-- ─── Step 4: Photos ───────────────────────────────── -->
-      <div class="step-panel" id="step-4">
-        <h2 class="step-title">Almost there</h2>
-        <p class="step-desc">Add your headshot to personalise your dashboard. It shows on every card and makes your pipeline feel like yours.</p>
-
         <div class="form-group">
           <label class="form-label">Your Headshot <span style="font-weight:500;color:#aaa;text-transform:none;letter-spacing:0;">(optional)</span></label>
           <input type="file" id="f-photo" accept="image/*" class="form-input" style="padding:8px;" />
           <p style="font-size:12px;color:#999;margin-top:4px;">Used in your dashboard profile. Max 5MB.</p>
         </div>
 
+        <!-- Advanced (optional) — growth speed + tone with sane defaults -->
+        <div class="advanced-toggle" id="advanced-toggle" onclick="this.classList.toggle('open');document.getElementById('advanced-content').classList.toggle('open');">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <span>Advanced settings <span style="font-weight:400;color:var(--text-tertiary);">(optional — sane defaults applied)</span></span>
+        </div>
+        <div class="advanced-content" id="advanced-content">
+          <div class="form-group">
+            <label class="form-label">How fast do you want to grow?</label>
+            <div class="pace-options" id="pace-options">
+              <div class="pace-option" data-value="5" onclick="selectPace(this)">
+                <div class="pace-label">Steady</div>
+                <div class="pace-sub">4 to 6 bookings/mo</div>
+              </div>
+              <div class="pace-option selected" data-value="10" onclick="selectPace(this)">
+                <div class="pace-label">Active</div>
+                <div class="pace-sub">8 to 12 bookings/mo</div>
+              </div>
+              <div class="pace-option" data-value="20" onclick="selectPace(this)">
+                <div class="pace-label">All-in</div>
+                <div class="pace-sub">As many as you can handle</div>
+              </div>
+            </div>
+            <input type="hidden" id="f-daily-target" value="10" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-tone">Pitch email tone</label>
+            <select id="f-tone" class="form-select">
+              <option value="warm-professional">Warm &amp; Professional</option>
+              <option value="direct">Direct &amp; Confident</option>
+              <option value="casual">Casual &amp; Friendly</option>
+              <option value="formal">Formal &amp; Polished</option>
+            </select>
+            <p class="form-hint">How should your pitches sound? You can change this any time in your dashboard.</p>
+          </div>
+        </div>
 
         <div style="margin:24px 0 20px;">
           <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:14px;color:var(--text-secondary);line-height:1.5;">
@@ -493,7 +447,7 @@ instagram.com/you | linkedin.com/in/you"></textarea>
         </div>
 
         <div class="form-nav">
-          <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
+          <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
           <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">
             <span id="submit-label">Launch My Pipeline</span>
           </button>
@@ -568,6 +522,6 @@ instagram.com/you | linkedin.com/in/you"></textarea>
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/onboard.js?v=20260426-debug"></script>
+  <script src="/dashboard/onboard.js?v=20260426-onboarding-r2-r4"></script>
 </body>
 </html>

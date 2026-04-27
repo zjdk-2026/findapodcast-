@@ -764,4 +764,56 @@ Strict rules:
   }
 });
 
+/**
+ * POST /api/onboard/suggest-field
+ * Body: { field: 'audience' | 'angles', bio: string, business?: string, title?: string }
+ *
+ * Generates a draft for the requested field based on the customer's bio.
+ * Used by the inline ✨ Suggest from bio buttons in the onboarding form.
+ * No credit charge — onboarding flow.
+ */
+router.post('/suggest-field', async (req, res) => {
+  const { field, bio, business, title } = req.body || {};
+  if (!field || !bio || bio.length < 30) {
+    return res.status(400).json({ ok: false, error: 'field_and_bio_required (min 30 chars)' });
+  }
+  if (!['audience', 'angles'].includes(field)) {
+    return res.status(400).json({ ok: false, error: 'invalid_field' });
+  }
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const prompts = {
+      audience: `Based on this bio, write a single sentence describing this person's IDEAL LISTENER (their target client). Be specific about demographics, psychographics, and the moment they'd seek out this person.
+
+Bio: ${bio.slice(0, 600)}
+${title ? `Title: ${title}` : ''}
+${business ? `Business: ${business}` : ''}
+
+Output ONE sentence, 15-30 words. No preamble. No em-dashes (use commas, periods, hyphens). Example format: "Female entrepreneurs aged 30-50 struggling with burnout while scaling their business past $250K to $1M."`,
+
+      angles: `Based on this bio, write 2-3 sentences capturing this person's SIGNATURE TALKING POINT — the hot take or contrarian view they'd lead a podcast with.
+
+Bio: ${bio.slice(0, 600)}
+${title ? `Title: ${title}` : ''}
+${business ? `Business: ${business}` : ''}
+
+Output 2-3 sentences, 60-90 words total. Lead with the hot take, then mention any framework names or signature stories you can infer. No preamble. No em-dashes (use commas, periods, hyphens). Plain text only.`,
+    };
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{ role: 'user', content: prompts[field] }],
+    });
+    const text = (msg.content?.[0]?.text || '').trim();
+    res.json({ ok: true, suggestion: text });
+  } catch (err) {
+    logger.warn('suggest-field failed', { field, error: err.message });
+    res.status(500).json({ ok: false, error: 'suggest_failed' });
+  }
+});
+
 module.exports = router;
