@@ -375,31 +375,28 @@ function renderHeroSection() {
         ${avatarHtml}
         <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
-      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        ${streak > 0 ? `
-          <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.06));border:1.5px solid rgba(245,158,11,0.30);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;color:#d97706;">
-            🔥 Day ${streak} streak
-          </div>` : ''}
-        <div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface-card);border:1.5px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-secondary);">
-          <span style="color:var(--text-primary);font-weight:800;">${sentThisWeek}/${weeklyTarget}</span>
-          <span>pitches this week</span>
-          <div style="width:60px;height:5px;background:var(--border-light);border-radius:3px;overflow:hidden;">
-            <div style="height:100%;background:${weekProgress >= 100 ? '#10b981' : '#6366f1'};width:${weekProgress}%;border-radius:3px;transition:width 0.4s;"></div>
-          </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <!-- Pill 1: progress (streak + pitches combined) — neutral -->
+        <div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);">
+          <span style="color:var(--text-primary);font-weight:700;">${sentThisWeek}/${weeklyTarget}</span>
+          <span style="font-weight:500;">this week</span>
+          ${streak > 0 ? `<span style="color:var(--border-medium);">·</span><span style="font-weight:500;">day ${streak}</span>` : ''}
+          ${weekProgress >= 100 ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span>` : ''}
         </div>
+        <!-- Pill 2: action (only colour comes from the CTA button) -->
         ${move ? `
-          <div style="display:inline-flex;align-items:center;gap:8px;background:${tone.bg};border:1.5px solid ${tone.border};border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;color:var(--text-primary);max-width:520px;">
-            <span style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${tone.label};">Your move</span>
-            <span style="color:var(--text-primary);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
-            <button onclick="${move.action}" style="background:${tone.btnBg};color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;color:var(--text-primary);">
+            <span style="color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
+            <button onclick="${move.action}" style="background:#10b981;color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
               ${esc(move.cta)}
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>` : ''}
+        <!-- Pill 3: reach — neutral -->
         ${lifetimeTotal > 0 ? `
-          <div style="display:inline-flex;align-items:baseline;gap:8px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(99,102,241,0.06));border:1.5px solid rgba(16,185,129,0.25);border-radius:999px;padding:6px 16px;">
-            <span style="font-size:18px;font-weight:900;letter-spacing:-0.02em;color:#10b981;line-height:1;">${formatNumber(lifetimeTotal)}</span>
-            <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">people heard you</span>
+          <div style="display:inline-flex;align-items:baseline;gap:6px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);">
+            <span style="color:var(--text-primary);font-weight:700;">${formatNumber(lifetimeTotal)}</span>
+            <span style="font-weight:500;">people heard you</span>
           </div>` : ''}
       </div>
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
