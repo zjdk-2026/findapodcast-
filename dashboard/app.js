@@ -358,13 +358,24 @@ function renderHeroSection() {
     ? `<img src="${esc(photoUrl)}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0;" />`
     : '';
 
+  // Your Move pill — compact, sits inline with streak/reach
+  const move = (typeof computeYourMove === 'function') ? computeYourMove() : null;
+  const moveTones = {
+    urgent: { bg: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(245,158,11,0.06))', border: 'rgba(239,68,68,0.30)', label: '#ef4444', btnBg: '#ef4444' },
+    warm:   { bg: 'linear-gradient(135deg,rgba(245,158,11,0.10),rgba(99,102,241,0.05))', border: 'rgba(245,158,11,0.30)', label: '#d97706', btnBg: '#f59e0b' },
+    cool:   { bg: 'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05))', border: 'rgba(99,102,241,0.25)', label: '#6366f1', btnBg: '#6366f1' },
+  };
+  const tone = move ? (moveTones[move.tone] || moveTones.cool) : null;
+  // Compact one-liner (truncated to fit pill)
+  const moveTextShort = move ? (move.text.length > 80 ? move.text.slice(0, 78) + '…' : move.text) : '';
+
   heroEl.innerHTML = `
     <div class="hero-greeting">
       <div style="display:flex;align-items:center;gap:12px;">
         ${avatarHtml}
         <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
-      <div style="margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         ${streak > 0 ? `
           <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.06));border:1.5px solid rgba(245,158,11,0.30);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;color:#d97706;">
             🔥 Day ${streak} streak
@@ -376,6 +387,15 @@ function renderHeroSection() {
             <div style="height:100%;background:${weekProgress >= 100 ? '#10b981' : '#6366f1'};width:${weekProgress}%;border-radius:3px;transition:width 0.4s;"></div>
           </div>
         </div>
+        ${move ? `
+          <div style="display:inline-flex;align-items:center;gap:8px;background:${tone.bg};border:1.5px solid ${tone.border};border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;color:var(--text-primary);max-width:520px;">
+            <span style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${tone.label};">Your move</span>
+            <span style="color:var(--text-primary);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
+            <button onclick="${move.action}" style="background:${tone.btnBg};color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
+              ${esc(move.cta)}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>` : ''}
         ${lifetimeTotal > 0 ? `
           <div style="display:inline-flex;align-items:baseline;gap:8px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(99,102,241,0.06));border:1.5px solid rgba(16,185,129,0.25);border-radius:999px;padding:6px 16px;">
             <span style="font-size:18px;font-weight:900;letter-spacing:-0.02em;color:#10b981;line-height:1;">${formatNumber(lifetimeTotal)}</span>
@@ -772,24 +792,10 @@ function renderPipelineHealth(stats) {
     nudgeColor = '#10b981'; icon = '🏆';
   }
 
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div style="background:${t.bg};border:1.5px solid ${t.border};border-radius:14px;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:260px;">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${t.label};margin-bottom:4px;">${esc(move.label)}</div>
-        <div style="font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.5;">${esc(move.text)}</div>
-      </div>
-      <button onclick="${move.action}" style="background:${t.label};color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;">
-        ${esc(move.cta)}
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-      <div style="display:flex;gap:22px;border-left:1px solid var(--border-light);padding-left:22px;">
-        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--text-primary);line-height:1;">${sent}</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Sent</div></div>
-        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:${replyRate >= 14 ? '#10b981' : 'var(--text-primary)'};line-height:1;">${replyRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Reply</div></div>
-        <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:#10b981;line-height:1;">${bookRate}%</div><div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-top:2px;">Book</div></div>
-      </div>
-    </div>
-  `;
+  // Your Move now lives in the hero row — pipeline-health banner is hidden to avoid duplication.
+  // (Stats SENT/REPLY/BOOK still computed; surface them here only if we want to bring them back.)
+  el.style.display = 'none';
+  el.innerHTML = '';
 }
 
 window.openMatchDetail = window.openMatchDetail || function(id) {
