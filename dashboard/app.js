@@ -192,6 +192,7 @@ function nextActionPillHtml(match) {
   if (status === 'replied') {
     label = '↪ Reply now';
     color = '#ef4444';
+    return `<button onclick="event.stopPropagation();openThreadModal('${esc(match.id)}')" style="display:inline-flex;align-items:center;gap:4px;background:${color}1a;color:${color};border:1px solid ${color}40;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;cursor:pointer;">Next: ${esc(label)}</button>`;
   } else if (status === 'new') {
     label = '✉ Send pitch';
     color = '#6366f1';
@@ -4927,6 +4928,156 @@ async function checkRepliesNow(event) {
   }
 }
 window.checkRepliesNow = checkRepliesNow;
+
+// ── Thread modal (Phase B reply pipeline) ─────────────────────────────
+let _activeThreadMatchId = null;
+
+async function openThreadModal(matchId) {
+  if (!matchId) return;
+  _activeThreadMatchId = matchId;
+  const modal = document.getElementById('thread-modal');
+  const titleEl = document.getElementById('thread-modal-title');
+  const subEl = document.getElementById('thread-modal-subtitle');
+  const listEl = document.getElementById('thread-messages');
+  const subjectEl = document.getElementById('thread-reply-subject');
+  const bodyEl = document.getElementById('thread-reply-body');
+  if (!modal || !listEl) return;
+
+  modal.style.display = 'flex';
+  listEl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">Loading conversation…</div>';
+  if (subjectEl) subjectEl.value = '';
+  if (bodyEl) bodyEl.value = '';
+
+  try {
+    const r = await fetch(`/api/thread/${matchId}`, { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'fetch_failed');
+
+    const m = data.match || {};
+    titleEl.textContent = m.podcast_title || 'Conversation';
+    subEl.textContent = m.host_name ? `with ${m.host_name}${m.host_email ? ' · ' + m.host_email : ''}` : (m.host_email || '');
+
+    const messages = data.messages || [];
+    if (messages.length === 0) {
+      listEl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">No messages in this thread yet.</div>';
+    } else {
+      listEl.innerHTML = messages.map(renderThreadMessage).join('');
+      // Scroll to newest at the bottom
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    // Pre-fill subject with Re: latest subject
+    const latest = messages[messages.length - 1];
+    const lastSubject = latest?.subject || '';
+    if (subjectEl) subjectEl.value = lastSubject.toLowerCase().startsWith('re:') ? lastSubject : (lastSubject ? `Re: ${lastSubject}` : '');
+
+    // Mark as read (zero unread count + clear seen badge)
+    fetch(`/api/thread/${matchId}/mark-read`, { method: 'POST', headers: { 'x-dashboard-token': state.token } }).catch(() => {});
+    const seenKey = `seen_replied_${state.token}`;
+    const seen = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
+    seen.add(matchId);
+    localStorage.setItem(seenKey, JSON.stringify([...seen]));
+  } catch (err) {
+    listEl.innerHTML = `<div style="padding:40px;text-align:center;color:#ef4444;font-size:14px;">Could not load thread (${esc(err.message || 'error')}).</div>`;
+  }
+}
+window.openThreadModal = openThreadModal;
+
+function closeThreadModal() {
+  _activeThreadMatchId = null;
+  const modal = document.getElementById('thread-modal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeThreadModal = closeThreadModal;
+
+function renderThreadMessage(msg) {
+  const isOutbound = msg.direction === 'outbound';
+  const align = isOutbound ? 'flex-end' : 'flex-start';
+  const bg = isOutbound ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'var(--surface-card)';
+  const color = isOutbound ? '#fff' : 'var(--text-primary)';
+  const border = isOutbound ? 'none' : '1px solid var(--border-light)';
+  const fromShort = (msg.from_email || '').split('<').pop().replace('>', '').trim() || (isOutbound ? 'You' : 'Host');
+  const when = msg.sent_at ? new Date(msg.sent_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+  const body = (msg.body_text || '').trim() || '(no body captured)';
+  const typeBadge = msg.message_type === 'pitch' ? 'Initial pitch'
+                  : msg.message_type === 'followup' ? 'Follow-up'
+                  : msg.message_type === 'host_reply' ? 'Reply from host'
+                  : msg.message_type === 'customer_reply' ? 'Your reply'
+                  : isOutbound ? 'Sent by you' : 'From host';
+
+  return `
+    <div style="display:flex;justify-content:${align};margin-bottom:14px;">
+      <div style="max-width:86%;background:${bg};color:${color};border:${border};border-radius:14px;padding:12px 16px;box-shadow:${isOutbound ? '0 2px 8px rgba(99,102,241,0.18)' : '0 1px 2px rgba(0,0,0,0.04)'};">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:6px;font-size:11px;font-weight:600;opacity:0.85;">
+          <span>${esc(typeBadge)}${msg.subject ? ' · ' + esc(msg.subject.slice(0, 60)) : ''}</span>
+          <span style="font-weight:500;opacity:0.75;white-space:nowrap;">${esc(when)}</span>
+        </div>
+        <div style="font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${esc(body).replace(/\n/g, '<br>')}</div>
+        ${!isOutbound && msg.from_email ? `<div style="margin-top:8px;font-size:11px;opacity:0.7;">${esc(fromShort)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function sendThreadReply() {
+  if (!_activeThreadMatchId) return;
+  const subjectEl = document.getElementById('thread-reply-subject');
+  const bodyEl = document.getElementById('thread-reply-body');
+  const sendBtn = document.getElementById('thread-send-btn');
+  if (!bodyEl || !sendBtn) return;
+
+  const body = (bodyEl.value || '').trim();
+  if (!body) { showToast('Write a reply before sending.', 'error'); return; }
+
+  sendBtn.disabled = true;
+  const orig = sendBtn.innerHTML;
+  sendBtn.innerHTML = 'Sending…';
+
+  try {
+    const data = await apiPost(`/api/reply/${_activeThreadMatchId}`, {
+      subject: subjectEl?.value || '',
+      body,
+    });
+    if (!data.ok) throw new Error(data.error || 'send_failed');
+
+    showToast('Reply sent.', 'success');
+    // Re-open the modal to show the new message at the bottom
+    const id = _activeThreadMatchId;
+    closeThreadModal();
+    setTimeout(() => openThreadModal(id), 200);
+  } catch (err) {
+    showToast('Could not send: ' + (err.message || 'error'), 'error');
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = orig;
+  }
+}
+window.sendThreadReply = sendThreadReply;
+
+// AI-draft stub (Phase C lights this up properly with Claude + thread context)
+async function draftReplyWithAI() {
+  const btn = document.getElementById('thread-ai-draft-btn');
+  if (!btn || !_activeThreadMatchId) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Drafting…';
+  try {
+    const data = await apiPost('/api/generate-followup', { matchId: _activeThreadMatchId });
+    if (!data.success && !data.body) throw new Error(data.error || 'draft_failed');
+    const bodyEl = document.getElementById('thread-reply-body');
+    if (bodyEl) bodyEl.value = data.body || data.email || '';
+    showToast('Draft ready. Edit and send.', 'success');
+  } catch (err) {
+    showToast('AI draft failed. Type your reply manually.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+window.draftReplyWithAI = draftReplyWithAI;
+
+// Override the openMatchDetail fallback so the Your-Move CTA opens the thread modal directly
+window.openMatchDetail = function(id) { openThreadModal(id); };
 
 // ── Credits counter (live monthly balance) ─────────────────────────────
 async function loadCredits() {

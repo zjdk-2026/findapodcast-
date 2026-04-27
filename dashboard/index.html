@@ -577,6 +577,47 @@
     </div>
   </div>
 
+  <!-- Thread modal — full conversation history + manual reply composer (Phase B) -->
+  <div id="thread-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal modal-wide" style="max-width:780px;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+      <div class="modal-header" style="padding:18px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:4px;">Conversation</div>
+          <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--text-primary);" id="thread-modal-title">—</h2>
+          <p style="margin:2px 0 0;font-size:13px;color:var(--text-secondary);" id="thread-modal-subtitle">—</p>
+        </div>
+        <button class="modal-close" onclick="closeThreadModal()" style="background:none;border:none;font-size:22px;color:var(--text-tertiary);cursor:pointer;padding:0 4px;">✕</button>
+      </div>
+
+      <!-- Message list (scrollable, oldest → newest) -->
+      <div id="thread-messages" style="flex:1;overflow-y:auto;padding:18px 24px;background:var(--surface-page);"></div>
+
+      <!-- Reply composer (sticky bottom) -->
+      <div id="thread-composer" style="border-top:1px solid var(--border-light);padding:14px 24px;background:var(--surface-card);">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <input type="text" id="thread-reply-subject" placeholder="Re: ..." style="flex:1;min-width:240px;padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;" />
+          <button id="thread-ai-draft-btn" onclick="draftReplyWithAI()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Draft with AI
+          </button>
+        </div>
+        <textarea id="thread-reply-body" rows="5" placeholder="Type your reply..." style="width:100%;padding:11px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;line-height:1.5;resize:vertical;min-height:100px;"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:12px;color:var(--text-tertiary);">
+            Replies in the original Gmail thread. Costs 1 credit.
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="closeThreadModal()" style="background:none;border:1.5px solid var(--border-medium);color:var(--text-secondary);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="thread-send-btn" onclick="sendThreadReply()" style="background:#10b981;color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              Send reply
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Interview Prep modal -->
   <div id="interview-prep-modal" class="modal-overlay" style="display:none;">
     <div class="modal modal-wide" style="max-width:600px;max-height:85vh;overflow-y:auto;">
@@ -745,6 +786,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260426-ux-rounds-2-4"></script>
+  <script src="/dashboard/app.js?v=20260426-thread-modal"></script>
 </body>
 </html>
