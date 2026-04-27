@@ -74,7 +74,10 @@ router.get('/auth/gmail/callback', async (req, res) => {
       // Access token only — we may still proceed but without long-lived access
     }
 
-    // Retrieve the Gmail email address from the access token
+    // Retrieve the Gmail email address. Use gmail.users.getProfile (covered by
+    // gmail.readonly/metadata) rather than oauth2.userinfo.get (needs userinfo.email
+    // scope which we don't request). Without this, gmail_email gets stored as the
+    // literal "connected" string and direction-detection on cached threads breaks.
     let gmailEmail = null;
     if (tokens.access_token) {
       try {
@@ -84,9 +87,9 @@ router.get('/auth/gmail/callback', async (req, res) => {
           process.env.GOOGLE_REDIRECT_URI
         );
         oauth2Client.setCredentials(tokens);
-        const oauth2 = require('googleapis').google.oauth2({ version: 'v2', auth: oauth2Client });
-        const userInfo = await oauth2.userinfo.get();
-        gmailEmail = userInfo.data.email || null;
+        const gmail = require('googleapis').google.gmail({ version: 'v1', auth: oauth2Client });
+        const profile = await gmail.users.getProfile({ userId: 'me' });
+        gmailEmail = (profile.data.emailAddress || '').toLowerCase() || null;
       } catch (emailErr) {
         logger.warn('Could not fetch Gmail email address', { clientId, error: emailErr.message });
       }
@@ -149,8 +152,25 @@ router.get('/auth/gmail/callback', async (req, res) => {
 });
 
 /**
+ * isBounceMessage(headers)
+ * Detects mailer-daemon / Delivery Status Notification messages so they don't
+ * get counted as host replies. Returns true if From or Subject indicates a bounce.
+ */
+function isBounceMessage(headers) {
+  const get = (n) => headers.find(h => h.name?.toLowerCase() === n.toLowerCase())?.value || '';
+  const from = get('From').toLowerCase();
+  const subject = get('Subject').toLowerCase();
+  return from.includes('mailer-daemon') || from.includes('postmaster@') ||
+         subject.includes('delivery status notification') ||
+         subject.includes('undeliverable') ||
+         subject.includes('mail delivery failed');
+}
+
+/**
  * getThreadMessageCount(refreshToken, threadId)
- * Returns the number of messages in a Gmail thread. Returns 0 on any error.
+ * Returns the number of NON-BOUNCE messages in a Gmail thread. Bounces
+ * (mailer-daemon delivery failures) are excluded so a failed pitch doesn't
+ * get falsely flagged as a host reply.
  */
 async function getThreadMessageCount(refreshToken, threadId) {
   try {
@@ -164,9 +184,11 @@ async function getThreadMessageCount(refreshToken, threadId) {
     const res = await gmail.users.threads.get({
       userId: 'me',
       id: threadId,
-      format: 'minimal',
+      format: 'metadata',
+      metadataHeaders: ['From', 'Subject'],
     });
-    return (res.data.messages?.length) || 0;
+    const msgs = res.data.messages || [];
+    return msgs.filter(m => !isBounceMessage(m.payload?.headers || [])).length;
   } catch (err) {
     logger.warn('getThreadMessageCount failed', { threadId, error: err.message });
     return 0;
@@ -280,17 +302,24 @@ router.post('/api/gmail/check-replies', async (req, res) => {
           fetchThread(client.gmail_refresh_token, threadId).then(async (messages) => {
             if (!messages || messages.length === 0) return;
             const customerEmail = (client.gmail_email || '').toLowerCase();
+            const isBounce = (msg) => {
+              const f = (msg.from || '').toLowerCase();
+              const s = (msg.subject || '').toLowerCase();
+              return f.includes('mailer-daemon') || f.includes('postmaster@') ||
+                     s.includes('delivery status notification') || s.includes('undeliverable');
+            };
             for (const msg of messages) {
               const fromLower = (msg.from || '').toLowerCase();
-              const isOutbound = customerEmail && fromLower.includes(customerEmail);
+              const isOutbound = customerEmail && customerEmail.includes('@') && fromLower.includes(customerEmail);
               const direction = isOutbound ? 'outbound' : 'inbound';
+              const messageType = isOutbound ? 'pitch' : (isBounce(msg) ? 'bounce' : 'host_reply');
               try {
                 await supabase.from('match_thread_messages').insert({
                   match_id:           m.id,
                   gmail_message_id:   msg.gmail_message_id,
                   gmail_thread_id:    msg.gmail_thread_id,
                   direction,
-                  message_type:       isOutbound ? null : 'host_reply',
+                  message_type:       messageType,
                   from_email:         msg.from || null,
                   to_email:           msg.to || null,
                   subject:            msg.subject || null,
@@ -305,17 +334,27 @@ router.post('/api/gmail/check-replies', async (req, res) => {
                 // Likely a duplicate gmail_message_id — that's fine, idempotent
               }
             }
-            // Update unread count = inbound messages count (until customer opens the thread)
-            const inboundCount = messages.filter(msg => {
+            // Real (non-bounce) inbound counts only — bounces should not light up the unread badge
+            const realInbound = messages.filter(msg => {
               const fromLower = (msg.from || '').toLowerCase();
-              return !(customerEmail && fromLower.includes(customerEmail));
-            }).length;
+              const out = customerEmail && customerEmail.includes('@') && fromLower.includes(customerEmail);
+              return !out && !isBounce(msg);
+            });
+            // If every inbound was a bounce, this isn't actually a reply — revert status to 'sent'.
+            if (realInbound.length === 0) {
+              await supabase.from('podcast_matches').update({
+                status: 'sent', last_reply_at: null, reply_count: 0,
+                message_count: messages.length, last_message_at: new Date().toISOString(),
+              }).eq('id', m.id).catch(() => {});
+              logger.info('Reverted bounce-only match to sent', { matchId: m.id });
+              return;
+            }
             await supabase.from('podcast_matches').update({
               message_count:        messages.length,
-              unread_inbound_count: inboundCount,
+              unread_inbound_count: realInbound.length,
               last_message_at:      new Date().toISOString(),
             }).eq('id', m.id).catch(() => {});
-            logger.info('Thread cached on first reply', { matchId: m.id, msgCount: messages.length, inboundCount });
+            logger.info('Thread cached on first reply', { matchId: m.id, msgCount: messages.length, realInboundCount: realInbound.length });
           }).catch((err) => {
             logger.warn('Thread capture failed (non-fatal)', { matchId: m.id, error: err.message });
           });
@@ -398,22 +437,25 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt, subj
       afterClause = ` after:${epochSeconds}`;
     }
 
-    // Strategy 2a: exact email match
-    const tries = [`from:${fromEmail}${afterClause}`];
+    // Exclude bounce notifications from every search — Gmail's `-from:` filters them out.
+    const noBounce = ' -from:mailer-daemon -from:postmaster -subject:"delivery status notification" -subject:"undeliverable"';
 
-    // Strategy 2b (NEW): broaden to the email's domain — catches replies from any sender at acme.com
+    // Strategy 2a: exact email match
+    const tries = [`from:${fromEmail}${afterClause}${noBounce}`];
+
+    // Strategy 2b: broaden to the email's domain — catches replies from any sender at acme.com
     // when the pitch went to podcast@acme.com but Sarah replied from sarah@acme.com.
     const domain = (fromEmail.split('@')[1] || '').trim();
     if (domain && domain.split('.').length >= 2 && !['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com'].includes(domain.toLowerCase())) {
-      tries.push(`from:@${domain}${afterClause}`);
+      tries.push(`from:@${domain}${afterClause}${noBounce}`);
     }
 
-    // Strategy 2c (NEW): subject-line match — catches replies that started a new thread
+    // Strategy 2c: subject-line match — catches replies that started a new thread
     // (e.g. host changed the subject after our pitch).
     if (subject) {
       const cleanSubject = subject.replace(/^Re:\s*/i, '').replace(/["'`]/g, '').slice(0, 80).trim();
       if (cleanSubject.length >= 8) {
-        tries.push(`subject:"${cleanSubject}"${afterClause} -from:me`);
+        tries.push(`subject:"${cleanSubject}"${afterClause} -from:me${noBounce}`);
       }
     }
 

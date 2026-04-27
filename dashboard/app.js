@@ -5104,7 +5104,8 @@ async function openThreadModal(matchId) {
     titleEl.textContent = m.podcast_title || 'Conversation';
     subEl.textContent = m.host_name ? `with ${m.host_name}${m.host_email ? ' · ' + m.host_email : ''}` : (m.host_email || '');
 
-    const messages = data.messages || [];
+    // Hide bounce notifications — they pollute the conversation view.
+    const messages = (data.messages || []).filter(m => m.message_type !== 'bounce');
     if (messages.length === 0) {
       listEl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">No messages in this thread yet.</div>';
     } else {

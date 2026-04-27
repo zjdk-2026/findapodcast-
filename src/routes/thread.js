@@ -57,18 +57,25 @@ router.get('/thread/:matchId', async (req, res) => {
           if (fresh && fresh.length > messagesOut.length) {
             // Insert any new messages we don't have yet (idempotent on gmail_message_id unique constraint)
             const customerEmail = (match.clients.gmail_email || '').toLowerCase();
+            const isBounce = (msg) => {
+              const f = (msg.from || '').toLowerCase();
+              const s = (msg.subject || '').toLowerCase();
+              return f.includes('mailer-daemon') || f.includes('postmaster@') ||
+                     s.includes('delivery status notification') || s.includes('undeliverable');
+            };
             const known = new Set(messagesOut.map(m => m.gmail_message_id).filter(Boolean));
             for (const msg of fresh) {
               if (known.has(msg.gmail_message_id)) continue;
               const fromLower = (msg.from || '').toLowerCase();
-              const isOutbound = customerEmail && fromLower.includes(customerEmail);
+              const isOutbound = customerEmail && customerEmail.includes('@') && fromLower.includes(customerEmail);
+              const messageType = isOutbound ? 'customer_reply' : (isBounce(msg) ? 'bounce' : 'host_reply');
               try {
                 await supabase.from('match_thread_messages').insert({
                   match_id:          matchId,
                   gmail_message_id:  msg.gmail_message_id,
                   gmail_thread_id:   msg.gmail_thread_id,
                   direction:         isOutbound ? 'outbound' : 'inbound',
-                  message_type:      isOutbound ? 'customer_reply' : 'host_reply',
+                  message_type:      messageType,
                   from_email:        msg.from || null,
                   to_email:          msg.to || null,
                   subject:           msg.subject || null,
