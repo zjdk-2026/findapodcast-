@@ -158,33 +158,40 @@
       </section>
 
 
-      <!-- Filter actions row — moved above tabs (left-aligned) -->
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 24px 8px;max-width:1400px;margin:0 auto;flex-wrap:wrap;">
-        <button id="add-podcast-btn" onclick="openAddPodcastModal()" title="Manually add a podcast you've found" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:4px 12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
+      <!-- Action + filter band — single horizontal control row, actions left / filters right -->
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 24px 10px;max-width:1400px;margin:0 auto;flex-wrap:wrap;">
+        <!-- Left: actions -->
+        <button id="add-podcast-btn" onclick="openAddPodcastModal()" title="Manually add a podcast you've found" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:5px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add a Podcast
         </button>
-        <button id="check-replies-btn" onclick="checkRepliesNow(event)" title="Force-check Gmail for new host replies right now" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:4px 12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
+        <button id="check-replies-btn" onclick="checkRepliesNow(event)" title="Force-check Gmail for new host replies right now" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:5px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Check replies
         </button>
-        <button id="refresh-pipeline-btn" onclick="refreshPipeline()" title="Re-enrich and re-score all podcast cards with the latest data" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:4px 12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
+        <button id="refresh-pipeline-btn" onclick="refreshPipeline()" title="Re-enrich and re-score all podcast cards with the latest data" style="font-size:12px;color:var(--text-tertiary);background:none;border:1.5px solid var(--border-medium);border-radius:999px;padding:5px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.4;">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Refresh
         </button>
-        <label class="filter-label">
-          Score ≥
-          <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:80px;accent-color:var(--accent);" />
-          <span id="min-score-value" style="min-width:22px;text-align:right;color:var(--text-primary);">0</span>
-        </label>
-        <label class="filter-label" style="cursor:pointer;" title="Only show podcasts where we have a direct email address for the host or producer">
-          <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);" />
-          Has Email
-        </label>
+        <!-- Spacer pushes filters right -->
+        <div style="flex:1;"></div>
+        <!-- Right: filters (subtle pill background to group + separate from actions) -->
+        <div style="display:inline-flex;align-items:center;gap:14px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:5px 14px;">
+          <label class="filter-label" style="display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--text-tertiary);font-weight:600;margin:0;">
+            <span>Score ≥</span>
+            <input type="range" id="min-score-slider" min="0" max="100" value="0" step="5" style="width:90px;accent-color:var(--accent);" />
+            <span id="min-score-value" style="min-width:24px;text-align:left;color:var(--text-primary);font-weight:700;">0</span>
+          </label>
+          <span style="width:1px;height:18px;background:var(--border-light);"></span>
+          <label class="filter-label" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-tertiary);font-weight:600;margin:0;" title="Only show podcasts where we have a direct email address for the host or producer">
+            <input type="checkbox" id="filter-has-email" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;" />
+            <span>Has Email</span>
+          </label>
+        </div>
       </div>
 
       <!-- Pipeline tabs row -->
-      <section class="filter-bar">
+      <section class="filter-bar" style="margin-top:8px;margin-bottom:14px;">
         <div class="tab-pills filter-tabs" id="filter-tabs">
           <button class="tab-pill filter-tab active" data-status="new">New</button>
           <button class="tab-pill filter-tab" data-status="sent">Pitched</button>
