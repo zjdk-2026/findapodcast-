@@ -336,6 +336,7 @@
           <button class="btn btn-outline btn-sm" id="email-copy-btn">Copy to Clipboard</button>
           <button class="btn btn-outline btn-sm" id="email-save-btn">Save Draft</button>
           <button class="btn btn-outline btn-sm" id="email-save-template-btn" title="Save this as your reusable pitch template, used for all future pitches">Save as My Template</button>
+          <button class="btn btn-outline btn-sm" id="email-apply-template-btn" onclick="openTemplatePicker(event)" title="Apply one of your saved templates to this match">Apply Template ▾</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-outline btn-sm" id="email-restore-btn" style="display:none;">Move Back to New</button>
@@ -786,6 +787,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260426-phase-c-ai-draft"></script>
+  <script src="/dashboard/app.js?v=20260426-templates"></script>
 </body>
 </html>

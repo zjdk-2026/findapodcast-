@@ -100,6 +100,7 @@ app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));
 app.use('/api', require('./routes/credits'));
 app.use('/api', require('./routes/thread'));
+app.use('/api', require('./routes/templates'));
 app.use('/api', require('./routes/stripe'));
 app.use('/api', require('./routes/contentBoost'));
 app.use('/api/operator', require('./routes/contentBoost'));

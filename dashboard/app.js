@@ -3422,6 +3422,7 @@ function openEmailModal(matchId) {
   show('email-reenrich-btn',    canRescoreStatuses.includes(status));
 
   $('email-modal').style.display = 'flex';
+  $('email-modal').dataset.matchId = matchId;
   document.body.style.overflow = 'hidden';
 
   // Hide voice intro section for thank-you mode (only for cold pitches)
@@ -4202,19 +4203,102 @@ async function saveAsTemplate() {
   if (!subject && !body) { showToast('Nothing to save.', 'error'); return; }
   const name = prompt('Name this template (e.g. "Intro pitch", "Follow-up"):');
   if (!name) return;
-  const templates = state.client.email_templates ? [...state.client.email_templates] : [];
-  const newTemplate = { id: Date.now().toString(), name: name.trim(), subject, body };
-  templates.push(newTemplate);
+
+  // Determine type from current match status if available
+  const matchId = $('email-modal')?.dataset.matchId || null;
+  const match = matchId ? state.matches.find(m => m.id === matchId) : null;
+  const type = match?.status === 'replied' ? 'followup' : (match?.status === 'appeared' ? 'thankyou' : 'pitch');
+
   try {
-    const data = await apiPatch(`/api/onboard/${state.client.id}`, { email_templates: templates });
-    if (data.success) {
-      state.client.email_templates = templates;
+    const data = await apiPost('/api/templates', { type, name: name.trim(), subject, body });
+    if (data.ok) {
       showToast(`Template "${name}" saved.`, 'success');
     } else {
-      showToast('Failed to save template.', 'error');
+      showToast('Failed to save template: ' + (data.error || 'unknown'), 'error');
     }
   } catch { showToast('Network error.', 'error'); }
 }
+
+// ── Template picker (dropdown shows saved templates) ──────────────────
+async function openTemplatePicker(event) {
+  event?.stopPropagation();
+  const matchId = $('email-modal')?.dataset.matchId;
+  if (!matchId) { showToast('Open an email first.', 'error'); return; }
+
+  // Remove any existing picker
+  document.getElementById('template-picker')?.remove();
+
+  // Fetch templates
+  let templates = [];
+  try {
+    const r = await fetch('/api/templates', { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    if (data.ok) templates = data.templates || [];
+  } catch {}
+
+  if (templates.length === 0) {
+    showToast('No saved templates yet. Save one first with the "Save as My Template" button.', 'success');
+    return;
+  }
+
+  // Build dropdown anchored to the button
+  const btn = document.getElementById('email-apply-template-btn');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+
+  const picker = document.createElement('div');
+  picker.id = 'template-picker';
+  picker.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.bottom + 4}px;background:var(--surface-card);border:1.5px solid var(--border-medium);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);z-index:99999;min-width:260px;max-width:320px;max-height:340px;overflow-y:auto;padding:6px;`;
+
+  picker.innerHTML = templates.map(t => `
+    <button onclick="applyTemplate('${esc(t.id)}', '${esc(matchId)}')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-primary);transition:background 0.1s;">
+      <div style="font-weight:700;display:flex;align-items:center;gap:6px;">
+        ${esc(t.name)}
+        ${t.is_default ? '<span style="font-size:9px;font-weight:800;background:#10b981;color:#fff;padding:2px 6px;border-radius:999px;">DEFAULT</span>' : ''}
+        <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.10);color:#6366f1;padding:2px 6px;border-radius:999px;text-transform:uppercase;">${esc(t.type)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">${t.use_count || 0} uses · ${esc((t.subject || '').slice(0, 40))}${(t.subject || '').length > 40 ? '…' : ''}</div>
+    </button>
+  `).join('');
+
+  // Hover effect
+  picker.querySelectorAll('button').forEach(b => {
+    b.addEventListener('mouseenter', () => b.style.background = 'rgba(99,102,241,0.08)');
+    b.addEventListener('mouseleave', () => b.style.background = 'none');
+  });
+
+  document.body.appendChild(picker);
+  // Close on click outside
+  setTimeout(() => {
+    const close = (e) => {
+      if (!picker.contains(e.target) && e.target !== btn) {
+        picker.remove();
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+window.openTemplatePicker = openTemplatePicker;
+
+async function applyTemplate(templateId, matchId) {
+  document.getElementById('template-picker')?.remove();
+  if (!templateId || !matchId) return;
+  try {
+    const data = await apiPost(`/api/templates/${templateId}/apply/${matchId}`, {});
+    if (!data.ok) throw new Error(data.error || 'apply_failed');
+
+    // Update modal fields with the substituted content
+    const subjectEl = $('modal-subject');
+    const bodyEl = $('modal-body-text');
+    if (subjectEl) subjectEl.value = data.subject || '';
+    if (bodyEl) bodyEl.value = data.body || '';
+    showToast('Template applied. Edit and send.', 'success');
+  } catch (err) {
+    showToast('Could not apply template: ' + (err.message || 'error'), 'error');
+  }
+}
+window.applyTemplate = applyTemplate;
 
 // ── Load Template ─────────────────────────────────────────────────────
 function loadTemplate(templateId) {
