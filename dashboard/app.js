@@ -376,15 +376,19 @@ function renderHeroSection() {
         <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
       <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <!-- Pill 1: ACTION — dominant. Heavier border, larger padding, accent CTA. Surfaces the move clearly without hype. -->
-        ${move ? `
+        <!-- Pill 1: ACTION — dominant. Heavier border, larger padding, accent CTA.
+             CTA colour matches the urgency: red for replies (matches Host Replied tab badge), green otherwise. -->
+        ${move ? (() => {
+          const ctaBg = move.tone === 'urgent' ? '#ef4444' : '#10b981';
+          return `
           <div style="display:inline-flex;align-items:center;gap:12px;background:var(--surface-card);border:1.5px solid var(--border-medium);border-radius:999px;padding:7px 8px 7px 18px;font-size:14px;color:var(--text-primary);box-shadow:0 1px 2px rgba(0,0,0,0.03);">
             <span style="color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
-            <button onclick="${move.action}" style="background:#10b981;color:#fff;border:none;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">
+            <button onclick="${move.action}" style="background:${ctaBg};color:#fff;border:none;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">
               ${esc(move.cta)}
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-          </div>` : ''}
+          </div>`;
+        })() : ''}
         <!-- Pill 2: PROGRESS — subtle. Hidden when 0 (avoids 'shame at zero'). Streak only when meaningful (>= 3 days). -->
         ${sentThisWeek > 0 ? `
           <div style="display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-tertiary);">
