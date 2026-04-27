@@ -204,7 +204,7 @@ router.post('/api/gmail/check-replies', async (req, res) => {
   // detected. We rely on inbox-search strategy for those (no thread_id to track yet).
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, email_subject, sent_at, created_at, status, reply_count, podcasts(contact_email, title)')
+    .select('id, gmail_thread_id, email_subject, sent_at, discovered_at, status, reply_count, podcasts(contact_email, title)')
     .eq('client_id', client.id)
     .in('status', ['new', 'sent', 'followed_up', 'replied']);
 
@@ -245,7 +245,7 @@ router.post('/api/gmail/check-replies', async (req, res) => {
       // v3: for 'new' matches with no sent_at, use created_at as the lower bound so we only
       // pick up replies that arrived AFTER the customer added the podcast to their pipeline.
       if (!hasReply && contactEmail) {
-        const lowerBound = m.sent_at || m.created_at || null;
+        const lowerBound = m.sent_at || m.discovered_at || null;
         hasReply = await checkInboxForReplyFromEmail(client.gmail_refresh_token, contactEmail, lowerBound, m.email_subject);
         if (hasReply && storedCount === 0) isNewReply = true;
       }
@@ -259,7 +259,7 @@ router.post('/api/gmail/check-replies', async (req, res) => {
         // Without this the dashboard timeline math (e.g. "X days ago", stale follow-up trigger)
         // would be off. Use created_at as a reasonable proxy for when the customer reached out.
         if (m.status === 'new' && !m.sent_at) {
-          replyFields.sent_at = m.created_at || new Date().toISOString();
+          replyFields.sent_at = m.discovered_at || new Date().toISOString();
         }
         try {
           await supabase.from('podcast_matches').update(replyFields).eq('id', m.id);
