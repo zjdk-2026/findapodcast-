@@ -5054,18 +5054,23 @@ async function sendThreadReply() {
 }
 window.sendThreadReply = sendThreadReply;
 
-// AI-draft stub (Phase C lights this up properly with Claude + thread context)
+// AI-draft reply (Phase C): Claude reads the FULL thread + customer profile
+// and drafts a contextual reply responding to the latest inbound message.
 async function draftReplyWithAI() {
   const btn = document.getElementById('thread-ai-draft-btn');
   if (!btn || !_activeThreadMatchId) return;
   const orig = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = 'Drafting…';
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Drafting…';
   try {
-    const data = await apiPost('/api/generate-followup', { matchId: _activeThreadMatchId });
-    if (!data.success && !data.body) throw new Error(data.error || 'draft_failed');
+    const data = await apiPost(`/api/draft-reply/${_activeThreadMatchId}`, {});
+    if (!data.ok) throw new Error(data.error || 'draft_failed');
     const bodyEl = document.getElementById('thread-reply-body');
-    if (bodyEl) bodyEl.value = data.body || data.email || '';
+    if (bodyEl) {
+      bodyEl.value = data.body || '';
+      bodyEl.focus();
+      bodyEl.setSelectionRange(bodyEl.value.length, bodyEl.value.length);
+    }
     showToast('Draft ready. Edit and send.', 'success');
   } catch (err) {
     showToast('AI draft failed. Type your reply manually.', 'error');

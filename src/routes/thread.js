@@ -208,6 +208,92 @@ router.post('/reply/:matchId', async (req, res) => {
   }
 });
 
+// ── POST /api/draft-reply/:matchId ───────────────────────────────────────
+// Phase C: Claude reads the FULL thread + customer profile and drafts a reply
+// that responds to the latest inbound message. Charges 1 credit per draft.
+router.post('/draft-reply/:matchId', async (req, res) => {
+  const { matchId } = req.params;
+  if (!matchId) return res.status(400).json({ ok: false, error: 'matchId_required' });
+
+  const charge = await chargeCredits(req.clientId, 'ai_draft_reply', { matchId });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ ok: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ ok: false, error: 'credit_charge_failed' });
+  }
+
+  try {
+    const { data: match, error: mErr } = await supabase
+      .from('podcast_matches')
+      .select('id, client_id, podcasts(title, host_name), clients(name, business_name, bio_short, speaking_angles)')
+      .eq('id', matchId)
+      .eq('client_id', req.clientId)
+      .single();
+    if (mErr || !match) return res.status(404).json({ ok: false, error: 'match_not_found' });
+
+    const { data: messages } = await supabase
+      .from('match_thread_messages')
+      .select('direction, message_type, from_email, subject, body_text, sent_at')
+      .eq('match_id', matchId)
+      .order('sent_at', { ascending: true });
+
+    const thread = (messages || []).map(m => {
+      const who = m.direction === 'outbound' ? 'YOU' : 'HOST';
+      const when = m.sent_at ? new Date(m.sent_at).toLocaleString() : 'unknown time';
+      return `[${who} · ${when}]\nSubject: ${m.subject || '(no subject)'}\n${(m.body_text || '').trim()}\n`;
+    }).join('\n---\n');
+
+    const client  = match.clients  || {};
+    const podcast = match.podcasts || {};
+    const firstName = (client.name || '').split(' ')[0] || 'me';
+    const angles = Array.isArray(client.speaking_angles) ? client.speaking_angles.join(', ') : (client.speaking_angles || '');
+
+    const prompt = `You are drafting the next reply in an email conversation between a podcast guest pitcher (the customer) and a podcast host.
+
+CUSTOMER PROFILE
+Name: ${client.name || 'unknown'}
+Business: ${client.business_name || 'not specified'}
+One-liner: ${(client.bio_short || '').slice(0, 250)}
+Speaking angles: ${angles.slice(0, 400)}
+
+PODCAST + HOST
+Show: ${podcast.title || 'unknown'}
+Host: ${podcast.host_name || 'the host'}
+
+FULL THREAD (oldest at top, latest at bottom):
+${thread || '(no thread captured yet)'}
+
+TASK
+Draft the next reply FROM the customer TO the host. Respond directly to the most recent host message.
+Rules:
+- 60 to 130 words. Concise.
+- Match the energy of the last host message (warm if they were warm, professional if formal).
+- Reference one specific thing the host said (book the recording, answer their question, confirm a time, etc.)
+- If the host asked to schedule, propose a few specific times next week.
+- Sign off with first name only: ${firstName}
+- No em-dashes anywhere. Use commas, periods, or hyphens.
+- Plain text only. No markdown, no signatures, no quoted text.
+
+Output the reply BODY only. No subject line. No preamble. Just the email body.`;
+
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const body = (msg.content?.[0]?.text || '').trim();
+
+    logger.info('AI draft-reply generated', { matchId, length: body.length });
+    res.json({ ok: true, body, credits_balance: charge.balance });
+  } catch (err) {
+    logger.error('draft-reply error', { matchId, error: err.message });
+    res.status(500).json({ ok: false, error: 'draft_failed', message: err.message });
+  }
+});
+
 // ── POST /api/thread/:matchId/mark-read ─────────────────────────────────
 router.post('/thread/:matchId/mark-read', async (req, res) => {
   const { matchId } = req.params;

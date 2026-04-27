@@ -43,6 +43,7 @@ const ACTIONS = {
   ai_generate_followup: { credits: -1,  points: 0  },
   ai_generate_dm:       { credits: -1,  points: 0  },
   ai_generate_thankyou: { credits: -1,  points: 0  },
+  ai_draft_reply:       { credits: -1,  points: 0  },
   interview_prep:       { credits: -1,  points: 1  },
   unlock:               { credits: -1,  points: 1  },
   search_batch:         { credits: -10, points: 10 },
