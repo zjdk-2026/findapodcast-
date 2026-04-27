@@ -1945,18 +1945,33 @@ function getFilteredSorted() {
     matches.sort((a, b) => (order[b.booking_likelihood] || 0) - (order[a.booking_likelihood] || 0));
   }
 
-  // Restored cards always float to the top of New tab
-  // Cards with no email AND no Apple URL sink to the bottom (nothing actionable)
+  // 'New' tab sort priority:
+  //   1. Most-recently added at top (manual +Add a Podcast inserts always float to top)
+  //   2. Cards with no email AND no Apple URL sink to the bottom (nothing actionable)
+  //   3. Restored cards float above older auto-discovered ones
+  //   4. Fit score as final tiebreaker within same bucket
   if (state.filter === 'new') {
     matches.sort((a, b) => {
+      // 1. Recency: anything created in the last 24h beats anything older
+      const now = Date.now();
+      const aCreated = new Date(a.created_at || 0).getTime();
+      const bCreated = new Date(b.created_at || 0).getTime();
+      const aIsFresh = (now - aCreated) < 24 * 60 * 60 * 1000;
+      const bIsFresh = (now - bCreated) < 24 * 60 * 60 * 1000;
+      if (aIsFresh && !bIsFresh) return -1;
+      if (!aIsFresh && bIsFresh) return 1;
+      if (aIsFresh && bIsFresh) return bCreated - aCreated; // most recent fresh add first
+      // 2. Actionable (has email or apple url) first
       const aActionable = !!(a.podcasts?.contact_email || a.podcasts?.apple_url);
       const bActionable = !!(b.podcasts?.contact_email || b.podcasts?.apple_url);
       if (aActionable && !bActionable) return -1;
       if (!aActionable && bActionable) return 1;
+      // 3. Restored cards above older
       if (a.restored_at && !b.restored_at) return -1;
       if (!a.restored_at && b.restored_at) return 1;
       if (a.restored_at && b.restored_at) return new Date(b.restored_at) - new Date(a.restored_at);
-      return 0;
+      // 4. Fit score
+      return (b.fit_score || 0) - (a.fit_score || 0);
     });
   }
 
