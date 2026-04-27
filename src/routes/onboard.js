@@ -73,8 +73,8 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
     </div>
 
     <div style="background:#1e1e2e;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #2d2d3f;">
-      <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Connect Gmail (Optional)</h2>
-      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">Connect your Gmail so pitches can be sent directly from your inbox. Takes 30 seconds.</p>
+      <h2 style="margin:0 0 8px;color:#e2e8f0;font-size:16px;font-weight:700;">Step 2: Connect Gmail to send your first pitch</h2>
+      <p style="margin:0 0 16px;color:#94a3b8;font-size:14px;">Pitches go from your own inbox so hosts reply to you. Takes 30 seconds. Without this you can't send.</p>
       <a href="${gmailAuthUrl}" style="display:block;background:#1e1e2e;color:#6366f1;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #6366f1;">Connect Gmail →</a>
     </div>
 
@@ -98,6 +98,37 @@ async function sendWelcomeEmail(client, dashboardUrl, gmailAuthUrl) {
       from:    fromEmail,
       to:      [client.email],
       subject: `Welcome to Find A Podcast, ${client.name.split(' ')[0]}! Your dashboard is ready`,
+      html,
+    }),
+  });
+}
+
+/**
+ * Send a "your matches are ready" email after the first-run pipeline finishes.
+ * Drives the customer back to the dashboard so they pitch within the first hour.
+ */
+async function sendMatchesReadyEmail(client, count) {
+  const apiKey   = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
+  const baseUrl  = process.env.BASE_URL || 'https://findapodcast.io';
+  if (!apiKey || !client?.email) return;
+  const dashUrl  = `${baseUrl}/dashboard/${client.dashboard_token}`;
+  const firstName = (client.name || 'there').split(' ')[0];
+  const html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#111827;line-height:1.55;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 14px;">Your first matches are ready, ${escapeHtml(firstName)}.</h1>
+  <p style="font-size:15px;margin:0 0 20px;color:#374151;">${count > 0 ? `${count} podcasts scored for fit.` : 'Your podcasts are scored.'} Each card has a personalised pitch drafted and ready to send. Open your dashboard, hit Send, get booked.</p>
+  <a href="${dashUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;">Open dashboard</a>
+  <p style="font-size:13px;margin:28px 0 0;color:#6b7280;">Tip: pitch your top 5 in the next hour. Customers who pitch in their first day get booked 3x faster.</p>
+  <p style="font-size:12px;margin:24px 0 0;color:#9ca3af;">— Find A Podcast</p>
+</div>`;
+  await fetch('https://api.resend.com/emails', {
+    method:  'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from:    fromEmail,
+      to:      [client.email],
+      subject: `${count > 0 ? count + ' podcasts' : 'Your podcasts'} ready to pitch — Find A Podcast`,
       html,
     }),
   });
@@ -469,38 +500,30 @@ router.post('/onboard', async (req, res) => {
       logger.warn('GHL sync failed', { clientId: data.id, error: err.message });
     });
 
-    // ── Background discovery — pre-warm matches on signup (fire-and-forget)
-    const { discoverPodcasts } = require('../services/discovery');
+    // ── Run the full pipeline on signup (fire-and-forget) ───────────────────
+    // Customer expects scored matches in their dashboard within minutes, not
+    // tomorrow at 7am. Calls the same runPipelineForClient as the daily cron,
+    // so customers signing up at 11am have their first 50 matches ready by
+    // the time they finish connecting Gmail. When done, fires a notification
+    // email so they come back to the dashboard.
+    const { runPipelineForClient } = require('../scheduler');
     setImmediate(async () => {
       try {
-        logger.info('Background discovery started for new client', { clientId: data.id });
-        const rawPodcasts = await discoverPodcasts(data, { isManual: true });
-        logger.info('Background discovery complete', { clientId: data.id, count: rawPodcasts.length });
-        // Upsert raw podcasts to the podcasts table so they're cached
-        for (const pod of rawPodcasts) {
-          await supabase.from('podcasts').upsert({
-            external_id: pod.external_id,
-            title: pod.title,
-            host_name: pod.host_name,
-            description: pod.description,
-            website: pod.website,
-            apple_url: pod.apple_url,
-            spotify_url: pod.spotify_url,
-            youtube_url: pod.youtube_url,
-            category: pod.category,
-            niche_tags: pod.niche_tags || [],
-            total_episodes: pod.total_episodes,
-            last_episode_date: pod.last_episode_date,
-            country: pod.country,
-            language: pod.language,
-            listen_score: pod.listen_score,
-            image: pod.image,
-            thumbnail: pod.thumbnail,
-          }, { onConflict: 'external_id', ignoreDuplicates: true });
+        logger.info('First-run pipeline started for new client', { clientId: data.id });
+        await runPipelineForClient(data);
+        logger.info('First-run pipeline complete', { clientId: data.id });
+        // Email the customer that their matches are ready
+        try {
+          const { data: matchCount } = await supabase
+            .from('podcast_matches')
+            .select('id', { count: 'exact', head: true })
+            .eq('client_id', data.id);
+          await sendMatchesReadyEmail(data, matchCount?.length || 0);
+        } catch (emailErr) {
+          logger.warn('Matches-ready email failed (non-fatal)', { clientId: data.id, error: emailErr.message });
         }
-        logger.info('Background podcast cache complete', { clientId: data.id, cached: rawPodcasts.length });
       } catch (bgErr) {
-        logger.warn('Background discovery failed', { clientId: data.id, error: bgErr.message });
+        logger.warn('First-run pipeline failed', { clientId: data.id, error: bgErr.message });
       }
     });
 

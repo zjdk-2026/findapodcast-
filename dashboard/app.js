@@ -1996,9 +1996,77 @@ function renderGrid() {
   }
 }
 
+// ── Top alert banner — Gmail not connected / OAuth scope problem ───────
+function renderTopAlertBanner() {
+  const el = document.getElementById('top-alert-banner');
+  if (!el) return;
+  const c = state.client || {};
+  // Gmail OAuth callback can redirect with ?gmailError=reauth_required when
+  // the refresh token gets revoked or expires. Surface that loud.
+  const urlError = new URLSearchParams(window.location.search).get('gmailError');
+  const needsReconnect = urlError === 'reauth_required';
+  const notConnected   = !c.gmail_email;
+  if (!notConnected && !needsReconnect) { el.innerHTML = ''; el.style.display = 'none'; return; }
+
+  const title = needsReconnect ? 'Gmail needs to be reconnected.' : 'Connect Gmail to send your pitches.';
+  const sub   = needsReconnect
+    ? 'Your Gmail token expired. Pitches and reply detection are paused until you reconnect (30 seconds).'
+    : "Without Gmail you can't send pitches or auto-detect host replies. Takes 30 seconds.";
+  const btnLabel = needsReconnect ? 'Reconnect Gmail' : 'Connect Gmail';
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="max-width:1400px;margin:0 auto;padding:12px 24px 0;">
+      <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:14px;padding:14px 18px;">
+        <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:800;color:#78350f;margin-bottom:2px;">${esc(title)}</div>
+          <div style="font-size:12.5px;color:#92400e;line-height:1.45;">${esc(sub)}</div>
+        </div>
+        <a href="/auth/gmail?clientId=${esc(c.id || '')}" style="flex-shrink:0;background:#b45309;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:9px 16px;border-radius:8px;white-space:nowrap;">${esc(btnLabel)}</a>
+      </div>
+    </div>`;
+}
+
 // ── Empty-state CTAs per tab ──────────────────────────────────────────
 function renderEmptyTabState() {
   const tab = state.currentFilter || 'new';
+
+  // Special case: customer just signed up and the first-run pipeline is still
+  // running in the background. Show a clear "we're working" state with auto-
+  // polling, NOT the static "click Find a Podcast" CTA.
+  if (tab === 'new' && state.client && !state.client.last_run_at) {
+    const created = state.client.created_at ? new Date(state.client.created_at) : null;
+    const ageMin  = created ? (Date.now() - created.getTime()) / 60000 : Infinity;
+    if (ageMin < 5) {
+      // Auto-poll dashboard every 8s while we're in this state (pipeline takes ~60-90s)
+      if (!state._firstRunPollTimer) {
+        state._firstRunPollTimer = setInterval(async () => {
+          try {
+            const fresh = await apiFetch(`/api/dashboard/${state.token}`);
+            if (fresh?.client?.last_run_at || (fresh?.matches?.length || 0) > 0) {
+              clearInterval(state._firstRunPollTimer);
+              state._firstRunPollTimer = null;
+              state.client = fresh.client;
+              state.matches = fresh.matches || [];
+              renderGrid();
+              updateStatBadges();
+            }
+          } catch { /* keep polling */ }
+        }, 8000);
+      }
+      return `
+        <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;background:var(--surface-card);border:1.5px dashed var(--border-medium);border-radius:18px;margin-top:8px;">
+          <div style="width:42px;height:42px;border:3px solid #e0e7ff;border-top-color:#6366f1;border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px;"></div>
+          <div style="font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Finding your first 50 podcast matches.</div>
+          <p style="font-size:14px;color:var(--text-secondary);max-width:480px;line-height:1.6;margin-bottom:6px;">Searching Listen Notes, scoring fit, drafting personalised pitches. Usually ready in 60-90 seconds.</p>
+          <p style="font-size:12px;color:var(--text-tertiary);">This page will refresh automatically.</p>
+        </div>
+      `;
+    }
+  }
+
   const messages = {
     new: {
       icon: '🎯',
@@ -2099,6 +2167,11 @@ function renderDashboard(data) {
       ? (() => { const d = new Date(client.last_run_at.endsWith('Z') ? client.last_run_at : client.last_run_at + 'Z'); return isNaN(d) ? '' : `Last updated ${d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`; })()
       : '';
   }
+
+  // Top alert banner — Gmail not connected (or token expired). Critical for
+  // premium UX: customer can't send pitches or have replies detected without
+  // Gmail. Banner stays until they reconnect.
+  renderTopAlertBanner();
 
   // Navbar right: Find a Stage + Community (coming-soon) + credits counter + Settings
   // Credits counter populated by loadCredits() once balance is fetched.
