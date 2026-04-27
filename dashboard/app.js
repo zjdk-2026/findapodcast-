@@ -3420,6 +3420,7 @@ function openEmailModal(matchId) {
   show('email-restore-btn',     canRestore);
   show('email-approve-btn',     status === 'new');
   show('email-reenrich-btn',    canRescoreStatuses.includes(status));
+  show('email-discovery-btn',   status === 'new');
 
   $('email-modal').style.display = 'flex';
   $('email-modal').dataset.matchId = matchId;
@@ -4280,6 +4281,36 @@ async function openTemplatePicker(event) {
   }, 0);
 }
 window.openTemplatePicker = openTemplatePicker;
+
+// ── Discovery email generator (alternative first-touch — probes for fit) ─
+async function generateDiscoveryEmail() {
+  const matchId = $('email-modal')?.dataset.matchId;
+  if (!matchId) return;
+  const btn = $('email-discovery-btn');
+  if (!btn) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Drafting…';
+  try {
+    const data = await apiPost('/api/generate-discovery', { matchId });
+    if (!data.success) throw new Error(data.error || 'generate_failed');
+    const subjectEl = $('modal-subject');
+    const bodyEl = $('modal-body-text');
+    if (subjectEl) subjectEl.value = data.subject || '';
+    if (bodyEl) {
+      bodyEl.value = data.body || '';
+      bodyEl.focus();
+      bodyEl.setSelectionRange(bodyEl.value.length, bodyEl.value.length);
+    }
+    showToast('Discovery email drafted. Edit and send.', 'success');
+  } catch (err) {
+    showToast('Could not draft discovery email: ' + (err.message || 'error'), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+window.generateDiscoveryEmail = generateDiscoveryEmail;
 
 async function applyTemplate(templateId, matchId) {
   document.getElementById('template-picker')?.remove();

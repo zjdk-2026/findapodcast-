@@ -282,6 +282,84 @@ router.post('/interview-prep', requireDashboardToken, async (req, res) => {
 });
 
 /**
+ * POST /api/generate-discovery
+ * Generates a curiosity-driven Discovery email (no pitch, just probing for fit).
+ * Subject: "What types of guests are you looking for next?"
+ * Body: short, polite, asks the host's plans, hints at the customer's angle
+ *       without giving it away. Probes for fit before pitching.
+ */
+router.post('/generate-discovery', requireDashboardToken, async (req, res, next) => {
+  const charge = await chargeCredits(req.clientId, 'ai_generate_pitch', { route: 'generate-discovery' });
+  if (!charge.ok) {
+    if (charge.error === 'insufficient_credits') {
+      return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
+    }
+    return res.status(500).json({ success: false, error: 'credit_charge_failed' });
+  }
+  next();
+}, async (req, res) => {
+  const { matchId } = req.body;
+  if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  try {
+    const { data: match, error: mErr } = await supabase
+      .from('podcast_matches')
+      .select('id, client_id, podcasts(title, host_name, description), clients(name, business_name, bio_short, speaking_angles, target_audience)')
+      .eq('id', matchId).eq('client_id', req.clientId).single();
+    if (mErr || !match) return res.status(404).json({ success: false, error: 'match_not_found' });
+
+    const client  = match.clients  || {};
+    const podcast = match.podcasts || {};
+    const firstName = (client.name || '').split(' ')[0] || 'me';
+    const hostFirst = (podcast.host_name || '').split(' ')[0] || 'there';
+
+    const prompt = `Write a SHORT discovery email (NOT a pitch) from a podcast guest pitcher to a host.
+
+The goal: probe for fit BEFORE pitching. Make the host curious. Get them to reply describing what guests they want next so the customer can tailor a follow-up pitch perfectly.
+
+CUSTOMER
+Name: ${client.name}
+Business: ${client.business_name || ''}
+One-liner: ${(client.bio_short || '').slice(0, 220)}
+Speaking angles: ${(Array.isArray(client.speaking_angles) ? client.speaking_angles.join(', ') : client.speaking_angles || '').slice(0, 300)}
+Their audience: ${client.target_audience || ''}
+
+PODCAST
+Show: ${podcast.title}
+Host: ${podcast.host_name || hostFirst}
+Show description: ${(podcast.description || '').slice(0, 250)}
+
+WRITE THE EMAIL BODY ONLY:
+- Open warmly, address by first name (${hostFirst})
+- 60 to 90 words. Tight.
+- Tell them in ONE sentence what the customer does (just enough to seed curiosity)
+- Ask them: "What types of guests are you looking for in the next few months?"
+- Add a soft tease about the customer's angle WITHOUT pitching directly
+- End: "If we're not aligned, no worries — but thought I'd ask."
+- Sign off with first name only: ${firstName}
+- Plain text. No em-dashes (use commas, periods, hyphens). No markdown.
+
+Output ONLY the email body. No subject line. No preamble.`;
+
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const body = (msg.content?.[0]?.text || '').trim();
+    const subject = `What types of guests are you looking for next?`;
+
+    logger.info('Discovery email generated', { matchId });
+    res.json({ success: true, subject, body });
+  } catch (err) {
+    logger.error('generate-discovery error', { error: err.message });
+    res.status(500).json({ success: false, error: 'internal_error' });
+  }
+});
+
+/**
  * POST /api/generate-dm
  * Generates a short, first-person social DM for a given match using Claude Haiku.
  */

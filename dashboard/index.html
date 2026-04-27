@@ -333,6 +333,7 @@
           <button class="btn btn-ghost btn-sm" id="email-modal-close-btn">Cancel</button>
           <button class="btn btn-outline btn-sm" id="email-reenrich-btn" style="display:none;font-size:12px;" title="Re-score this match and refresh Why You Fit and Best Pitch Angle">Re-score</button>
           <button class="btn btn-outline btn-sm" id="email-rewrite-btn" style="display:none;">Rewrite Pitch</button>
+          <button class="btn btn-outline btn-sm" id="email-discovery-btn" onclick="generateDiscoveryEmail()" title="Use a curiosity-led discovery email instead of a direct pitch — probes the host for fit before pitching" style="display:none;">Use Discovery Email ✨</button>
           <button class="btn btn-outline btn-sm" id="email-copy-btn">Copy to Clipboard</button>
           <button class="btn btn-outline btn-sm" id="email-save-btn">Save Draft</button>
           <button class="btn btn-outline btn-sm" id="email-save-template-btn" title="Save this as your reusable pitch template, used for all future pitches">Save as My Template</button>
@@ -787,6 +788,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260426-templates"></script>
+  <script src="/dashboard/app.js?v=20260426-discovery-email"></script>
 </body>
 </html>
