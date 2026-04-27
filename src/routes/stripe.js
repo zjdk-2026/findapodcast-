@@ -123,8 +123,25 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
     const email    = session.customer_email || session.customer_details?.email;
     const name     = session.metadata?.name || '';
     const amount   = (session.amount_total / 100).toFixed(2);
+    const kind     = session.metadata?.kind || 'content_boost';
 
-    logger.info('Stripe payment completed', { clientId, email, amount });
+    logger.info('Stripe payment completed', { clientId, email, amount, kind });
+
+    // ── Credit top-up branch ────────────────────────────────────────
+    // Created by /api/credits/topup-checkout. metadata.credits is the pack size.
+    if (kind === 'credit_topup' && clientId) {
+      const credits = parseInt(session.metadata?.credits, 10);
+      if (credits > 0) {
+        const { applyTopUp } = require('../lib/credits');
+        await applyTopUp(clientId, credits, {
+          stripe_session_id: session.id,
+          pack: session.metadata?.pack,
+          dollars: amount,
+        });
+        logger.info('Credit top-up applied', { clientId, credits });
+      }
+      return res.json({ received: true });
+    }
 
     const matchId = session.metadata?.match_id || null;
 

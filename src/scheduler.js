@@ -298,6 +298,16 @@ function initScheduler() {
     } catch (err) { logger.error('Daily follow-up sweep failed', { error: err.message }); }
   }, { timezone: 'UTC', scheduled: true });
 
+  // 24h-before heads-up — 6am UTC, one hour before the sweep runs.
+  // Emails customers a heads-up so they can edit/skip/send-now from the dashboard
+  // BEFORE the 7-day auto-fire happens. Premium UX = control, not surprises.
+  cron.schedule('0 6 * * *', async () => {
+    try {
+      const { runFollowupHeadsUp } = require('./services/followupSweep');
+      await runFollowupHeadsUp();
+    } catch (err) { logger.error('Daily follow-up heads-up failed', { error: err.message }); }
+  }, { timezone: 'UTC', scheduled: true });
+
   logger.info('Scheduler initialised');
 }
 

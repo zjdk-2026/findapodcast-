@@ -2289,6 +2289,17 @@ function renderDashboard(data) {
     window.history.replaceState({}, '', window.location.pathname);
   }
 
+  // Credit top-up success / cancellation feedback
+  if (urlParams.get('topup') === 'success') {
+    showToast('Top-up successful. Credits added to your account.', 'success');
+    // Refresh credit balance now that the webhook has processed the top-up
+    setTimeout(() => loadCredits(), 1500);
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (urlParams.get('topup') === 'cancelled') {
+    showToast('Top-up cancelled. No charge made.', 'info');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   // Profile photo
   const headerAvatar   = document.getElementById('header-avatar');
   const dropdownAvatar = document.getElementById('dropdown-avatar');
@@ -2614,14 +2625,55 @@ function closeConfirmModal() {
   document.body.style.overflow = '';
 }
 
-async function bookMatch(matchId) {
+// bookMatch now opens a modal so the customer can capture the show/episode title,
+// recording date/time, and notes — all of which feed the dashboard timeline AND
+// the booking congrats email. The actual /api/book POST happens inside submitBooking().
+let _activeBookMatchId = null;
+function bookMatch(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
+  _activeBookMatchId = matchId;
+  const modal = document.getElementById('book-modal');
+  if (!modal) {
+    // Fallback if modal HTML missing — book directly
+    return submitBookingDirect(matchId, {});
+  }
+  // Pre-fill show name with podcast title
+  const nameEl  = document.getElementById('book-show-name');
+  const dateEl  = document.getElementById('book-recording-date');
+  const timeEl  = document.getElementById('book-recording-time');
+  const notesEl = document.getElementById('book-notes');
+  if (nameEl)  nameEl.value  = match.podcasts?.title || '';
+  if (dateEl)  dateEl.value  = '';
+  if (timeEl)  timeEl.value  = '';
+  if (notesEl) notesEl.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => nameEl?.focus(), 50);
+}
+function closeBookModal() {
+  _activeBookMatchId = null;
+  const modal = document.getElementById('book-modal');
+  if (modal) modal.style.display = 'none';
+}
+async function submitBooking() {
+  const matchId = _activeBookMatchId;
+  if (!matchId) return closeBookModal();
+  const showName = (document.getElementById('book-show-name')?.value || '').trim();
+  const date     = (document.getElementById('book-recording-date')?.value || '').trim();
+  const time     = (document.getElementById('book-recording-time')?.value || '').trim();
+  const notes    = (document.getElementById('book-notes')?.value || '').trim();
+  // Combine date + time into ISO if both are set; date alone is fine too.
+  let recordingAt = null;
+  if (date) recordingAt = time ? `${date}T${time}:00` : `${date}T00:00:00`;
+  closeBookModal();
+  await submitBookingDirect(matchId, { showName, recordingAt, notes });
+}
+async function submitBookingDirect(matchId, payload) {
   setCardLoading(matchId, true);
   try {
-    const data = await apiPost('/api/book', { matchId });
+    const data = await apiPost('/api/book', { matchId, ...payload });
     if (data.success) {
-      updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at });
+      updateMatchInState(matchId, { status: 'booked', booked_at: data.match?.booked_at, booked_show_name: payload.showName || null, client_notes: data.match?.client_notes });
       switchToFilter('booked');
       updateStatBadges();
       showBookingCelebration(matchId);
@@ -2631,6 +2683,8 @@ async function bookMatch(matchId) {
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally  { setCardLoading(matchId, false); }
 }
+window.closeBookModal = closeBookModal;
+window.submitBooking  = submitBooking;
 
 function confirmUnbook(matchId) {
   const match = state.matches.find((m) => m.id === matchId);
@@ -5372,9 +5426,26 @@ function openCreditsModal() {
             <div>• AI-generated pitch / interview prep: <strong style="color:var(--text-primary);">1 credit</strong></div>
           </div>
         </div>
-        <div style="font-size:12px;color:var(--text-tertiary);text-align:center;line-height:1.6;">
-          Need more this month? Top-up packs coming soon.<br>Email <a href="mailto:hi@zacdeane.com?subject=Credit%20top-up" style="color:var(--accent);">hi@zacdeane.com</a> to add credits manually.
+        <div style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Top up now — credits added the moment you pay</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <button onclick="buyCreditPack('small')" style="background:var(--bg-tertiary,rgba(99,102,241,0.05));border:1.5px solid var(--border-light);border-radius:10px;padding:14px 6px;cursor:pointer;text-align:center;">
+            <div style="font-size:18px;font-weight:900;color:var(--text-primary);">50</div>
+            <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;">credits</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:6px;">$25</div>
+          </button>
+          <button onclick="buyCreditPack('medium')" style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1.5px solid var(--accent);border-radius:10px;padding:14px 6px;cursor:pointer;text-align:center;position:relative;">
+            <span style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:0.05em;">BEST</span>
+            <div style="font-size:18px;font-weight:900;color:var(--text-primary);">200</div>
+            <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;">credits</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:6px;">$80</div>
+          </button>
+          <button onclick="buyCreditPack('large')" style="background:var(--bg-tertiary,rgba(99,102,241,0.05));border:1.5px solid var(--border-light);border-radius:10px;padding:14px 6px;cursor:pointer;text-align:center;">
+            <div style="font-size:18px;font-weight:900;color:var(--text-primary);">500</div>
+            <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;">credits</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:6px;">$175</div>
+          </button>
         </div>
+        <div style="font-size:11px;color:var(--text-tertiary);text-align:center;line-height:1.5;">Secure checkout via Stripe. Credits never expire.</div>
       `}
     </div>
   `;
@@ -5394,7 +5465,23 @@ function closeCreditsModal() {
   const modal = document.getElementById('credits-modal');
   if (modal) modal.style.display = 'none';
 }
+async function buyCreditPack(pack) {
+  try {
+    const data = await apiPost('/api/credits/topup-checkout', { pack });
+    if (data.ok && data.url) {
+      window.location.href = data.url;
+    } else if (data.error === 'stripe_not_configured') {
+      showToast('Checkout temporarily unavailable. Email hi@zacdeane.com.', 'error');
+    } else {
+      showToast(data.error || 'Could not start checkout. Try again.', 'error');
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+  }
+}
 window.openCreditsModal = openCreditsModal;
+window.closeCreditsModal = closeCreditsModal;
+window.buyCreditPack    = buyCreditPack;
 window.closeCreditsModal = closeCreditsModal;
 
 // ── Out-of-credits handler — wired into apiPost wrapper ────────────────

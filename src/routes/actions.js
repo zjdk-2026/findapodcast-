@@ -341,7 +341,7 @@ router.post('/send-thankyou', async (req, res) => {
  * POST /api/book
  */
 router.post('/book', async (req, res) => {
-  const { matchId } = req.body;
+  const { matchId, showName, recordingAt, notes } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
   try {
@@ -355,9 +355,24 @@ router.post('/book', async (req, res) => {
 
     if (fetchErr || !matchFull) return res.status(404).json({ success: false, error: 'Match not found.' });
 
+    // Build update payload. We store recording_at + free-form notes inside
+    // client_notes (no schema change required) so the dashboard timeline shows
+    // when the customer is actually recording.
+    const updates = { status: 'booked', booked_at: new Date().toISOString() };
+    if (showName && showName.trim()) updates.booked_show_name = showName.trim();
+    const noteParts = [];
+    if (recordingAt) {
+      try {
+        const dt = new Date(recordingAt);
+        if (!isNaN(dt)) noteParts.push(`Recording: ${dt.toISOString()}`);
+      } catch { /* ignore */ }
+    }
+    if (notes && notes.trim()) noteParts.push(notes.trim());
+    if (noteParts.length) updates.client_notes = noteParts.join('\n\n');
+
     const { data, error } = await supabase
       .from('podcast_matches')
-      .update({ status: 'booked', booked_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .select()
@@ -385,9 +400,42 @@ router.post('/book', async (req, res) => {
         const firstName = (client.name || '').split(' ')[0] || 'there';
         const podcastTitle = podcast.title || 'the podcast';
 
+        // Pull recording date from client_notes if the customer entered one
+        let recordingLine = '';
+        let icsAttachment = null;
+        const recMatch = (data.client_notes || '').match(/Recording:\s*([^\n]+)/);
+        if (recMatch) {
+          try {
+            const dt = new Date(recMatch[1].trim());
+            if (!isNaN(dt)) {
+              const formatted = dt.toLocaleString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+              recordingLine = `<p><strong>Recording:</strong> ${formatted}</p>`;
+              // Build an .ics calendar invite — 60 min default duration
+              const start = dt;
+              const end   = new Date(dt.getTime() + 60 * 60 * 1000);
+              const fmt   = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+              const ics = [
+                'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Find A Podcast//EN', 'METHOD:PUBLISH',
+                'BEGIN:VEVENT',
+                `UID:${matchId}@findapodcast.io`,
+                `DTSTAMP:${fmt(new Date())}`,
+                `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
+                `SUMMARY:Podcast recording — ${podcastTitle.replace(/[\r\n,;]/g, ' ')}`,
+                `DESCRIPTION:Booked via Find A Podcast.`,
+                'END:VEVENT', 'END:VCALENDAR',
+              ].join('\r\n');
+              icsAttachment = {
+                filename: 'podcast-recording.ics',
+                content:  Buffer.from(ics, 'utf8').toString('base64'),
+              };
+            }
+          } catch { /* ignore parse errors */ }
+        }
+
         const html = `
 <p>Hi ${firstName},</p>
 <p>You're booked on <strong>${podcastTitle}</strong>. Well done.</p>
+${recordingLine}
 <p>A few things to do now:</p>
 <ul>
 <li>Confirm the date and time with the host</li>
@@ -397,18 +445,21 @@ router.post('/book', async (req, res) => {
 <p>Want to turn this episode into 30 days of content? Our team handles the editing, captions, YouTube cut, and written posts. Reply to this email and we'll tell you how it works.</p>
 <p>Keep going,<br>Zac</p>`;
 
+        const emailBody = {
+          from:    fromEmail,
+          to:      [client.email],
+          subject: 'You just got booked.',
+          html,
+        };
+        if (icsAttachment) emailBody.attachments = [icsAttachment];
+
         await fetch('https://api.resend.com/emails', {
           method:  'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type':  'application/json',
           },
-          body: JSON.stringify({
-            from:    fromEmail,
-            to:      [client.email],
-            subject: 'You just got booked.',
-            html,
-          }),
+          body: JSON.stringify(emailBody),
         });
         logger.info('Booking congrats email sent', { matchId, clientEmail: client.email });
       } catch (emailErr) {

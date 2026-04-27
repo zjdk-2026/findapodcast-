@@ -221,4 +221,79 @@ async function runFollowupSweep() {
   return { sent, skippedCredits, skippedNoEmail, failed };
 }
 
-module.exports = { runFollowupSweep, generateFollowUpBody };
+/**
+ * runFollowupHeadsUp — daily 24h-before-auto-followup nudge
+ *
+ * Customer-control upgrade. Premium customers do NOT want their pitches
+ * auto-followed-up without warning. This sweep finds matches whose 7-day
+ * mark falls TOMORROW (between 5.5 and 6.5 days since sent_at) and emails
+ * the customer a heads-up so they can edit/skip/send-now from the dashboard.
+ *
+ * One consolidated email per customer per day (groups multiple matches).
+ */
+async function runFollowupHeadsUp() {
+  logger.info('Follow-up heads-up: starting');
+
+  const now    = new Date();
+  const minAge = new Date(now.getTime() - 6.5 * 24 * 60 * 60 * 1000);
+  const maxAge = new Date(now.getTime() - 5.5 * 24 * 60 * 60 * 1000);
+
+  const { data: matches, error } = await supabase
+    .from('podcast_matches')
+    .select('id, client_id, sent_at, follow_up_sent, email_subject, email_subject_edited, podcasts(title, host_name), clients(id, name, email, dashboard_token)')
+    .eq('status', 'sent')
+    .gte('sent_at', minAge.toISOString())
+    .lte('sent_at', maxAge.toISOString());
+
+  if (error) { logger.error('Follow-up heads-up: fetch error', { error: error.message }); return; }
+  const eligible = (matches || []).filter(m => !m.follow_up_sent);
+  if (eligible.length === 0) { logger.info('Follow-up heads-up: no eligible matches'); return; }
+
+  // Group by client
+  const byClient = new Map();
+  for (const m of eligible) {
+    const cid = m.client_id;
+    if (!byClient.has(cid)) byClient.set(cid, { client: m.clients, items: [] });
+    byClient.get(cid).items.push(m);
+  }
+
+  const apiKey   = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
+  const baseUrl  = process.env.BASE_URL || 'https://findapodcast.io';
+  let sent = 0;
+  if (!apiKey) { logger.warn('Follow-up heads-up: RESEND_API_KEY missing — skipping'); return; }
+
+  for (const { client, items } of byClient.values()) {
+    if (!client?.email || !client?.dashboard_token) continue;
+    const dashUrl = `${baseUrl}/dashboard/${client.dashboard_token}?tab=sent`;
+    const firstName = (client.name || 'there').split(' ')[0];
+    const list = items.slice(0, 8).map(m => `<li><strong>${(m.podcasts?.title || 'a podcast').replace(/[<>]/g, '')}</strong>${m.podcasts?.host_name ? ' · ' + m.podcasts.host_name.replace(/[<>]/g, '') : ''}</li>`).join('');
+    const html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#111827;line-height:1.55;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 14px;">Follow-ups firing tomorrow, ${firstName}.</h1>
+  <p style="font-size:15px;margin:0 0 14px;color:#374151;">${items.length === 1 ? 'One pitch hits its 7-day mark in 24 hours' : `${items.length} pitches hit their 7-day mark in 24 hours`}. Find A Podcast will auto-send a follow-up unless you edit, skip, or send now.</p>
+  <ul style="font-size:14px;margin:0 0 18px;padding-left:20px;color:#1f2937;">${list}</ul>
+  <a href="${dashUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;">Review in dashboard</a>
+  <p style="font-size:12.5px;margin:24px 0 0;color:#6b7280;">Tip: tweaking the follow-up subject or angle can lift reply rates 20%+. Quick edits beat the auto-send.</p>
+  <p style="font-size:12px;margin:18px 0 0;color:#9ca3af;">— Find A Podcast</p>
+</div>`;
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: fromEmail, to: [client.email],
+          subject: `${items.length === 1 ? '1 follow-up' : items.length + ' follow-ups'} firing tomorrow`,
+          html,
+        }),
+      });
+      sent++;
+    } catch (err) {
+      logger.warn('Follow-up heads-up: email send failed', { clientId: client.id, error: err.message });
+    }
+  }
+  logger.info('Follow-up heads-up: complete', { customers: byClient.size, eligible: eligible.length, sent });
+  return { sent, eligible: eligible.length };
+}
+
+module.exports = { runFollowupSweep, runFollowupHeadsUp, generateFollowUpBody };
