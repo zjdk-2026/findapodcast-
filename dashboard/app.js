@@ -375,28 +375,29 @@ function renderHeroSection() {
         ${avatarHtml}
         <div class="hero-greeting-name" id="hero-greeting-name">${greeting}, ${esc(name.split(' ')[0])}${hasUnseenReply() ? '<span class="header-reply-dot" title="You have unseen host replies"></span>' : ''}</div>
       </div>
-      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <!-- Pill 1: progress (streak + pitches combined) — neutral -->
-        <div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);">
-          <span style="color:var(--text-primary);font-weight:700;">${sentThisWeek}/${weeklyTarget}</span>
-          <span style="font-weight:500;">this week</span>
-          ${streak > 0 ? `<span style="color:var(--border-medium);">·</span><span style="font-weight:500;">day ${streak}</span>` : ''}
-          ${weekProgress >= 100 ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span>` : ''}
-        </div>
-        <!-- Pill 2: action (only colour comes from the CTA button) -->
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <!-- Pill 1: ACTION — dominant. Heavier border, larger padding, accent CTA. Surfaces the move clearly without hype. -->
         ${move ? `
-          <div style="display:inline-flex;align-items:center;gap:8px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;color:var(--text-primary);">
-            <span style="color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
-            <button onclick="${move.action}" style="background:#10b981;color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
+          <div style="display:inline-flex;align-items:center;gap:12px;background:var(--surface-card);border:1.5px solid var(--border-medium);border-radius:999px;padding:7px 8px 7px 18px;font-size:14px;color:var(--text-primary);box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+            <span style="color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px;" title="${esc(move.text)}">${esc(moveTextShort)}</span>
+            <button onclick="${move.action}" style="background:#10b981;color:#fff;border:none;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">
               ${esc(move.cta)}
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>` : ''}
-        <!-- Pill 3: reach — neutral -->
+        <!-- Pill 2: PROGRESS — subtle. Hidden when 0 (avoids 'shame at zero'). Streak only when meaningful (>= 3 days). -->
+        ${sentThisWeek > 0 ? `
+          <div style="display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-tertiary);">
+            <span style="color:var(--text-secondary);font-weight:600;">${sentThisWeek} of ${weeklyTarget}</span>
+            <span>this week</span>
+            ${streak >= 3 ? `<span style="color:var(--border-medium);">·</span><span>${streak}-day streak</span>` : ''}
+            ${weekProgress >= 100 ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;"></span>` : ''}
+          </div>` : ''}
+        <!-- Pill 3: REACH — subtle. Professional language. -->
         ${lifetimeTotal > 0 ? `
-          <div style="display:inline-flex;align-items:baseline;gap:6px;background:var(--surface-card);border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);">
-            <span style="color:var(--text-primary);font-weight:700;">${formatNumber(lifetimeTotal)}</span>
-            <span style="font-weight:500;">people heard you</span>
+          <div style="display:inline-flex;align-items:baseline;gap:6px;background:transparent;border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-tertiary);">
+            <span style="color:var(--text-secondary);font-weight:600;">${formatNumber(lifetimeTotal)}</span>
+            <span>listener reach</span>
           </div>` : ''}
       </div>
       ${chips.length > 0 ? `<div class="hero-chips">${chips.join('')}</div>` : ''}
@@ -684,13 +685,17 @@ function computeYourMove() {
   const aired    = matches.filter(m => m.status === 'aired' || m.status === 'appeared');
 
   // Priority: unseen reply > book the call > stale follow-up > new pitches > find more
+  // Phrasing tuned for business experts: specific names where known, no hype, no shame.
   if (unseenReplies.length > 0) {
     const m = unseenReplies[0];
-    const hostFirst = (m.podcasts?.host_name || '').split(' ')[0] || 'the host';
+    const hostFirst = (m.podcasts?.host_name || '').split(' ')[0] || '';
     const showName  = m.podcasts?.title || 'the show';
+    const text = hostFirst
+      ? `${hostFirst} at ${showName} replied. Lock in the recording before the window closes.`
+      : `New reply on ${showName}. Lock in the recording before the window closes.`;
     return {
       label: 'Your move',
-      text:  `${hostFirst} at ${showName} replied. Open the thread and lock in the recording.`,
+      text,
       cta:   'Open reply',
       action: `openMatchDetail(${JSON.stringify(m.id)})`,
       tone: 'urgent',
@@ -699,7 +704,7 @@ function computeYourMove() {
   if (unbooked.length > 0) {
     return {
       label: 'Your move',
-      text:  `${unbooked.length} host${unbooked.length > 1 ? 's' : ''} replied. Book the calls before the window closes — replies cool inside 48 hours.`,
+      text:  `${unbooked.length} host${unbooked.length > 1 ? 's' : ''} waiting. Reply windows cool inside 48 hours.`,
       cta:   'See replies',
       action: `setFilter('replied')`,
       tone: 'urgent',
@@ -708,8 +713,8 @@ function computeYourMove() {
   if (stalePitches.length > 0) {
     return {
       label: 'Your move',
-      text:  `${stalePitches.length} pitch${stalePitches.length > 1 ? 'es' : ''} sat 7+ days with no reply. Follow up — most bookings come from touch 2.`,
-      cta:   'See stale pitches',
+      text:  `${stalePitches.length} pitch${stalePitches.length > 1 ? 'es' : ''} past 7 days. Most bookings land on the second touch.`,
+      cta:   'Review',
       action: `setFilter('sent')`,
       tone: 'warm',
     };
@@ -717,8 +722,8 @@ function computeYourMove() {
   if (newReady.length > 0) {
     return {
       label: 'Your move',
-      text:  `${newReady.length} fresh match${newReady.length > 1 ? 'es' : ''} waiting. Send your next pitch and stack momentum.`,
-      cta:   'Review new',
+      text:  `${newReady.length} fresh match${newReady.length > 1 ? 'es' : ''} ready to review.`,
+      cta:   'Review',
       action: `setFilter('new')`,
       tone: 'warm',
     };
@@ -726,7 +731,7 @@ function computeYourMove() {
   if (aired.length > 0) {
     return {
       label: 'Your move',
-      text:  `Pipeline is empty for now. Run Find a Podcast to discover 10 fresh shows in your niche (10 credits).`,
+      text:  `Pipeline is clear. Discover 10 fresh shows in your niche.`,
       cta:   'Find a Podcast',
       action: `runPipeline()`,
       tone: 'cool',
@@ -734,7 +739,7 @@ function computeYourMove() {
   }
   return {
     label: 'Get started',
-    text:  `Click Find a Podcast to discover your first 10 matches and start pitching today.`,
+    text:  `Discover your first 10 matches and start pitching.`,
     cta:   'Find a Podcast',
     action: `runPipeline()`,
     tone: 'cool',
