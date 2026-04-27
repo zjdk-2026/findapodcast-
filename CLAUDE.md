@@ -74,4 +74,13 @@ Push: `git add . && git commit -m "msg" && git push origin master`
 ## Env Vars (set in Railway for prod, .env for local)
 ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, LISTENNOTES_API_KEY,
 GOOGLE_SEARCH_API_KEY, GOOGLE_SEARCH_CX, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-RESEND_API_KEY, RESEND_FROM_EMAIL, OPERATOR_KEY, BASE_URL, GOOGLE_REDIRECT_URI
+RESEND_API_KEY, RESEND_FROM_EMAIL, OPERATOR_KEY, BASE_URL, GOOGLE_REDIRECT_URI,
+CRON_SECRET (required for /api/cron/check-replies-all)
+
+## Reply detection cron (Apr 27 2026)
+- POST /api/cron/check-replies-all (header `x-cron-secret: $CRON_SECRET`) scans every connected client every 5 min, regardless of whether their dashboard tab is open.
+- Fires Resend notification email to `clients.email` the moment a host reply is detected (subject: `<Host> just replied — <Podcast>`).
+- Uses `scanRepliesForClient(client)` extracted in `src/routes/gmail.js` so the per-dashboard endpoint and the cron share one code path.
+- Set up Railway cron via Railway dashboard → Cron Jobs: `*/5 * * * *  curl -X POST -H "x-cron-secret: $CRON_SECRET" $BASE_URL/api/cron/check-replies-all`
+- Bounce-aware: mailer-daemon delivery failures NEVER count as replies. `getThreadMessageCount` uses metadata format and filters via `isBounceMessage()`. `checkInboxForReplyFromEmail` injects `-from:mailer-daemon -subject:"delivery status notification" -subject:"undeliverable"` into every search query.
+- Thread caching tags bounces with `message_type='bounce'` and reverts the match to 'sent' if every inbound message was a bounce.

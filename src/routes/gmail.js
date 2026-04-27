@@ -196,45 +196,28 @@ async function getThreadMessageCount(refreshToken, threadId) {
 }
 
 /**
- * POST /api/gmail/check-replies
- * Called on dashboard load and polled every 5 minutes. Checks all sent/followed_up/replied
- * matches for Gmail replies. Auto-moves any replied matches to 'replied' status.
- * Tracks reply_count (thread message count) and last_reply_at for new-reply detection.
+ * scanRepliesForClient(client)
+ * Core reply-scan loop. Extracted so both the per-dashboard endpoint AND the
+ * server-side cron (/api/cron/check-replies-all) can call it without duplication.
  *
- * Detection uses two strategies:
- *  1. Thread message count > stored reply_count (reply came in the same Gmail thread)
- *  2. Inbox search for a message from: the contact email (handles out-of-thread replies)
+ * Returns { checked, updated, firstReplies } where firstReplies is the list of
+ * matches that just transitioned to 'replied' (so the caller can fire a
+ * "host just replied" email notification).
  */
-router.post('/api/gmail/check-replies', async (req, res) => {
-  const token = req.headers['x-dashboard-token'] || req.body.token;
-  if (!token) return res.status(401).json({ success: false, error: 'Unauthorised.' });
+async function scanRepliesForClient(client) {
+  if (!client?.gmail_refresh_token) return { checked: 0, updated: [], firstReplies: [] };
 
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, gmail_refresh_token')
-    .eq('dashboard_token', token)
-    .single();
-
-  // Return gmailConnected flag so the dashboard can show a warning
-  if (!client?.gmail_refresh_token) {
-    return res.json({ success: true, updated: [], gmailConnected: false });
-  }
-
-  // Scan 'new', 'sent', 'followed_up', AND 'replied' matches.
-  // 'new' is included so manually-added podcasts (where the customer emailed the host
-  // directly from Gmail, bypassing the dashboard's Send button) still get their replies
-  // detected. We rely on inbox-search strategy for those (no thread_id to track yet).
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, email_subject, sent_at, discovered_at, status, reply_count, podcasts(contact_email, title)')
+    .select('id, gmail_thread_id, email_subject, sent_at, discovered_at, status, reply_count, client_id, podcasts(contact_email, title, host_name)')
     .eq('client_id', client.id)
     .in('status', ['new', 'sent', 'followed_up', 'replied']);
 
-  if (!matches?.length) return res.json({ success: true, updated: [], gmailConnected: true, checked: 0 });
+  if (!matches?.length) return { checked: 0, updated: [], firstReplies: [] };
 
   const updated = [];
+  const firstReplies = [];
 
-  // Process matches serially to avoid Gmail rate limits (not Promise.all)
   for (const m of matches) {
     try {
       let threadId = m.gmail_thread_id;
@@ -291,6 +274,12 @@ router.post('/api/gmail/check-replies', async (req, res) => {
           logger.warn('reply_count/last_reply_at columns may be missing', { matchId: m.id, error: dbErr.message });
         }
         updated.push(m.id);
+        firstReplies.push({
+          matchId: m.id,
+          podcastTitle: m.podcasts?.title || 'a podcast',
+          hostName: m.podcasts?.host_name || null,
+          contactEmail,
+        });
         logger.info('Match auto-moved to replied', { matchId: m.id, contactEmail });
 
         // Award reply outcome points (+10, no credit cost). Fire-and-forget.
@@ -380,7 +369,123 @@ router.post('/api/gmail/check-replies', async (req, res) => {
     }
   }
 
-  return res.json({ success: true, updated, gmailConnected: true, checked: matches.length });
+  return { checked: matches.length, updated, firstReplies };
+}
+
+/**
+ * notifyHostReply(client, reply)
+ * Fires a Resend email to the customer when a host replies. Returns silently
+ * if RESEND_API_KEY is missing so dev environments don't break.
+ */
+async function notifyHostReply(client, reply) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !client?.email) return;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
+  const baseUrl   = process.env.BASE_URL || 'https://findapodcast.io';
+  const dashUrl   = `${baseUrl}/dashboard/${client.dashboard_token}`;
+  const who = reply.hostName ? `${reply.hostName} from ${reply.podcastTitle}` : reply.podcastTitle;
+  const subject = `${reply.hostName || 'A host'} just replied — ${reply.podcastTitle}`;
+  const html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#111827;line-height:1.55;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 14px;color:#111827;">A host just replied to your pitch.</h1>
+  <p style="font-size:15px;margin:0 0 20px;color:#374151;">${esc(who)} just responded. Open your dashboard to read it and lock the booking.</p>
+  <a href="${dashUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;">Open dashboard</a>
+  <p style="font-size:13px;margin:28px 0 0;color:#6b7280;">Reply within 24 hours when you can — fast responses get booked.</p>
+  <p style="font-size:12px;margin:24px 0 0;color:#9ca3af;">— Find A Podcast</p>
+</div>`;
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: fromEmail, to: [client.email], subject, html }),
+    });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      logger.warn('Reply notification email failed', { matchId: reply.matchId, error: data });
+    } else {
+      logger.info('Reply notification email sent', { matchId: reply.matchId, to: client.email });
+    }
+  } catch (err) {
+    logger.warn('Reply notification email error', { matchId: reply.matchId, error: err.message });
+  }
+}
+
+// Tiny HTML escaper for the email template above.
+function esc(s) { return String(s || '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch])); }
+
+/**
+ * POST /api/gmail/check-replies
+ * Called on dashboard load and polled every 5 minutes from the open dashboard tab.
+ * For background scanning regardless of whether the dashboard is open, see
+ * /api/cron/check-replies-all.
+ */
+router.post('/api/gmail/check-replies', async (req, res) => {
+  const token = req.headers['x-dashboard-token'] || req.body.token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorised.' });
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('id, email, dashboard_token, gmail_refresh_token, gmail_email')
+    .eq('dashboard_token', token)
+    .single();
+
+  if (!client?.gmail_refresh_token) {
+    return res.json({ success: true, updated: [], gmailConnected: false });
+  }
+
+  const result = await scanRepliesForClient(client);
+
+  // Fire notification emails for any matches that just flipped to 'replied'.
+  // Fire-and-forget — never block the response on email delivery.
+  for (const reply of result.firstReplies) {
+    notifyHostReply(client, reply).catch(() => {});
+  }
+
+  return res.json({ success: true, updated: result.updated, gmailConnected: true, checked: result.checked });
+});
+
+/**
+ * POST /api/cron/check-replies-all
+ * Server-side cron endpoint. Scans every connected client's Gmail every 5 min
+ * regardless of whether their dashboard is open, and emails them when a host
+ * replies. Auth: header 'x-cron-secret' must match process.env.CRON_SECRET.
+ *
+ * Recommended Railway cron: every 5 min POST to {BASE_URL}/api/cron/check-replies-all
+ */
+router.post('/api/cron/check-replies-all', async (req, res) => {
+  const secret = (req.headers['x-cron-secret'] || '').trim();
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ success: false, error: 'Unauthorised.' });
+  }
+
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('id, email, dashboard_token, gmail_refresh_token, gmail_email')
+    .not('gmail_refresh_token', 'is', null);
+
+  if (!clients?.length) return res.json({ success: true, scanned: 0, totalUpdated: 0, totalReplies: 0 });
+
+  let totalUpdated = 0;
+  let totalReplies = 0;
+  const perClient = [];
+
+  // Serial — avoids hammering Gmail across many tokens at once
+  for (const c of clients) {
+    try {
+      const r = await scanRepliesForClient(c);
+      totalUpdated += r.updated.length;
+      totalReplies += r.firstReplies.length;
+      perClient.push({ clientId: c.id, ...r });
+      for (const reply of r.firstReplies) {
+        notifyHostReply(c, reply).catch(() => {});
+      }
+    } catch (err) {
+      logger.warn('cron scan failed for client', { clientId: c.id, error: err.message });
+    }
+  }
+
+  logger.info('Cron reply scan complete', { scanned: clients.length, totalUpdated, totalReplies });
+  res.json({ success: true, scanned: clients.length, totalUpdated, totalReplies });
 });
 
 /**
