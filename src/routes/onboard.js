@@ -401,13 +401,21 @@ router.post('/onboard', async (req, res) => {
     }
 
     // ── Build client record ───────────────────────────────────
+    // The `credential` field is not a column on `clients` — fold it into bio_long
+    // (with a "Notable: …" prefix) so the AI pitch-writer still sees it. Adding
+    // a real column would require running a migration; keeping it in bio_long
+    // ships immediately and the pitch-writer reads from bio_long anyway.
+    const bioLongMerged = credential && credential.trim()
+      ? `${bio_long ? bio_long.trim() + '\n\n' : ''}Notable: ${credential.trim()}`
+      : (bio_long || null);
+
     const clientRecord = {
       name:              name.trim(),
       email:             email.trim().toLowerCase(),
       business_name:     business_name     || null,
       title:             title             || null,
       bio_short:         bio_short         || null,
-      bio_long:          bio_long          || null,
+      bio_long:          bioLongMerged,
       topics:            topics,
       speaking_angles:   speaking_angles   || [],
       target_audience:   target_audience   || null,
@@ -432,7 +440,6 @@ router.post('/onboard', async (req, res) => {
       pitch_style:       pitch_style       || null,
       extra_links:       extra_links       || null,
       email_signature:   email_signature   || null,
-      credential:        credential        || null,
       is_active:         true,
       photo_url:         photo_url         || null,
       logo_url:          logo_url          || null,
@@ -554,7 +561,7 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
     'topics', 'speaking_angles', 'target_audience', 'website',
     'booking_link', 'lead_magnet', 'social_instagram', 'social_linkedin',
     'social_twitter', 'social_facebook', 'social_youtube', 'preferred_tone', 'daily_target',
-    'pitch_style', 'extra_links', 'email_signature', 'credential',
+    'pitch_style', 'extra_links', 'email_signature',
     'photo_url', 'logo_url',
     'languages', 'geographies',
     'share_with_community',
@@ -563,6 +570,12 @@ router.patch('/onboard/:clientId', requireDashboardToken, async (req, res) => {
   const updates = {};
   for (const key of allowed) {
     if (req.body[key] !== undefined) updates[key] = req.body[key] || null;
+  }
+  // `credential` is not a column on clients — fold into bio_long if provided
+  if (req.body.credential && req.body.credential.trim()) {
+    const cred = req.body.credential.trim();
+    const existing = (req.body.bio_long || updates.bio_long || '').trim();
+    updates.bio_long = existing ? `${existing}\n\nNotable: ${cred}` : `Notable: ${cred}`;
   }
   // Keep array fields as arrays
   if (req.body.topics)           updates.topics           = req.body.topics;
@@ -682,7 +695,7 @@ router.post('/detect-socials', async (req, res) => {
  * Zero hallucination: every field returned must be derivable from the
  * page text. Claude is explicitly instructed not to invent data.
  */
-router.post('/prefill', async (req, res) => {
+router.post('/onboard/prefill', async (req, res) => {
   const { url } = req.body || {};
   if (!url || !/^https?:\/\//i.test(url)) {
     return res.status(400).json({ ok: false, error: 'invalid_url' });
@@ -795,7 +808,7 @@ Strict rules:
  * Used by the inline ✨ Suggest from bio buttons in the onboarding form.
  * No credit charge — onboarding flow.
  */
-router.post('/suggest-field', async (req, res) => {
+router.post('/onboard/suggest-field', async (req, res) => {
   const { field, bio, business, title } = req.body || {};
   if (!field || !bio || bio.length < 30) {
     return res.status(400).json({ ok: false, error: 'field_and_bio_required (min 30 chars)' });

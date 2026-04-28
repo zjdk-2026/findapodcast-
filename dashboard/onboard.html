@@ -9,7 +9,7 @@
     /* ── Topic autocomplete tag widget ──────────────────── */
     .tag-input-wrap {
       position:relative; padding:8px 10px; border:2px solid var(--border-medium);
-      border-radius:10px; background:var(--surface-card); min-height:48px;
+      border-radius:10px; background:var(--bg-card); min-height:48px;
       display:flex; flex-wrap:wrap; gap:6px; align-items:center;
       transition:border-color 0.15s;
     }
@@ -31,7 +31,7 @@
     }
     .tag-suggestions {
       display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
-      background:var(--surface-card); border:1.5px solid var(--accent);
+      background:var(--bg-card); border:1.5px solid var(--accent);
       border-radius:10px; max-height:260px; overflow-y:auto;
       z-index:9999; box-shadow:0 12px 40px rgba(0,0,0,0.18);
     }
@@ -39,7 +39,7 @@
     .tag-suggestion {
       padding:9px 14px; cursor:pointer; font-size:14px;
       color:var(--text-primary); transition:background 0.1s;
-      border-bottom:1px solid var(--border-light);
+      border-bottom:1px solid var(--border-subtle);
     }
     .tag-suggestion:last-child { border-bottom:none; }
     .tag-suggestion:hover, .tag-suggestion.active { background:rgba(99,102,241,0.10); }
@@ -61,7 +61,7 @@
     .advanced-toggle {
       display:flex; align-items:center; gap:8px; cursor:pointer;
       padding:10px 14px; border-radius:10px;
-      background:var(--surface-page); border:1px dashed var(--border-medium);
+      background:var(--bg-tertiary); border:1px dashed var(--border-medium);
       font-size:13px; font-weight:600; color:var(--text-secondary);
       user-select:none; margin-bottom:12px;
     }
@@ -89,7 +89,7 @@
     .pace-options { display:flex; gap:12px; margin-top:6px; }
     .pace-option {
       flex:1; padding:14px 10px; border:2px solid var(--border-medium);
-      border-radius:14px; background:var(--surface-card);
+      border-radius:14px; background:var(--bg-card);
       cursor:pointer; text-align:center; transition:all 0.15s;
     }
     .pace-option:hover { border-color:var(--accent); }
@@ -126,11 +126,11 @@
       font-size:14px; color:rgba(255,255,255,0.75);
       margin:0; position:relative; z-index:1;
     }
-    .success-steps { display:flex; flex-direction:column; gap:0; margin-bottom:24px; border:1.5px solid var(--border-light); border-radius:14px; overflow:hidden; }
+    .success-steps { display:flex; flex-direction:column; gap:0; margin-bottom:24px; border:1.5px solid var(--border-subtle); border-radius:14px; overflow:hidden; }
     .success-step {
       display:flex; align-items:center; gap:14px;
-      padding:16px 18px; background:var(--surface-card);
-      border-bottom:1px solid var(--border-light);
+      padding:16px 18px; background:var(--bg-card);
+      border-bottom:1px solid var(--border-subtle);
       transition:background 0.15s;
     }
     .success-step:last-child { border-bottom:none; }
@@ -140,7 +140,7 @@
     }
     .success-step-icon.done { background:rgba(16,185,129,0.12); }
     .success-step-icon.active { background:rgba(99,102,241,0.12); }
-    .success-step-icon.pending { background:var(--surface-page); border:1.5px solid var(--border-medium); }
+    .success-step-icon.pending { background:var(--bg-tertiary); border:1.5px solid var(--border-medium); }
     .success-step-text { flex:1; }
     .success-step-text strong { display:block; font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:2px; }
     .success-step-text span { font-size:12px; color:var(--text-secondary); }
@@ -157,7 +157,7 @@
     .success-cta-secondary {
       display:flex; align-items:center; justify-content:center;
       width:100%; padding:13px 24px; border-radius:14px;
-      border:1.5px solid var(--border-medium); background:var(--surface-card);
+      border:1.5px solid var(--border-medium); background:var(--bg-card);
       color:var(--text-primary); font-size:14px; font-weight:600;
       text-decoration:none; transition:border-color 0.15s;
     }
@@ -504,7 +504,7 @@ instagram.com/you | linkedin.com/in/you"></textarea>
           </a>
           <a id="success-dashboard-link" href="#" class="success-cta-secondary">Open My Podcast Pipeline</a>
 
-          <div style="margin-top:20px;padding:20px;border:1.5px solid var(--border-medium);border-radius:14px;background:var(--surface-card);text-align:center;">
+          <div style="margin-top:20px;padding:20px;border:1.5px solid var(--border-medium);border-radius:14px;background:var(--bg-card);text-align:center;">
             <p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Book your free strategy session</p>
             <p style="font-size:12px;color:var(--text-secondary);margin:0 0 14px;">As a new member you get a free 60-minute call to optimise your pitch, CTA, and funnel before we start sending.</p>
             <a href="https://api.leadconnectorhq.com/widget/bookings/60-minute-meeting-with-zac-deane" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#6366f1;color:#fff;font-size:13px;font-weight:700;padding:11px 22px;border-radius:10px;text-decoration:none;">
