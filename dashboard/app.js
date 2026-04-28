@@ -1003,6 +1003,7 @@ function buildFallbackTipsClient(podcast) {
 async function unlockContact(event, podcastId) {
   event.preventDefault();
   event.stopPropagation();
+  if (state.demo?.active) { openUpgradeModal(); return; }
   const btn = event.currentTarget;
   const orig = btn.innerHTML;
   btn.disabled = true;
@@ -2001,7 +2002,39 @@ function renderTopAlertBanner() {
   const el = document.getElementById('top-alert-banner');
   if (!el) return;
   const c = state.client || {};
-  // Gmail OAuth callback can redirect with ?gmailError=reauth_required when
+
+  // Priority 1: DEMO MODE banner. The whole pipeline is locked, this needs to
+  // be loud. Sticky and dismissable only by upgrading.
+  if (state.demo?.active) {
+    const expiresAt = state.demo.expires_at ? new Date(state.demo.expires_at) : null;
+    const daysLeft  = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86400000)) : null;
+    const expired   = state.demo.expired;
+    const title = expired
+      ? 'Your demo expired. Unlock to keep your pipeline.'
+      : 'Demo mode · You can browse, but actions are locked.';
+    const sub = expired
+      ? "Your matches are still here. Upgrade to start contacting hosts and sending pitches."
+      : (daysLeft !== null
+          ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left in your demo. Unlock to send pitches, see contact details, and get the real platform.`
+          : 'Unlock to send pitches, see contact details, and get the real platform.');
+    el.style.display = 'block';
+    el.innerHTML = `
+      <div style="max-width:1400px;margin:0 auto;padding:12px 24px 0;">
+        <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1.5px solid #6366f1;border-radius:14px;padding:14px 18px;color:#fff;">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:2px;">${esc(title)}</div>
+            <div style="font-size:12.5px;color:rgba(255,255,255,0.78);line-height:1.45;">${esc(sub)}</div>
+          </div>
+          <button onclick="openUpgradeModal()" style="flex-shrink:0;background:#fff;color:#312e81;border:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;white-space:nowrap;cursor:pointer;">Unlock pipeline →</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Priority 2: Gmail OAuth callback can redirect with ?gmailError=reauth_required when
   // the refresh token gets revoked or expires. Surface that loud.
   const urlError = new URLSearchParams(window.location.search).get('gmailError');
   const needsReconnect = urlError === 'reauth_required';
@@ -2029,14 +2062,88 @@ function renderTopAlertBanner() {
     </div>`;
 }
 
+// Upgrade modal — every locked action button funnels here. Sends them to the
+// $997 Stripe Payment Link with their client_reference_id appended so the
+// webhook can match the payment back to the demo account.
+function openUpgradeModal() {
+  const url = state.demo?.unlock_url || 'https://buy.stripe.com/dRm9AT7Dq7W5aJf4V18IU0O';
+  let modal = document.getElementById('upgrade-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'upgrade-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,25,0.72);backdrop-filter:blur(6px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.onclick = (e) => { if (e.target === modal) closeUpgradeModal(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;padding:36px 36px 32px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.4);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#312e81);display:flex;align-items:center;justify-content:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#6366f1;text-transform:uppercase;">Unlock the platform</div>
+          <div style="font-size:20px;font-weight:800;color:#1d1d1f;letter-spacing:-0.01em;margin-top:2px;">Ready to start booking?</div>
+        </div>
+        <button onclick="closeUpgradeModal()" style="background:none;border:none;font-size:24px;color:#86868b;cursor:pointer;line-height:1;">×</button>
+      </div>
+      <p style="font-size:14.5px;color:#4b4b52;line-height:1.6;margin:0 0 22px;">Your pipeline is real. The matches, the AI pitches, the scoring — all generated for your profile. Unlock now to:</p>
+      <ul style="list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:9px;">
+        <li style="font-size:14px;color:#1d1d1f;padding-left:24px;position:relative;">
+          <span style="position:absolute;left:0;top:1px;width:16px;height:16px;background:#eef0ff;color:#6366f1;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;">✓</span>
+          See every podcast title, host name and contact email
+        </li>
+        <li style="font-size:14px;color:#1d1d1f;padding-left:24px;position:relative;">
+          <span style="position:absolute;left:0;top:1px;width:16px;height:16px;background:#eef0ff;color:#6366f1;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;">✓</span>
+          Send AI-drafted pitches from your own Gmail
+        </li>
+        <li style="font-size:14px;color:#1d1d1f;padding-left:24px;position:relative;">
+          <span style="position:absolute;left:0;top:1px;width:16px;height:16px;background:#eef0ff;color:#6366f1;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;">✓</span>
+          Live reply detection (5-min cron, email alert)
+        </li>
+        <li style="font-size:14px;color:#1d1d1f;padding-left:24px;position:relative;">
+          <span style="position:absolute;left:0;top:1px;width:16px;height:16px;background:#eef0ff;color:#6366f1;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;">✓</span>
+          500 monthly pitch credits, top-ups available
+        </li>
+      </ul>
+      <a href="${esc(url)}" style="display:block;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(99,102,241,0.3);">Unlock pipeline →</a>
+      <p style="text-align:center;font-size:12px;color:#86868b;margin:14px 0 0;">Secure checkout via Stripe. Pipeline unlocks the moment payment lands.</p>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.style.display = 'none';
+}
+window.openUpgradeModal  = openUpgradeModal;
+window.closeUpgradeModal = closeUpgradeModal;
+
 // ── Empty-state CTAs per tab ──────────────────────────────────────────
 function renderEmptyTabState() {
   const tab = state.currentFilter || 'new';
 
-  // Special case: customer just signed up and the first-run pipeline is still
-  // running in the background. Show a clear "we're working" state with auto-
-  // polling, NOT the static "click Find a Podcast" CTA.
-  if (tab === 'new' && state.client && !state.client.last_run_at) {
+  // Special case: DEMO ACCOUNT with zero matches yet. Don't auto-poll —
+  // the pipeline runs ONLY when the prospect clicks Find A Podcast, that's
+  // the demo's wow moment. Show a big inviting prompt instead.
+  if (tab === 'new' && state.demo?.active && state.matches.length === 0) {
+    return `
+      <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;background:linear-gradient(180deg,#eef0ff,#fff);border:1.5px solid #c7d2fe;border-radius:18px;margin-top:8px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:#6366f1;color:#fff;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:18px;">▸ Live demo</div>
+        <div style="font-size:24px;font-weight:800;color:#1d1d1f;margin-bottom:10px;letter-spacing:-0.01em;">Click Find A Podcast to see the magic.</div>
+        <p style="font-size:14.5px;color:#4b4b52;max-width:520px;line-height:1.6;margin-bottom:24px;">We'll search 4M+ podcasts, score the top 10 against your profile, and write a personalised pitch for each one in about 90 seconds. Your matches are real — only the contact details stay locked until you upgrade.</p>
+        <button onclick="runPipeline()" style="background:#6366f1;color:#fff;border:none;border-radius:999px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(99,102,241,0.3);">
+          Find A Podcast
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    `;
+  }
+
+  // Special case: paid customer just signed up and the first-run pipeline is
+  // still running in the background. Show a clear "we're working" state with
+  // auto-polling.
+  if (tab === 'new' && state.client && !state.client.last_run_at && !state.demo?.active) {
     const created = state.client.created_at ? new Date(state.client.created_at) : null;
     const ageMin  = created ? (Date.now() - created.getTime()) / 60000 : Infinity;
     if (ageMin < 5) {
@@ -2143,6 +2250,13 @@ function renderDashboard(data) {
   state.matches           = matches || [];
   state.stats             = stats   || {};
   state.communityGroupUrl = data.community_group_url || null;
+  state.demo              = data.demo || null;
+  // Auto-open the unlock modal when the prospect lands here from a Stripe-cancelled
+  // checkout, OR celebrate when they return successfully (handled in the
+  // ?topup= block below — also catches ?unlocked=success).
+  if (state.demo?.expired) {
+    setTimeout(() => openUpgradeModal(), 600);
+  }
 
   // Fetch live credit balance (fire-and-forget so render isn't blocked)
   loadCredits();
@@ -2298,6 +2412,29 @@ function renderDashboard(data) {
   } else if (urlParams.get('topup') === 'cancelled') {
     showToast('Top-up cancelled. No charge made.', 'info');
     window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // Demo unlock success — coming back from Stripe after the $997 payment.
+  // Stripe webhook may not have processed yet; poll the dashboard a few times
+  // until demo_mode flips off, then refresh the page so all redacted matches
+  // become real podcast names.
+  if (urlParams.get('unlocked') === 'success') {
+    showToast('Welcome to Find A Podcast — unlocking your pipeline now…', 'success');
+    window.history.replaceState({}, '', window.location.pathname);
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const fresh = await apiFetch(`/api/dashboard/${state.token}`);
+        if (fresh && fresh.demo === null) {
+          clearInterval(poll);
+          showToast('Pipeline unlocked. Welcome aboard.', 'success');
+          // Force a hard reload so every cached match re-renders unredacted.
+          setTimeout(() => window.location.reload(), 800);
+        }
+      } catch { /* keep polling */ }
+      if (attempts >= 12) clearInterval(poll); // ~36 sec ceiling
+    }, 3000);
   }
 
   // Profile photo
@@ -2630,6 +2767,7 @@ function closeConfirmModal() {
 // the booking congrats email. The actual /api/book POST happens inside submitBooking().
 let _activeBookMatchId = null;
 function bookMatch(matchId) {
+  if (state.demo?.active) { openUpgradeModal(); return; }
   const match = state.matches.find((m) => m.id === matchId);
   if (!match) return;
   _activeBookMatchId = matchId;
@@ -3208,6 +3346,7 @@ async function saveInlineEdits(matchId) {
 }
 
 async function sendFromInline(matchId) {
+  if (state.demo?.active) { openUpgradeModal(); return; }
   await saveInlineEdits(matchId);
   toggleInlinePitch(matchId);
   sendMatch(matchId);
@@ -5034,6 +5173,7 @@ function closeAddPodcastModal() {
   if (btn) { btn.textContent = 'Add to My Pipeline'; btn.disabled = false; }
 }
 async function submitAddPodcast() {
+  if (state.demo?.active) { openUpgradeModal(); return; }
   const url  = document.getElementById('add-podcast-url').value.trim();
   const name = document.getElementById('add-podcast-name').value.trim();
   if (!url && !name) { showToast('Please enter a podcast URL or name.', 'error'); return; }

@@ -27,6 +27,11 @@ router.post('/unlock/:podcastId', requireDashboardToken, async (req, res) => {
 
   if (!podcastId) return res.status(400).json({ ok: false, error: 'podcastId required' });
 
+  // Demo gate: prospects can't unlock contact data.
+  const { requireNotDemo } = require('../lib/demo');
+  const demoCheck = await requireNotDemo(clientId);
+  if (!demoCheck.allowed) return res.status(demoCheck.status).json(demoCheck.body);
+
   // Credit gate: 1 credit per unlock (skipped for unlimited Tour customers)
   if (clientId) {
     const charge = await chargeCredits(clientId, 'unlock', { podcastId });

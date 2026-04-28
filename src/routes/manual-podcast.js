@@ -87,6 +87,13 @@ router.post('/add-podcast', async (req, res) => {
     return res.status(400).json({ success: false, error: 'A podcast URL, Apple Podcasts link, or name is required.' });
   }
 
+  // Demo gate: prospects can't manually add podcasts (operator key bypasses).
+  if (token && !operatorKey) {
+    const { requireNotDemo } = require('../lib/demo');
+    const demoCheck = await requireNotDemo(resolvedClientId);
+    if (!demoCheck.allowed) return res.status(demoCheck.status).json(demoCheck.body);
+  }
+
   try {
     // ── 0. Pre-check: has this URL already been added for this client? ────────
     const urlsToCheck = [podcastUrl, appleUrl, spotifyUrl].filter(Boolean);

@@ -409,6 +409,15 @@ router.post('/onboard', async (req, res) => {
       ? `${bio_long ? bio_long.trim() + '\n\n' : ''}Notable: ${credential.trim()}`
       : (bio_long || null);
 
+    // Every new self-serve signup starts in DEMO MODE for 14 days.
+    // Dashboard renders redacted matches, action endpoints (send, unlock,
+    // add-podcast, book) return 402 demo_locked. Prospect upgrades via the
+    // $997 Stripe link, webhook flips demo_mode=false. Existing paying
+    // customers are unaffected (they already have rows from before this).
+    const DEMO_DURATION_DAYS = 14;
+    const demoStart   = new Date();
+    const demoExpires = new Date(demoStart.getTime() + DEMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
     const clientRecord = {
       name:              name.trim(),
       email:             email.trim().toLowerCase(),
@@ -416,6 +425,12 @@ router.post('/onboard', async (req, res) => {
       title:             title             || null,
       bio_short:         bio_short         || null,
       bio_long:          bioLongMerged,
+      demo_mode:         true,
+      demo_started_at:   demoStart.toISOString(),
+      demo_expires_at:   demoExpires.toISOString(),
+      // Demo accounts get 50 credits = 5 Find A Podcast clicks (10 podcasts each).
+      // Caps the discovery cost while still giving the prospect a real wow moment.
+      credits_remaining: 50,
       topics:            topics,
       speaking_angles:   speaking_angles   || [],
       target_audience:   target_audience   || null,
@@ -507,32 +522,27 @@ router.post('/onboard', async (req, res) => {
       logger.warn('GHL sync failed', { clientId: data.id, error: err.message });
     });
 
-    // ── Run the full pipeline on signup (fire-and-forget) ───────────────────
-    // Customer expects scored matches in their dashboard within minutes, not
-    // tomorrow at 7am. Calls the same runPipelineForClient as the daily cron,
-    // so customers signing up at 11am have their first 50 matches ready by
-    // the time they finish connecting Gmail. When done, fires a notification
-    // email so they come back to the dashboard.
-    const { runPipelineForClient } = require('../scheduler');
-    setImmediate(async () => {
-      try {
-        logger.info('First-run pipeline started for new client', { clientId: data.id });
-        await runPipelineForClient(data);
-        logger.info('First-run pipeline complete', { clientId: data.id });
-        // Email the customer that their matches are ready
+    // ── First-run pipeline ──────────────────────────────────────────────────
+    // Demo accounts (the default for /onboard self-serve signups) DO NOT
+    // auto-run the pipeline — the prospect clicks "Find a Podcast" themselves
+    // during the demo call. That reveal IS the wow moment.
+    //
+    // Paid/upgraded accounts (created via operator or post-Stripe-unlock)
+    // would benefit from the auto-pipeline so they don't wait. For now every
+    // self-serve signup is demo, so we skip. Re-enable inside the
+    // demo_mode === false branch if/when we add direct-paid signup.
+    if (!clientRecord.demo_mode) {
+      const { runPipelineForClient } = require('../scheduler');
+      setImmediate(async () => {
         try {
-          const { data: matchCount } = await supabase
-            .from('podcast_matches')
-            .select('id', { count: 'exact', head: true })
-            .eq('client_id', data.id);
-          await sendMatchesReadyEmail(data, matchCount?.length || 0);
-        } catch (emailErr) {
-          logger.warn('Matches-ready email failed (non-fatal)', { clientId: data.id, error: emailErr.message });
+          logger.info('First-run pipeline started for new client', { clientId: data.id });
+          await runPipelineForClient(data);
+          logger.info('First-run pipeline complete', { clientId: data.id });
+        } catch (bgErr) {
+          logger.warn('First-run pipeline failed', { clientId: data.id, error: bgErr.message });
         }
-      } catch (bgErr) {
-        logger.warn('First-run pipeline failed', { clientId: data.id, error: bgErr.message });
-      }
-    });
+      });
+    }
 
     return res.status(201).json({
       success:      true,

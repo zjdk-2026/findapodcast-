@@ -3,6 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
+const { redactForDemo, isDemoLocked, isDemoExpired, buildUnlockUrl, STRIPE_UNLOCK_URL } = require('../lib/demo');
 
 const router = express.Router();
 
@@ -99,23 +100,42 @@ router.get('/dashboard/:token', async (req, res) => {
     const safeClient = { ...client };
     delete safeClient.gmail_refresh_token;
 
+    // ── Demo mode redaction ─────────────────────────────────────────────────
+    // When client.demo_mode === true, every match runs through redactForDemo()
+    // before leaving the server. Frontend never sees real podcast titles, host
+    // names, contact emails, social URLs, websites, or exact download numbers.
+    // Score, why-fits, pitch angle and the AI-drafted pitch body STAY visible
+    // — that's the value proof. Frontend reads match._locked to render
+    // black-bar / lock-icon UI.
+    const demoLocked = isDemoLocked(client);
+    const demoExpired = isDemoExpired(client);
+    const rawMatches = matches || [];
+    const outboundMatches = demoLocked ? rawMatches.map(redactForDemo) : rawMatches;
+
     return res.json({
       success: true,
       client:  safeClient,
       community_group_url: process.env.COMMUNITY_GROUP_URL || 'https://www.facebook.com/groups/1271256181171237',
-      matches: matches || [],
+      matches: outboundMatches,
+      demo: demoLocked ? {
+        active:        true,
+        expired:       demoExpired,
+        expires_at:    client.demo_expires_at,
+        unlock_url:    buildUnlockUrl(client),
+        message:       demoExpired
+          ? 'Your 14-day demo has expired. Unlock to keep your pipeline.'
+          : 'You are in demo mode. Unlock the platform to send pitches and contact hosts.',
+      } : null,
       stats: {
-        total:    (matches || []).length,
-        new:      (matches || []).filter((m) => m.status === 'new').length,
-        approved: (matches || []).filter((m) => m.status === 'approved').length,
-        sent:     (matches || []).filter((m) => m.status === 'sent').length,
-        replied:  (matches || []).filter((m) => m.status === 'replied').length,
-        booked:   (matches || []).filter((m) => m.status === 'booked').length,
-        dismissed:(matches || []).filter((m) => m.status === 'dismissed').length,
-        avgScore: (matches || []).length > 0
-          ? Math.round(
-              (matches || []).reduce((sum, m) => sum + (m.fit_score || 0), 0) / (matches || []).length
-            )
+        total:    rawMatches.length,
+        new:      rawMatches.filter((m) => m.status === 'new').length,
+        approved: rawMatches.filter((m) => m.status === 'approved').length,
+        sent:     rawMatches.filter((m) => m.status === 'sent').length,
+        replied:  rawMatches.filter((m) => m.status === 'replied').length,
+        booked:   rawMatches.filter((m) => m.status === 'booked').length,
+        dismissed:rawMatches.filter((m) => m.status === 'dismissed').length,
+        avgScore: rawMatches.length > 0
+          ? Math.round(rawMatches.reduce((sum, m) => sum + (m.fit_score || 0), 0) / rawMatches.length)
           : 0,
       },
     });

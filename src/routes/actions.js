@@ -165,6 +165,11 @@ router.post('/send', async (req, res) => {
   const { matchId } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
 
+  // Demo gate: prospects in demo mode can't actually send.
+  const { requireNotDemo } = require('../lib/demo');
+  const demoCheck = await requireNotDemo(req.clientId);
+  if (!demoCheck.allowed) return res.status(demoCheck.status).json(demoCheck.body);
+
   // Credit gate: pitch send costs 1 credit (skipped for unlimited Tour customers)
   const charge = await chargeCredits(req.clientId, 'pitch_send', { matchId });
   if (!charge.ok) {
@@ -343,6 +348,11 @@ router.post('/send-thankyou', async (req, res) => {
 router.post('/book', async (req, res) => {
   const { matchId, showName, recordingAt, notes } = req.body;
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
+
+  // Demo gate: prospects can't book — there's nothing to book against (host names are redacted).
+  const { requireNotDemo } = require('../lib/demo');
+  const demoCheck = await requireNotDemo(req.clientId);
+  if (!demoCheck.allowed) return res.status(demoCheck.status).json(demoCheck.body);
 
   try {
     // Fetch match with podcast + client so we can send the congrats email

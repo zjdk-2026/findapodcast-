@@ -119,13 +119,39 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
   // ── Handle checkout.session.completed ─────────────────────────────
   if (event.type === 'checkout.session.completed') {
     const session  = event.data.object;
-    const clientId = session.metadata?.client_id;
+    // Stripe Payment Links pass our internal id via client_reference_id (URL param),
+    // hosted Checkout sessions pass it via metadata.client_id. Cover both.
+    const clientId = session.metadata?.client_id || session.client_reference_id || null;
     const email    = session.customer_email || session.customer_details?.email;
     const name     = session.metadata?.name || '';
     const amount   = (session.amount_total / 100).toFixed(2);
     const kind     = session.metadata?.kind || 'content_boost';
 
-    logger.info('Stripe payment completed', { clientId, email, amount, kind });
+    logger.info('Stripe payment completed', { clientId, email, amount, kind, sessionId: session.id });
+
+    // ── Demo unlock branch ──────────────────────────────────────────
+    // Any payment from the $997 demo unlock Payment Link will arrive WITHOUT
+    // metadata.kind (Payment Links don't let us set metadata). We detect it
+    // via the existence of client_reference_id pointing at a demo-mode client.
+    // If clientId resolves to a demo account, flip demo_mode off.
+    if (clientId) {
+      const { data: c } = await supabase
+        .from('clients')
+        .select('id, demo_mode, demo_unlocked_at')
+        .eq('id', clientId)
+        .single();
+      if (c?.demo_mode && !c?.demo_unlocked_at) {
+        await supabase.from('clients').update({
+          demo_mode:        false,
+          demo_unlocked_at: new Date().toISOString(),
+          // Give them a fresh credit budget so they can immediately start sending
+          credits_remaining: 500,
+        }).eq('id', clientId);
+        logger.info('Demo unlocked via Stripe payment', { clientId, sessionId: session.id, amount });
+        // Return early — this is the demo unlock path, not content boost or top-up
+        return res.json({ received: true, demo_unlocked: true });
+      }
+    }
 
     // ── Credit top-up branch ────────────────────────────────────────
     // Created by /api/credits/topup-checkout. metadata.credits is the pack size.
