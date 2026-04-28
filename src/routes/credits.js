@@ -130,4 +130,64 @@ router.post('/credits/topup-checkout', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/demo/unlock-checkout
+ * Creates a Stripe Checkout session for the $997 demo unlock. Replaces the raw
+ * Payment Link flow because Checkout Sessions let us bake the post-payment
+ * success_url with the customer's dashboard token so they land back on their
+ * unlocked dashboard with ?unlocked=success.
+ *
+ * Webhook in src/routes/stripe.js detects metadata.kind='demo_unlock' (or
+ * client_reference_id pointing at a demo-mode client) and flips demo_mode=false.
+ */
+router.post('/demo/unlock-checkout', async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(503).json({ ok: false, error: 'stripe_not_configured' });
+  }
+  try {
+    const Stripe = require('stripe');
+    const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+    const baseUrl = process.env.BASE_URL || 'https://findapodcast.io';
+    const { data: client } = await supabase
+      .from('clients')
+      .select('id, email, name, dashboard_token, demo_mode, demo_unlocked_at')
+      .eq('id', req.clientId)
+      .single();
+    if (!client) return res.status(404).json({ ok: false, error: 'client_not_found' });
+    if (!client.demo_mode || client.demo_unlocked_at) {
+      return res.status(400).json({ ok: false, error: 'not_in_demo' });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: 'aud',
+          unit_amount: 99700, // $997 AUD in cents
+          product_data: {
+            name: 'Find A Podcast — Self-Managed Unlock',
+            description: 'Unlocks your full pipeline: real podcast titles, host emails, send pitches via your Gmail, live reply detection, booking calendar, 500 monthly credits.',
+          },
+        },
+      }],
+      customer_email: client.email,
+      client_reference_id: req.clientId,
+      metadata: {
+        kind:      'demo_unlock',
+        client_id: req.clientId,
+        token:     client.dashboard_token,
+        name:      client.name || '',
+      },
+      success_url: `${baseUrl}/dashboard/${client.dashboard_token}?unlocked=success`,
+      cancel_url:  `${baseUrl}/dashboard/${client.dashboard_token}?unlocked=cancelled`,
+    });
+    logger.info('Demo unlock checkout session created', { clientId: req.clientId, sessionId: session.id });
+    res.json({ ok: true, url: session.url });
+  } catch (err) {
+    logger.error('demo: unlock checkout failed', { clientId: req.clientId, error: err.message });
+    res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
 module.exports = router;

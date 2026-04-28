@@ -112,8 +112,12 @@ async function apiPost(url, body) {
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
+  // Universal demo-locked handler — any 402 demo_locked fires the upgrade modal
+  if (res.status === 402 && (data.error === 'demo_locked' || data.demo_locked)) {
+    if (typeof openUpgradeModal === 'function') openUpgradeModal();
+  }
   // Universal out-of-credits handler — any 402 fires the top-up modal
-  if (res.status === 402 && data.error === 'insufficient_credits') {
+  else if (res.status === 402 && data.error === 'insufficient_credits') {
     if (typeof handleInsufficientCredits === 'function') handleInsufficientCredits(data);
   }
   // Refresh credit counter after every successful charging action
@@ -2062,11 +2066,11 @@ function renderTopAlertBanner() {
     </div>`;
 }
 
-// Upgrade modal — every locked action button funnels here. Sends them to the
-// $997 Stripe Payment Link with their client_reference_id appended so the
-// webhook can match the payment back to the demo account.
+// Upgrade modal — every locked action button funnels here. Click "Unlock"
+// hits /api/demo/unlock-checkout which creates a Stripe Checkout Session with
+// success_url baked to land them back on THEIR dashboard post-payment with
+// ?unlocked=success. The poll-and-reload then surfaces the unredacted matches.
 function openUpgradeModal() {
-  const url = state.demo?.unlock_url || 'https://buy.stripe.com/dRm9AT7Dq7W5aJf4V18IU0O';
   let modal = document.getElementById('upgrade-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -2106,12 +2110,32 @@ function openUpgradeModal() {
           500 monthly pitch credits, top-ups available
         </li>
       </ul>
-      <a href="${esc(url)}" style="display:block;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(99,102,241,0.3);">Unlock pipeline →</a>
-      <p style="text-align:center;font-size:12px;color:#86868b;margin:14px 0 0;">Secure checkout via Stripe. Pipeline unlocks the moment payment lands.</p>
+      <button id="upgrade-cta-btn" onclick="startDemoCheckout()" style="width:100%;display:block;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(99,102,241,0.3);cursor:pointer;">Unlock pipeline →</button>
+      <p style="text-align:center;font-size:12px;color:#86868b;margin:14px 0 0;">$997 AUD · Secure checkout via Stripe · Pipeline unlocks instantly on payment.</p>
     </div>
   `;
   modal.style.display = 'flex';
 }
+async function startDemoCheckout() {
+  const btn = document.getElementById('upgrade-cta-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Opening checkout…'; }
+  try {
+    const data = await apiPost('/api/demo/unlock-checkout', {});
+    if (data.ok && data.url) {
+      window.location.href = data.url;
+    } else if (data.error === 'stripe_not_configured') {
+      showToast('Checkout temporarily unavailable. Email hi@zacdeane.com to unlock manually.', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Unlock pipeline →'; }
+    } else {
+      showToast(data.error || 'Could not start checkout. Try again.', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Unlock pipeline →'; }
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Unlock pipeline →'; }
+  }
+}
+window.startDemoCheckout = startDemoCheckout;
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
@@ -4137,6 +4161,11 @@ async function runPipeline() {
       }
       showToast(`Pipeline complete. Checking for new matches...`, 'success');
       pollForNewMatches();
+    } else if (res.status === 402 && (data.error === 'demo_locked' || data.demo_locked)) {
+      // Demo prospect ran out of starter credits — funnel to upgrade
+      openUpgradeModal();
+    } else if (res.status === 402 && data.error === 'insufficient_credits') {
+      handleInsufficientCredits(data);
     } else {
       showToast('Pipeline run failed.', 'error');
     }

@@ -711,20 +711,33 @@ router.post('/onboard/prefill', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'invalid_url' });
   }
 
+  // Each phase is wrapped in its own try/catch so a partial failure still
+  // returns whatever could be extracted (e.g. socials parsed even if the
+  // Claude call fails). Helps pinpoint where prefill is breaking from logs.
+  let html = '';
+  let text = '';
+  const socials = { instagram: null, linkedin: null, twitter: null, facebook: null };
+
+  // ── Phase 1: fetch the page ────────────────────────────────────────────
   try {
-    // 1) Fetch the page
     const fetchRes = await fetch(url, {
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
       redirect: 'follow',
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FindAPodcastBot/1.0; +https://findapodcast.io)' },
     });
     if (!fetchRes.ok) {
+      logger.warn('prefill: fetch returned non-OK', { url, status: fetchRes.status });
       return res.json({ ok: false, error: 'fetch_failed', status: fetchRes.status });
     }
-    const html = await fetchRes.text();
+    html = await fetchRes.text();
+  } catch (fetchErr) {
+    logger.warn('prefill: fetch threw', { url, error: fetchErr.message });
+    return res.json({ ok: false, error: 'fetch_failed', message: fetchErr.message });
+  }
 
-    // 2) Strip tags + collapse whitespace + truncate to keep token cost down
-    const text = (html || '')
+  // ── Phase 2: strip + truncate ──────────────────────────────────────────
+  try {
+    text = (html || '')
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
       .replace(/<[^>]+>/g, ' ')
@@ -733,20 +746,29 @@ router.post('/onboard/prefill', async (req, res) => {
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 8000);
+  } catch (stripErr) {
+    logger.warn('prefill: html strip failed', { url, error: stripErr.message });
+    text = '';
+  }
 
-    // 3) Pull social links from the same HTML (zero-hallucination — only what's literally there)
+  // ── Phase 3: regex-extract social links (always attempted, never fails) ─
+  try {
     const findLink = (re) => {
       const m = html.match(re);
       return m ? m[0].split(/['"<>]/)[0] : null;
     };
-    const socials = {
-      instagram: findLink(/https?:\/\/(?:www\.)?instagram\.com\/[a-z0-9_.]{2,30}\/?/i),
-      linkedin:  findLink(/https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/(?:in|company)\/[a-z0-9\-_.]{2,}\/?/i),
-      twitter:   findLink(/https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[a-z0-9_]{1,15}\/?/i),
-      facebook:  findLink(/https?:\/\/(?:www\.)?facebook\.com\/[a-z0-9.\-]{3,}\/?/i),
-    };
+    socials.instagram = findLink(/https?:\/\/(?:www\.)?instagram\.com\/[a-z0-9_.]{2,30}\/?/i);
+    socials.linkedin  = findLink(/https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/(?:in|company)\/[a-z0-9\-_.]{2,}\/?/i);
+    socials.twitter   = findLink(/https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[a-z0-9_]{1,15}\/?/i);
+    socials.facebook  = findLink(/https?:\/\/(?:www\.)?facebook\.com\/[a-z0-9.\-]{3,}\/?/i);
+  } catch (regexErr) {
+    logger.warn('prefill: socials regex threw', { url, error: regexErr.message });
+  }
 
-    // 4) Ask Claude to extract a structured profile (low temperature, JSON only)
+  // ── Phase 4: Claude profile extraction ─────────────────────────────────
+  // If Claude fails, we still return the socials so the form auto-fills SOMETHING.
+  // Better partial than total failure for the customer experience.
+  try {
     const anthropic = getAnthropicClient();
     const prompt = `You are extracting a public-speaker profile from a website. Reply with ONLY a JSON object.
 
@@ -804,9 +826,22 @@ Strict rules:
 
     logger.info('onboard prefill success', { url, hasProfile: !!profile.name });
     return res.json({ ok: true, profile });
-  } catch (err) {
-    logger.warn('onboard prefill failed', { url, error: err.message });
-    return res.status(500).json({ ok: false, error: 'prefill_failed' });
+  } catch (claudeErr) {
+    // Claude call failed (auth, rate limit, model deprecation, etc.) — log
+    // detail to server logs but degrade gracefully: return whatever socials
+    // we already extracted so the form still gets some auto-fill.
+    logger.warn('prefill: claude extraction failed', {
+      url,
+      error: claudeErr.message,
+      status: claudeErr.status,
+      type: claudeErr.constructor?.name,
+    });
+    return res.json({
+      ok: true,
+      profile: { ...socials },
+      claude_error: claudeErr.message?.slice(0, 200) || 'unknown',
+      degraded: true,
+    });
   }
 });
 

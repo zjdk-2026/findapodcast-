@@ -3,7 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { sendDraft, createDraft, getMessageMetadata } = require('../services/gmailService');
+const { sendDraft, createDraft, getMessageMetadata, sendThreadedReply } = require('../services/gmailService');
 const { writeEmail } = require('../services/emailWriter');
 const { chargeCredits, awardPoints } = require('../lib/credits');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
@@ -632,6 +632,11 @@ router.post('/send-followup', async (req, res) => {
   if (!matchId) return res.status(400).json({ success: false, error: 'matchId is required.' });
   if (!body)    return res.status(400).json({ success: false, error: 'Email body is required.' });
 
+  // Demo gate
+  const { requireNotDemo } = require('../lib/demo');
+  const demoCheck = await requireNotDemo(req.clientId);
+  if (!demoCheck.allowed) return res.status(demoCheck.status).json(demoCheck.body);
+
   // Credit gate: follow-up send costs 1 credit
   const charge = await chargeCredits(req.clientId, 'followup_send', { matchId });
   if (!charge.ok) {
@@ -650,23 +655,97 @@ router.post('/send-followup', async (req, res) => {
       .single();
     if (fetchError || !match) return res.status(404).json({ success: false, error: 'Match not found.' });
 
-    let gmailSent = false;
-    if (match.clients?.gmail_refresh_token) {
-      const contactEmail = match.podcasts?.contact_email || null;
-      if (contactEmail?.includes('@')) {
-        try {
-          const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, subject || `Following up: ${match.podcasts?.title || 'your show'}`, body);
-          await sendDraft(match.clients.gmail_refresh_token, draftId);
-          gmailSent = true;
-          logger.info('Follow-up email sent', { matchId });
-        } catch (gmailErr) {
-          logger.warn('Follow-up Gmail send failed', { matchId, error: gmailErr.message });
-        }
+    const contactEmail = match.podcasts?.contact_email || null;
+    if (!match.clients?.gmail_refresh_token || !contactEmail?.includes('@')) {
+      // Mark as followed-up even if no Gmail (so the customer can manually send and have the system know)
+      await supabase.from('podcast_matches').update({ follow_up_sent: true, status: 'followed_up' }).eq('id', matchId).eq('client_id', req.clientId);
+      return res.json({ success: true, gmailSent: false, credits_balance: charge.balance });
+    }
+
+    const finalSubject = subject || `Re: ${match.email_subject_edited || match.email_subject || 'Guest pitch'}`;
+    let sentMsg = null;
+
+    // ── THREADED PATH ────────────────────────────────────────────────────────
+    // If we captured the original Gmail thread on the initial pitch send, the
+    // follow-up MUST land inside that same thread so the host sees one
+    // continuous conversation. This mirrors followupSweep.js.
+    if (match.gmail_thread_id) {
+      // Pull the most recent message's RFC-822 Message-ID for In-Reply-To.
+      // Falls back to the original pitch's message ID if no thread cache.
+      let inReplyTo = null;
+      const { data: latestMsg } = await supabase
+        .from('match_thread_messages')
+        .select('rfc822_message_id')
+        .eq('match_id', matchId)
+        .not('rfc822_message_id', 'is', null)
+        .order('sent_at', { ascending: false })
+        .limit(1)
+        .single();
+      inReplyTo = latestMsg?.rfc822_message_id || null;
+      if (!inReplyTo && match.gmail_pitch_message_id) {
+        const meta = await getMessageMetadata(match.clients.gmail_refresh_token, match.gmail_pitch_message_id);
+        inReplyTo = meta?.rfc822MessageId || null;
+      }
+
+      try {
+        sentMsg = await sendThreadedReply({
+          refreshToken: match.clients.gmail_refresh_token,
+          to:           contactEmail,
+          subject:      finalSubject,
+          body,
+          threadId:     match.gmail_thread_id,
+          inReplyTo:    inReplyTo || undefined,
+        });
+        logger.info('Manual follow-up sent (threaded)', { matchId, threadId: match.gmail_thread_id });
+      } catch (threadErr) {
+        logger.warn('Manual follow-up threaded send failed, falling back', { matchId, error: threadErr.message });
       }
     }
 
-    await supabase.from('podcast_matches').update({ follow_up_sent: true, status: 'followed_up' }).eq('id', matchId).eq('client_id', req.clientId);
-    return res.json({ success: true, gmailSent, credits_balance: charge.balance });
+    // ── FALLBACK PATH ────────────────────────────────────────────────────────
+    // Older matches with no captured threadId. Send as new email. This breaks
+    // the one-thread guarantee but is unavoidable for legacy matches.
+    if (!sentMsg) {
+      try {
+        const draftId = await createDraft(match.clients.gmail_refresh_token, contactEmail, finalSubject, body);
+        sentMsg = await sendDraft(match.clients.gmail_refresh_token, draftId);
+        logger.info('Manual follow-up sent (no thread, fallback)', { matchId });
+      } catch (gmailErr) {
+        logger.warn('Manual follow-up Gmail send failed', { matchId, error: gmailErr.message });
+      }
+    }
+
+    // Cache the outbound message so future follow-ups + replies thread off it.
+    if (sentMsg?.id) {
+      try {
+        const meta = await getMessageMetadata(match.clients.gmail_refresh_token, sentMsg.id);
+        await supabase.from('match_thread_messages').insert({
+          match_id:          matchId,
+          gmail_message_id:  sentMsg.id,
+          gmail_thread_id:   sentMsg.threadId || match.gmail_thread_id,
+          direction:         'outbound',
+          message_type:      'followup',
+          from_email:        meta?.from || null,
+          to_email:          contactEmail,
+          subject:           finalSubject,
+          body_text:         body,
+          rfc822_message_id: meta?.rfc822MessageId || null,
+          sent_at:           new Date().toISOString(),
+        });
+      } catch (logErr) {
+        logger.warn('Manual follow-up: thread cache insert failed', { matchId, error: logErr.message });
+      }
+    }
+
+    await supabase.from('podcast_matches').update({
+      follow_up_sent:           true,
+      status:                   'followed_up',
+      gmail_followup_message_id: sentMsg?.id || null,
+      last_message_at:           new Date().toISOString(),
+      message_count:             (match.message_count || 0) + 1,
+    }).eq('id', matchId).eq('client_id', req.clientId);
+
+    return res.json({ success: true, gmailSent: !!sentMsg, credits_balance: charge.balance });
   } catch (err) {
     logger.error('Send-followup route error', { matchId, error: err.message });
     return res.status(500).json({ success: false, error: 'Internal server error.' });

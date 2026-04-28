@@ -29,6 +29,22 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
   const charge = await chargeCredits(clientId, 'search_batch', { trigger: 'manual_run' });
   if (!charge.ok) {
     if (charge.error === 'insufficient_credits') {
+      // Demo prospects who burn through their 50 starter credits should see the
+      // upgrade modal, not a generic "out of credits" error. Looks the same as
+      // any other locked action, keeps the demo unbreakable on a sales call.
+      try {
+        const { data: client } = await supabase.from('clients').select('id, email, demo_mode, demo_unlocked_at').eq('id', clientId).single();
+        if (client?.demo_mode && !client?.demo_unlocked_at) {
+          const { buildUnlockUrl } = require('../lib/demo');
+          return res.status(402).json({
+            success:     false,
+            error:       'demo_locked',
+            demo_locked: true,
+            message:     'You\'ve hit the demo limit. Unlock the platform to keep finding podcasts.',
+            unlock_url:  buildUnlockUrl(client),
+          });
+        }
+      } catch { /* fall through to standard insufficient_credits */ }
       return res.status(402).json({ success: false, error: 'insufficient_credits', balance: charge.balance, needed: charge.needed });
     }
     return res.status(500).json({ success: false, error: 'credit_charge_failed' });
