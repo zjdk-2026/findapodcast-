@@ -111,6 +111,7 @@ router.post('/credits/topup-checkout', async (req, res) => {
           },
         },
       }],
+      allow_promotion_codes: true,
       customer_email: client.email,
       client_reference_id: req.clientId,
       metadata: {
@@ -171,6 +172,7 @@ router.post('/demo/unlock-checkout', async (req, res) => {
           },
         },
       }],
+      allow_promotion_codes: true,
       customer_email: client.email,
       client_reference_id: req.clientId,
       metadata: {
