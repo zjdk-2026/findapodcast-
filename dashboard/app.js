@@ -1631,13 +1631,17 @@ function renderMatchCard(match) {
               const days = Math.round((Date.now() - new Date(podcast.last_episode_date).getTime()) / 86400000);
               pills.push(`<span class="inline-pill">${days}d ago</span>`);
             }
-            if (podcast.estimated_monthly_listeners) {
-              const n = podcast.estimated_monthly_listeners;
-              const label = n >= 1000000 ? (n/1000000).toFixed(1).replace(/\.0$/,'')+'M' : n >= 1000 ? Math.round(n/1000)+'K' : n;
-              pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners from Rephonic">~${label}/mo</span>`);
-            } else if (podcast.listen_score) {
-              const est = estimateAudience(podcast.listen_score);
-              pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners based on listen score">~${est.label}/mo</span>`);
+            // Showcase card never shows synthetic audience numbers — would
+            // be a fabrication. Real shows can show their estimate.
+            if (!match._showcase) {
+              if (podcast.estimated_monthly_listeners) {
+                const n = podcast.estimated_monthly_listeners;
+                const label = n >= 1000000 ? (n/1000000).toFixed(1).replace(/\.0$/,'')+'M' : n >= 1000 ? Math.round(n/1000)+'K' : n;
+                pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners from Rephonic">~${label}/mo</span>`);
+              } else if (podcast.listen_score) {
+                const est = estimateAudience(podcast.listen_score);
+                pills.push(`<span class="inline-pill" style="background:rgba(99,102,241,0.08);color:#6366f1;border-color:rgba(99,102,241,0.2);" title="Estimated monthly listeners based on listen score">~${est.label}/mo</span>`);
+              }
             }
             if (podcast.country) pills.push(`<span class="inline-pill">${esc(podcast.country)}</span>`);
             return pills.join('');
