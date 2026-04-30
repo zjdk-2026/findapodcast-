@@ -1901,7 +1901,12 @@ function getFilteredSorted() {
   const byTitle = new Map();
   for (const m of state.matches) {
     const title = (m.podcasts?.title || '').toLowerCase().trim();
-    const key   = title || m.podcast_id || m.id;
+    // In demo mode, redacted titles collapse to block characters of similar
+    // length and would otherwise collide on the dedup key, hiding most cards.
+    // Skip title-based dedup when the title is just blocks; fall through to
+    // podcast_id which is always unique.
+    const isRedacted = title && /^█+$/.test(title);
+    const key   = (isRedacted ? null : title) || m.podcast_id || m.id;
     const existing = byTitle.get(key);
     if (!existing) {
       byTitle.set(key, m);
