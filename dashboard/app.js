@@ -148,21 +148,25 @@ function extractToken() {
 }
 
 // ── Score helpers ─────────────────────────────────────────────────────
+// Thresholds are deliberately wide on the high end - real-world fit
+// scores cluster in the 60-90 range, and showing every decent match as
+// "yellow / mid" undersells the matches. Anything 65+ is a real fit
+// worth pitching.
 function scoreTier(score) {
-  if (score >= 80) return 'high';
-  if (score >= 60) return 'mid';
+  if (score >= 65) return 'high';
+  if (score >= 40) return 'mid';
   return 'low';
 }
 
 function scoreColorClass(score) {
-  if (score >= 80) return 'high';
-  if (score >= 60) return 'mid';
+  if (score >= 65) return 'high';
+  if (score >= 40) return 'mid';
   return 'low';
 }
 
 function scoreColorVar(score) {
-  if (score >= 80) return 'var(--success)';
-  if (score >= 60) return 'var(--warning)';
+  if (score >= 65) return 'var(--success)';
+  if (score >= 40) return 'var(--warning)';
   return 'var(--danger)';
 }
 
@@ -2413,7 +2417,7 @@ function renderDashboard(data) {
   }
 
   // Stats
-  const highCount = state.matches.filter((m) => (m.fit_score || 0) >= 60).length;
+  const highCount = state.matches.filter((m) => (m.fit_score || 0) >= 65).length;
   const avgScore  = state.matches.length > 0
     ? Math.round(state.matches.reduce((s, m) => s + (m.fit_score || 0), 0) / state.matches.length)
     : 0;
@@ -2559,7 +2563,7 @@ function updateStatBadges() {
   const m = state.matches;
   renderStats({
     total:    m.length,
-    high:     m.filter((x) => (x.fit_score || 0) >= 60).length,
+    high:     m.filter((x) => (x.fit_score || 0) >= 65).length,
     avgScore: m.length > 0
       ? Math.round(m.reduce((s, x) => s + (x.fit_score || 0), 0) / m.length)
       : 0,
