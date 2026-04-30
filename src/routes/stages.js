@@ -138,6 +138,7 @@ router.post('/api/stages/waitlist', async (req, res) => {
   }
 
   // Fire-and-forget owner notification. Resend REST API (no SDK installed).
+  // Using same FROM pattern as digestEmail / onboard welcome (proven verified sender).
   if (process.env.RESEND_API_KEY) {
     const subject = `New Find A Stage waitlist signup: ${email}`;
     const lines = [
@@ -148,16 +149,25 @@ router.post('/api/stages/waitlist', async (req, res) => {
       clientId ? `<strong>Existing client:</strong> Yes (${clientId})` : `<strong>Existing client:</strong> No (anonymous lead)`,
     ].filter(Boolean);
     const html = `<h2>Find A Stage waitlist signup</h2><p>${lines.join('<br>')}</p><p style="color:#888;font-size:12px;">Saved to Supabase stage_waitlist table.</p>`;
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from:    process.env.RESEND_FROM_EMAIL || 'noreply@findapodcast.io',
-        to:      ['hi@zacdeane.com'],
-        subject,
-        html,
-      }),
-    }).catch((err) => logger.warn('stage waitlist notify failed', { error: err.message }));
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'hi@zacdeane.com';
+    const ownerEmail = process.env.OWNER_NOTIFY_EMAIL || 'hi@zacdeane.com';
+    try {
+      const resp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: fromEmail, to: [ownerEmail], subject, html }),
+      });
+      if (!resp.ok) {
+        const errText = await resp.text();
+        logger.warn('stage waitlist notify rejected', { status: resp.status, body: errText.slice(0, 300) });
+      } else {
+        logger.info('stage waitlist notify sent', { to: ownerEmail });
+      }
+    } catch (err) {
+      logger.warn('stage waitlist notify failed', { error: err.message });
+    }
+  } else {
+    logger.warn('stage waitlist notify skipped — RESEND_API_KEY missing');
   }
 
   res.json({ ok: true });
