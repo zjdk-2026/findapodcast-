@@ -325,10 +325,11 @@ function renderHeroSection() {
   else if (pitchedCount > 0) subtitle = `${pitchedCount} pitch${pitchedCount > 1 ? 'es' : ''} out in the world. Check back for replies.`;
   else if (newCount > 0) subtitle = `${newCount} new show${newCount > 1 ? 's' : ''} ready to review. Start pitching today.`;
 
+  // Hero already shows the reply via the dominant "Open reply" Move pill +
+  // the red dot next to the user's name. A second "X new replies" chip
+  // duplicates the signal and adds visual noise. Keeping the chips array
+  // for any future use, but no chips currently render.
   const chips = [];
-  if (unseenRepliedCount > 0) {
-    chips.push(`<span class="stat-chip stat-chip-blue" style="background:#FF3B30;color:#fff;">${unseenRepliedCount} new repl${unseenRepliedCount === 1 ? 'y' : 'ies'}</span>`);
-  }
 
   const airedMatches   = state.matches.filter((m) => m.status === 'appeared');
   const lifetimeTotal  = airedMatches.reduce((t, m) => t + (estimateAudience(m.podcasts?.listen_score).low), 0);
@@ -3392,6 +3393,7 @@ async function markAsFollowedUpManually(matchId) {
     if (data.success) {
       updateMatchInState(matchId, { status: 'followed_up' });
       renderGrid();
+      updateStatBadges();
       showToast('Marked as Followed Up.', 'success');
     }
   } catch (err) {
