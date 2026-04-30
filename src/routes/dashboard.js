@@ -110,6 +110,21 @@ router.get('/dashboard/:token', async (req, res) => {
     const demoLocked = isDemoLocked(client);
     const demoExpired = isDemoExpired(client);
     const rawMatches = matches || [];
+
+    // Pin showcase contact info — enrichment occasionally clobbers the
+    // contact_email on the Breakthrough Moment seed row. The card is
+    // useless without Zac's real email visible, so force-set it here on
+    // every dashboard fetch as a permanent guard.
+    const SHOWCASE_PODCAST_ID = 'fa9303fd-3567-4535-9c6f-b918723d8c68';
+    for (const m of rawMatches) {
+      if (m.podcast_id === SHOWCASE_PODCAST_ID && m.podcasts) {
+        m.podcasts.contact_email      = 'hi@zacdeane.com';
+        m.podcasts.contact_unlocked_at = m.podcasts.contact_unlocked_at || new Date().toISOString();
+        m.podcasts.contact_confidence = 'high';
+        m.podcasts.host_name           = m.podcasts.host_name || 'Zac Deane';
+      }
+    }
+
     const outboundMatches = demoLocked ? rawMatches.map(redactForDemo) : rawMatches;
 
     return res.json({
