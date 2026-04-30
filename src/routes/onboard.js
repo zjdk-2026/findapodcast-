@@ -495,6 +495,38 @@ router.post('/onboard', async (req, res) => {
       });
     }
 
+    // Seed every demo dashboard with the Breakthrough Moment showcase card so
+    // prospects see one fully-unlocked, real-host, real-email match the moment
+    // they land. Bypasses redaction via SHOWCASE_PODCAST_ID in lib/demo.js.
+    // Failure here must NOT block signup — log and continue.
+    try {
+      const SHOWCASE_PODCAST_ID = 'fa9303fd-3567-4535-9c6f-b918723d8c68';
+      await supabase.from('podcast_matches').insert({
+        client_id:            data.id,
+        podcast_id:           SHOWCASE_PODCAST_ID,
+        fit_score:            94,
+        relevance_score:      95,
+        audience_score:       88,
+        recency_score:        95,
+        guest_quality_score:  92,
+        reach_score:          85,
+        contactability_score: 100,
+        brand_score:          95,
+        seo_score:            88,
+        booking_likelihood:   'high',
+        show_summary:         'Zac Deane sits down with founders, coaches, and creators to unpack the single moment that broke them open and rebuilt them stronger. Books guests across business, mindset, health, and creative work. Weekly drops, ~45 min interviews, host actively replies to pitches.',
+        why_this_client_fits: 'Zac specifically hunts for guests who have a CONCRETE turning-point story (not a generic founder origin) plus a system or framework they built afterward. If you have a real before/after moment AND a methodology you have shipped, you map directly to his guest archetype.',
+        best_pitch_angle:     'Lead with the single sentence version of your breakthrough moment, then tee up the framework or business you built from it. Skip the credential dump.',
+        episode_to_reference: 'Any recent episode where the guest unpacks their lowest 90 days and the exact moment that broke the pattern.',
+        email_subject:        'Guest pitch for The Breakthrough Moment',
+        email_body:           `Hi Zac,\n\nFound your show through a podcast search. The way you let guests sit in the messy middle of their breakthrough story before pulling out the system - that's rare.\n\nMy moment: [one-sentence version of the turning point that flipped your trajectory]. What I built from it: [the framework or business you now run].\n\nThe specific story I'd bring to your audience: [the part most listeners haven't heard - the cost, the doubt, the 3am decision].\n\nIf the angle lands, I'll send a 90-second voice note unpacking it. If not, no chase.\n\nThanks for the show.\n\n[Your name]`,
+        red_flags:            [],
+        status:               'new',
+      });
+    } catch (showcaseErr) {
+      logger.warn('Demo showcase seed failed (non-fatal)', { clientId: data.id, error: showcaseErr.message });
+    }
+
     const baseUrl   = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
     const dashboardUrl = `${baseUrl}/dashboard/${data.dashboard_token}`;
     const gmailAuthUrl = `${baseUrl}/auth/gmail?clientId=${data.id}`;

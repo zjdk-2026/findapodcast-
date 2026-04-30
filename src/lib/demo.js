@@ -32,6 +32,11 @@
 
 const STRIPE_UNLOCK_URL = 'https://buy.stripe.com/dRm9AT7Dq7W5aJf4V18IU0O';
 
+// Showcase podcast — Zac's "Breakthrough Moment" row. Bypasses redaction in
+// demo mode so every prospect sees one fully-unlocked card with real host info,
+// real email, and a working pitch button. Drives the wow on sales calls.
+const SHOWCASE_PODCAST_ID = 'fa9303fd-3567-4535-9c6f-b918723d8c68';
+
 function redactString(str, minLen = 8, maxLen = 22) {
   if (!str) return '████████';
   // Keep length proportional to the original so the UI doesn't all redact identically.
@@ -52,6 +57,12 @@ function bucketAudience(n) {
 function redactForDemo(match) {
   if (!match) return match;
   const p = match.podcasts || {};
+
+  // Showcase card — never redact. Prospects see Zac's real podcast, real email,
+  // working pitch button. The "this is what you'll be looking at" proof.
+  if (p.id === SHOWCASE_PODCAST_ID || match.podcast_id === SHOWCASE_PODCAST_ID) {
+    return { ...match, _locked: false, _showcase: true };
+  }
 
   // Build a redacted podcast clone — null out every identity/contact field,
   // keep score-relevant fields and bucketed numbers.
