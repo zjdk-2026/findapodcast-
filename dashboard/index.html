@@ -64,10 +64,10 @@
 
     <div class="dropdown-divider"></div>
     <p class="dropdown-section-label">Grow</p>
-    <button class="dropdown-item dropdown-item-highlight" onclick="openReferralModal()">
+    <div class="dropdown-item dropdown-item-highlight" style="cursor:default;opacity:0.7;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Refer a Friend. Earn Commission. <span style="font-size:10px;font-weight:700;background:rgba(99,102,241,0.15);color:var(--accent);border-radius:20px;padding:2px 7px;margin-left:4px;">Coming Soon</span>
-    </button>
+    </div>
     <button class="dropdown-item" onclick="openTestimonialLink()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       Leave a Review
@@ -453,6 +453,12 @@
         <!-- Pitch style -->
         <div><label class="field-label">What does your ideal pitch to a podcast host sound like?</label><textarea id="profile-pitch-style" rows="3" class="email-edit-field" placeholder="Tell us the angle, stories, or credentials you always want included. We use this to craft every pitch in your voice."></textarea></div>
 
+        <!-- Offer / lead magnet -->
+        <div><label class="field-label">What do you want listeners to do after the episode?</label><input type="text" id="profile-offer" class="email-edit-field" placeholder="e.g. Book a free discovery call, buy my book, join my mastermind, download my free guide" /></div>
+
+        <!-- Booking link -->
+        <div><label class="field-label">Booking / scheduling link <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">(optional - paste your Calendly, SavvyCal, etc.)</span></label><input type="text" id="profile-booking-link" class="email-edit-field" placeholder="https://calendly.com/yourname/30min" /></div>
+
         <!-- Pitch settings -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div>
@@ -524,16 +530,15 @@
           <p style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Appended to the bottom of every pitch email.</p>
         </div>
 
-        <!-- Community opt-in -->
-        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px 18px;display:flex;align-items:flex-start;gap:14px;">
-          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-top:2px;">
-            <input type="checkbox" id="profile-share-community" style="opacity:0;width:0;height:0;" onchange="document.getElementById('community-toggle-track').style.background=this.checked?'#6366f1':'#d1d5db';document.getElementById('community-toggle-thumb').style.transform=this.checked?'translateX(20px)':'translateX(0)';" />
-            <span id="community-toggle-track" style="position:absolute;inset:0;background:#d1d5db;border-radius:999px;transition:background 0.2s;cursor:pointer;"></span>
-            <span id="community-toggle-thumb" style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:transform 0.2s;pointer-events:none;"></span>
-          </label>
+        <!-- Community opt-in (coming soon) -->
+        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px 18px;display:flex;align-items:flex-start;gap:14px;opacity:0.7;">
+          <input type="checkbox" id="profile-share-community" style="display:none;" />
+          <div style="display:flex;align-items:center;justify-content:center;width:44px;height:24px;flex-shrink:0;margin-top:2px;background:#d1d5db;border-radius:999px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:#4c1d95;">Show my profile in the community leaderboard</div>
-            <div style="font-size:12px;color:#6d28d9;margin-top:2px;line-height:1.5;">Your name, photo, social links, and stats will be visible to other members. Turn off at any time to go anonymous.</div>
+            <div style="font-size:13px;font-weight:700;color:#4c1d95;">Community leaderboard <span style="font-size:10px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:20px;padding:2px 8px;margin-left:6px;">Coming Soon</span></div>
+            <div style="font-size:12px;color:#6d28d9;margin-top:2px;line-height:1.5;">Show your profile, stats, and links to other members. Opt-in or stay private. Launching soon.</div>
           </div>
         </div>
 

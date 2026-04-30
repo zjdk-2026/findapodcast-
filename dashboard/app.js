@@ -723,8 +723,8 @@ function computeYourMove() {
     return {
       label: 'Your move',
       text:  `${stalePitches.length} pitch${stalePitches.length > 1 ? 'es' : ''} past 7 days. Most bookings land on the second touch.`,
-      cta:   'Review',
-      action: `setFilter('sent')`,
+      cta:   'Coming soon',
+      action: `void(0)`,
       tone: 'warm',
     };
   }
@@ -732,8 +732,8 @@ function computeYourMove() {
     return {
       label: 'Your move',
       text:  `${newReady.length} fresh match${newReady.length > 1 ? 'es' : ''} ready to review.`,
-      cta:   'Review',
-      action: `setFilter('new')`,
+      cta:   'Coming soon',
+      action: `void(0)`,
       tone: 'warm',
     };
   }
@@ -4403,6 +4403,8 @@ $('profile-instagram').value    = c.social_instagram   || '';
   $('profile-bio-short').value    = c.bio_short          || '';
   $('profile-bio-long').value     = c.bio_long           || '';
   $('profile-pitch-style').value  = c.pitch_style        || '';
+  if ($('profile-offer'))         $('profile-offer').value         = c.lead_magnet  || '';
+  if ($('profile-booking-link'))  $('profile-booking-link').value  = c.booking_link || '';
   // Pace selector
   const dailyTarget = c.daily_target || 10;
   $('profile-daily').value = dailyTarget;
@@ -4450,6 +4452,8 @@ async function saveProfile() {
     bio_short:        $('profile-bio-short').value.trim(),
     bio_long:         $('profile-bio-long').value.trim(),
     pitch_style:      $('profile-pitch-style').value.trim(),
+    lead_magnet:      ($('profile-offer')?.value         || '').trim(),
+    booking_link:     ($('profile-booking-link')?.value  || '').trim(),
     ...countryToLangGeo($('profile-country')?.value || 'Any'),
   };
   try {
