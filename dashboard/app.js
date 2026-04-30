@@ -394,16 +394,16 @@ function renderHeroSection() {
             </button>
           </div>`;
         })() : ''}
-        <!-- Pill 2: PROGRESS — subtle. Hidden when 0 (avoids 'shame at zero'). Streak only when meaningful (>= 3 days). -->
-        ${sentThisWeek > 0 ? `
+        <!-- Pill 2: PROGRESS — subtle. Hidden when 0 (avoids 'shame at zero'). Streak only when meaningful (>= 3 days). Hidden in demo mode (prospect hasn't actually pitched, "X of 15" is misleading). -->
+        ${sentThisWeek > 0 && !state.demo?.active ? `
           <div style="display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-tertiary);">
             <span style="color:var(--text-secondary);font-weight:600;">${sentThisWeek} of ${weeklyTarget}</span>
             <span>this week</span>
             ${streak >= 3 ? `<span style="color:var(--border-medium);">·</span><span>${streak}-day streak</span>` : ''}
             ${weekProgress >= 100 ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;"></span>` : ''}
           </div>` : ''}
-        <!-- Pill 3: REACH — subtle. Professional language. -->
-        ${lifetimeTotal > 0 ? `
+        <!-- Pill 3: REACH — subtle. Professional language. Hidden in demo mode (prospect hasn't aired anything yet). -->
+        ${lifetimeTotal > 0 && !state.demo?.active ? `
           <div style="display:inline-flex;align-items:baseline;gap:6px;background:transparent;border:1px solid var(--border-light);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-tertiary);">
             <span style="color:var(--text-secondary);font-weight:600;">${formatNumber(lifetimeTotal)}</span>
             <span>listener reach</span>
