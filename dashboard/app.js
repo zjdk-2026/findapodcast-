@@ -3226,6 +3226,47 @@ function toggleInlinePitch(matchId) {
 }
 window.toggleInlinePitch = toggleInlinePitch;
 
+// ── Pitch preset templates ─────────────────────────────────────────────
+// Two flavours:
+//   1. Subject-only: just swaps the subject line, keeps the AI-drafted body.
+//      Good for tweaking the framing of the AI pitch.
+//   2. Full template: swaps subject AND body. Pre-written short alternatives
+//      to the long AI pitch — useful when the host's email looks like
+//      they want quick + casual, not a full pitch.
+function buildPitchPresets(podcast, client) {
+  const t        = podcast?.title    || 'your show';
+  const host     = (podcast?.host_name || '').split(' ')[0] || 'there';
+  const fromName = (client?.name      || '').split(' ')[0] || '';
+  const sig      = fromName ? `\n\n${fromName}` : '';
+
+  return [
+    // ── Subject-only swaps (keep current body) ─────────────────────────
+    { type: 'subject', label: `Guest inquiry for ${t}`, subject: `Guest inquiry for ${t}` },
+    { type: 'subject', label: `Quick guest pitch for ${t}`, subject: `Quick guest pitch for ${t}` },
+    { type: 'subject', label: `Would love to join you on ${t}`, subject: `Would love to join you on ${t}` },
+
+    // ── Full templates (swap subject + body) ───────────────────────────
+    {
+      type:    'full',
+      label:   `Soft inquiry — what kind of guests are you looking for?`,
+      subject: `What kind of guests are you looking for on ${t}?`,
+      body:    `Hi ${host},\n\nQuick one — what kind of guests are you actively booking on ${t} right now? Want to make sure I'd be a real fit before sending the full pitch.\n\nIf you're open to it, I'll send my one-pager and the angle I'd bring to your audience.\n\n(Pretty sure I'd be your perfect guest 😉)${sig}`,
+    },
+    {
+      type:    'full',
+      label:   `Direct — applying as a guest`,
+      subject: `Guest application for ${t} — what do you need from me?`,
+      body:    `Hi ${host},\n\nI'd love to apply as a guest for ${t}. Rather than guess at your format, what do you need from a guest application — topic outline, sample audio, anything else?\n\nHappy to send the full kit. Just want to respect your process.${sig}`,
+    },
+    {
+      type:    'full',
+      label:   `Curious — short ask, no hard pitch`,
+      subject: `Open to guest pitches for ${t}?`,
+      body:    `Hi ${host},\n\nFan of ${t}. Are you currently open to guest pitches?\n\nIf yes, I'll send a 3-line summary of the angle I'd bring + a link to past appearances. If not, I'll save you the inbox clutter.\n\nEither way — keep up the good work.${sig}`,
+    },
+  ];
+}
+
 function sanitizePitchFields(subject, body) {
   // Detect if body is a raw JSON string (AI response wasn't parsed before saving)
   if (body && body.trim().startsWith('{')) {
@@ -3254,17 +3295,25 @@ function populateInlinePitch(matchId) {
   if (bodyEl)  bodyEl.value  = isFallback ? '' : currentBody;
   // Populate subject presets — podcast-specific options
   if (presetEl) {
-    const t = match.podcasts?.title || 'your show';
-    const presets = [
-      `Guest inquiry for ${t}`,
-      `Quick guest pitch for ${t}`,
-      `Would love to join you on ${t}`,
-    ];
-    presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
-      presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    const presets = buildPitchPresets(match.podcasts, state.client);
+    presetEl.innerHTML = '<option value="">Choose a template…</option>' +
+      '<optgroup label="Quick subject swaps (keeps your current body)">' +
+        presets.filter(p => p.type === 'subject').map((p, i) => `<option value="s:${i}">${esc(p.label)}</option>`).join('') +
+      '</optgroup>' +
+      '<optgroup label="Full short templates (subject + body)">' +
+        presets.filter(p => p.type === 'full').map((p, i) => `<option value="f:${i}">${esc(p.label)}</option>`).join('') +
+      '</optgroup>';
     presetEl.style.display = 'block';
     presetEl.onchange = () => {
-      if (presetEl.value && subjEl) { subjEl.value = presetEl.value; presetEl.value = ''; }
+      if (!presetEl.value || !subjEl) return;
+      const [kind, idx] = presetEl.value.split(':');
+      const list = presets.filter(p => p.type === (kind === 's' ? 'subject' : 'full'));
+      const chosen = list[parseInt(idx, 10)];
+      if (chosen) {
+        subjEl.value = chosen.subject;
+        if (chosen.type === 'full' && bodyEl) bodyEl.value = chosen.body;
+      }
+      presetEl.value = '';
       updatePitchPreview(matchId);
     };
   }
@@ -3668,19 +3717,37 @@ function openEmailModal(matchId) {
 
   // Populate subject preset dropdown with podcast-specific options
   if (presetEl) {
-    const t = podcast.title || 'your show';
-    const presets = isAppeared ? [
-      `Thank you for having me on ${t}`,
-      'Really enjoyed our conversation',
-      'Thanks for the episode',
-    ] : [
-      `Guest inquiry for ${t}`,
-      `Quick guest pitch for ${t}`,
-      `Would love to join you on ${t}`,
-    ];
-    presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
-      presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
-    presetEl.onchange = () => { if (presetEl.value && subjectEl) { subjectEl.value = presetEl.value; presetEl.value = ''; } };
+    if (isAppeared) {
+      const t = podcast.title || 'your show';
+      const presets = [
+        `Thank you for having me on ${t}`,
+        'Really enjoyed our conversation',
+        'Thanks for the episode',
+      ];
+      presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
+        presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+      presetEl.onchange = () => { if (presetEl.value && subjectEl) { subjectEl.value = presetEl.value; presetEl.value = ''; } };
+    } else {
+      const presets = buildPitchPresets(podcast, state.client);
+      presetEl.innerHTML = '<option value="">Choose a template…</option>' +
+        '<optgroup label="Quick subject swaps (keeps your current body)">' +
+          presets.filter(p => p.type === 'subject').map((p, i) => `<option value="s:${i}">${esc(p.label)}</option>`).join('') +
+        '</optgroup>' +
+        '<optgroup label="Full short templates (subject + body)">' +
+          presets.filter(p => p.type === 'full').map((p, i) => `<option value="f:${i}">${esc(p.label)}</option>`).join('') +
+        '</optgroup>';
+      presetEl.onchange = () => {
+        if (!presetEl.value) return;
+        const [kind, idx] = presetEl.value.split(':');
+        const list = presets.filter(p => p.type === (kind === 's' ? 'subject' : 'full'));
+        const chosen = list[parseInt(idx, 10)];
+        if (chosen) {
+          if (subjectEl) subjectEl.value = chosen.subject;
+          if (chosen.type === 'full' && bodyEl) bodyEl.value = chosen.body;
+        }
+        presetEl.value = '';
+      };
+    }
   }
 
   const currentBody    = match.email_body_edited    || match.email_body    || '';
