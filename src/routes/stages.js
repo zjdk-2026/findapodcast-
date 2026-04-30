@@ -136,6 +136,30 @@ router.post('/api/stages/waitlist', async (req, res) => {
     logger.error('stage_waitlist insert failed', { error: error.message });
     return res.status(500).json({ ok: false, error: 'save_failed' });
   }
+
+  // Fire-and-forget owner notification. Resend REST API (no SDK installed).
+  if (process.env.RESEND_API_KEY) {
+    const subject = `New Find A Stage waitlist signup: ${email}`;
+    const lines = [
+      `<strong>Email:</strong> ${email}`,
+      city     ? `<strong>City:</strong> ${city}`         : null,
+      industry ? `<strong>Industry / Niche:</strong> ${industry}` : null,
+      notes    ? `<strong>Notes:</strong> ${notes}`       : null,
+      clientId ? `<strong>Existing client:</strong> Yes (${clientId})` : `<strong>Existing client:</strong> No (anonymous lead)`,
+    ].filter(Boolean);
+    const html = `<h2>Find A Stage waitlist signup</h2><p>${lines.join('<br>')}</p><p style="color:#888;font-size:12px;">Saved to Supabase stage_waitlist table.</p>`;
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from:    process.env.RESEND_FROM_EMAIL || 'noreply@findapodcast.io',
+        to:      ['hi@zacdeane.com'],
+        subject,
+        html,
+      }),
+    }).catch((err) => logger.warn('stage waitlist notify failed', { error: err.message }));
+  }
+
   res.json({ ok: true });
 });
 
