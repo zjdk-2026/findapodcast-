@@ -46,6 +46,7 @@ const ACTIONS = {
   ai_draft_reply:       { credits: -1,  points: 0  },
   interview_prep:       { credits: -1,  points: 1  },
   unlock:               { credits: -1,  points: 1  },
+  deep_enrich:          { credits: -2,  points: 1  },
   search_batch:         { credits: -10, points: 10 },
   stage_search_batch:   { credits: -5,  points: 5  },
   voice_intro_attached: { credits: 0,   points: 2  },

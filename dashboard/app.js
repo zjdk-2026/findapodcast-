@@ -1163,6 +1163,23 @@ function actionButtonsHtml(match) {
     </button>`);
   }
 
+  // ── Deep Enrich button ──
+  // Show on any card that has a website/apple_url AND is missing social links.
+  // Uses SGAI to scrape the website for Instagram, Facebook, LinkedIn, X/Twitter,
+  // YouTube, TikTok, email. Costs 2 credits per use.
+  const hasWebsiteOrDir = !!(podcast.website || podcast.apple_url || podcast.spotify_url);
+  const missingSocial  = !isValidSocialProfile(podcast.instagram_url, 'instagram') ||
+                         !isValidSocialProfile(podcast.twitter_url, 'twitter') ||
+                         !isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
+                         !isValidSocialProfile(podcast.facebook_url, 'facebook') ||
+                         !isValidSocialProfile(podcast.youtube_url, 'youtube') ||
+                         !isValidSocialProfile(podcast.tiktok_url, 'tiktok');
+  if (hasWebsiteOrDir && missingSocial) {
+    buttons.push(`<button class="btn btn-xs sgai-deep-btn" onclick="deepEnrichCard('${id}')" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #ddd6fe;font-weight:600;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg>Deep Enrich - 2cr
+    </button>`);
+  }
+
   const hasContactEmail = !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
   const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
                     isValidSocialProfile(podcast.twitter_url, 'twitter') ||
@@ -1347,6 +1364,76 @@ async function enrichAICard(matchId) {
   }
 }
 window.enrichAICard = enrichAICard;
+
+// ── Deep Enrich Card —────────────────────────────────────────────────────
+// Uses SGAI to scrape the podcast's website for social links + email.
+// Costs 2 credits charged to the client's balance.
+async function deepEnrichCard(matchId) {
+  const btn = document.querySelector(`.sgai-deep-btn[onclick*="'${matchId}'"]`);
+  const originalText = btn ? btn.innerText : 'Deep Enrich';
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32 20" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg>Scraping site…
+      </span>`;
+      btn.style.background = '#ede9fe';
+      btn.style.color = '#7c3aed';
+      btn.style.cursor = 'wait';
+    }
+
+    const data = await apiPost(`/api/enrich-ai/deep/${matchId}`, {});
+
+    if (!data.ok) {
+      const errorMap = {
+        insufficient_credits: 'Not enough credits. Deep Enrich costs 2 credits.',
+        podcast_not_found:    'Podcast not found in database.',
+        no_url_available:     'No website URL available to scrape.',
+        empty_result:         'Could not extract data from this website.',
+        sgai_timeout:         'ScrapeGraphAI timed out. Try again.',
+        sgai_api_error:       'Deep enrichment failed. Try again later.',
+        db_update_failed:     'Failed to save enriched data.',
+      };
+      const msg = errorMap[data.error?.split(':')[0]] || data.error || 'Deep enrichment failed.';
+      showToast(msg, 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.cursor = 'pointer';
+        btn.style.background = '#f5f3ff';
+        btn.style.color = '#7c3aed';
+      }
+      return;
+    }
+
+    // Success — update the match in state with enriched fields
+    if (data.podcast) {
+      const match = state.matches.find(m => m.id === matchId);
+      if (match) {
+        match.podcasts = { ...match.podcasts, ...data.podcast };
+      }
+    }
+
+    const fields = data.fields_found && data.fields_found.length
+      ? ` (${data.fields_found.length} fields)`
+      : '';
+    showToast(`🎯 Deep enrich complete${fields}!`, 'success');
+
+    // Re-render the card to show new social links
+    updateCard(matchId);
+  } catch (err) {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      btn.style.cursor = 'pointer';
+      btn.style.background = '#f5f3ff';
+      btn.style.color = '#7c3aed';
+    }
+  }
+}
+window.deepEnrichCard = deepEnrichCard;
 
 /**
  * Silent background re-enrich for a single match.

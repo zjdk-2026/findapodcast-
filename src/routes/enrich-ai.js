@@ -16,8 +16,9 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { enrichPodcastWithSGAI, enrichBatch } = require('../services/sgai-enricher');
+const { enrichPodcastWithSGAI, enrichBatch, deepEnrichPodcastWithSGAI } = require('../services/sgai-enricher');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
+const { chargeCredits } = require('../lib/credits');
 
 const router = express.Router();
 
@@ -132,6 +133,77 @@ router.post('/enrich-ai/batch', requireDashboardToken, async (req, res) => {
     return res.json({ ok: true, results });
   } catch (err) {
     logger.error('POST /api/enrich-ai/batch failed', { clientId, error: err.message });
+    return res.status(500).json({ ok: false, error: 'internal_error' });
+  }
+});
+
+// ── POST /api/enrich-ai/deep/:podcastId ─────────────────────────────────────
+// Deep Enrich — 2 credits per use. Scrapes the podcast's website using SGAI
+// to extract social media links (Instagram, Facebook, LinkedIn, X/Twitter,
+// YouTube, TikTok), contact email, and description. Only fills null fields.
+// If no website URL exists, tries to discover it from the Apple/Spotify page.
+router.post('/enrich-ai/deep/:podcastId', requireDashboardToken, async (req, res) => {
+  const { podcastId } = req.params;
+  const clientId = req.clientId || req.body?.clientId || null;
+
+  if (!podcastId) {
+    return res.status(400).json({ ok: false, error: 'podcastId_required' });
+  }
+
+  if (!clientId) {
+    return res.status(400).json({ ok: false, error: 'clientId_required' });
+  }
+
+  try {
+    // 1. Charge 2 credits
+    const creditResult = await chargeCredits(clientId, 'deep_enrich', { podcastId });
+
+    if (!creditResult.ok) {
+      return res.status(402).json({
+        ok: false,
+        error: 'insufficient_credits',
+        message: creditResult.message || 'Insufficient credits. Deep Enrich costs 2 credits.',
+        credits_remaining: creditResult.credits_remaining || 0,
+      });
+    }
+
+    // 2. Run deep enrichment
+    const result = await deepEnrichPodcastWithSGAI(podcastId);
+
+    if (!result.ok) {
+      // Refund credits on failure
+      await supabase.rpc('add_credits', {
+        p_client_id: clientId,
+        p_amount: 2,
+        p_reason: `refund_deep_enrich: ${result.error}`,
+      }).catch(() => {});
+
+      const statusMap = {
+        podcast_not_found: 404,
+        no_url_available:  400,
+        empty_result:      422,
+        sgai_api_error:    502,
+        db_update_failed:  500,
+      };
+      return res.status(statusMap[result.error?.split(':')[0]] || 500).json(result);
+    }
+
+    // 3. Re-fetch podcast for fresh state
+    const { data: podcast } = await supabase
+      .from('podcasts')
+      .select('id, host_name, description, website, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, booking_page_url, guest_application_url, niche_tags, enriched_at, deep_enriched_at')
+      .eq('id', podcastId)
+      .single();
+
+    return res.json({
+      ok: true,
+      enriched: result.enriched,
+      fields_found: result.fields_found || [],
+      podcast: podcast || null,
+      credits_remaining: creditResult.credits_remaining,
+    });
+  } catch (err) {
+    logger.error('POST /api/enrich-ai/deep failed', { podcastId, error: err.message });
     return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
