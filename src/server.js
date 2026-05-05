@@ -33,6 +33,7 @@ const actionsRouter   = require('./routes/actions');
 const gmailRouter     = require('./routes/gmail');
 const operatorRouter  = require('./routes/operator');
 const followupRouter  = require('./routes/followup');
+const enrichAIRouter  = require('./routes/enrich-ai');
 
 // Scheduler
 const { initScheduler } = require('./scheduler');
@@ -109,6 +110,7 @@ app.use('/api', require('./routes/vision-board'));
 app.use('/api', require('./routes/leaderboard'));
 app.use('/api', require('./routes/push'));
 app.use('/api', require('./routes/unlock'));
+app.use('/api', enrichAIRouter);
 app.use(require('./routes/upload'));
 
 // ── Public static files (served before catch-alls) ───────────────────

@@ -1153,6 +1153,16 @@ function actionButtonsHtml(match) {
   const podcast = match.podcasts || {};
   const buttons = [];
 
+  // ── AI Enrich button ──
+  // Show on 'new' and 'dream' cards that have a website/URL but no host_name yet
+  const hasUrl = !!(podcast.website || podcast.url);
+  const needsEnrich = !podcast.host_name && hasUrl;
+  if (needsEnrich) {
+    buttons.push(`<button class="btn btn-xs sgai-enrich-btn" onclick="enrichAICard('${id}')" style="background:#eef2ff;color:#4338ca;border:1.5px solid #c7d2fe;font-weight:600;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1-8.313-12.454z"/></svg>AI Enrich
+    </button>`);
+  }
+
   const hasContactEmail = !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
   const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
                     isValidSocialProfile(podcast.twitter_url, 'twitter') ||
@@ -1274,6 +1284,69 @@ function isNeutralFallback(match) {
                              (match.best_pitch_angle || '').includes('goes directly to Zac');
   return allFifty || allZero || hasPlaceholderText;
 }
+
+/**
+ * AI Enrich a single podcast card using ScrapeGraphAI.
+ * Calls the backend API, updates the card in-place, and shows toast feedback.
+ */
+async function enrichAICard(matchId) {
+  const btn = document.querySelector(`.sgai-enrich-btn[onclick*="'${matchId}'"]`);
+  const originalText = btn ? btn.innerText : 'Enrich';
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32 20" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg>Enriching…
+      </span>`;
+      btn.style.background = '#e0e7ff';
+      btn.style.color = '#6366f1';
+      btn.style.cursor = 'wait';
+    }
+
+    const data = await apiPost(`/api/enrich-ai/${matchId}`, {});
+
+    if (!data.ok) {
+      const errorMap = {
+        podcast_not_found: 'Podcast not found in database.',
+        no_url_available:  'No website URL for this podcast.',
+        empty_result:      'Could not extract data from this website.',
+        sgai_timeout:      'ScrapeGraphAI timed out. Try again.',
+        sgai_api_error:    'AI enrichment failed. Try again later.',
+        db_update_failed:  'Failed to save enriched data.',
+      };
+      const msg = errorMap[data.error?.split(':')[0]] || data.error || 'Enrichment failed.';
+      showToast(msg, 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.cursor = 'pointer';
+      }
+      return;
+    }
+
+    // Success — update the match in state with enriched fields
+    if (data.podcast) {
+      const match = state.matches.find(m => m.id === matchId);
+      if (match) {
+        match.podcasts = { ...match.podcasts, ...data.podcast };
+      }
+    }
+
+    showToast('🎯 Podcast enriched with AI data!', 'success');
+
+    // Re-render the card to show new data
+    updateCard(matchId);
+  } catch (err) {
+    showToast('Network error. Please try again.', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      btn.style.cursor = 'pointer';
+    }
+  }
+}
+window.enrichAICard = enrichAICard;
 
 /**
  * Silent background re-enrich for a single match.
