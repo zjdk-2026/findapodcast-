@@ -1163,23 +1163,6 @@ function actionButtonsHtml(match) {
     </button>`);
   }
 
-  // ── Deep Enrich button ──
-  // Show on any card that has a website/apple_url AND is missing social links.
-  // Uses SGAI to scrape the website for Instagram, Facebook, LinkedIn, X/Twitter,
-  // YouTube, TikTok, email. Costs 2 credits per use.
-  const hasWebsiteOrDir = !!(podcast.website || podcast.apple_url || podcast.spotify_url);
-  const missingSocial  = !isValidSocialProfile(podcast.instagram_url, 'instagram') ||
-                         !isValidSocialProfile(podcast.twitter_url, 'twitter') ||
-                         !isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
-                         !isValidSocialProfile(podcast.facebook_url, 'facebook') ||
-                         !isValidSocialProfile(podcast.youtube_url, 'youtube') ||
-                         !isValidSocialProfile(podcast.tiktok_url, 'tiktok');
-  if (hasWebsiteOrDir && missingSocial) {
-    buttons.push(`<button class="btn btn-xs sgai-deep-btn" onclick="deepEnrichCard('${id}')" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #ddd6fe;font-weight:600;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:middle;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg>Deep Enrich - 2cr
-    </button>`);
-  }
-
   const hasContactEmail = !!(podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email));
   const hasSocial = isValidSocialProfile(podcast.instagram_url, 'instagram') ||
                     isValidSocialProfile(podcast.twitter_url, 'twitter') ||
@@ -1326,6 +1309,7 @@ async function enrichAICard(matchId) {
     if (!data.ok) {
       const errorMap = {
         podcast_not_found: 'Podcast not found in database.',
+        internal_error:    'Server error. Try again in a moment.',
         no_url_available:  'No website URL for this podcast.',
         empty_result:      'Could not extract data from this website.',
         sgai_timeout:      'ScrapeGraphAI timed out. Try again.',
@@ -1388,6 +1372,7 @@ async function deepEnrichCard(matchId) {
     if (!data.ok) {
       const errorMap = {
         insufficient_credits: 'Not enough credits. Deep Enrich costs 2 credits.',
+        internal_error:       'Server error. Try again in a moment.',
         podcast_not_found:    'Podcast not found in database.',
         no_url_available:     'No website URL available to scrape.',
         empty_result:         'Could not extract data from this website.',
@@ -1816,6 +1801,23 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com') ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>` : ''}
           ${isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com') ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
           ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
+          ${(() => {
+            const hasSiteOrDir = !!(podcast.website || podcast.apple_url || podcast.spotify_url);
+            if (!hasSiteOrDir) return '';
+            const missingSocial = !isValidSocialProfile(podcast.instagram_url, 'instagram') ||
+              !isValidSocialProfile(podcast.twitter_url, 'twitter') ||
+              !isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
+              !isValidSocialProfile(podcast.facebook_url, 'facebook') ||
+              !isValidSocialProfile(podcast.youtube_url, 'youtube') ||
+              !isValidSocialProfile(podcast.tiktok_url, 'tiktok');
+            if (!missingSocial && podcast.deep_enriched_at) {
+              return `<span class="card-link-chip" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete</span>`;
+            }
+            if (missingSocial) {
+              return `<button class="card-link-chip sgai-deep-btn" onclick="event.stopPropagation();deepEnrichCard('${id}')" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg> Deep Enrich - 2cr</button>`;
+            }
+            return '';
+          })()}
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:8px;padding:1px 5px;margin-left:3px;letter-spacing:0.3px;">BETA</span></a>` : ''}
           ${podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email) ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
         ${match.reply_count > 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} replies</span>` : ''}

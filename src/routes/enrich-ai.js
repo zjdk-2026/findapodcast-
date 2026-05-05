@@ -163,7 +163,7 @@ router.post('/enrich-ai/deep/:podcastId', requireDashboardToken, async (req, res
         ok: false,
         error: 'insufficient_credits',
         message: creditResult.message || 'Insufficient credits. Deep Enrich costs 2 credits.',
-        credits_remaining: creditResult.credits_remaining || 0,
+        credits_remaining: creditResult.balance || 0,
       });
     }
 
@@ -200,7 +200,7 @@ router.post('/enrich-ai/deep/:podcastId', requireDashboardToken, async (req, res
       enriched: result.enriched,
       fields_found: result.fields_found || [],
       podcast: podcast || null,
-      credits_remaining: creditResult.credits_remaining,
+      credits_remaining: creditResult.balance,
     });
   } catch (err) {
     logger.error('POST /api/enrich-ai/deep failed', { podcastId, error: err.message });
