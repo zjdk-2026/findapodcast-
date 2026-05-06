@@ -5905,7 +5905,11 @@ async function openThreadModal(matchId) {
 
     // Pre-fill subject with Re: latest subject
     const latest = messages[messages.length - 1];
-    const lastSubject = latest?.subject || '';
+    let lastSubject = (latest?.subject || '').trim();
+    // Strip bracket prefixes like [Support Ticket #123] or [Maxwell Leadership Support]
+    lastSubject = lastSubject.replace(/^\[[^\]]*\]\s*/, '').trim();
+    // Strip trailing colons, semicolons — they suggest a truncated or automated subject
+    lastSubject = lastSubject.replace(/[;:]$/, '').trim();
     if (subjectEl) subjectEl.value = lastSubject.toLowerCase().startsWith('re:') ? lastSubject : (lastSubject ? `Re: ${lastSubject}` : '');
 
     // Mark as read (zero unread count + clear seen badge)
@@ -5935,7 +5939,24 @@ function renderThreadMessage(msg) {
   const border = isOutbound ? 'none' : '1px solid var(--border-light)';
   const fromShort = (msg.from_email || '').split('<').pop().replace('>', '').trim() || (isOutbound ? 'You' : 'Host');
   const when = msg.sent_at ? new Date(msg.sent_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-  const body = (msg.body_text || '').trim() || '(no body captured)';
+  let body = (msg.body_text || '').trim();
+  if (!body && msg.body_html) {
+    body = msg.body_html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<p[^>]*>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+  if (!body) body = '(no body captured)';
   const typeBadge = msg.message_type === 'pitch' ? 'Initial pitch'
                   : msg.message_type === 'followup' ? 'Follow-up'
                   : msg.message_type === 'host_reply' ? 'Reply from host'

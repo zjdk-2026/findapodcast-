@@ -19,6 +19,25 @@ const logger   = require('../lib/logger');
 
 const router = express.Router();
 
+// Simple HTML-to-text stripper for inbound email body fallback
+function stripHtml(html) {
+  if (!html || typeof html !== 'string') return '';
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<p[^>]*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 router.post('/inbound-email', async (req, res) => {
   const payload = req.body;
 
@@ -32,7 +51,7 @@ router.post('/inbound-email', async (req, res) => {
     const fromEmail   = payload.from   || '';
     const toEmail     = payload.to     || '';
     const subject     = payload.subject || '';
-    const bodyText    = payload.text   || payload.body_plain || '';
+    const bodyText    = payload.text   || payload.body_plain || stripHtml(payload.html) || '';
     const bodyHtml    = payload.html   || '';
     const rawHeaders  = payload.headers || {};
 
