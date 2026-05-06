@@ -204,7 +204,7 @@ async function callSGAI(url) {
       SGAI_ENDPOINT,
       {
         website_url: url,
-        user_prompt: EXTRACT_PROMPT,
+        prompt: EXTRACT_PROMPT,
       },
       {
         headers: {
@@ -296,7 +296,7 @@ async function deepEnrichPodcastWithSGAI(podcastId) {
   // 1. Fetch podcast from DB
   const { data: podcast, error: dbError } = await supabase
     .from('podcasts')
-    .select('id, title, website, url, apple_url, spotify_url, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, description, deep_enriched_at')
+    .select('id, title, website, apple_url, spotify_url, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, description, deep_enriched_at')
     .eq('id', podcastId)
     .single();
 
@@ -348,7 +348,7 @@ For any field where data is not available, use null. Do NOT fabricate or guess d
       SGAI_ENDPOINT,
       {
         website_url: targetUrl,
-        user_prompt: deepPrompt,
+        prompt: deepPrompt,
       },
       {
         headers: {
