@@ -1789,6 +1789,10 @@ function renderMatchCard(match) {
               !isValidSocialProfile(podcast.facebook_url, 'facebook') ||
               !isValidSocialProfile(podcast.youtube_url, 'youtube') ||
               !isValidSocialProfile(podcast.tiktok_url, 'tiktok');
+            // Hide badge entirely once enrichment is done
+            if (podcast.deep_enriched_at) {
+              return '';
+            }
             if (!missingSocial && podcast.deep_enriched_at) {
               return `<span class="card-link-chip" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete</span>`;
             }
