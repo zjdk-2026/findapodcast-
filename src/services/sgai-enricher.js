@@ -35,11 +35,18 @@ const EXTRACT_PROMPT = `Extract structured data about this podcast. Return ONLY 
   "facebook_url": "Full URL to the podcast's Facebook page if present",
   "youtube_url": "Full URL to the podcast's YouTube channel if present",
   "tiktok_url": "Full URL to the podcast's TikTok profile if present",
+  "soundcloud_url": "Full URL to the podcast's SoundCloud profile if present",
   "booking_page_url": "Full URL to a guest booking / appear-on page if one exists",
   "guest_application_url": "Full URL to a guest application form if one exists"
 }
 
-For any field where data is not available, use null. Do NOT fabricate or guess data. Only extract what is visibly present on the page.`;
+★★★★★ CRITICAL RULES — VIOLATING THESE WASTES MONEY ★★★★★
+1. NEVER fabricate or guess social media URLs. Only return a URL if you SEE it literally on the page (an <a href="..."> linking to instagram.com, twitter.com, etc.).
+2. NEVER return a URL that doesn't match the platform. E.g., if you find a YouTube link, put it in youtube_url, NOT in instagram_url.
+3. If a social media page or link is NOT visibly present on the page, return null for that field. Do not guess.
+4. For host_name: return the actual person name (e.g. "Steve Siebold"), NOT the podcast title or a description. If no person's name is found, return null.
+5. For topics: only include topics that are explicitly mentioned or clearly the theme of the show. A general phrase like "helping people" is not a topic.
+6. For contact_email: only return an email address you actually SEE written out on the page. Do not guess or construct one.`;
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
@@ -100,6 +107,7 @@ async function enrichPodcastWithSGAI(podcastId) {
     { key: 'facebook_url',          src: extractResult.facebook_url },
     { key: 'youtube_url',           src: extractResult.youtube_url },
     { key: 'tiktok_url',            src: extractResult.tiktok_url },
+    { key: 'soundcloud_url',        src: extractResult.soundcloud_url },
     { key: 'booking_page_url',      src: extractResult.booking_page_url },
     { key: 'guest_application_url', src: extractResult.guest_application_url },
   ];
@@ -119,6 +127,38 @@ async function enrichPodcastWithSGAI(podcastId) {
     const existingTags = Array.isArray(podcast.niche_tags) ? podcast.niche_tags : [];
     const merged = [...new Set([...existingTags, ...nicheTags])];
     patch.niche_tags = merged;
+  }
+
+  // ── Host name verification ────────────────────────────────────────────
+  // If SGAI returned a host_name that looks like a brand/company name,
+  // run a second-pass SGAI call focused specifically on finding the PERSON
+  // who hosts the show. If that fails, fallback to the podcast title.
+  if (patch.host_name && looksLikeBrandName(patch.host_name, podcast.title)) {
+    logger.info('SGAI host_name looks like a brand — running verification', {
+      podcastId,
+      host_name: patch.host_name,
+      title: podcast.title,
+    });
+
+    const verifiedName = await verifyHostName(targetUrl);
+
+    if (verifiedName && !looksLikeBrandName(verifiedName, podcast.title)) {
+      logger.info('Host name verification: replaced brand name with person name', {
+        podcastId,
+        old: patch.host_name,
+        new: verifiedName,
+      });
+      patch.host_name = verifiedName;
+    } else {
+      // Fallback to podcast title if no person name could be verified
+      const fallback = podcast.title || null;
+      logger.info('Host name verification: no person found, falling back to title', {
+        podcastId,
+        original: patch.host_name,
+        fallback,
+      });
+      patch.host_name = fallback;
+    }
   }
 
   // Always update enriched_at to track when SGAI enrichment ran
@@ -282,6 +322,84 @@ function parseSGAIResponse(data, url) {
   return data;
 }
 
+// ── Host name verification ──────────────────────────────────────────────────
+
+/**
+ * Check if a returned host_name looks like a brand/company rather than a person.
+ * Used to decide whether a second-pass verification call is needed.
+ */
+function looksLikeBrandName(name, podcastTitle) {
+  if (!name) return true;
+
+  const normalized = name.toLowerCase().trim();
+  const titleLower = (podcastTitle || '').toLowerCase().trim();
+
+  // Identical to podcast title = definitely not a person's name
+  if (normalized === titleLower) return true;
+
+  // Title contains the name or vice versa (e.g. "Leadership Without Losing Your Soul" as host)
+  if (titleLower.includes(normalized) || normalized.includes(titleLower)) return true;
+
+  // Common brand/company keywords
+  const brandKeywords = ['podcast', 'show', 'media', 'network', 'studio', 'inc', 'llc',
+    'ltd', 'corp', 'group', 'company', 'digital', 'entertainment', 'productions',
+    'publishing', 'agency', 'solutions', 'global', 'partners', 'ventures'];
+
+  const words = normalized.split(/\s+/);
+  for (const word of words) {
+    const clean = word.replace(/[^a-zA-Z]/g, '');
+    if (brandKeywords.includes(clean)) return true;
+  }
+
+  // Single-word name (e.g. "Bloomberg") is suspicious — could be a brand
+  if (words.length === 1 && words[0].length > 3) return true;
+
+  return false;
+}
+
+/**
+ * Second-pass SGAI call focused specifically on finding the PERSON name of the host.
+ * Prompts SGAI to navigate the site for host bios/about pages and return only the host name.
+ *
+ * @param {string} url - Website URL to scrape
+ * @returns {Promise<string|null>} Person's name or null
+ */
+async function verifyHostName(url) {
+  if (!url) return null;
+
+  const prompt = `Visit this podcast's website and find the host(s) — the actual PERSON or PEOPLE who host the show. Look for "About the Host" sections, team pages, host bios, author bylines, or any page that names the person.
+
+Return ONLY a valid JSON object (no markdown, no code fences):
+{
+  "host_name": "First and last name of the person who hosts this podcast. If multiple hosts, provide all names separated by commas. If you absolutely cannot find any person's name, return null."
+}
+
+Do NOT return the podcast name, brand name, or company name. Only return a real person's name.`;
+
+  try {
+    const response = await axios.post(
+      SGAI_ENDPOINT,
+      { url, prompt },
+      {
+        headers: {
+          'SGAI-APIKEY': SGAI_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        timeout: ENRICH_TIMEOUT_MS,
+      }
+    );
+    const result = parseSGAIResponse(response.data, url);
+    if (result && result.host_name && typeof result.host_name === 'string' && result.host_name.trim()) {
+      const verified = result.host_name.trim();
+      logger.info('Host name verification: found person name', { host_name: verified, url });
+      return verified;
+    }
+  } catch (err) {
+    logger.debug('Host name verification: SGAI call failed', { url, error: err.message });
+  }
+  return null;
+}
+
 /**
  * Deep Enrich — extract social links + email from a podcast's website using SGAI.
  *
@@ -340,11 +458,18 @@ async function deepEnrichPodcastWithSGAI(podcastId) {
   "facebook_url": "Full URL to the podcast's Facebook page if present",
   "youtube_url": "Full URL to the podcast's YouTube channel if present",
   "tiktok_url": "Full URL to the podcast's TikTok profile if present",
+  "soundcloud_url": "Full URL to the podcast's SoundCloud profile if present",
   "booking_page_url": "Full URL to a guest booking / appear-on page if one exists",
   "guest_application_url": "Full URL to a guest application form if one exists"
 }
 
-For any field where data is not available, use null. Do NOT fabricate or guess data. Only extract what is literally present on the page. Navigate the site to find the contact/about/team pages if needed.`;
+★★★★★ CRITICAL RULES — VIOLATING THESE WASTES MONEY ★★★★★
+1. NEVER fabricate or guess social media URLs. Only return a URL if you SEE it literally on the page (an <a href="..."> linking to instagram.com, twitter.com, etc.).
+2. NEVER return a URL that doesn't match the platform. E.g., if you find a YouTube link, put it in youtube_url, NOT in instagram_url.
+3. If a social media page or link is NOT visibly present on the page, return null for that field. Do not guess.
+4. For host_name: return the actual person name (e.g. "Steve Siebold"), NOT the podcast title or a description. If no person's name is found, return null.
+5. For contact_email: only return an email address you actually SEE written out on the page. Do not guess or construct one.
+6. Navigate the site (about page, team page, contact page) to find social links and email — but ONLY return what you find. Do not make up anything.`;
 
   // 4. Call SGAI
   let extractResult;
@@ -386,6 +511,7 @@ For any field where data is not available, use null. Do NOT fabricate or guess d
     { key: 'facebook_url',      src: extractResult.facebook_url },
     { key: 'youtube_url',       src: extractResult.youtube_url },
     { key: 'tiktok_url',        src: extractResult.tiktok_url },
+    { key: 'soundcloud_url',     src: extractResult.soundcloud_url },
     { key: 'booking_page_url',      src: extractResult.booking_page_url },
     { key: 'guest_application_url', src: extractResult.guest_application_url },
   ];

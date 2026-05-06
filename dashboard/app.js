@@ -924,6 +924,9 @@ function contactChipsHtml(podcast) {
   if (isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com')) {
     chips.push(`<a class="contact-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`);
   }
+  if ((isValidUrl(podcast.soundcloud_url) && podcast.soundcloud_url.toLowerCase().includes('soundcloud.com')) || (isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('soundcloud.com'))) {
+    chips.push(`<a class="contact-chip" href="${esc(podcast.soundcloud_url || podcast.apple_url)}" target="_blank" rel="noopener">SoundCloud</a>`);
+  }
 
   const isSameAsApple = podcast.apple_url && podcast.website &&
     podcast.website.toLowerCase().trim() === podcast.apple_url.toLowerCase().trim();
@@ -1779,6 +1782,7 @@ function renderMatchCard(match) {
         <div class="card-row-links" onclick="event.stopPropagation()">
           ${isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com') ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>` : ''}
           ${isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com') ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
+          ${(isValidUrl(podcast.soundcloud_url) && podcast.soundcloud_url.toLowerCase().includes('soundcloud.com')) || (isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('soundcloud.com')) ? `<a class="card-link-chip" href="${esc(podcast.soundcloud_url || podcast.apple_url)}" target="_blank" rel="noopener">SoundCloud</a>` : ''}
           ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
           ${isValidSocialProfile(podcast.twitter_url, "twitter") ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ""}
           ${isValidSocialProfile(podcast.facebook_url, "facebook") ? `<a class="card-link-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>` : ""}
