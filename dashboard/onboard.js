@@ -574,8 +574,18 @@ async function prefillFromWebsite() {
       renderTopicTags();
     }
 
-    statusEl.style.cssText = 'display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
-    statusEl.textContent = `Pre-filled what we could find. Review the fields below and edit anything that's off.`;
+    // Check if we actually filled anything useful
+    const filledCount = [p.name, p.title, p.business, p.bio_short, p.credential, p.instagram, p.linkedin, p.twitter, p.facebook].filter(Boolean).length;
+    if (data.degraded && filledCount === 0) {
+      statusEl.style.cssText = 'display:block;background:#fefce8;border:1px solid #fde68a;color:#92400e;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+      statusEl.textContent = 'Could not pre-fill from that URL. Please fill in the fields below manually.';
+    } else if (data.degraded && filledCount > 0) {
+      statusEl.style.cssText = 'display:block;background:#fefce8;border:1px solid #fde68a;color:#92400e;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+      statusEl.textContent = `Partially filled (${filledCount} fields). AI enrichment is currently unavailable — please fill remaining fields manually.`;
+    } else {
+      statusEl.style.cssText = 'display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
+      statusEl.textContent = `Pre-filled what we could find. Review the fields below and edit anything that's off.`;
+    }
   } catch (err) {
     statusEl.style.cssText = 'display:block;background:#fff1f0;border:1px solid #fecaca;color:#991b1b;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;';
     statusEl.textContent = 'Could not read that URL. Fill in the fields below manually.';
@@ -832,7 +842,15 @@ async function maybeFireDomainPrefill(email) {
       p.topics.forEach(t => { const v = (t || '').toLowerCase().trim(); if (v && !_selectedTopics.includes(v)) _selectedTopics.push(v); });
       renderTopicTags();
     }
-    showToast(`Pre-filled from ${domain}. Review the fields below.`, 'success');
+    if (data.degraded) {
+      const filledCount = [p.name, p.title, p.business, p.bio_short, p.credential, p.instagram, p.linkedin, p.twitter, p.facebook].filter(Boolean).length;
+      if (filledCount > 0) {
+        showToast(`Partially filled ${filledCount} fields from ${domain} (AI enrichment unavailable).`, 'info');
+      }
+      // If nothing filled, no toast — silent fail is better than confusing
+    } else {
+      showToast(`Pre-filled from ${domain}. Review the fields below.`, 'success');
+    }
     saveOnboardDraft();
   } catch {}
 }

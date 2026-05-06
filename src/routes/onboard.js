@@ -797,8 +797,51 @@ router.post('/onboard/prefill', async (req, res) => {
     logger.warn('prefill: socials regex threw', { url, error: regexErr.message });
   }
 
+  // ── Phase 3B: meta-tag fallback extraction ─────────────────────────────
+  // Always extract name, business, and description from HTML meta tags.
+  // These serve as fallback values if Claude fails (e.g. billing exhausted).
+  let metaName = null;
+  let metaBusiness = null;
+  let metaBio = null;
+  let metaTopics = null;
+  try {
+    // Title tag → extract name (take text before last separator)
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch) {
+      const raw = titleMatch[1].trim();
+      // Try to extract a person name from title patterns like "Name | Title" or "Title - Name"
+      const sep = raw.split(/\s*[|–—-]\s*/).filter(Boolean);
+      if (sep.length >= 2) {
+        // Pick the shorter part as likely name (names are shorter than descriptions)
+        const [a, b] = sep[0].length <= sep[1].length ? [sep[0], sep[1]] : [sep[1], sep[0]];
+        metaName = a; // shorter segment is likely the name
+        metaBusiness = b; // longer segment is likely the business/description
+      } else {
+        metaBusiness = raw;
+      }
+    }
+    // OG / meta description
+    const descMatch = html.match(/<meta\s+(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta\s+[^>]*content=["']([^"']{10,})["'][^>]*(?:name|property)=["'](?:description|og:description)["']/i);
+    if (descMatch) {
+      metaBio = descMatch[1].replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+    }
+    // Meta keywords
+    const kwMatch = html.match(/<meta\s+name=["']keywords["'][^>]*content=["']([^"']+)["']/i);
+    if (kwMatch) {
+      metaTopics = kwMatch[1].split(',').map(s => s.trim().toLowerCase()).filter(Boolean).slice(0, 6);
+    }
+    // OG site_name as fallback business name
+    const siteMatch = html.match(/<meta\s+(?:property|name)=["']og:site_name["'][^>]*content=["']([^"']+)["']/i);
+    if (siteMatch && !metaBusiness) {
+      metaBusiness = siteMatch[1].trim();
+    }
+  } catch (metaErr) {
+    logger.warn('prefill: meta extraction threw', { url, error: metaErr.message });
+  }
+
   // ── Phase 4: Claude profile extraction ─────────────────────────────────
-  // If Claude fails, we still return the socials so the form auto-fills SOMETHING.
+  // If Claude fails, we still return whatever we found (socials + meta fallback).
   // Better partial than total failure for the customer experience.
   try {
     const anthropic = getAnthropicClient();
@@ -834,7 +877,7 @@ Strict rules:
     const m = raw.match(/\{[\s\S]*\}/);
     if (!m) {
       logger.warn('prefill: claude did not return JSON', { url });
-      return res.json({ ok: true, profile: { ...socials } });
+      return res.json({ ok: true, profile: { ...socials, name: metaName, business: metaBusiness, bio_short: metaBio, topics: metaTopics || [] } });
     }
 
     let parsed = {};
@@ -870,7 +913,13 @@ Strict rules:
     });
     return res.json({
       ok: true,
-      profile: { ...socials },
+      profile: {
+        ...socials,
+        name: metaName,
+        business: metaBusiness,
+        bio_short: metaBio,
+        topics: metaTopics || [],
+      },
       claude_error: claudeErr.message?.slice(0, 200) || 'unknown',
       degraded: true,
     });
