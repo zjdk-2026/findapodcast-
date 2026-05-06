@@ -2673,3 +2673,13 @@ td.muted { color: var(--text-secondary); font-size: 13px; }
   flex-wrap: wrap;
 }
 
+/* ── Rotating icon for Auto-processing indicator ──────────────── */
+.rotating-icon {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

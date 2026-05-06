@@ -234,10 +234,59 @@ router.post('/run/:clientId', requireDashboardToken, async (req, res) => {
     // ── 7. Update last_run_at ─────────────────────────────────
     await updateLastRun(clientId);
 
-    // NOTE: Auto-triggered deep enrichment disabled in the unlock-first launch.
-    // Contact data is now revealed via the strict-unlock flow (POST /api/unlock/:id).
-    // The zero-hallucination skill forbids silent background writes that bypass
-    // the Claude verification pass + source-receipt rules.
+    // ── 8. Auto-trigger SGAI enrich + deep enrich (fire-and-forget) ──
+    // For every new match, run ScrapeGraphAI enrichment (host_name, description)
+    // followed by deep enrichment (social links, contact email).
+    // Results flow into the DB asynchronously; cards update on next page load.
+    if (savedMatches.length > 0) {
+      const { enrichPodcastWithSGAI, deepEnrichPodcastWithSGAI } = require('../services/sgai-enricher');
+      const podcastIds = savedMatches
+        .map(m => m.podcasts?.id || m.podcast_id)
+        .filter(Boolean);
+
+      // Deduplicate (multiple matches may share the same podcast)
+      const uniqueIds = [...new Set(podcastIds)];
+
+      logger.info('Auto SGAI enrichment starting', {
+        clientId,
+        matchCount: savedMatches.length,
+        podcastCount: uniqueIds.length,
+      });
+
+      // Fire-and-forget — runs async, won't block the response
+      (async () => {
+        for (const pid of uniqueIds) {
+          try {
+            // Step 1: Basic SGAI enrich (host_name, description, topics, first-pass socials)
+            const basic = await enrichPodcastWithSGAI(pid);
+            if (!basic.ok) {
+              logger.warn('Auto SGAI: basic enrich skipped', { podcastId: pid, reason: basic.error });
+              // Even if basic enrich fails, try deep enrich if we have a URL
+            }
+
+            // Step 2: Deep enrich (social links, email — full unlock)
+            const deep = await deepEnrichPodcastWithSGAI(pid);
+            if (!deep.ok) {
+              logger.warn('Auto SGAI: deep enrich skipped', { podcastId: pid, reason: deep.error });
+            } else {
+              logger.info('Auto SGAI: podcast fully enriched', {
+                podcastId: pid,
+                fieldsFound: deep.fields_found,
+              });
+            }
+          } catch (err) {
+            logger.error('Auto SGAI: enrichment failed for podcast', {
+              podcastId: pid,
+              error: err.message,
+            });
+          }
+        }
+        logger.info('Auto SGAI enrichment complete', {
+          clientId,
+          processed: uniqueIds.length,
+        });
+      })();
+    }
 
     logger.info('Pipeline run complete', {
       clientId,

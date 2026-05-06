@@ -1792,10 +1792,10 @@ function renderMatchCard(match) {
             if (!missingSocial && podcast.deep_enriched_at) {
               return `<span class="card-link-chip" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete</span>`;
             }
-            if (missingSocial) {
-              return `<button class="card-link-chip sgai-deep-btn" onclick="event.stopPropagation();deepEnrichCard('${match.id}','${match.podcast_id}',this)" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg> Unlock</button>`;
-            }
-            return '';
+            // Auto-enrich runs server-side after each "Find a Podcast" run.
+            // If the enrichment hasn't completed yet, show a processing indicator
+            // instead of a clickable button that may throw server errors.
+            return `<span class="card-link-chip" style="background:#fefce8;color:#a16207;border-color:#fef08a;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2" class="rotating-icon"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Auto</span>`;
           })()}
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:8px;padding:1px 5px;margin-left:3px;letter-spacing:0.3px;">BETA</span></a>` : ''}
           ${podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email) ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
