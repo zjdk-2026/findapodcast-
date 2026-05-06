@@ -89,6 +89,7 @@ app.get('/health', async (req, res) => {
 app.use('/', require('./routes/agency'));
 app.use('/', require('./routes/stages'));
 app.use('/', require('./routes/referral'));
+app.use('/api', require('./routes/inbound-email')); // Resend webhook — no auth, must be first
 
 app.use('/api/auth', authRouter);
 app.use('/api', onboardRouter);

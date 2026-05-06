@@ -1792,7 +1792,7 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.booking_page_url) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Booking Page</a>` : ""}
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:8px;padding:1px 5px;margin-left:3px;letter-spacing:0.3px;">BETA</span></a>` : ''}
           ${podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email) ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
-        ${match.reply_count > 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} replies</span>` : ''}
+        ${match.reply_count >= 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} ${match.reply_count === 1 ? 'reply' : 'replies'}</span>` : ''}
         </div>
       </div>
       <div class="card-row-right">
@@ -4825,6 +4825,273 @@ async function openTemplatePicker(event) {
 }
 window.openTemplatePicker = openTemplatePicker;
 
+// ── Thread Reply: Template picker dropdown ─────────────────────────────
+async function openThreadTemplatePicker() {
+  const btn = document.getElementById('thread-templates-btn');
+  if (!btn) return;
+
+  // Remove any existing picker
+  document.getElementById('thread-template-picker')?.remove();
+
+  // Fetch templates
+  let templates = [];
+  try {
+    const r = await fetch('/api/templates', { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    if (data.ok) templates = data.templates || [];
+  } catch {}
+
+  if (templates.length === 0) {
+    showToast('No saved templates yet. Write a reply and save it as a template first.', 'info');
+    return;
+  }
+
+  const rect = btn.getBoundingClientRect();
+
+  const picker = document.createElement('div');
+  picker.id = 'thread-template-picker';
+  picker.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.bottom + 4}px;background:var(--surface-card);border:1.5px solid var(--border-medium);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);z-index:99999;min-width:260px;max-width:320px;max-height:340px;overflow-y:auto;padding:6px;`;
+
+  picker.innerHTML = templates.map(t => `
+    <button onclick="loadThreadTemplate('${esc(t.id)}')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-primary);transition:background 0.1s;">
+      <div style="font-weight:700;display:flex;align-items:center;gap:6px;">
+        ${esc(t.name)}
+        ${t.is_default ? '<span style="font-size:9px;font-weight:800;background:#10b981;color:#fff;padding:2px 6px;border-radius:999px;">DEFAULT</span>' : ''}
+        <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.10);color:#6366f1;padding:2px 6px;border-radius:999px;text-transform:uppercase;">${esc(t.type)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">${t.use_count || 0} uses · ${esc((t.subject || '').slice(0, 40))}${(t.subject || '').length > 40 ? '…' : ''}</div>
+    </button>
+  `).join('');
+
+  picker.querySelectorAll('button').forEach(b => {
+    b.addEventListener('mouseenter', () => b.style.background = 'rgba(99,102,241,0.08)');
+    b.addEventListener('mouseleave', () => b.style.background = 'none');
+  });
+
+  document.body.appendChild(picker);
+  setTimeout(() => {
+    const close = (e) => {
+      if (!picker.contains(e.target) && e.target !== btn) {
+        picker.remove();
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+window.openThreadTemplatePicker = openThreadTemplatePicker;
+
+function loadThreadTemplate(templateId) {
+  document.getElementById('thread-template-picker')?.remove();
+  const templates = state.client.email_templates || [];
+  let t = templates.find(x => x.id === templateId);
+  if (!t) return;
+  const subjectEl = document.getElementById('thread-reply-subject');
+  const bodyEl = document.getElementById('thread-reply-body');
+  if (subjectEl) subjectEl.value = t.subject || '';
+  if (bodyEl) bodyEl.value = t.body || '';
+  showToast(`Template "${t.name}" loaded.`, 'success');
+}
+window.loadThreadTemplate = loadThreadTemplate;
+
+// ── Thread Reply: Save as Template ────────────────────────────────────
+async function saveThreadTemplate() {
+  const subject = document.getElementById('thread-reply-subject')?.value || '';
+  const body = document.getElementById('thread-reply-body')?.value || '';
+  if (!subject && !body) { showToast('Nothing to save.', 'error'); return; }
+  const name = prompt('Name this template (e.g. "Intro pitch", "Follow-up"):');
+  if (!name) return;
+
+  const type = _activeThreadMatchId
+    ? (() => {
+        const m = state.matches.find(x => x.id === _activeThreadMatchId);
+        return m?.status === 'replied' ? 'followup' : (m?.status === 'appeared' ? 'thankyou' : 'pitch');
+      })()
+    : 'pitch';
+
+  try {
+    const data = await apiPost('/api/templates', { type, name: name.trim(), subject, body });
+    if (data.ok) {
+      showToast(`Template "${name}" saved.`, 'success');
+    } else {
+      showToast('Failed to save template: ' + (data.error || 'unknown'), 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+window.saveThreadTemplate = saveThreadTemplate;
+
+// ── Template Manager (profile dropdown CRUD) ──────────────────────────
+function openTemplateManager() {
+  $('profile-dropdown').style.display = 'none';
+  const modal = document.getElementById('template-manager-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderTemplateManager();
+}
+window.openTemplateManager = openTemplateManager;
+
+function closeTemplateManager() {
+  const modal = document.getElementById('template-manager-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.closeTemplateManager = closeTemplateManager;
+
+async function renderTemplateManager() {
+  const body = document.getElementById('template-manager-body');
+  if (!body) return;
+
+  body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">Loading templates…</div>';
+
+  try {
+    const r = await fetch('/api/templates', { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    const templates = (data.ok ? data.templates : []) || [];
+
+    if (templates.length === 0) {
+      body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">No templates yet. Write a reply in the thread composer or email modal and save it as a template.</div>';
+      return;
+    }
+
+    body.innerHTML = templates.map(t => `
+      <div class="template-manager-item" id="tm-item-${esc(t.id)}" style="border:1.5px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--surface-card);">
+        <!-- Default view -->
+        <div class="tm-view" id="tm-view-${esc(t.id)}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:14px;color:var(--text-primary);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                ${esc(t.name)}
+                ${t.is_default ? '<span style="font-size:9px;font-weight:800;background:#10b981;color:#fff;padding:2px 8px;border-radius:999px;">DEFAULT</span>' : ''}
+                <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.10);color:#6366f1;padding:2px 6px;border-radius:999px;text-transform:uppercase;">${esc(t.type)}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <span style="font-weight:600;color:var(--text-tertiary);">Subject:</span> ${esc((t.subject || '(no subject)').slice(0, 80))}
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                <span style="font-weight:600;color:var(--text-tertiary);">Body:</span> ${esc((t.body || '').slice(0, 200))}${(t.body || '').length > 200 ? '…' : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">${t.use_count || 0} uses</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button onclick="editTemplate('${esc(t.id)}')" style="background:rgba(99,102,241,0.08);color:#6366f1;border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>
+              <button onclick="deleteTemplate('${esc(t.id)}')" style="background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline edit view (hidden by default) -->
+        <div class="tm-edit" id="tm-edit-${esc(t.id)}" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="tm-edit-name-${esc(t.id)}" value="${esc(t.name)}" placeholder="Template name" style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;font-weight:600;" />
+            <input type="text" id="tm-edit-subject-${esc(t.id)}" value="${esc(t.subject || '')}" placeholder="Subject (optional)" style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;" />
+            <textarea id="tm-edit-body-${esc(t.id)}" rows="6" placeholder="Email body template..." style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;line-height:1.5;resize:vertical;min-height:120px;">${esc(t.body || '')}</textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button onclick="cancelTemplateEdit('${esc(t.id)}')" style="background:none;border:1.5px solid var(--border-medium);color:var(--text-secondary);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
+              <button onclick="saveTemplateEdit('${esc(t.id)}')" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch {
+    body.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;font-size:14px;">Failed to load templates. Check your connection and try again.</div>';
+  }
+}
+
+async function deleteTemplate(templateId) {
+  if (!window.confirm('Delete this template? This cannot be undone.')) return;
+
+  try {
+    const data = await apiPost(`/api/templates/${templateId}`, { _method: 'DELETE' });
+    // Try both DELETE method styles
+    let ok = data.ok;
+    if (!ok) {
+      // Some servers use method override, try actual DELETE
+      const r = await fetch(`/api/templates/${templateId}`, {
+        method: 'DELETE',
+        headers: { 'x-dashboard-token': state.token }
+      });
+      const d = await r.json();
+      ok = d.ok;
+    }
+    if (ok) {
+      showToast('Template deleted.', 'success');
+      renderTemplateManager();
+    } else {
+      showToast('Failed to delete template.', 'error');
+    }
+  } catch {
+    // Try DELETE method directly
+    try {
+      const r = await fetch(`/api/templates/${templateId}`, {
+        method: 'DELETE',
+        headers: { 'x-dashboard-token': state.token }
+      });
+      const d = await r.json();
+      if (d.ok) {
+        showToast('Template deleted.', 'success');
+        renderTemplateManager();
+      } else {
+        showToast('Failed to delete template.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    }
+  }
+}
+window.deleteTemplate = deleteTemplate;
+
+function editTemplate(templateId) {
+  document.getElementById(`tm-view-${templateId}`).style.display = 'none';
+  document.getElementById(`tm-edit-${templateId}`).style.display = 'block';
+}
+window.editTemplate = editTemplate;
+
+function cancelTemplateEdit(templateId) {
+  document.getElementById(`tm-view-${templateId}`).style.display = '';
+  document.getElementById(`tm-edit-${templateId}`).style.display = 'none';
+}
+window.cancelTemplateEdit = cancelTemplateEdit;
+
+async function saveTemplateEdit(templateId) {
+  const name = document.getElementById(`tm-edit-name-${templateId}`)?.value?.trim();
+  const subject = document.getElementById(`tm-edit-subject-${templateId}`)?.value?.trim() || '';
+  const body = document.getElementById(`tm-edit-body-${templateId}`)?.value?.trim() || '';
+  if (!name) { showToast('Template name is required.', 'error'); return; }
+
+  try {
+    const data = await apiPatch(`/api/templates/${templateId}`, { name, subject, body });
+    if (data.ok) {
+      showToast('Template updated.', 'success');
+      renderTemplateManager();
+    } else {
+      showToast('Failed to update template: ' + (data.error || 'unknown'), 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+window.saveTemplateEdit = saveTemplateEdit;
+
+async function addNewTemplate() {
+  const name = prompt('Enter a name for the new template (e.g. "Intro pitch", "Follow-up"):');
+  if (!name) return;
+  const subject = prompt('Enter a default subject line (optional):') || '';
+  const body = prompt('Enter the email body template:');
+  if (!body) { showToast('Body text is required.', 'error'); return; }
+
+  try {
+    const data = await apiPost('/api/templates', { type: 'pitch', name: name.trim(), subject, body });
+    if (data.ok) {
+      showToast(`Template "${name}" created.`, 'success');
+      renderTemplateManager();
+    } else {
+      showToast('Failed to create template: ' + (data.error || 'unknown'), 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+window.addNewTemplate = addNewTemplate;
+
 // ── Discovery email generator (alternative first-touch — probes for fit) ─
 async function generateDiscoveryEmail() {
   const matchId = $('email-modal')?.dataset.matchId;
@@ -5043,12 +5310,18 @@ function initModals() {
   $('template-save-btn')?.addEventListener('click', saveTemplate);
   $('template-reset-btn')?.addEventListener('click', resetTemplate);
 
+  // Template manager modal
+  const tmModal = document.getElementById('template-manager-modal');
+  tmModal?.addEventListener('click', (e) => { if (e.target === tmModal) closeTemplateManager(); });
+
   // Escape key closes any open modal
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (emailModal    && emailModal.style.display    !== 'none') closeEmailModal();
     if (contactModal  && contactModal.style.display  !== 'none') closeContactModal();
     if (templateModal && templateModal.style.display !== 'none') closeTemplateModal();
+    const tmModal = document.getElementById('template-manager-modal');
+    if (tmModal && tmModal.style.display !== 'none') closeTemplateManager();
   });
 }
 
