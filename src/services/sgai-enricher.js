@@ -203,7 +203,7 @@ async function callSGAI(url) {
     const response = await axios.post(
       SGAI_ENDPOINT,
       {
-        website_url: url,
+        url: url,
         prompt: EXTRACT_PROMPT,
       },
       {
@@ -241,6 +241,11 @@ function parseSGAIResponse(data, url) {
   if (!data) return null;
 
   logger.debug('SGAI raw response', { url, type: typeof data });
+
+  // Format 0: { json: { host_name: ..., ... } } — SGAI v2 response format
+  if (data.json && typeof data.json === 'object' && !Array.isArray(data.json)) {
+    return data.json;
+  }
 
   // Format 1: { content: { host_name: ..., ... } }
   if (data.content && typeof data.content === 'object' && !Array.isArray(data.content)) {
@@ -347,7 +352,7 @@ For any field where data is not available, use null. Do NOT fabricate or guess d
     const response = await axios.post(
       SGAI_ENDPOINT,
       {
-        website_url: targetUrl,
+        url: targetUrl,
         prompt: deepPrompt,
       },
       {
