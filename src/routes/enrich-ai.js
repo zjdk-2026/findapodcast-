@@ -52,7 +52,7 @@ router.post('/enrich-ai/:podcastId', requireDashboardToken, async (req, res) => 
     // Re-fetch the podcast so the frontend gets complete, up-to-date data
     const { data: podcast } = await supabase
       .from('podcasts')
-      .select('id, host_name, description, website, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, booking_page_url, guest_application_url, niche_tags, enriched_at')
+      .select('id, host_name, description, website, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, soundcloud_url, booking_page_url, guest_application_url, niche_tags, enriched_at')
       .eq('id', podcastId)
       .single();
 
@@ -191,7 +191,7 @@ router.post('/enrich-ai/deep/:podcastId', requireDashboardToken, async (req, res
     // 3. Re-fetch podcast for fresh state
     const { data: podcast } = await supabase
       .from('podcasts')
-      .select('id, host_name, description, website, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, booking_page_url, guest_application_url, niche_tags, enriched_at, deep_enriched_at')
+      .select('id, host_name, description, website, contact_email, instagram_url, twitter_url, linkedin_page_url, facebook_url, youtube_url, tiktok_url, soundcloud_url, booking_page_url, guest_application_url, niche_tags, enriched_at, deep_enriched_at')
       .eq('id', podcastId)
       .single();
 
