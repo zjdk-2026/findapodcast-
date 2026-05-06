@@ -70,6 +70,7 @@ router.get('/dashboard/:token', async (req, res) => {
           language,
           listen_score,
           enriched_at,
+          deep_enriched_at,
           contact_unlocked_at,
           contact_confidence,
           contact_sources,

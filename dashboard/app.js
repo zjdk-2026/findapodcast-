@@ -1352,21 +1352,12 @@ window.enrichAICard = enrichAICard;
 // ── Deep Enrich Card —────────────────────────────────────────────────────
 // Uses SGAI to scrape the podcast's website for social links + email.
 // Costs 2 credits charged to the client's balance.
-async function deepEnrichCard(matchId) {
-  const btn = document.querySelector(`.sgai-deep-btn[onclick*="'${matchId}'"]`);
-  const originalText = btn ? btn.innerText : 'Deep Enrich';
+// ── Deep enrichment handler ─────────────────────────────────────
+async function deepEnrichCard(matchId, btnEl) {
+  // Remove button immediately — no loading state
+  if (btnEl) btnEl.remove();
 
   try {
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32 20" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg>Scraping site…
-      </span>`;
-      btn.style.background = '#ede9fe';
-      btn.style.color = '#7c3aed';
-      btn.style.cursor = 'wait';
-    }
-
     const data = await apiPost(`/api/enrich-ai/deep/${matchId}`, {});
 
     if (!data.ok) {
@@ -1382,13 +1373,6 @@ async function deepEnrichCard(matchId) {
       };
       const msg = errorMap[data.error?.split(':')[0]] || data.error || 'Deep enrichment failed.';
       showToast(msg, 'error');
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        btn.style.cursor = 'pointer';
-        btn.style.background = '#f5f3ff';
-        btn.style.color = '#7c3aed';
-      }
       return;
     }
 
@@ -1409,15 +1393,10 @@ async function deepEnrichCard(matchId) {
     updateCard(matchId);
   } catch (err) {
     showToast('Network error. Please try again.', 'error');
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      btn.style.cursor = 'pointer';
-      btn.style.background = '#f5f3ff';
-      btn.style.color = '#7c3aed';
-    }
   }
 }
+// ── End of deep enrichment handler ──────────────────────────────
+
 window.deepEnrichCard = deepEnrichCard;
 
 /**
@@ -1814,7 +1793,7 @@ function renderMatchCard(match) {
               return `<span class="card-link-chip" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete</span>`;
             }
             if (missingSocial) {
-              return `<button class="card-link-chip sgai-deep-btn" onclick="event.stopPropagation();deepEnrichCard('${match.id}')" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg> Deep Enrich - 2cr</button>`;
+              return `<button class="card-link-chip sgai-deep-btn" onclick="event.stopPropagation();deepEnrichCard('${match.podcast_id}',this)" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9h-2.5"/><path d="M12 13V6"/><path d="M9 9l3-3 3 3"/></svg> Unlock</button>`;
             }
             return '';
           })()}
