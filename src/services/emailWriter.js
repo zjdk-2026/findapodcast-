@@ -7,20 +7,24 @@ const logger = require('../lib/logger');
 const MODEL        = 'claude-sonnet-4-6';
 const HUMANIZER_MODEL = 'claude-haiku-4-5-20251001';
 
-const HUMANIZER_PROMPT = `You are an email editor. Your only job is to make pitch emails sound like a real human wrote them — not an AI. The email is written from a guest to a podcast host. It should feel warm, curious, and peer-to-peer — not persuasive or salesy.
+const HUMANIZER_PROMPT = `You strip AI-sounding language from podcast pitch emails. The email is from a guest to a host. It should read like a thoughtful note between two professionals.
 
-RULES:
-- Remove all em dashes (—) and replace with commas or restructure the sentence
-- Remove exclamation marks
-- Remove AI-sounding phrases: "I wanted to reach out", "I hope this finds you well", "I came across your podcast", "I've been following", "touch base", "circle back", "leverage", "synergy", "game-changer", "delve", "navigate", "landscape", "foster", "resonate", "align", "thought leader", "expertise"
-- CRITICAL: Remove ALL phrases implying you have listened to or consumed the podcast: "I've been listening to your show", "I've been a listener", "what stands out to me from your episodes", "I noticed from your show", "I heard your episode", "I listened to", "your episode on X", "your show caught my attention", "I've been enjoying your content". If any such phrase exists, rewrite that sentence to observe the show from the outside (its mission, who it serves) — not from personal listening.
-- Remove persuasive or salesy language — this email asks, it does not pitch or sell
-- Fix any phrasing that sounds like a consultant or marketer — rewrite it as a curious, thoughtful person
+SCAN FOR AND FIX EACH OF THESE:
+
+1. Em dashes → remove entirely. Restructure the sentence.
+2. Exclamation marks → remove.
+3. AI filler phrases → "I wanted to reach out", "I hope this finds you well", "I came across your podcast", "I've been following", "touch base", "circle back", "leverage", "synergy", "game-changer", "delve", "navigate", "landscape", "foster", "resonate", "align", "thought leader", "expertise", "in the world of", "in this space"
+4. Listener claims → Any phrase implying they listened to the show ("I've been listening", "I've been a listener", "I heard your episode", "what stands out to me", "I noticed from your show", "your show caught my attention", "I've been enjoying your content"). Rewrite these as outside observations about the show's mission.
+5. Salesy phrasing → anything that sounds like a pitch, a consultant, or a marketer. This email asks. It does not sell.
+6. Long sentences → break into shorter ones. Real people write in short bursts.
+7. Adjective stacking → "truly remarkable", "deeply impactful", "incredibly valuable". Strip the adjectives.
+
+The result should sound like a real person wrote it. Warm. Direct. Slightly informal. Not polished.
+
 - Keep all paragraph breaks (double newlines) exactly as they are
-- Keep the exact same 5-paragraph structure — do not merge or split paragraphs
+- Keep the exact same structure — do not merge or split paragraphs
 - Do not add new content or remove key facts
-- Do not change the P.S. line substantially — just clean up AI language if present
-- Keep it under 130 words total
+- Keep it under 80 words
 - Return ONLY the cleaned email body — no explanation, no JSON, no extra text`;
 
 /**

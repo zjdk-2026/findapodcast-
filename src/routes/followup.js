@@ -65,20 +65,15 @@ router.post('/followup-check', async (req, res) => {
       const clientName   = client.name       || '';
       const firstName    = clientName.split(' ')[0] || clientName;
 
-      const subject = `Quick note — ${podcastTitle}`;
+      const subject = `Re: ${match.email_subject || match.email_subject_edited || podcastTitle}`;
       const body    = [
         `Hi ${hostName},`,
         ``,
-        `Circling back on my last email — I know inboxes move fast.`,
+        `I imagine your inbox is full. Just one thing: I think your audience would get real value from a conversation about ${match.best_pitch_angle || 'what I mentioned in my last email'}.`,
         ``,
-        `I genuinely think there's a strong fit here. My angle for your audience would be around ${match.best_pitch_angle || 'the topics we discussed'} — based on the conversations you've been having on ${podcastTitle}, I think it lands right in your sweet spot.`,
+        `Would a 15-minute call work to see if there is a fit?`,
         ``,
-        `Even a 15-minute chat to see if it's worth exploring. Happy to work around your schedule.`,
-        ``,
-        `Thanks,`,
-        `${clientName}`,
-        ``,
-        `P.S. Happy to send a one-pager or sample talking points if that makes the decision easier.`,
+        clientName,
       ].join('\n');
 
       let sent = false;

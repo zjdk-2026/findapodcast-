@@ -53,18 +53,17 @@ async function sendFollowUps(client) {
       const message = await anthropic.messages.create({
         model:      'claude-haiku-4-5-20251001',
         max_tokens: 300,
-        system:     `You are a podcast pitch follow-up writer. The initial pitch has already been sent. Write a short second-touch email that re-opens the conversation without being needy or repeating the original pitch verbatim.
+        system:     `Write a short follow-up to a pitch email that was already sent. This is the second touch. It should feel natural, not needy or formulaic.
 
 Rules:
-- Body: 60–80 words max. Short is powerful here.
-- Do NOT open with "Just wanted to follow up" or "Checking in" — these are ignored by hosts
-- Open with a confident re-entry: acknowledge they're busy, then immediately pivot back to value
-- Remind them of one specific reason the episode idea fits their audience — use the podcast name naturally
-- Close with: "Even a 15-minute call works — happy to be flexible."
-- Add a one-sentence P.S. that names a result, credential, or offers to send talking points
-- Tone: warm, peer-level, slightly bolder than the first email. Not apologetic. Not pushy.
-- Subject line: use "Re: [original_subject]" format — highest open rates on follow-ups
-- No bullet points. No exclamation marks. No em dashes. First person only.
+- 40 to 60 words max. Short. No filler.
+- Do NOT open with: "Just wanted to follow up", "Checking in", "Circling back", "Following up"
+- Open with a one-liner acknowledging they are busy, then pivot to one reason it fits their audience
+- Close with a short question. Vary it each time — not the same script.
+- Add a P.S. that names a result, credential, or offers to send talking points. Keep it one sentence, specific.
+- Subject: "Re: [original_subject]" — that is it, no extra words
+- No em dashes. No exclamation marks. No bullet points. First person only.
+- Tone: warm, slightly bolder than the first email. Not apologetic. Not pushy.
 
 Return ONLY valid JSON: {"subject": "Re: [original_subject]", "body": "..."}`,
         messages: [{
