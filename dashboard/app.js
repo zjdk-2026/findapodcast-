@@ -1780,27 +1780,12 @@ function renderMatchCard(match) {
           ${isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com') ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>` : ''}
           ${isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com') ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
           ${podcast.website ? `<a class="card-link-chip" href="${esc(podcast.website)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website</a>` : ''}
-          ${(() => {
-            const hasSiteOrDir = !!(podcast.website || podcast.apple_url || podcast.spotify_url);
-            if (!hasSiteOrDir) return '';
-            const missingSocial = !isValidSocialProfile(podcast.instagram_url, 'instagram') ||
-              !isValidSocialProfile(podcast.twitter_url, 'twitter') ||
-              !isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, 'linkedin') ||
-              !isValidSocialProfile(podcast.facebook_url, 'facebook') ||
-              !isValidSocialProfile(podcast.youtube_url, 'youtube') ||
-              !isValidSocialProfile(podcast.tiktok_url, 'tiktok');
-            // Hide badge entirely once enrichment is done
-            if (podcast.deep_enriched_at) {
-              return '';
-            }
-            if (!missingSocial && podcast.deep_enriched_at) {
-              return `<span class="card-link-chip" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete</span>`;
-            }
-            // Auto-enrich runs server-side after each "Find a Podcast" run.
-            // If the enrichment hasn't completed yet, show a processing indicator
-            // instead of a clickable button that may throw server errors.
-            return `<span class="card-link-chip" style="background:#fefce8;color:#a16207;border-color:#fef08a;font-weight:600;display:inline-flex;align-items:center;gap:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2" class="rotating-icon"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Auto</span>`;
-          })()}
+          ${isValidSocialProfile(podcast.twitter_url, "twitter") ? `<a class="card-link-chip" href="${esc(podcast.twitter_url)}" target="_blank" rel="noopener">Twitter/X</a>` : ""}
+          ${isValidSocialProfile(podcast.facebook_url, "facebook") ? `<a class="card-link-chip" href="${esc(podcast.facebook_url)}" target="_blank" rel="noopener">Facebook</a>` : ""}
+          ${isValidSocialProfile(podcast.linkedin_page_url || podcast.linkedin_url, "linkedin") ? `<a class="card-link-chip" href="${esc(podcast.linkedin_page_url || podcast.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ""}
+          ${isValidSocialProfile(podcast.youtube_url, "youtube") ? `<a class="card-link-chip" href="${esc(podcast.youtube_url)}" target="_blank" rel="noopener">YouTube</a>` : ""}
+          ${isValidUrl(podcast.tiktok_url) ? `<a class="card-link-chip" href="${esc(podcast.tiktok_url)}" target="_blank" rel="noopener">TikTok</a>` : ""}
+          ${isValidUrl(podcast.booking_page_url) ? `<a class="card-link-chip" href="${esc(podcast.booking_page_url)}" target="_blank" rel="noopener">Booking Page</a>` : ""}
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:8px;padding:1px 5px;margin-left:3px;letter-spacing:0.3px;">BETA</span></a>` : ''}
           ${podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email) ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
         ${match.reply_count > 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} replies</span>` : ''}
