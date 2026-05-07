@@ -8,21 +8,53 @@
  * skipping any with status='replied' (host already responded) or follow_up_sent=true.
  *
  * For each eligible match:
- *   1. Generates a personalised, threaded follow-up via Claude haiku-4.5
- *      (References the original pitch angle, soft re-ask, "circling back" tone)
- *   2. Charges 1 credit (skips silently if customer is out of credits)
- *   3. Sends via Gmail in the SAME thread as the original pitch
- *      (uses gmail_thread_id captured at original send for proper Re: threading)
- *   4. Marks follow_up_sent = true, status = 'followed_up'
+ *   1. Checks the client's saved default 'followup' template — if found, uses
+ *      it with {host_name}, {podcast_title}, {client_name} etc. substitution.
+ *   2. If no saved template, generates a personalised follow-up via Claude.
+ *   3. If Claude fails, uses a clean hardcoded fallback.
+ *   4. Charges 1 credit (skips silently if customer is out of credits).
+ *   5. Sends via Resend with In-Reply-To headers for proper threading.
+ *   6. Marks follow_up_sent = true, status = 'followed_up'.
  */
 
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
-const { createDraft, sendDraft, sendThreadedReply, getMessageMetadata } = require('./gmailService');
+const { sendEmail } = require('./resendMailService');
 const { chargeCredits } = require('../lib/credits');
 const { getClient: getAnthropicClient } = require('../lib/anthropic');
 
-async function generateFollowUpBody({ client, podcast, match }) {
+// ── Placeholder substitution ────────────────────────────────────────────
+function replacePlaceholders(str, vars) {
+  return (str || '').replace(/\{(\w+)\}/gi, (_, key) => {
+    const k = key.toLowerCase();
+    return vars[k] !== undefined && vars[k] !== null ? vars[k] : `{${key}}`;
+  });
+}
+
+// ── Template lookup ─────────────────────────────────────────────────────
+async function getFollowUpTemplate(clientId) {
+  try {
+    // Prefer the default, fall back to most-recently-used
+    const { data: templates } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('type', 'followup')
+      .order('is_default', { ascending: false })
+      .order('use_count', { ascending: false })
+      .limit(1);
+
+    if (templates && templates.length > 0) {
+      return templates[0];
+    }
+  } catch (err) {
+    logger.warn('followup-sweep: template lookup failed', { clientId, error: err.message });
+  }
+  return null;
+}
+
+// ── Body resolution: template > AI > hardcoded fallback ────────────────
+async function resolveFollowUpBody({ client, podcast, match }) {
   const clientName    = (client.name || '').trim();
   const firstName     = clientName.split(' ')[0] || clientName;
   const hostName      = (podcast.host_name || 'there').trim();
@@ -31,7 +63,35 @@ async function generateFollowUpBody({ client, podcast, match }) {
   const originalSubject = (match.email_subject_edited || match.email_subject || '').trim();
   const replySubject  = originalSubject ? `Re: ${originalSubject}` : `Following up — ${podcastTitle}`;
 
-  // Fast path if Anthropic key isn't present — fall back to a clean-but-generic template
+  // 1. Try saved template
+  const tpl = await getFollowUpTemplate(match.client_id || client.id);
+  if (tpl && tpl.subject && tpl.body) {
+    const vars = {
+      host_name:           hostName,
+      host_first_name:     hostName.split(' ')[0] || hostName,
+      podcast_title:       podcastTitle,
+      client_name:         clientName,
+      client_first_name:   firstName,
+      one_liner:           client.bio_short || '',
+      credential:          client.bio_short || '',
+      business_name:       client.business_name || '',
+    };
+
+    // Increment template use count
+    try {
+      await supabase.from('email_templates')
+        .update({ use_count: (tpl.use_count || 0) + 1, last_used_at: new Date().toISOString() })
+        .eq('id', tpl.id);
+    } catch (_) {}
+
+    return {
+      subject: replacePlaceholders(tpl.subject, vars),
+      body:    replacePlaceholders(tpl.body, vars),
+      source:  'template',
+    };
+  }
+
+  // 2. Claude AI generation (fast path if no Anthropic key)
   if (!process.env.ANTHROPIC_API_KEY) {
     return {
       subject: replySubject,
@@ -49,6 +109,7 @@ async function generateFollowUpBody({ client, podcast, match }) {
         `Thanks,`,
         firstName,
       ].join('\n'),
+      source: 'fallback',
     };
   }
 
@@ -78,13 +139,37 @@ Write a follow-up email body. Rules:
       messages: [{ role: 'user', content: prompt }],
     });
     const body = (msg.content?.[0]?.text || '').trim();
-    return { subject: replySubject, body };
+
+    // 3. If the AI returns something meaningful, use it
+    if (body.length > 20) {
+      return { subject: replySubject, body, source: 'ai' };
+    }
   } catch (err) {
     logger.warn('followup-sweep: Claude generation failed, using fallback', { matchId: match.id, error: err.message });
-    return generateFollowUpBody({ client, podcast, match: { ...match, _skipClaude: true } });
   }
+
+  // 3. Hardcoded fallback (clean, short, human)
+  return {
+    subject: replySubject,
+    body: [
+      `Hi ${hostName},`,
+      ``,
+      `Circling back on my last email — I know inboxes move fast.`,
+      ``,
+      angle
+        ? `My angle for ${podcastTitle} would be ${angle}. I think it lands in your sweet spot based on what you've been having on the show.`
+        : `I genuinely think there's a strong fit here for your audience.`,
+      ``,
+      `Even a 15-minute chat to see if it's worth exploring. Happy to work around your schedule.`,
+      ``,
+      `Thanks,`,
+      firstName,
+    ].join('\n'),
+    source: 'fallback',
+  };
 }
 
+// ── Main sweep ─────────────────────────────────────────────────────────
 async function runFollowupSweep() {
   logger.info('Daily follow-up sweep: starting');
 
@@ -94,7 +179,7 @@ async function runFollowupSweep() {
 
   const { data: matches, error } = await supabase
     .from('podcast_matches')
-    .select('id, client_id, status, sent_at, follow_up_sent, email_subject, email_subject_edited, best_pitch_angle, gmail_thread_id, gmail_pitch_message_id, message_count, podcasts(id, title, host_name, contact_email), clients(id, name, email, bio_short, business_name, gmail_refresh_token)')
+    .select('id, client_id, status, sent_at, follow_up_sent, email_subject, email_subject_edited, best_pitch_angle, message_count, podcasts(id, title, host_name, contact_email), clients(id, name, email, bio_short, business_name)')
     .eq('status', 'sent')
     .gte('sent_at', minAge.toISOString())
     .lte('sent_at', maxAge.toISOString());
@@ -104,7 +189,6 @@ async function runFollowupSweep() {
     return;
   }
 
-  // Filter out matches that already have follow_up_sent = true
   const eligible = (matches || []).filter(m => !m.follow_up_sent);
   logger.info('Daily follow-up sweep: eligible matches', { count: eligible.length });
 
@@ -117,7 +201,7 @@ async function runFollowupSweep() {
     const client = match.clients || {};
     const podcast = match.podcasts || {};
 
-    if (!client.gmail_refresh_token || !podcast.contact_email?.includes('@')) {
+    if (!podcast.contact_email?.includes('@')) {
       skippedNoEmail++;
       continue;
     }
@@ -131,86 +215,74 @@ async function runFollowupSweep() {
     }
 
     try {
-      const { subject, body } = await generateFollowUpBody({ client, podcast, match });
+      const { subject, body, source } = await resolveFollowUpBody({ client, podcast, match });
+      logger.info('followup sweep: body resolved', { matchId: match.id, source });
 
-      let sentMsg = null;
-      // If we captured the original Message-ID + threadId on the initial pitch, send as a proper threaded reply
-      if (match.gmail_thread_id && match.gmail_pitch_message_id) {
-        // Look up the original RFC-822 Message-ID from match_thread_messages (or fetch from Gmail as fallback)
-        let rfcMessageId = null;
-        const { data: pitchRow } = await supabase
-          .from('match_thread_messages')
-          .select('rfc822_message_id')
-          .eq('match_id', match.id)
-          .eq('direction', 'outbound')
-          .eq('message_type', 'pitch')
-          .limit(1)
-          .single();
-        rfcMessageId = pitchRow?.rfc822_message_id || null;
+      // Look up the most recent outbound message's RFC-822 Message-ID for threading
+      let inReplyTo = null;
+      let references = null;
+      const { data: latestMsg } = await supabase
+        .from('match_thread_messages')
+        .select('rfc822_message_id')
+        .eq('match_id', match.id)
+        .eq('direction', 'outbound')
+        .not('rfc822_message_id', 'is', null)
+        .order('sent_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-        if (!rfcMessageId) {
-          // Fallback: fetch from Gmail directly
-          const meta = await getMessageMetadata(client.gmail_refresh_token, match.gmail_pitch_message_id);
-          rfcMessageId = meta?.rfc822MessageId || null;
-        }
-
-        try {
-          sentMsg = await sendThreadedReply({
-            refreshToken: client.gmail_refresh_token,
-            to:           podcast.contact_email,
-            subject,
-            body,
-            threadId:     match.gmail_thread_id,
-            inReplyTo:    rfcMessageId || undefined,
-          });
-        } catch (threadErr) {
-          logger.warn('followup sweep: threaded reply failed, falling back to draft+send', { matchId: match.id, error: threadErr.message });
-        }
+      if (latestMsg?.rfc822_message_id) {
+        inReplyTo = latestMsg.rfc822_message_id;
+        references = latestMsg.rfc822_message_id;
       }
 
-      // Fallback path: no threadId stored (older matches) — send as a new email with Re: subject
-      if (!sentMsg) {
-        const draftId = await createDraft(client.gmail_refresh_token, podcast.contact_email, subject, body).catch(() => null);
-        if (!draftId) { failed++; continue; }
-        sentMsg = await sendDraft(client.gmail_refresh_token, draftId).catch(() => null);
-        if (!sentMsg) { failed++; continue; }
+      // Send via Resend with threading headers
+      const sentResult = await sendEmail({
+        to: podcast.contact_email,
+        subject,
+        body,
+        inReplyTo: inReplyTo || undefined,
+        references: references || undefined,
+      });
+
+      if (!sentResult?.id) {
+        failed++;
+        logger.warn('followup sweep: send returned no id', { matchId: match.id });
+        continue;
       }
 
       // Persist the follow-up message in the thread ledger
-      if (sentMsg?.id) {
-        const meta = await getMessageMetadata(client.gmail_refresh_token, sentMsg.id);
-        try {
-          await supabase.from('match_thread_messages').insert({
-            match_id:          match.id,
-            gmail_message_id:  sentMsg.id,
-            gmail_thread_id:   sentMsg.threadId || match.gmail_thread_id,
-            direction:         'outbound',
-            message_type:      'followup',
-            from_email:        meta?.from || null,
-            to_email:          podcast.contact_email,
-            subject,
-            body_text:         body,
-            rfc822_message_id: meta?.rfc822MessageId || null,
-            in_reply_to:       null,
-            sent_at:           new Date().toISOString(),
-          });
-        } catch (logErr) {
-          logger.warn('followup sweep: thread message insert failed', { matchId: match.id, error: logErr.message });
-        }
+      try {
+        await supabase.from('match_thread_messages').insert({
+          match_id:          match.id,
+          gmail_message_id:  sentResult.id,
+          direction:         'outbound',
+          message_type:      'followup',
+          from_email:        sentResult.from || null,
+          to_email:          podcast.contact_email,
+          subject,
+          body_text:         body,
+          rfc822_message_id: sentResult.id,
+          in_reply_to:       inReplyTo || null,
+          sent_at:           new Date().toISOString(),
+        });
+      } catch (logErr) {
+        logger.warn('followup sweep: thread message insert failed', { matchId: match.id, error: logErr.message });
       }
 
+      // Update match metadata
       await supabase.from('podcast_matches')
         .update({
-          follow_up_sent:           true,
-          status:                   'followed_up',
-          gmail_followup_message_id: sentMsg?.id || null,
-          last_message_at:          new Date().toISOString(),
-          message_count:            (match.message_count || 0) + 1,
+          follow_up_sent:            true,
+          status:                    'followed_up',
+          gmail_followup_message_id: sentResult.id || null,
+          last_message_at:           new Date().toISOString(),
+          message_count:             (match.message_count || 0) + 1,
         })
         .eq('id', match.id);
 
       sent++;
-      logger.info('followup sweep: sent', { matchId: match.id, hostEmail: podcast.contact_email, threaded: !!match.gmail_thread_id });
+      logger.info('followup sweep: sent via Resend', { matchId: match.id, hostEmail: podcast.contact_email, source });
     } catch (err) {
       failed++;
       logger.warn('followup sweep: send failed', { matchId: match.id, error: err.message });
@@ -249,7 +321,6 @@ async function runFollowupHeadsUp() {
   const eligible = (matches || []).filter(m => !m.follow_up_sent);
   if (eligible.length === 0) { logger.info('Follow-up heads-up: no eligible matches'); return; }
 
-  // Group by client
   const byClient = new Map();
   for (const m of eligible) {
     const cid = m.client_id;
@@ -274,7 +345,7 @@ async function runFollowupHeadsUp() {
   <p style="font-size:15px;margin:0 0 14px;color:#374151;">${items.length === 1 ? 'One pitch hits its 7-day mark in 24 hours' : `${items.length} pitches hit their 7-day mark in 24 hours`}. Find A Podcast will auto-send a follow-up unless you edit, skip, or send now.</p>
   <ul style="font-size:14px;margin:0 0 18px;padding-left:20px;color:#1f2937;">${list}</ul>
   <a href="${dashUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;">Review in dashboard</a>
-  <p style="font-size:12.5px;margin:24px 0 0;color:#6b7280;">Tip: tweaking the follow-up subject or angle can lift reply rates 20%+. Quick edits beat the auto-send.</p>
+  <p style="font-size:12.5px;margin:24px 0 0;color:#6b7280;">Tip: use your saved Follow-up template in Settings to control the exact copy that fires. Templates beat auto-generated every time.</p>
   <p style="font-size:12px;margin:18px 0 0;color:#9ca3af;">— Find A Podcast</p>
 </div>`;
     try {
@@ -296,4 +367,4 @@ async function runFollowupHeadsUp() {
   return { sent, eligible: eligible.length };
 }
 
-module.exports = { runFollowupSweep, runFollowupHeadsUp, generateFollowUpBody };
+module.exports = { runFollowupSweep, runFollowupHeadsUp, resolveFollowUpBody };
