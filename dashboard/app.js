@@ -1733,6 +1733,12 @@ function toggleLeaderboard() {
 }
 window.toggleLeaderboard = toggleLeaderboard;
 
+// ── Small date formatter ───────────────────────────────────────────────
+function formatDateShort(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 // ── Render a single match card ────────────────────────────────────────
 function renderMatchCard(match) {
   const podcast    = match.podcasts || {};
@@ -1836,14 +1842,15 @@ function renderMatchCard(match) {
           ${match.seo_score != null ? scoreBarHtml('SEO Value', match.seo_score) : ''}
         </div>
 
-        <!-- Why fits -->
-        ${match.why_this_client_fits ? `
+        <!-- Why fits — only relevant for pre-booking pipeline stages -->
+        ${['new','dream','sent','followed_up','replied'].includes(match.status) && match.why_this_client_fits ? `
         <div class="why-fits-box">
           <p class="why-fits-label">Why You Fit</p>
           <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
         </div>` : ''}
 
-        <!-- Analysis -->
+        <!-- Best Pitch Angle — only for pre-booking stages -->
+        ${['new','dream','sent','followed_up','replied'].includes(match.status) ? `
         <div class="card-analysis">
           ${match.best_pitch_angle ? `
           <div class="why-fits-box">
@@ -1851,7 +1858,16 @@ function renderMatchCard(match) {
             <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
           </div>` : ''}
       ${episodeHtml}
-    </div>
+    </div>` : ''}
+
+        <!-- Booking info — shown on Booked tab -->
+        ${match.status === 'booked' ? `
+        <div class="why-fits-box">
+          <p class="why-fits-label">Booking Details</p>
+          ${match.booked_show_name ? `<p class="why-fits-text" style="margin-bottom:6px;"><strong>Show:</strong> ${esc(match.booked_show_name)}</p>` : ''}
+          ${match.booked_at ? `<p class="why-fits-text" style="margin-bottom:6px;"><strong>Booked:</strong> ${formatDateShort(new Date(match.booked_at))}</p>` : ''}
+          ${match.client_notes ? `<p class="why-fits-text" style="margin-bottom:6px;"><strong>Notes:</strong> ${esc(match.client_notes)}</p>` : ''}
+        </div>` : ''}
 
     <!-- Meta tags -->
     ${metaTagsHtml(podcast)}
