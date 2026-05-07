@@ -3370,41 +3370,60 @@ window.toggleInlinePitch = toggleInlinePitch;
 
 // ── Pitch preset templates ─────────────────────────────────────────────
 // Two flavours:
-//   1. Subject-only: just swaps the subject line, keeps the AI-drafted body.
+//   1. Subject-only: Just swaps the subject line, keeps the AI-drafted body.
 //      Good for tweaking the framing of the AI pitch.
-//   2. Full template: swaps subject AND body. Pre-written short alternatives
-//      to the long AI pitch — useful when the host's email looks like
-//      they want quick + casual, not a full pitch.
+//   2. Full template: Swaps subject AND body. Short, human-sounding alternatives
+//      to the AI pitch — for hosts who prefer quick + casual.
+//
+// RULES applied to ALL presets:
+//   - No em dashes, no exclamation marks, no bullet points
+//   - No "Guest inquiry" / "Guest pitch" / "Guest application" phrasing
+//   - Under 80 words body, under 6 words subject
+//   - Peer-level tone, not salesy
+//   - No P.S., no sign-off (added by system)
+//   - No emoji, no canned generic closers
 function buildPitchPresets(podcast, client) {
   const t        = podcast?.title    || 'your show';
   const host     = (podcast?.host_name || '').split(' ')[0] || 'there';
   const fromName = (client?.name      || '').split(' ')[0] || '';
-  const sig      = fromName ? `\n\n${fromName}` : '';
+  const sig      = fromName ? `\\n\\n${fromName}` : '';
 
   return [
     // ── Subject-only swaps (keep current body) ─────────────────────────
-    { type: 'subject', label: `Guest inquiry for ${t}`, subject: `Guest inquiry for ${t}` },
-    { type: 'subject', label: `Quick guest pitch for ${t}`, subject: `Quick guest pitch for ${t}` },
-    { type: 'subject', label: `Would love to join you on ${t}`, subject: `Would love to join you on ${t}` },
+    {
+      type: 'subject',
+      label: `Ideas for ${t}`,
+      subject: `Ideas for ${t}`,
+    },
+    {
+      type: 'subject',
+      label: `Question for ${host}`,
+      subject: `Question for ${host}`,
+    },
+    {
+      type: 'subject',
+      label: `Quick thought on ${t}`,
+      subject: `Quick thought on ${t}`,
+    },
 
     // ── Full templates (swap subject + body) ───────────────────────────
     {
       type:    'full',
-      label:   `Soft inquiry — what kind of guests are you looking for?`,
-      subject: `What kind of guests are you looking for on ${t}?`,
-      body:    `Hi ${host},\n\nQuick one — what kind of guests are you actively booking on ${t} right now? Want to make sure I'd be a real fit before sending the full pitch.\n\nIf you're open to it, I'll send my one-pager and the angle I'd bring to your audience.\n\n(Pretty sure I'd be your perfect guest 😉)${sig}`,
+      label:   `Soft fit check — are you booking guests?`,
+      subject: `Are you booking guests on ${t} right now?`,
+      body:    `Hi ${host},\\n\\nQuick question: what kind of guests are you booking on ${t} this season? I'd rather ask than guess whether my angle fits.\\n\\nIf you're open to it, I'll send a short summary of what I'd bring to your audience.${sig}`,
     },
     {
       type:    'full',
-      label:   `Direct — applying as a guest`,
-      subject: `Guest application for ${t} — what do you need from me?`,
-      body:    `Hi ${host},\n\nI'd love to apply as a guest for ${t}. Rather than guess at your format, what do you need from a guest application — topic outline, sample audio, anything else?\n\nHappy to send the full kit. Just want to respect your process.${sig}`,
+      label:   `Topic angle pitch`,
+      subject: `An angle for your audience on ${t}`,
+      body:    `Hi ${host},\\n\\nI've been watching what ${t} covers, and I think your audience would get real value from a conversation about (specific topic).\\n\\nWould a 10-minute call work to see if there is a fit?${sig}`,
     },
     {
       type:    'full',
-      label:   `Curious — short ask, no hard pitch`,
-      subject: `Open to guest pitches for ${t}?`,
-      body:    `Hi ${host},\n\nFan of ${t}. Are you currently open to guest pitches?\n\nIf yes, I'll send a 3-line summary of the angle I'd bring + a link to past appearances. If not, I'll save you the inbox clutter.\n\nEither way — keep up the good work.${sig}`,
+      label:   `Short pitch, low pressure`,
+      subject: `Worth a conversation for ${t}?`,
+      body:    `Hi ${host},\\n\\nI know how full inboxes get. Here is my pitch in three lines: (1) what I do, (2) why your audience would care, (3) what we would talk about.\\n\\nIf that sounds interesting, I am happy to send more detail.${sig}`,
     },
   ];
 }
@@ -4923,26 +4942,120 @@ window.saveThreadTemplate = saveThreadTemplate;
 // ── Template Manager (profile dropdown CRUD) ──────────────────────────
 function openTemplateManager() {
   $('profile-dropdown').style.display = 'none';
-  const modal = document.getElementById('template-manager-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
+  const drawer = document.getElementById('template-manager-modal');
+  if (!drawer) return;
+  drawer.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   renderTemplateManager();
 }
 window.openTemplateManager = openTemplateManager;
 
 function closeTemplateManager() {
-  const modal = document.getElementById('template-manager-modal');
-  if (modal) modal.style.display = 'none';
+  const drawer = document.getElementById('template-manager-modal');
+  if (drawer) drawer.style.display = 'none';
   document.body.style.overflow = '';
 }
 window.closeTemplateManager = closeTemplateManager;
+
+// ── Type badge helper ──────────────────────────────────────────────────
+function tmTypeBadge(type) {
+  const cls = type === 'followup' ? 'tm-badge-followup' :
+             type === 'reply'     ? 'tm-badge-reply'   :
+                                    'tm-badge-pitch';
+  return `<span class="tm-badge ${cls}">${esc(type || 'pitch')}</span>`;
+}
+
+// ── New template form state ────────────────────────────────────────────
+let _tmNewFormShowing = false;
+
+function showNewTemplateForm() {
+  if (_tmNewFormShowing) return;
+  const body = document.getElementById('template-manager-body');
+  if (!body) return;
+
+  // Check if we need to scroll the body back up
+  body.scrollTop = 0;
+
+  const form = document.createElement('div');
+  form.id = 'tm-new-form';
+  form.className = 'tm-new-form';
+  form.innerHTML = `
+    <div class="tm-new-form-title">Create a new template</div>
+
+    <div class="tm-new-row">
+      <div>
+        <label class="field-label" for="tm-new-name">Template Name</label>
+        <input type="text" id="tm-new-name" class="tm-edit-field" placeholder="e.g. Intro Pitch, Follow-up" autocomplete="off" />
+      </div>
+      <div>
+        <label class="field-label" for="tm-new-type">Type</label>
+        <select id="tm-new-type" class="tm-edit-field" style="cursor:pointer;">
+          <option value="pitch">Pitch</option>
+          <option value="followup">Follow-up</option>
+          <option value="reply">Reply</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label" for="tm-new-subject">Subject Line</label>
+      <input type="text" id="tm-new-subject" class="tm-edit-field" placeholder="Optional — leave blank to generate per-match" autocomplete="off" />
+    </div>
+
+    <div>
+      <label class="field-label" for="tm-new-body">Email Body</label>
+      <textarea id="tm-new-body" class="tm-edit-field tm-edit-textarea" placeholder="Use {host_name}, {podcast_title}, {client_name} as placeholders. They'll be replaced with real values when you send."></textarea>
+      <div class="tm-placeholder-hint">Available placeholders: {host_name} &middot; {podcast_title} &middot; {client_name}</div>
+    </div>
+
+    <div class="tm-new-actions">
+      <button class="btn btn-ghost btn-sm" onclick="cancelNewTemplate()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewTemplate()">Save Template</button>
+    </div>
+  `;
+
+  body.insertBefore(form, body.firstChild);
+  _tmNewFormShowing = true;
+
+  // Focus the name field
+  setTimeout(() => document.getElementById('tm-new-name')?.focus(), 100);
+}
+window.showNewTemplateForm = showNewTemplateForm;
+
+function cancelNewTemplate() {
+  const form = document.getElementById('tm-new-form');
+  if (form) form.remove();
+  _tmNewFormShowing = false;
+}
+window.cancelNewTemplate = cancelNewTemplate;
+
+async function saveNewTemplate() {
+  const name    = document.getElementById('tm-new-name')?.value?.trim();
+  const type    = document.getElementById('tm-new-type')?.value || 'pitch';
+  const subject = document.getElementById('tm-new-subject')?.value?.trim() || '';
+  const body    = document.getElementById('tm-new-body')?.value?.trim();
+
+  if (!name) { showToast('Template name is required.', 'error'); return; }
+  if (!body) { showToast('Email body is required.', 'error'); return; }
+
+  try {
+    const data = await apiPost('/api/templates', { type, name, subject, body });
+    if (data.ok) {
+      showToast(`Template "${name}" created.`, 'success');
+      cancelNewTemplate();
+      renderTemplateManager();
+    } else {
+      showToast('Failed to create template: ' + (data.error || 'unknown'), 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+}
+window.saveNewTemplate = saveNewTemplate;
 
 async function renderTemplateManager() {
   const body = document.getElementById('template-manager-body');
   if (!body) return;
 
-  body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">Loading templates…</div>';
+  body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text-tertiary);font-size:14px;">Loading templates…</div>';
 
   try {
     const r = await fetch('/api/templates', { headers: { 'x-dashboard-token': state.token } });
@@ -4950,95 +5063,102 @@ async function renderTemplateManager() {
     const templates = (data.ok ? data.templates : []) || [];
 
     if (templates.length === 0) {
-      body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary);font-size:14px;">No templates yet. Write a reply in the thread composer or email modal and save it as a template.</div>';
+      body.innerHTML = `
+        <div style="padding:60px 20px;text-align:center;">
+          <div style="font-size:40px;margin-bottom:16px;opacity:0.3;">&#128196;</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No templates yet</div>
+          <p style="font-size:13px;color:var(--text-tertiary);line-height:1.6;max-width:360px;margin:0 auto 20px;">
+            Write a pitch in the email composer, then save it as a template. Or click "+ New Template" to create one from scratch.
+          </p>
+          <button class="btn btn-primary" onclick="showNewTemplateForm()">+ Create Your First Template</button>
+        </div>`;
       return;
     }
 
     body.innerHTML = templates.map(t => `
-      <div class="template-manager-item" id="tm-item-${esc(t.id)}" style="border:1.5px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--surface-card);">
-        <!-- Default view -->
-        <div class="tm-view" id="tm-view-${esc(t.id)}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div class="tm-card" id="tm-item-${esc(t.id)}">
+
+        <!-- View mode -->
+        <div id="tm-view-${esc(t.id)}">
+          <div class="tm-card-header">
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:700;font-size:14px;color:var(--text-primary);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="tm-card-title">
                 ${esc(t.name)}
-                ${t.is_default ? '<span style="font-size:9px;font-weight:800;background:#10b981;color:#fff;padding:2px 8px;border-radius:999px;">DEFAULT</span>' : ''}
-                <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.10);color:#6366f1;padding:2px 6px;border-radius:999px;text-transform:uppercase;">${esc(t.type)}</span>
+                ${t.is_default ? '<span class="tm-badge tm-badge-default">DEFAULT</span>' : ''}
+                ${tmTypeBadge(t.type)}
               </div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                <span style="font-weight:600;color:var(--text-tertiary);">Subject:</span> ${esc((t.subject || '(no subject)').slice(0, 80))}
+              <div class="tm-subject">
+                <span class="tm-subject-label">Subject:</span> ${esc((t.subject || '(no subject)').slice(0, 80))}
               </div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                <span style="font-weight:600;color:var(--text-tertiary);">Body:</span> ${esc((t.body || '').slice(0, 200))}${(t.body || '').length > 200 ? '…' : ''}
+              <div class="tm-body-preview">${esc((t.body || '').slice(0, 200))}${(t.body || '').length > 200 ? '…' : ''}</div>
+              <div class="tm-meta">
+                <span>${t.use_count || 0} uses</span>
+                ${t.updated_at ? `<span>Edited ${timeAgo(t.updated_at)}</span>` : ''}
               </div>
-              <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">${t.use_count || 0} uses</div>
             </div>
-            <div style="display:flex;gap:6px;flex-shrink:0;">
-              <button onclick="editTemplate('${esc(t.id)}')" style="background:rgba(99,102,241,0.08);color:#6366f1;border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>
-              <button onclick="deleteTemplate('${esc(t.id)}')" style="background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">Delete</button>
+            <div class="tm-card-actions">
+              <button class="tm-card-btn tm-card-btn-edit" onclick="editTemplate('${esc(t.id)}')">Edit</button>
+              <button class="tm-card-btn tm-card-btn-delete" onclick="deleteTemplate('${esc(t.id)}')">Delete</button>
             </div>
           </div>
         </div>
 
-        <!-- Inline edit view (hidden by default) -->
-        <div class="tm-edit" id="tm-edit-${esc(t.id)}" style="display:none;">
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <input type="text" id="tm-edit-name-${esc(t.id)}" value="${esc(t.name)}" placeholder="Template name" style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;font-weight:600;" />
-            <input type="text" id="tm-edit-subject-${esc(t.id)}" value="${esc(t.subject || '')}" placeholder="Subject (optional)" style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;" />
-            <textarea id="tm-edit-body-${esc(t.id)}" rows="6" placeholder="Email body template..." style="padding:9px 12px;border:1.5px solid var(--border-light);border-radius:10px;font-size:14px;font-family:inherit;line-height:1.5;resize:vertical;min-height:120px;">${esc(t.body || '')}</textarea>
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-              <button onclick="cancelTemplateEdit('${esc(t.id)}')" style="background:none;border:1.5px solid var(--border-medium);color:var(--text-secondary);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
-              <button onclick="saveTemplateEdit('${esc(t.id)}')" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
+        <!-- Edit mode -->
+        <div id="tm-edit-${esc(t.id)}" style="display:none;">
+          <div class="tm-edit-form">
+            <input type="text" id="tm-edit-name-${esc(t.id)}" class="tm-edit-field" value="${esc(t.name)}" placeholder="Template name" />
+            <input type="text" id="tm-edit-subject-${esc(t.id)}" class="tm-edit-field" value="${esc(t.subject || '')}" placeholder="Subject (optional)" />
+            <textarea id="tm-edit-body-${esc(t.id)}" class="tm-edit-field tm-edit-textarea" placeholder="Email body template...">${esc(t.body || '')}</textarea>
+            <div class="tm-edit-actions">
+              <button class="btn btn-ghost btn-sm" onclick="cancelTemplateEdit('${esc(t.id)}')">Cancel</button>
+              <button class="btn btn-primary btn-sm" onclick="saveTemplateEdit('${esc(t.id)}')">Save</button>
             </div>
           </div>
         </div>
+
       </div>
     `).join('');
 
   } catch {
-    body.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;font-size:14px;">Failed to load templates. Check your connection and try again.</div>';
+    body.innerHTML = '<div style="padding:48px;text-align:center;color:#ef4444;font-size:14px;">Failed to load templates. Check your connection and try again.</div>';
   }
+}
+
+// ── Simple relative time helper ────────────────────────────────────────
+function timeAgo(isoStr) {
+  if (!isoStr) return '';
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return `${Math.floor(days / 30)}mo ago`;
 }
 
 async function deleteTemplate(templateId) {
   if (!window.confirm('Delete this template? This cannot be undone.')) return;
 
+  const del = async () => {
+    const r = await fetch(`/api/templates/${templateId}`, {
+      method: 'DELETE',
+      headers: { 'x-dashboard-token': state.token }
+    });
+    return r.json();
+  };
+
   try {
-    const data = await apiPost(`/api/templates/${templateId}`, { _method: 'DELETE' });
-    // Try both DELETE method styles
-    let ok = data.ok;
-    if (!ok) {
-      // Some servers use method override, try actual DELETE
-      const r = await fetch(`/api/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: { 'x-dashboard-token': state.token }
-      });
-      const d = await r.json();
-      ok = d.ok;
-    }
-    if (ok) {
+    const data = await del();
+    if (data.ok) {
       showToast('Template deleted.', 'success');
       renderTemplateManager();
     } else {
       showToast('Failed to delete template.', 'error');
     }
   } catch {
-    // Try DELETE method directly
-    try {
-      const r = await fetch(`/api/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: { 'x-dashboard-token': state.token }
-      });
-      const d = await r.json();
-      if (d.ok) {
-        showToast('Template deleted.', 'success');
-        renderTemplateManager();
-      } else {
-        showToast('Failed to delete template.', 'error');
-      }
-    } catch {
-      showToast('Network error.', 'error');
-    }
+    showToast('Network error.', 'error');
   }
 }
 window.deleteTemplate = deleteTemplate;
@@ -5056,9 +5176,9 @@ function cancelTemplateEdit(templateId) {
 window.cancelTemplateEdit = cancelTemplateEdit;
 
 async function saveTemplateEdit(templateId) {
-  const name = document.getElementById(`tm-edit-name-${templateId}`)?.value?.trim();
+  const name    = document.getElementById(`tm-edit-name-${templateId}`)?.value?.trim();
   const subject = document.getElementById(`tm-edit-subject-${templateId}`)?.value?.trim() || '';
-  const body = document.getElementById(`tm-edit-body-${templateId}`)?.value?.trim() || '';
+  const body    = document.getElementById(`tm-edit-body-${templateId}`)?.value?.trim() || '';
   if (!name) { showToast('Template name is required.', 'error'); return; }
 
   try {
@@ -5072,25 +5192,6 @@ async function saveTemplateEdit(templateId) {
   } catch { showToast('Network error.', 'error'); }
 }
 window.saveTemplateEdit = saveTemplateEdit;
-
-async function addNewTemplate() {
-  const name = prompt('Enter a name for the new template (e.g. "Intro pitch", "Follow-up"):');
-  if (!name) return;
-  const subject = prompt('Enter a default subject line (optional):') || '';
-  const body = prompt('Enter the email body template:');
-  if (!body) { showToast('Body text is required.', 'error'); return; }
-
-  try {
-    const data = await apiPost('/api/templates', { type: 'pitch', name: name.trim(), subject, body });
-    if (data.ok) {
-      showToast(`Template "${name}" created.`, 'success');
-      renderTemplateManager();
-    } else {
-      showToast('Failed to create template: ' + (data.error || 'unknown'), 'error');
-    }
-  } catch { showToast('Network error.', 'error'); }
-}
-window.addNewTemplate = addNewTemplate;
 
 // ── Discovery email generator (alternative first-touch — probes for fit) ─
 async function generateDiscoveryEmail() {

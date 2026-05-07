@@ -335,9 +335,9 @@ WRITE THE EMAIL BODY ONLY:
 - Tell them in ONE sentence what the customer does (just enough to seed curiosity)
 - Ask them: "What types of guests are you looking for in the next few months?"
 - Add a soft tease about the customer's angle WITHOUT pitching directly
-- End: "If we're not aligned, no worries — but thought I'd ask."
+- End: "If we are not aligned, no worries but thought I would ask."
 - Sign off with first name only: ${firstName}
-- Plain text. No em-dashes (use commas, periods, hyphens). No markdown.
+- Plain text. NO DASHES of any kind. No em dashes, no en dashes, no hyphens. Use commas, periods, or colons instead. No markdown.
 
 Output ONLY the email body. No subject line. No preamble.`;
 
