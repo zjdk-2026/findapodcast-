@@ -394,3 +394,30 @@ function buildPodcastRecord(enriched) {
 }
 
 module.exports = router;
+
+/**
+ * DELETE /api/matches
+ * Delete all podcast matches for the authenticated client.
+ * Resets the dashboard to start fresh.
+ */
+router.delete('/matches', requireDashboardToken, async (req, res) => {
+  const clientId = req.clientId;
+
+  try {
+    const { error } = await supabase
+      .from('podcast_matches')
+      .delete()
+      .eq('client_id', clientId);
+
+    if (error) {
+      logger.error('Failed to delete matches', { clientId, error: error.message });
+      return res.status(500).json({ success: false, error: 'Failed to delete matches.' });
+    }
+
+    logger.info('All matches deleted for client', { clientId });
+    return res.json({ success: true, message: 'All matches deleted. Dashboard reset.' });
+  } catch (err) {
+    logger.error('Delete matches error', { clientId, error: err.message });
+    return res.status(500).json({ success: false, error: 'Server error.' });
+  }
+});

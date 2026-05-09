@@ -32,6 +32,7 @@ SCORING DIMENSIONS (each 0–100) — 5X STRICT
    - 0–29: Poor or no alignment.
    ★ RULE: If the show description or niche doesn't explicitly match client topics, DO NOT inflate. "Entrepreneurship" is NOT a match for "AI-powered sales tools."
    ★ RULE: Generic business podcasts that cover "everything" get -15 penalty. Specialized shows score higher.
+   ★ HARD RULE: If the show has been dormant >180 days (last_episode_date more than 6 months ago), relevance MUST be 0. A dead show has NO CURRENT relevance — you cannot guest on a show that isn't publishing. Check last_episode_date in the data.
 
 2. AUDIENCE SCORE (weight: 25%)
    How well does the podcast's listener base match the client's target audience?

@@ -74,6 +74,19 @@ function applyAlgorithmicOverrides(scores, podcast) {
     clamped.recency_score = 0;
   }
 
+  // ── Relevance override: dead shows have ZERO relevance ─────────────────
+  if (podcast.last_episode_date) {
+    const lastEp = new Date(podcast.last_episode_date);
+    const now = new Date();
+    const daysSince = Math.floor((now - lastEp) / (1000 * 60 * 60 * 24));
+
+    if (daysSince > 365) {
+      clamped.relevance_score = 0;
+    } else if (daysSince > 180) {
+      clamped.relevance_score = Math.min(clamped.relevance_score, 10);
+    }
+  }
+
   // ── Accessibility override: dead shows can't be booked ────────────────
   if (podcast.last_episode_date) {
     const lastEp = new Date(podcast.last_episode_date);
