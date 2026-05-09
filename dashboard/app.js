@@ -1893,6 +1893,11 @@ function renderMatchCard(match) {
         </span>
         <button class="inline-pitch-close" onclick="toggleInlinePitch('${esc(match.id)}')" title="Close">&#x2715;</button>
       </div>
+      <div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;" id="tmpl-sel-${esc(match.id)}">
+        <button type="button" class="btn-tmpl-inline" data-tmpl="my" onclick="applyInlineTemplateOption('${esc(match.id)}','my')" style="flex:1;min-width:90px;padding:7px 8px;border:1.5px solid var(--border-light);border-radius:8px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:11px;font-weight:600;color:var(--text-secondary);transition:all 0.12s;line-height:1.3;">My Template</button>
+        <button type="button" class="btn-tmpl-inline" data-tmpl="soft" onclick="applyInlineTemplateOption('${esc(match.id)}','soft')" style="flex:1;min-width:90px;padding:7px 8px;border:1.5px solid var(--border-light);border-radius:8px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:11px;font-weight:600;color:var(--text-secondary);transition:all 0.12s;line-height:1.3;">Soft Option</button>
+        <button type="button" class="btn-tmpl-inline" data-tmpl="blank" onclick="applyInlineTemplateOption('${esc(match.id)}','blank')" style="flex:1;min-width:90px;padding:7px 8px;border:1.5px solid var(--border-light);border-radius:8px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:11px;font-weight:600;color:var(--text-secondary);transition:all 0.12s;line-height:1.3;">Write it Yourself</button>
+      </div>
       <select id="inline-preset-${esc(match.id)}" class="inline-pitch-field" style="display:none;cursor:pointer;"></select>
       <div class="inline-field-group">
         <label class="inline-field-label">Subject</label>
@@ -3501,6 +3506,67 @@ function populateInlinePitch(matchId) {
     setTimeout(() => rewriteInlinePitch(matchId), 100);
   }
 }
+
+// ── Inline template selector (My Template / Soft Option / Write it Yourself) ──
+function applyInlineTemplateOption(matchId, option) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const podcast = match.podcasts || {};
+  const subjectEl = $(`inline-subject-${matchId}`);
+  const bodyEl = $(`inline-body-${matchId}`);
+  if (!subjectEl || !bodyEl) return;
+
+  // Highlight the active button
+  const container = $(`tmpl-sel-${matchId}`);
+  if (container) {
+    container.querySelectorAll('.btn-tmpl-inline').forEach(b => {
+      b.style.borderColor = '';
+      b.style.background = '';
+      b.style.color = '';
+    });
+    const active = container.querySelector(`[data-tmpl="${option}"]`);
+    if (active) {
+      active.style.borderColor = '#6366f1';
+      active.style.background = 'rgba(99,102,241,0.08)';
+      active.style.color = '#6366f1';
+    }
+  }
+
+  if (option === 'my') {
+    const saved = (state.client?.email_templates || []).filter(t => t.subject || t.body);
+    if (saved.length > 0) {
+      subjectEl.value = saved[0].subject || '';
+      bodyEl.value    = saved[0].body    || '';
+      showToast(`Loaded "${saved[0].name}".`, 'success');
+    } else if (state.client?.pitch_style) {
+      bodyEl.value    = state.client.pitch_style;
+      subjectEl.value = '';
+      showToast('Loaded your pitch style. Edit subject as needed.', 'info');
+    } else {
+      showToast('No saved template found. Save one in Manage Templates.', 'info');
+    }
+  } else if (option === 'soft') {
+    const hostSubject = match.email_subject_edited || match.email_subject || '';
+    const hostBody    = match.email_body_edited    || match.email_body    || '';
+    if (hostBody && !hostBody.includes('[Write your pitch here') && !hostBody.includes("I'd love to be a guest")) {
+      subjectEl.value = hostSubject;
+      bodyEl.value    = hostBody;
+      showToast('Loaded the AI-generated pitch for this host.', 'success');
+    } else {
+      const hostName = (podcast?.host_name || '').split(' ')[0] || 'there';
+      const showTitle = podcast?.title || 'your show';
+      const fromName = (state.client?.name || '').split(' ')[0] || '';
+      subjectEl.value = `Are you booking guests on ${showTitle} right now?`;
+      bodyEl.value    = `Hi ${hostName},\n\nQuick question: what kind of guests are you booking on ${showTitle} this season? I would rather ask than guess whether my angle fits.\n\nIf you are open to it, I will send a short summary of what I would bring to your audience.${fromName ? '\n\n' + fromName : ''}`;
+      showToast('No pitch found — loaded a soft fit-check template.', 'success');
+    }
+  } else if (option === 'blank') {
+    subjectEl.value = '';
+    bodyEl.value    = '';
+  }
+  updatePitchPreview(matchId);
+}
+window.applyInlineTemplateOption = applyInlineTemplateOption;
 
 function updatePitchPreview(matchId) {
   const subjEl    = $(`inline-subject-${matchId}`);
