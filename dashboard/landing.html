@@ -3,1112 +3,725 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Find A Podcast: Grow Your Business Through Podcast Speaking</title>
-  <link rel="icon" type="image/svg+xml" href="/dashboard/favicon.svg" />
-  <link rel="apple-touch-icon" href="/dashboard/favicon.svg" />
-  <meta name="description" content="Business owners who speak on podcasts close more deals, generate inbound leads, and scale without paid ads. We build your full podcast speaking pipeline so you can focus on showing up and speaking." />
+  <title>Find A Podcast &mdash; Get Booked on Podcasts. Without the Grind.</title>
+  <meta name="description" content="Stop cold DMing. Start getting invited on shows that actually reach your target audience. Find A Podcast helps you book podcast tours that grow your business." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
-    body {
-      background: #f5f5f7;
-      color: #1d1d1f;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1e1b2e;
+      background: #faf9ff;
       line-height: 1.6;
     }
-    a { color: inherit; text-decoration: none; }
 
-    /* ── NAV ── */
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      height: 64px;
-      background: rgba(245,245,247,0.92);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(0,0,0,0.07);
+      padding: 18px 0;
+      border-bottom: 1px solid #ede9fe;
     }
+
     .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 17px;
-      font-weight: 700;
-      color: #1d1d1f;
-    }
-    .nav-brand svg { color: #6366f1; }
-    .nav-cta {
-      background: #6366f1;
-      color: #fff;
-      padding: 10px 22px;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background 0.2s, transform 0.15s;
-    }
-    .nav-cta:hover { background: #4f46e5; transform: translateY(-1px); }
-
-    /* ── HERO ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      background: #ffffff;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -200px; left: 50%;
-      transform: translateX(-50%);
-      width: 1000px; height: 700px;
-      background: radial-gradient(ellipse at center, rgba(99,102,241,0.07) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(99,102,241,0.08);
-      border: 1px solid rgba(99,102,241,0.22);
-      color: #6366f1;
-      padding: 6px 16px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 32px;
-      letter-spacing: 0.02em;
-    }
-    .hero-badge span { width: 6px; height: 6px; background: #6366f1; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-    h1 {
-      font-size: clamp(40px, 6.5vw, 76px);
-      font-weight: 900;
-      line-height: 1.06;
-      letter-spacing: -0.035em;
-      max-width: 920px;
-      margin-bottom: 12px;
-      color: #1d1d1f;
-    }
-    h1 em {
-      font-style: normal;
-      background: linear-gradient(135deg, #6366f1 0%, #a78bfa 60%, #e879f9 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-sub2 {
-      font-size: clamp(20px, 2.8vw, 26px);
-      font-weight: 700;
-      color: #1d1d1f;
-      max-width: 760px;
-      line-height: 1.4;
-      margin-bottom: 10px;
-      letter-spacing: -0.015em;
-    }
-    .hero-sub3 {
-      font-size: clamp(16px, 2vw, 19px);
-      color: #6e6e73;
-      max-width: 620px;
-      line-height: 1.75;
-      margin-bottom: 48px;
-    }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #6366f1;
-      color: #fff;
-      padding: 20px 44px;
-      border-radius: 999px;
-      font-size: 18px;
-      font-weight: 700;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-      box-shadow: 0 4px 28px rgba(99,102,241,0.35);
-    }
-    .btn-primary:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 36px rgba(99,102,241,0.45); }
-    .hero-note { font-size: 13px; color: #aeaeb2; margin-top: 14px; }
-    .hero-stats {
-      display: flex;
-      gap: 56px;
-      margin-top: 72px;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding-top: 48px;
-      border-top: 1px solid rgba(0,0,0,0.07);
-      width: 100%;
-      max-width: 760px;
-    }
-    .hero-stat { text-align: center; }
-    .hero-stat-value { font-size: 36px; font-weight: 900; color: #1d1d1f; line-height: 1; margin-bottom: 6px; letter-spacing: -0.03em; }
-    .hero-stat-label { font-size: 13px; color: #aeaeb2; font-weight: 500; }
-
-    /* ── SHARED ── */
-    section { padding: 96px 24px; }
-    .container { max-width: 1040px; margin: 0 auto; }
-    .section-label {
-      display: inline-block;
-      color: #6366f1;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-    .section-title {
-      font-size: clamp(28px, 4vw, 48px);
-      font-weight: 900;
-      letter-spacing: -0.028em;
-      line-height: 1.12;
-      margin-bottom: 18px;
-      color: #1d1d1f;
-    }
-    .section-title em {
-      font-style: normal;
-      background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .section-sub {
-      font-size: 18px;
-      color: #6e6e73;
-      line-height: 1.75;
-      max-width: 600px;
-    }
-
-    /* ── PAIN SECTION ── */
-    .pain { background: #0f172a; color: #e2e8f0; text-align: center; }
-    .pain .section-label { color: #a78bfa; }
-    .pain-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2px;
-      margin-top: 52px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-    .pain-item {
-      background: #1e293b;
-      padding: 32px 28px;
-      text-align: left;
-    }
-    .pain-item .pain-icon { font-size: 24px; margin-bottom: 14px; }
-    .pain-item h3 { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
-    .pain-item p { font-size: 14px; color: #94a3b8; line-height: 1.65; }
-
-    /* ── STORY SECTION ── */
-    .story { background: #f5f5f7; }
-    .story-inner {
-      max-width: 740px;
-      margin: 0 auto;
-    }
-    .story-inner p {
-      font-size: 19px;
-      color: #3a3a3c;
-      line-height: 1.9;
-      margin-bottom: 28px;
-    }
-    .story-inner p:last-child { margin-bottom: 0; }
-    .story-inner strong { color: #1d1d1f; font-weight: 700; }
-    .story-inner em { font-style: italic; color: #6366f1; }
-    .story-zac {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 40px;
-    }
-    .story-zac-avatar {
-      width: 140px;
-      flex-shrink: 0;
-      align-self: stretch;
-      overflow: hidden;
-      border-radius: 16px;
-    }
-    .story-zac-avatar img {
-      width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block;
-    }
-    .story-zac-name { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 3px; }
-    .story-zac-creds { font-size: 13px; color: #6e6e73; line-height: 1.5; }
-
-    /* ── WAVE / FOMO ── */
-    .wave { background: #ffffff; text-align: center; }
-    .wave-quote {
-      font-size: clamp(26px, 4vw, 50px);
-      font-weight: 900;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      max-width: 840px;
-      margin: 0 auto 28px;
-      color: #1d1d1f;
-    }
-    .wave-quote em {
-      font-style: normal;
-      background: linear-gradient(135deg, #f59e0b, #ef4444);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .wave-body {
-      font-size: 18px;
-      color: #6e6e73;
-      max-width: 620px;
-      margin: 0 auto 20px;
-      line-height: 1.85;
-    }
-    .wave-stats {
-      display: flex;
-      gap: 0;
-      margin: 52px auto 0;
-      max-width: 800px;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-    .wave-stat {
-      flex: 1;
-      padding: 32px 24px;
-      border-right: 1px solid rgba(0,0,0,0.08);
-      text-align: center;
-      background: #f5f5f7;
-    }
-    .wave-stat:last-child { border-right: none; }
-    .wave-stat-val { font-size: 36px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.03em; margin-bottom: 6px; }
-    .wave-stat-label { font-size: 13px; color: #6e6e73; font-weight: 500; line-height: 1.4; }
-
-    /* ── HOW IT WORKS ── */
-    .how { background: #f5f5f7; }
-    .steps {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      margin-top: 52px;
-      max-width: 860px;
-      margin-left: auto;
-      margin-right: auto;
-      position: relative;
-    }
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 20px;
-      padding: 32px 36px;
-      position: relative;
-    }
-    .step:nth-child(odd) { border-right: 1px solid rgba(0,0,0,0.07); }
-    .step:nth-child(1), .step:nth-child(2) { border-bottom: 1px solid rgba(0,0,0,0.07); }
-    .step:nth-child(3), .step:nth-child(4) { border-bottom: 1px solid rgba(0,0,0,0.07); }
-    .step-num {
-      width: 44px; height: 44px;
-      background: #6366f1;
-      color: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
+      font-size: 22px;
       font-weight: 800;
-      flex-shrink: 0;
-      margin-top: 2px;
+      color: #1e1b2e;
+      letter-spacing: -0.3px;
     }
-    .step-body {}
-    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #1d1d1f; }
-    .step p { font-size: 14px; color: #6e6e73; line-height: 1.6; }
 
-    /* ── TIMELINE ── */
-    .timeline-section { background: #ffffff; }
-    .timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      margin-top: 52px;
-      max-width: 720px;
-    }
-    .timeline-item {
-      display: flex;
-      gap: 28px;
-      position: relative;
-    }
-    .timeline-item:not(:last-child) .timeline-dot::after {
-      content: '';
-      position: absolute;
-      left: 19px;
-      top: 40px;
-      width: 2px;
-      height: calc(100% - 8px);
-      background: rgba(99,102,241,0.15);
-    }
-    .timeline-left {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      flex-shrink: 0;
-      width: 40px;
-      position: relative;
-    }
-    .timeline-dot {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(99,102,241,0.1);
-      border: 2px solid rgba(99,102,241,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-    }
-    .timeline-content {
-      padding-bottom: 36px;
-      flex: 1;
-    }
-    .timeline-day {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+    .nav-brand span {
       color: #6366f1;
-      margin-bottom: 4px;
-    }
-    .timeline-content h3 { font-size: 17px; font-weight: 700; color: #1d1d1f; margin-bottom: 6px; }
-    .timeline-content p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
-
-    /* ── PIPELINE VISUAL ── */
-    .pipeline-section { background: #0f172a; padding: 96px 24px; }
-    .pipeline-section .section-label { color: #a78bfa; }
-    .pipeline-section .section-title { color: #f1f5f9; }
-    .pipeline-section .section-sub { color: #94a3b8; }
-
-    /* App frame wrapper */
-    .dash-frame {
-      margin-top: 52px;
-      background: #0d1117;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      overflow: hidden;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.12);
-    }
-    .dash-frame-bar {
-      background: #161b22;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .dash-dot { width: 11px; height: 11px; border-radius: 50%; }
-    .dash-dot-r { background: #ff5f57; }
-    .dash-dot-y { background: #febc2e; }
-    .dash-dot-g { background: #28c840; }
-    .dash-frame-url {
-      margin-left: 14px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 6px;
-      padding: 4px 12px;
-      font-size: 11px;
-      color: #475569;
-      font-family: monospace;
-    }
-    .dash-inner { padding: 20px 20px 24px; }
-
-    /* Filter tabs */
-    .dash-tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    .dash-tab {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
-      color: #64748b;
-      cursor: default;
-      user-select: none;
-    }
-    .dash-tab.active {
-      background: #6366f1;
-      color: #fff;
-      border-color: #6366f1;
     }
 
-    /* Card grid */
-    .dash-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-    @media (max-width: 640px) { .dash-grid { grid-template-columns: 1fr 1fr; } }
-
-    .pipeline-card {
-      background: #161b22;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 12px;
-      padding: 14px;
-    }
-    .pipeline-card-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 3px; line-height: 1.35; }
-    .pipeline-card-host { font-size: 11px; color: #475569; margin-bottom: 10px; }
-    .pipeline-score {
-      display: flex;
+    .nav-cta {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 2px;
+      background: #6366f1;
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      transition: background 0.2s, transform 0.15s;
     }
-    .pipeline-score-bar {
-      flex: 1;
-      height: 4px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .pipeline-score-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: linear-gradient(90deg, #6366f1, #a78bfa);
-    }
-    .pipeline-score-val { font-size: 11px; font-weight: 800; color: #818cf8; min-width: 20px; text-align: right; }
-    .pipeline-card-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
-      margin-top: 8px;
-      letter-spacing: 0.02em;
-    }
-    .status-new { background: rgba(99,102,241,0.13); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
-    .status-sent { background: rgba(59,130,246,0.13); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
-    .status-followup { background: rgba(14,165,233,0.12); color: #7dd3fc; border: 1px solid rgba(14,165,233,0.2); }
-    .status-replied { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-    .status-booked { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.22); }
-    .status-aired { background: rgba(168,85,247,0.12); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.2); }
 
-    /* ── 50 PODCASTS FEATURE ── */
-    .fifty { background: #f5f5f7; }
-    .fifty-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-top: 52px;
-      align-items: start;
+    .nav-cta:hover {
+      background: #5558e6;
+      transform: translateY(-1px);
     }
-    .fifty-features {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 72px 0 56px;
     }
-    .fifty-feature {
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.07);
+
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      color: #1e1b2e;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 .highlight {
+      color: #6366f1;
+    }
+
+    .hero p {
+      font-size: clamp(17px, 2.5vw, 20px);
+      color: #5b5770;
+      max-width: 680px;
+      margin: 0 auto 40px;
+      line-height: 1.65;
+    }
+
+    .hero-img-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
       border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.18), 0 6px 20px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      background: #fff;
     }
-    .fifty-feature-icon {
-      width: 42px;
-      height: 42px;
-      background: rgba(99,102,241,0.09);
+
+    .hero-img-wrapper img {
+      width: 100%;
+    }
+
+    /* Dashboard Showcase */
+    .showcase {
+      padding: 80px 0;
+      background: #fff;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #6366f1;
+      margin-bottom: 10px;
+    }
+
+    .showcase h2 {
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .showcase > .container > p {
+      text-align: center;
+      color: #5b5770;
+      font-size: 17px;
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+
+    .showcase-img {
+      border-radius: 14px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      margin-bottom: 48px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: #f8f7ff;
+      border: 1px solid #ede9fe;
+      border-radius: 14px;
+      padding: 28px 24px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      box-shadow: 0 8px 28px rgba(99, 102, 241, 0.10);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      background: #6366f1;
+      color: #fff;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      flex-shrink: 0;
+      font-weight: 700;
+      margin-bottom: 14px;
     }
-    .fifty-feature h3 { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 4px; }
-    .fifty-feature p { font-size: 13px; color: #6e6e73; line-height: 1.6; }
 
-    /* ── SCORE CARD MOCKUP ── */
-    .score-card-mockup {
-      background: #0f172a;
-      border-radius: 20px;
-      padding: 24px;
-      border: 1px solid rgba(255,255,255,0.07);
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1e1b2e;
     }
-    .score-card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      gap: 12px;
+
+    .feature-card p {
+      font-size: 14px;
+      color: #5b5770;
+      line-height: 1.6;
     }
-    .score-card-title { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 3px; }
-    .score-card-host { font-size: 12px; color: #64748b; }
-    .score-card-fit {
-      background: linear-gradient(135deg, #6366f1, #a78bfa);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 800;
-      padding: 8px 14px;
-      border-radius: 12px;
+
+    /* Pricing */
+    .pricing {
+      padding: 80px 0;
+    }
+
+    .pricing h2 {
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 700;
+      letter-spacing: -0.4px;
       text-align: center;
-      flex-shrink: 0;
-      line-height: 1.2;
+      margin-bottom: 8px;
     }
-    .score-card-fit small { display: block; font-size: 10px; font-weight: 500; opacity: 0.8; }
-    .score-bars {
+
+    .pricing > .container > p {
+      text-align: center;
+      color: #5b5770;
+      font-size: 17px;
+      margin-bottom: 48px;
+    }
+
+    .pricing-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .score-bar-item {}
-    .score-bar-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #64748b;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-    .score-bar-label span:last-child { color: #a5b4fc; }
-    .score-bar-track {
-      height: 5px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .score-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #6366f1, #a78bfa);
-    }
-    .score-card-insight {
-      background: rgba(99,102,241,0.1);
-      border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
-    }
-    .score-card-insight-label { font-size: 10px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-    .score-card-insight-text { font-size: 12px; color: #94a3b8; line-height: 1.55; }
-    .score-card-tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .score-tag {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      color: #64748b;
-    }
-
-    /* ── COMPARISON ── */
-    .compare { background: #ffffff; }
-    .compare-table {
-      margin-top: 52px;
-      border-radius: 20px;
-      overflow: hidden;
-      border: 1px solid rgba(0,0,0,0.08);
-    }
-    .compare-header {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      background: #f5f5f7;
-    }
-    .compare-header-cell {
-      padding: 18px 24px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #6e6e73;
-      border-right: 1px solid rgba(0,0,0,0.07);
-      text-align: center;
-    }
-    .compare-header-cell:last-child { border-right: none; }
-    .compare-header-cell.highlight {
-      background: #0f172a;
-      color: #a5b4fc;
-      font-weight: 800;
-    }
-    .compare-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    .compare-row:nth-child(even) { background: #fafafa; }
-    .compare-cell {
-      padding: 16px 24px;
-      font-size: 14px;
-      color: #6e6e73;
-      border-right: 1px solid rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      line-height: 1.45;
-    }
-    .compare-cell:last-child { border-right: none; }
-    .compare-cell.situation { font-weight: 500; color: #1d1d1f; }
-    .compare-cell.bad { color: #4b5563; }
-    .compare-cell.good {
-      background: rgba(99,102,241,0.04);
-      color: #1d1d1f;
-      font-weight: 600;
-    }
-    .compare-cell.good::before { content: '✓'; color: #6366f1; font-size: 17px; font-weight: 900; flex-shrink: 0; }
-    .compare-cell.bad::before { content: '✗'; color: #ef4444; font-size: 17px; font-weight: 900; flex-shrink: 0; }
-
-    /* ── PLANS ── */
-    .plans { background: #f5f5f7; text-align: center; }
-    .plans-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      max-width: 800px;
-      margin: 52px auto 0;
+      gap: 28px;
       align-items: start;
     }
+
     .plan-card {
-      background: #ffffff;
-      border: 1.5px solid rgba(0,0,0,0.09);
-      border-radius: 24px;
-      padding: 40px 32px;
-      display: flex;
-      flex-direction: column;
-      text-align: left;
+      background: #fff;
+      border: 1px solid #e2dff5;
+      border-radius: 18px;
+      padding: 40px 32px 36px;
       position: relative;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: box-shadow 0.2s;
     }
-    .plan-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.09); }
-    .plan-card.featured {
-      background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 55%, #0b1120 100%);
+
+    .plan-card:hover {
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.10);
+    }
+
+    .plan-card.premium {
       border: 2px solid #6366f1;
-      box-shadow: 0 20px 60px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
-      position: relative;
-      overflow: hidden;
-      padding-top: 64px;
+      box-shadow: 0 0 0 1px #6366f1, 0 8px 32px rgba(99, 102, 241, 0.12);
     }
-    .plan-card.featured::before {
-      content: '';
-      position: absolute;
-      top: -40%; right: -20%;
-      width: 70%; height: 70%;
-      background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 65%);
-      pointer-events: none;
+
+    .plan-card.premium:hover {
+      box-shadow: 0 0 0 1px #6366f1, 0 12px 44px rgba(99, 102, 241, 0.18);
     }
-    .plan-card.featured::after {
-      content: '';
-      position: absolute;
-      bottom: -30%; left: -10%;
-      width: 60%; height: 60%;
-      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 65%);
-      pointer-events: none;
-    }
-    .plan-card.featured > * { position: relative; z-index: 1; }
-    .plan-badge {
-      position: absolute;
-      top: 18px; left: 50%;
-      transform: translateX(-50%);
-      background: #6366f1;
-      color: #fff;
-      font-size: 11px;
+
+    .badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #6366f1;
+      font-size: 12px;
       font-weight: 700;
-      padding: 4px 18px;
-      border-radius: 999px;
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-      z-index: 2;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
     }
-    /* Override the > * rule specifically for the badge so it stays absolutely positioned */
-    .plan-card.featured > .plan-badge { position: absolute; }
-    .plan-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
-    .plan-card.featured .plan-label { color: #c7d2fe; }
-    .plan-name { font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .plan-card.featured .plan-name { color: #ffffff; }
-    .plan-desc { font-size: 15px; color: #6e6e73; line-height: 1.65; margin-bottom: 28px; }
-    .plan-card.featured .plan-desc { color: #cbd5e1; }
+
+    .plan-card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1e1b2e;
+    }
+
+    .plan-price {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: #1e1b2e;
+      margin-bottom: 4px;
+    }
+
+    .plan-price span {
+      font-size: 18px;
+      font-weight: 500;
+      color: #5b5770;
+      letter-spacing: 0;
+    }
+
+    .plan-desc {
+      color: #5b5770;
+      font-size: 15px;
+      margin-bottom: 24px;
+      line-height: 1.65;
+    }
+
     .plan-features {
       list-style: none;
       padding: 0;
-      margin: 0 0 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      margin-bottom: 28px;
     }
+
     .plan-features li {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      padding: 8px 0;
       font-size: 14px;
-      color: #1d1d1f;
-      line-height: 1.5;
-    }
-    .plan-card.featured .plan-features li { color: #e2e8f0; }
-    .plan-features li::before { content: '✓'; color: #22c55e; font-weight: 800; flex-shrink: 0; }
-    .plan-features li.plan-section-label { display: block; }
-    .plan-features li.plan-section-label::before { content: none; }
-    .plan-section-label {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: #6366f1;
-      margin-top: 18px;
-      margin-bottom: 4px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    .plan-section-label:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-    .plan-card.featured .plan-section-label { color: #a5b4fc; border-top-color: rgba(255,255,255,0.08); }
-    .plan-guarantee {
-      background: rgba(34,197,94,0.08);
-      border: 1px solid rgba(34,197,94,0.25);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-top: 8px;
-      margin-bottom: 20px;
+      color: #3a3650;
       display: flex;
-      gap: 10px;
       align-items: flex-start;
+      gap: 10px;
     }
-    .plan-guarantee svg { color: #22c55e; flex-shrink: 0; margin-top: 2px; }
-    .plan-guarantee-text { font-size: 13.5px; line-height: 1.5; color: #1d1d1f; }
-    .plan-card.featured .plan-guarantee { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
-    .plan-card.featured .plan-guarantee-text { color: #e2e8f0; }
-    .plan-guarantee b { color: #166534; font-weight: 800; }
-    .plan-card.featured .plan-guarantee b { color: #86efac; }
-    .btn-plan {
+
+    .plan-features li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      background: #6366f1;
+      border-radius: 50%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z'/%3E%3C/svg%3E");
+      background-size: 12px;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .plan-cta {
       display: block;
       text-align: center;
-      padding: 16px 24px;
-      border-radius: 999px;
+      font-weight: 600;
       font-size: 16px;
-      font-weight: 700;
-      background: #0f172a;
+      padding: 14px 0;
+      border-radius: 12px;
+      transition: background 0.2s, transform 0.15s;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .plan-cta.primary {
+      background: #6366f1;
       color: #fff;
-      transition: transform 0.15s, background 0.2s;
     }
-    .btn-plan:hover { transform: translateY(-1px); background: #1e293b; }
-    .plan-card.featured .btn-plan { background: #6366f1; }
-    .plan-card.featured .btn-plan:hover { background: #4f46e5; }
 
-    /* ── CONTENT BOOST ── */
-    .boost-section { background: #0f172a; padding: 80px 24px; }
-    .boost-inner {
-      max-width: 1040px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: center;
+    .plan-cta.primary:hover {
+      background: #5558e6;
+      transform: translateY(-1px);
     }
-    .boost-label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #a78bfa; margin-bottom: 14px; }
-    .boost-title { font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 18px; }
-    .boost-body { font-size: 17px; color: #94a3b8; line-height: 1.8; margin-bottom: 28px; }
-    .boost-items {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .boost-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 14px;
-      color: #cbd5e1;
-      line-height: 1.5;
-    }
-    .boost-item-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .boost-card-visual {
-      background: #1e293b;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 32px;
-      position: relative;
-      overflow: hidden;
-    }
-    .boost-card-visual::before {
-      content: '';
-      position: absolute;
-      top: -60px; right: -60px;
-      width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .boost-card-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
-    .boost-card-sub { font-size: 13px; color: #64748b; margin-bottom: 24px; }
-    .boost-deliverables {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .boost-deliverable {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      padding: 12px 14px;
-    }
-    .boost-deliverable-icon { font-size: 16px; }
-    .boost-deliverable-text { font-size: 13px; color: #e2e8f0; font-weight: 600; }
-    .boost-deliverable-count { margin-left: auto; font-size: 12px; color: #a78bfa; font-weight: 700; }
 
-    /* ── LEADERBOARD TEASER ── */
-    .leaderboard-teaser { background: #ffffff; padding: 64px 24px; text-align: center; }
-    .leaderboard-teaser-inner {
-      max-width: 680px;
-      margin: 0 auto;
-      background: linear-gradient(135deg, #f8f7ff 0%, #fdf4ff 100%);
-      border: 1px solid rgba(99,102,241,0.15);
-      border-radius: 24px;
-      padding: 48px 40px;
-      position: relative;
-      overflow: hidden;
+    .plan-cta.outline {
+      background: transparent;
+      color: #6366f1;
+      border: 2px solid #6366f1;
     }
-    .leaderboard-teaser-inner::before {
-      content: '';
-      position: absolute;
-      top: -40px; right: -40px;
-      width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
-      pointer-events: none;
+
+    .plan-cta.outline:hover {
+      background: #eef2ff;
+      transform: translateY(-1px);
     }
-    .soon-badge {
+
+    .guarantee-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(99,102,241,0.1);
-      border: 1px solid rgba(99,102,241,0.25);
+      background: #eef2ff;
       color: #6366f1;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 14px;
-      border-radius: 999px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-    .leaderboard-medals {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin: 24px 0;
-    }
-    .leaderboard-medal {
-      text-align: center;
-    }
-    .leaderboard-medal-icon { margin-bottom: 6px; display:flex; justify-content:center; }
-    .medal-badge { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff; }
-    .medal-badge.gold { background: linear-gradient(135deg,#f59e0b,#d97706); }
-    .medal-badge.silver { background: linear-gradient(135deg,#9ca3af,#6b7280); }
-    .medal-badge.bronze { background: linear-gradient(135deg,#cd7c4a,#b45309); }
-    .leaderboard-medal-name { font-size: 13px; font-weight: 700; color: #1d1d1f; }
-    .leaderboard-medal-stat { font-size: 11px; color: #6e6e73; }
-
-    /* ── OBJECTIONS ── */
-    .objections { background: #f5f5f7; }
-    .obj-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 18px;
-      margin-top: 48px;
-    }
-    .obj-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 28px;
-      border: 1px solid rgba(0,0,0,0.06);
-    }
-    .obj-q { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 10px; }
-    .obj-a { font-size: 14px; color: #6e6e73; line-height: 1.7; }
-
-    /* ── TRIAL SECTION ── */
-    .trial-section { background: #f5f5f7; }
-    .trial-steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2px;
-      background: rgba(0,0,0,0.06);
-      border-radius: 20px;
-      overflow: hidden;
-      margin-top: 52px;
-    }
-    .trial-step {
-      background: #fff;
-      padding: 36px 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .trial-day {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #6366f1;
+      padding: 8px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
     }
-    .trial-step h3 { font-size: 16px; font-weight: 700; color: #1d1d1f; }
-    .trial-step p { font-size: 13px; color: #6e6e73; line-height: 1.65; }
-    .trial-step-icon {
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      background: rgba(99,102,241,0.08);
-      display: flex; align-items: center; justify-content: center;
-      color: #6366f1;
-    }
-    @media (max-width: 700px) { .trial-steps { grid-template-columns: 1fr 1fr; } }
 
-    /* ── FINAL CTA ── */
-    .final-cta {
-      text-align: center;
-      padding: 120px 24px;
-      background: #ffffff;
-      position: relative;
-      overflow: hidden;
+    .guarantee-badge::before {
+      content: '\2605';
+      font-size: 15px;
     }
-    .final-cta::before {
+
+    /* FAQ */
+    .faq {
+      padding: 80px 0;
+      background: #fff;
+    }
+
+    .faq h2 {
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    .faq-list {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid #ede9fe;
+    }
+
+    .faq-item:first-child {
+      border-top: 1px solid #ede9fe;
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e1b2e;
+      padding: 20px 0;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .faq-question:hover {
+      color: #6366f1;
+    }
+
+    .faq-question .icon {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      position: relative;
+      margin-left: 16px;
+    }
+
+    .faq-question .icon::before,
+    .faq-question .icon::after {
       content: '';
       position: absolute;
-      bottom: -80px; left: 50%;
-      transform: translateX(-50%);
-      width: 700px; height: 400px;
-      background: radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 70%);
-      pointer-events: none;
+      background: #6366f1;
+      border-radius: 2px;
+      transition: transform 0.25s;
     }
-    .final-cta h2 { font-size: clamp(30px, 5vw, 58px); font-weight: 900; letter-spacing: -0.03em; max-width: 780px; margin: 0 auto 20px; line-height: 1.08; color: #1d1d1f; }
-    .final-cta p { font-size: 18px; color: #6e6e73; max-width: 520px; margin: 0 auto 44px; line-height: 1.75; }
-    .final-note { margin-top: 18px; font-size: 13px; color: #aeaeb2; }
 
-    /* ── FOOTER ── */
+    .faq-question .icon::before {
+      width: 2px;
+      height: 16px;
+      top: 3px;
+      left: 10px;
+    }
+
+    .faq-question .icon::after {
+      width: 16px;
+      height: 2px;
+      top: 10px;
+      left: 3px;
+    }
+
+    .faq-item.open .faq-question .icon::before {
+      transform: rotate(90deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .faq-answer-inner {
+      padding-bottom: 20px;
+      font-size: 15px;
+      color: #5b5770;
+      line-height: 1.7;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 300px;
+    }
+
+    /* Footer */
     footer {
-      border-top: 1px solid rgba(0,0,0,0.07);
-      padding: 28px 24px;
-      text-align: center;
-      color: #aeaeb2;
-      font-size: 13px;
-      background: #f5f5f7;
+      padding: 32px 0;
+      border-top: 1px solid #ede9fe;
     }
 
-    @media (max-width: 768px) {
-      .fifty-grid { grid-template-columns: 1fr; }
-      .boost-inner { grid-template-columns: 1fr; gap: 40px; }
-      .compare-header, .compare-row { grid-template-columns: 1fr; }
-      .compare-header-cell, .compare-cell { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
-      .compare-header-cell:last-child, .compare-cell:last-child { border-bottom: none; }
-      .compare-cell.situation { background: #f8f8f8; font-weight: 700; }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
-    @media (max-width: 640px) {
-      nav { padding: 0 16px; }
-      .wave-stats { flex-direction: column; }
-      .wave-stat { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
-      .wave-stat:last-child { border-bottom: none; }
-      .hero-stats { gap: 32px; }
-      .plans-grid { grid-template-columns: 1fr; }
-      .score-bars { grid-template-columns: 1fr; }
-      .leaderboard-teaser-inner { padding: 32px 24px; }
+
+    .footer-copy {
+      font-size: 14px;
+      color: #8b87a0;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 14px;
+      color: #5b5770;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #6366f1;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 48px 0 36px;
+      }
+
+      .showcase, .pricing, .faq {
+        padding: 56px 0;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .plan-card {
+        padding: 32px 24px 28px;
+      }
+
+      .nav-cta {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+
+      .nav-brand {
+        font-size: 18px;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .faq-question {
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 18px;
+      }
+
+      .plan-price {
+        font-size: 32px;
+      }
+
+      .hero h1 {
+        font-size: 30px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <a href="/" class="nav-brand">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" x2="12" y1="19" y2="22"/>
-      </svg>
-      Find A Podcast
-    </a>
-    <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="nav-cta">Book a Free Demo →</a>
+  <!-- Navigation -->
+  <nav class="container">
+    <a href="/" class="nav-brand">Find A <span>Podcast</span></a>
+    <a href="https://buy.stripe.com/3cs3dA8bK51h12IeV4I0Y3" class="nav-cta" target="_blank" rel="noopener">Get Started &rarr;</a>
   </nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-badge">
-      <span></span>
-      The fastest way to get booked on podcasts
-    </div>
-
-    <h1>We do the work.<br>You show up.<br><em>Your business scales.</em></h1>
-
-    <p class="hero-sub2">Get booked on the podcasts where your ideal clients are already listening. We find them, write the pitch, send it from your inbox, follow up till they reply. You record. You close.</p>
-
-    <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary">
-      Book a Free 15-Min Demo
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
-    <p class="hero-note">15 minutes &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; We'll show you the system&nbsp;live</p>
-  </section>
-
-  <!-- WHY PODCASTS -->
-  <section class="pain" style="background:#0a0a0f;">
-    <div class="container" style="text-align:center;max-width:840px;">
-      <p class="section-label" style="color:#6366f1;">Why podcasts</p>
-      <div style="font-size:clamp(108px, 16vw, 200px);font-weight:900;letter-spacing:-0.04em;line-height:0.9;color:#6366f1;margin:24px 0 28px;">80%</div>
-      <h2 class="section-title" style="color:#f1f5f9;font-size:clamp(28px,3.5vw,42px);max-width:720px;margin:0 auto 16px;">of podcast listeners <span style="background:linear-gradient(135deg,#e0e7ff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">have bought something</span> after hearing it recommended on a show they trust.</h2>
-      <p style="font-size:13px;color:#475569;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:24px;">Edison Research · Infinite Dial</p>
-      <p style="font-size:18px;color:#94a3b8;line-height:1.7;max-width:620px;margin:0 auto;">One good podcast appearance does more for your reputation in 45 minutes than six months of posting.</p>
+  <!-- Hero -->
+  <section class="hero container">
+    <h1>Get Booked on Podcasts.<br /><span class="highlight">Without the Grind.</span></h1>
+    <p>Stop cold DMing. Start getting invited on shows that actually reach your target audience.</p>
+    <div class="hero-img-wrapper">
+      <img src="/dashboard/dashboard-demo.png" alt="Find A Podcast dashboard screenshot showing AI powered podcast match scoring and pipeline management" />
     </div>
   </section>
 
-  <!-- STORY -->
-  <section class="story">
+  <!-- Dashboard Showcase -->
+  <section class="showcase">
     <div class="container">
-      <div class="story-inner">
-        <p class="section-label">Who built it</p>
-        <p>
-          <strong>The biggest names in business already figured this out.</strong> Tony Robbins toured podcasts before launching his challenges. Matthew McConaughey hit every major show when his book dropped. Mel Robbins built a podcast that now beats Diary of a CEO. Podcast appearances collapse the trust timeline. Listeners arrive pre-sold. Deals close faster.
-        </p>
-        <p>
-          The problem: building a consistent podcast pipeline is a full-time job. Finding shows, pitching hosts, following up, booking the calendar. <em>We built the system that does all of it. You show up. You record.</em>
-        </p>
+      <span class="section-label">Powerful Platform</span>
+      <h2>See the Dashboard in Action</h2>
+      <p>Our intelligent platform matches you with the right shows, manages outreach, and keeps your pipeline flowing.</p>
+      <div class="showcase-img">
+        <img src="/dashboard/dashboard-demo.png" alt="Find A Podcast dashboard showing match scores, follow ups, and pipeline" />
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">AI</div>
+          <h3>AI Powered Match Scoring</h3>
+          <p>Our engine scores every podcast against your audience, niche, and goals so you only pitch shows that matter.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">SM</div>
+          <h3>Smart Follow Ups</h3>
+          <p>Automated sequences that keep the conversation warm without being pushy. Never drop a hot lead again.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">RT</div>
+          <h3>Real Time Pipeline</h3>
+          <p>See every stage of your podcast tour from outreach to booking to publication in one clean view.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="story-zac">
-          <div class="story-zac-avatar" style="background:none;overflow:hidden;padding:0;flex-shrink:0;align-self:stretch;"><img src="/dashboard/zac.jpg" alt="Zac Deane" style="width:160px;height:100%;min-height:160px;object-fit:cover;object-position:top center;border-radius:16px;display:block;" /></div>
-          <div>
-            <div class="story-zac-name">Zac Deane, Founder of Find A Podcast</div>
-            <div class="story-zac-creds">10 years podcasting · Host of The Breakthrough Moment · 15,000+ YouTube subscribers · 488 episodes · TV & acting background</div>
-            <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-              <a href="https://www.youtube.com/channel/UCOar0ZRVi-4QttXMm2LYQDw" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                YouTube
-              </a>
-              <a href="https://www.instagram.com/zacdeane/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                Instagram
-              </a>
-              <a href="https://open.spotify.com/show/7FBW99BOy9CavEse731bK5?si=55a5fe0aa55e4433" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#1db954;color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                Podcast
-              </a>
+  <!-- Pricing / Upsell -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <span class="section-label">Choose Your Path</span>
+      <h2>Get Booked. Your Way.</h2>
+      <p>Whether you want to take the reins yourself or hand it all off, we have a plan that works.</p>
+      <div class="pricing-grid">
+
+        <!-- DIY Card -->
+        <div class="plan-card">
+          <span class="badge">Best For Self Starters</span>
+          <h3>Do It Yourself</h3>
+          <div class="plan-price">$997 <span>one time</span></div>
+          <p class="plan-desc">Get everything you need to book your own podcast tours</p>
+          <ul class="plan-features">
+            <li>Full dashboard access</li>
+            <li>AI match finding</li>
+            <li>Pitch templates</li>
+            <li>Email integration</li>
+            <li>Weekly match updates</li>
+            <li>Priority support</li>
+          </ul>
+          <a href="https://buy.stripe.com/3cs3dA8bK51h12IeV4I0Y3" class="plan-cta primary" target="_blank" rel="noopener">Buy DIY &rarr; $997</a>
+        </div>
+
+        <!-- DFY Card -->
+        <div class="plan-card premium">
+          <span class="badge">Most Popular</span>
+          <h3>Done For You</h3>
+          <div class="plan-price">$1,997 <span>one time</span></div>
+          <div class="guarantee-badge">20 Booked Podcasts Guaranteed</div>
+          <p class="plan-desc">We book 20 podcasts for you. Guaranteed or your money back.</p>
+          <ul class="plan-features">
+            <li>Full podcast tour management</li>
+            <li>Media kit creation</li>
+            <li>100+ repurposed content pieces</li>
+            <li>Lead magnet creation</li>
+            <li>Calendar management</li>
+            <li>Host relationship management</li>
+          </ul>
+          <a href="https://buy.stripe.com/bJe14naPC4JT8B74V18IU0R" class="plan-cta primary" target="_blank" rel="noopener">Buy DFY &rarr; $1,997</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="container">
+      <h2>Questions People Ask</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What kind of podcasts do you work with?
+            <span class="icon"></span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              We work with podcasts across every major industry: SaaS, ecommerce, professional services, health and wellness, fintech, real estate, and more. Our platform indexes thousands of shows so we can find the perfect fit for your specific audience and expertise.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            How does the Done For You guarantee work?
+            <span class="icon"></span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              We guarantee you will get booked on at least 20 podcast episodes. If we do not reach that number within the agreed timeframe, you get a full refund. No questions asked. We are confident in our process because it works.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Do I need to have a following to get booked?
+            <span class="icon"></span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Not at all. Podcast hosts care about your story, your expertise, and your ability to deliver value to their listeners. You do not need a large following. Our system matches you based on your message and experience, not your follower count.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            How soon will I start seeing results?
+            <span class="icon"></span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Most users start seeing match recommendations within 24 hours of signing up. With the DIY plan, you can start pitching right away. With the Done For You plan, we begin outreach within 48 hours and you can expect your first bookings within the first two weeks.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Can I switch plans later?
+            <span class="icon"></span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. You can start with the Do It Yourself plan and upgrade to the Done For You plan at any time. We will credit your original purchase toward the upgrade. Just reach out to our support team and we will handle the transition for you.
             </div>
           </div>
         </div>
@@ -1116,127 +729,32 @@
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how">
-    <div class="container">
-      <p class="section-label">How it works</p>
-      <h2 class="section-title">Set up in 5 minutes.<br>Then <em>start getting booked.</em></h2>
-      <p class="section-sub">Faster than networking events. More targeted than cold outreach. Your voice in the right rooms this week.</p>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <h3>Onboard in 5 minutes</h3>
-            <p>Your offer, your ideal client, your best stories. We sharpen your pitch angles before anything goes out.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <h3>We find the right shows</h3>
-            <p>Targeted matches scored for niche fit, audience match, and host responsiveness. Fresh in your dashboard daily.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <h3>You hit send</h3>
-            <p>Each pitch is pre-written in your voice for that specific host. Sent from your own Gmail. Optional voice intro attached.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-body">
-            <h3>We follow up. You record.</h3>
-            <p>Auto follow-up sequencer until they reply. Reply detected instantly. You walk in pre-sold. Deals close faster.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PLANS -->
-  <section class="plans">
-    <div class="container">
-      <p class="section-label">Your options</p>
-      <h2 class="section-title">Get booked on podcasts.<br><em>Pick your speed.</em></h2>
-      <p class="section-sub" style="margin: 0 auto 0;">Both options get you in front of the right audiences fast. The difference is how much you want us involved. Book a free demo and we'll show you live.</p>
-
-      <div class="plans-grid">
-
-        <!-- SELF-MANAGED -->
-        <div class="plan-card">
-          <p class="plan-label">Self-Managed</p>
-          <p class="plan-name">We do the work.<br>You hit send.</p>
-          <p class="plan-desc">Daily podcast matches in your dashboard. Pitches written in your voice. Sent from your Gmail. Auto follow-up. Optional voice intro attached. About 2 hours a week from you.</p>
-          <div class="plan-guarantee">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-            <div class="plan-guarantee-text"><b>Send 50, Book 3 guarantee.</b> Send 50 pitches in 30 days. If you don't get 3 replies and 1 booking, your next month is on us.</div>
-          </div>
-          <a href="/self-managed-overview" target="_blank" rel="noopener" class="btn-plan" style="background:transparent;border:1.5px solid #d1d1d6;color:#1d1d1f;margin-bottom:10px;">See the full stack →</a>
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
-        </div>
-
-        <!-- PODCAST TOUR -->
-        <div class="plan-card featured">
-          <div class="plan-badge">DONE FOR YOU</div>
-          <p class="plan-label">Podcast Tour · 20 guaranteed bookings</p>
-          <p class="plan-name" style="color:#ffffff;">You show up.<br>We do everything.</p>
-          <p class="plan-desc">20 booked podcast appearances in 90 days, fully managed. Plus media kit, lead magnet, listener funnel audit, post-episode email sequence, and 100+ pieces of repurposed content delivered ready to share.</p>
-          <div class="plan-guarantee">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-            <div class="plan-guarantee-text"><b>Double guarantee.</b> 14-day Sleep On It refund. Then We Don't Stop Pitching until 20 episodes are recorded.</div>
-          </div>
-          <a href="/podcast-tour-overview" target="_blank" rel="noopener" class="btn-plan" style="background:transparent;border:1.5px solid rgba(255,255,255,0.3);color:#ffffff;margin-bottom:10px;">See the full stack →</a>
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
-        </div>
-
-      </div>
-
-      <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which plan fits? Book the demo and we'll tell you in the first five minutes.</p>
-    </div>
-  </section>
-
-  <!-- OBJECTIONS -->
-  <section class="objections">
-    <div class="container">
-      <p class="section-label">Honest answers</p>
-      <h2 class="section-title">Questions people ask<br>before they book the call.</h2>
-      <div class="obj-grid">
-        <div class="obj-card">
-          <p class="obj-q">"Will the pitches sound like me?"</p>
-          <p class="obj-a">Yes. Every pitch is written from your profile, in your voice, for that specific host. You review before it sends. Edit, rewrite, or approve as-is. Nothing leaves your inbox without your say-so.</p>
-        </div>
-        <div class="obj-card">
-          <p class="obj-q">"What if hosts don't reply?"</p>
-          <p class="obj-a">Most don't on email one. That's why auto follow-ups run unlimited until they reply or opt out. Most bookings come from follow-up two or later. And new shows hit your dashboard daily, so momentum never stops.</p>
-        </div>
-        <div class="obj-card">
-          <p class="obj-q">"I don't have a big following. Will hosts book me?"</p>
-          <p class="obj-a">Most hosts care about your story and what you give their audience. Not your follower count. We match you to shows where your expertise, not your audience size, is the draw. Many clients booked their first show with zero social following.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FINAL CTA -->
-  <section class="final-cta">
-    <div class="container">
-      <p class="section-label" style="display:block;text-align:center;">Your move</p>
-      <h2>Your next client<br>is listening to a podcast<br><em style="font-style:normal;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">right now. Make it yours.</em></h2>
-      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. It takes 15 minutes to see if this is right for you.</p>
-      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;">
-        Book a Free 15-Min Demo
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-      <p class="final-note">15 minutes &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; We'll show you the system&nbsp;live</p>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
+  <!-- Footer -->
   <footer>
-    <p>© 2026 Find A Podcast &nbsp;·&nbsp; findapodcast.io &nbsp;·&nbsp; <a href="/privacy" style="color:#6e6e73;">Privacy Policy</a> &nbsp;·&nbsp; <a href="/onboard" style="color:#6366f1;font-weight:600;">Book a Demo</a></p>
+    <div class="container footer-inner">
+      <p class="footer-copy">&copy; 2026 Find A Podcast. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="/dashboard/privacy.html">Privacy Policy</a>
+        <a href="/dashboard/terms.html">Terms of Service</a>
+      </div>
+    </div>
   </footer>
 
+  <script>
+    document.querySelectorAll('.faq-question').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var item = this.parentElement;
+        var isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item.open').forEach(function(el) {
+          el.classList.remove('open');
+          el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          item.classList.add('open');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
