@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
   <link rel="apple-touch-icon" href="/favicon-180x180.png" />
-  <link rel="stylesheet" href="/dashboard/style.css?v=20260422-unlock-2" />
+  <link rel="stylesheet" href="/dashboard/style.css?v=20260509-tmpl-selector" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -320,9 +320,11 @@
         <!-- Subject -->
         <div>
           <label class="field-label" for="modal-subject">Subject</label>
-          <select id="modal-subject-preset" class="email-edit-field" style="margin-bottom:6px;font-size:13px;color:var(--text-secondary);">
-            <option value="">Choose a subject preset…</option>
-          </select>
+          <div id="template-selector" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="tmpl-btn" data-tmpl="my" style="flex:1;min-width:110px;padding:9px 10px;border:1.5px solid var(--border-light);border-radius:10px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--text-secondary);transition:all 0.15s;line-height:1.3;">My Template</button>
+            <button type="button" class="tmpl-btn" data-tmpl="soft" style="flex:1;min-width:110px;padding:9px 10px;border:1.5px solid var(--border-light);border-radius:10px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--text-secondary);transition:all 0.15s;line-height:1.3;">Soft Option</button>
+            <button type="button" class="tmpl-btn" data-tmpl="blank" style="flex:1;min-width:110px;padding:9px 10px;border:1.5px solid var(--border-light);border-radius:10px;background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--text-secondary);transition:all 0.15s;line-height:1.3;">Write it Yourself</button>
+          </div>
           <input type="text" id="modal-subject" class="email-edit-field" style="font-size:14px;font-weight:600;" />
         </div>
         <!-- Body -->
@@ -832,6 +834,6 @@
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260509-fix-profile-modal"></script>
+  <script src="/dashboard/app.js?v=20260509-tmpl-selector"></script>
 </body>
 </html>

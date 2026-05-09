@@ -3888,43 +3888,73 @@ function openEmailModal(matchId) {
   const titleEl = $('email-modal-title');
   if (titleEl) titleEl.textContent = isAppeared ? `Thank You: ${podcast.title || 'Unknown Show'}` : `Pitch Email: ${podcast.title || 'Unknown Show'}`;
 
-  const subjectEl  = $('modal-subject');
-  const presetEl   = $('modal-subject-preset');
-  const bodyEl     = $('modal-body-text');
+  const subjectEl = $('modal-subject');
+  const bodyEl    = $('modal-body-text');
+  const tmplSel   = $('template-selector');
 
-  // Populate subject preset dropdown with podcast-specific options
-  if (presetEl) {
-    if (isAppeared) {
-      const t = podcast.title || 'your show';
-      const presets = [
-        `Thank you for having me on ${t}`,
-        'Really enjoyed our conversation',
-        'Thanks for the episode',
-      ];
-      presetEl.innerHTML = '<option value="">Choose a subject preset…</option>' +
-        presets.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
-      presetEl.onchange = () => { if (presetEl.value && subjectEl) { subjectEl.value = presetEl.value; presetEl.value = ''; } };
-    } else {
-      const presets = buildPitchPresets(podcast, state.client);
-      presetEl.innerHTML = '<option value="">Choose a template…</option>' +
-        '<optgroup label="Quick subject swaps (keeps your current body)">' +
-          presets.filter(p => p.type === 'subject').map((p, i) => `<option value="s:${i}">${esc(p.label)}</option>`).join('') +
-        '</optgroup>' +
-        '<optgroup label="Full short templates (subject + body)">' +
-          presets.filter(p => p.type === 'full').map((p, i) => `<option value="f:${i}">${esc(p.label)}</option>`).join('') +
-        '</optgroup>';
-      presetEl.onchange = () => {
-        if (!presetEl.value) return;
-        const [kind, idx] = presetEl.value.split(':');
-        const list = presets.filter(p => p.type === (kind === 's' ? 'subject' : 'full'));
-        const chosen = list[parseInt(idx, 10)];
-        if (chosen) {
-          if (subjectEl) subjectEl.value = chosen.subject;
-          if (chosen.type === 'full' && bodyEl) bodyEl.value = chosen.body;
-        }
-        presetEl.value = '';
-      };
+  // Three-option template selector: My Template / Soft Option / Write it Yourself
+  function applyTemplateOption(option) {
+    if (!subjectEl || !bodyEl) return;
+    if (option === 'my') {
+      // Use the user's first saved template from Template Manager
+      const saved = (state.client?.email_templates || []).filter(t => t.subject || t.body);
+      if (saved.length > 0) {
+        subjectEl.value = saved[0].subject || '';
+        bodyEl.value    = saved[0].body    || '';
+        showToast(`Loaded "${saved[0].name}".`, 'success');
+      } else if (state.client?.pitch_style) {
+        // Fallback to pitch_style field from profile
+        bodyEl.value    = state.client.pitch_style;
+        subjectEl.value = '';
+        showToast('Loaded your pitch style. Edit subject as needed.', 'info');
+      } else {
+        showToast('No saved template found. Save one in Manage Templates.', 'info');
+      }
+    } else if (option === 'soft') {
+      // Use the match's existing AI-generated pitch (the host's template), softened
+      const hostSubject = match.email_subject_edited || match.email_subject || '';
+      const hostBody    = match.email_body_edited    || match.email_body    || '';
+      if (hostBody && !hostBody.includes('[Write your pitch here') && !hostBody.includes("I'd love to be a guest")) {
+        subjectEl.value = hostSubject;
+        bodyEl.value    = hostBody;
+        showToast('Loaded the AI-generated pitch for this host.', 'success');
+      } else {
+        // No existing pitch — use the soft fit-check preset
+        const hostName = (podcast?.host_name || '').split(' ')[0] || 'there';
+        const showTitle = podcast?.title || 'your show';
+        const fromName = (state.client?.name || '').split(' ')[0] || '';
+        subjectEl.value = `Are you booking guests on ${showTitle} right now?`;
+        bodyEl.value    = `Hi ${hostName},\n\nQuick question: what kind of guests are you booking on ${showTitle} this season? I would rather ask than guess whether my angle fits.\n\nIf you are open to it, I will send a short summary of what I would bring to your audience.${fromName ? '\n\n' + fromName : ''}`;
+        showToast('No pitch found — loaded a soft fit-check template.', 'success');
+      }
+    } else if (option === 'blank') {
+      // Blank slate — user writes from scratch
+      subjectEl.value = '';
+      bodyEl.value    = '';
     }
+    // Highlight the active button
+    if (tmplSel) {
+      tmplSel.querySelectorAll('.tmpl-btn').forEach(b => {
+        b.style.borderColor = 'var(--border-light)';
+        b.style.background  = 'var(--bg-secondary)';
+        b.style.color       = 'var(--text-secondary)';
+      });
+      const active = tmplSel.querySelector(`.tmpl-btn[data-tmpl="${option}"]`);
+      if (active) {
+        active.style.borderColor = '#6366f1';
+        active.style.background  = 'rgba(99,102,241,0.08)';
+        active.style.color       = '#6366f1';
+      }
+    }
+  }
+
+  // Wire up template selector clicks (one-time delegation via the container)
+  if (tmplSel && !tmplSel._wired) {
+    tmplSel._wired = true;
+    tmplSel.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tmpl-btn');
+      if (btn) applyTemplateOption(btn.dataset.tmpl);
+    });
   }
 
   const currentBody    = match.email_body_edited    || match.email_body    || '';
@@ -3995,7 +4025,9 @@ function openEmailModal(matchId) {
   $('email-modal').dataset.matchId = matchId;
   document.body.style.overflow = 'hidden';
 
-  // Hide voice intro section for thank-you mode (only for cold pitches)
+  // Hide template selector and voice intro for thank-you mode
+  const tmplSelEl = $('template-selector');
+  if (tmplSelEl) tmplSelEl.style.display = isAppeared ? 'none' : 'flex';
   const voiceSection = $('voice-intro-section');
   if (voiceSection) voiceSection.style.display = isAppeared ? 'none' : 'block';
   voiceIntro.loadForMatch(matchId);
