@@ -3398,52 +3398,6 @@ window.toggleInlinePitch = toggleInlinePitch;
 //   - Peer-level tone, not salesy
 //   - No P.S., no sign-off (added by system)
 //   - No emoji, no canned generic closers
-function buildPitchPresets(podcast, client) {
-  const t        = podcast?.title    || 'your show';
-  const host     = (podcast?.host_name || '').split(' ')[0] || 'there';
-  const fromName = (client?.name      || '').split(' ')[0] || '';
-  const sig      = fromName ? `\\n\\n${fromName}` : '';
-
-  return [
-    // ── Subject-only swaps (keep current body) ─────────────────────────
-    {
-      type: 'subject',
-      label: `Ideas for ${t}`,
-      subject: `Ideas for ${t}`,
-    },
-    {
-      type: 'subject',
-      label: `Question for ${host}`,
-      subject: `Question for ${host}`,
-    },
-    {
-      type: 'subject',
-      label: `Quick thought on ${t}`,
-      subject: `Quick thought on ${t}`,
-    },
-
-    // ── Full templates (swap subject + body) ───────────────────────────
-    {
-      type:    'full',
-      label:   `Soft fit check — are you booking guests?`,
-      subject: `Are you booking guests on ${t} right now?`,
-      body:    `Hi ${host},\\n\\nQuick question: what kind of guests are you booking on ${t} this season? I'd rather ask than guess whether my angle fits.\\n\\nIf you're open to it, I'll send a short summary of what I'd bring to your audience.${sig}`,
-    },
-    {
-      type:    'full',
-      label:   `Topic angle pitch`,
-      subject: `An angle for your audience on ${t}`,
-      body:    `Hi ${host},\\n\\nI've been watching what ${t} covers, and I think your audience would get real value from a conversation about (specific topic).\\n\\nWould a 10-minute call work to see if there is a fit?${sig}`,
-    },
-    {
-      type:    'full',
-      label:   `Short pitch, low pressure`,
-      subject: `Worth a conversation for ${t}?`,
-      body:    `Hi ${host},\\n\\nI know how full inboxes get. Here is my pitch in three lines: (1) what I do, (2) why your audience would care, (3) what we would talk about.\\n\\nIf that sounds interesting, I am happy to send more detail.${sig}`,
-    },
-  ];
-}
-
 function sanitizePitchFields(subject, body) {
   // Detect if body is a raw JSON string (AI response wasn't parsed before saving)
   if (body && body.trim().startsWith('{')) {
@@ -3472,35 +3426,16 @@ function populateInlinePitch(matchId) {
   if (bodyEl)  bodyEl.value  = isFallback ? '' : currentBody;
   // Populate subject presets — podcast-specific options
   if (presetEl) {
-    const presets = buildPitchPresets(match.podcasts, state.client);
-    presetEl.innerHTML = '<option value="">Choose a template…</option>' +
+    presetEl.innerHTML =
       '<option value="tmpl:my">My Template</option>' +
       '<option value="tmpl:soft">Soft Option</option>' +
-      '<option value="tmpl:blank">Write it Yourself</option>' +
-      '<optgroup label="Quick subject swaps (keeps your current body)">' +
-        presets.filter(p => p.type === 'subject').map((p, i) => `<option value="s:${i}">${esc(p.label)}</option>`).join('') +
-      '</optgroup>' +
-      '<optgroup label="Full short templates (subject + body)">' +
-        presets.filter(p => p.type === 'full').map((p, i) => `<option value="f:${i}">${esc(p.label)}</option>`).join('') +
-      '</optgroup>';
+      '<option value="tmpl:blank">Write it Yourself</option>';
     presetEl.style.display = 'block';
     presetEl.onchange = () => {
       if (!presetEl.value || !subjEl) return;
-      if (presetEl.value.startsWith('tmpl:')) {
-        const option = presetEl.value.split(':')[1];
-        applyInlineTemplateOption(matchId, option);
-        presetEl.value = '';
-        return;
-      }
-      const [kind, idx] = presetEl.value.split(':');
-      const list = presets.filter(p => p.type === (kind === 's' ? 'subject' : 'full'));
-      const chosen = list[parseInt(idx, 10)];
-      if (chosen) {
-        subjEl.value = chosen.subject;
-        if (chosen.type === 'full' && bodyEl) bodyEl.value = chosen.body;
-      }
+      const option = presetEl.value.split(':')[1];
+      applyInlineTemplateOption(matchId, option);
       presetEl.value = '';
-      updatePitchPreview(matchId);
     };
   }
   updatePitchPreview(matchId);
