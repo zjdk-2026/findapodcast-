@@ -307,11 +307,103 @@
 
   <!-- Email modal -->
   <div id="email-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
-   
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 class="modal-title" id="email-modal-title">Email Draft</h3>
+        <button class="modal-close" id="email-modal-close" aria-label="Close">&#x2715;</button>
+      </div>
+      <div class="modal-body" id="email-modal-body">
+        <!-- Contact info row -->
+        <div id="email-contact-row" class="modal-contact-info" style="display:none;"></div>
+        <!-- Match insights -->
+        <div id="email-match-insights" style="display:none;background:#f8f7ff;border:1px solid #e0dbff;border-radius:12px;padding:14px 16px;display:none;gap:12px;flex-direction:column;"></div>
+        <!-- Subject -->
+        <div>
+          <label class="field-label" for="modal-subject">Subject</label>
+          <select id="modal-subject-preset" class="email-edit-field" style="margin-bottom:6px;font-size:13px;color:var(--text-secondary);">
+            <option value="">Choose a subject preset…</option>
+          </select>
+          <input type="text" id="modal-subject" class="email-edit-field" style="font-size:14px;font-weight:600;" />
+        </div>
+        <!-- Body -->
+        <div>
+          <label class="field-label" for="modal-body-text">Body</label>
+          <textarea id="modal-body-text" rows="12" class="email-edit-field" style="min-height:240px;"></textarea>
+        </div>
 
-... [OUTPUT TRUNCATED - 10644 chars omitted out of 60644 total] ...
+        <!-- Voice intro (per-host audio attachment) -->
+        <div id="voice-intro-section" style="border:1px solid var(--border-subtle);border-radius:12px;padding:14px 16px;background:rgba(99,102,241,0.04);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Voice intro <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">(optional, attached to email)</span></div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Hosts get 100 cold pitches a week. A 30-second voice note from you cuts through.</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" id="voice-record-btn" class="btn btn-outline btn-xs" style="font-size:12px;">● Record</button>
+              <label class="btn btn-outline btn-xs" style="font-size:12px;cursor:pointer;margin:0;">Upload<input type="file" id="voice-upload-input" accept="audio/*" style="display:none;" /></label>
+            </div>
+          </div>
+          <div id="voice-recording-status" style="display:none;align-items:center;font-size:12px;color:#dc2626;font-weight:600;margin-bottom:6px;">
+            <span id="voice-recording-dot" style="display:inline-block;width:8px;height:8px;background:#dc2626;border-radius:50%;margin-right:6px;animation:vintro-pulse 1s infinite;"></span>
+            Recording... <span id="voice-recording-time" style="margin-left:4px;">0:00</span>
+            <button type="button" id="voice-stop-btn" class="btn btn-xs" style="margin-left:8px;background:#dc2626;color:#fff;border:none;font-size:11px;">Stop</button>
+          </div>
+          <div id="voice-attached-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+            <audio id="voice-player" controls style="height:32px;flex:1;min-width:200px;"></audio>
+            <span id="voice-meta" style="font-size:11px;color:var(--text-secondary);"></span>
+            <button type="button" id="voice-delete-btn" class="btn btn-outline btn-xs" style="font-size:11px;color:#dc2626;border-color:#fecaca;">Remove</button>
+          </div>
+          <style>@keyframes vintro-pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }</style>
+        </div>
+      </div>
+      <div class="modal-footer" style="flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="email-modal-close-btn">Cancel</button>
+          <button class="btn btn-outline btn-sm" id="email-reenrich-btn" style="display:none;font-size:12px;" title="Re-score this match and refresh Why You Fit and Best Pitch Angle">Re-score</button>
+          <button class="btn btn-outline btn-sm" id="email-rewrite-btn" style="display:none;">Rewrite Pitch</button>
+          <button class="btn btn-outline btn-sm" id="email-discovery-btn" onclick="generateDiscoveryEmail()" title="Use a curiosity-led discovery email instead of a direct pitch — probes the host for fit before pitching" style="display:none;">Use Discovery Email ✨</button>
+          <button class="btn btn-outline btn-sm" id="email-copy-btn">Copy to Clipboard</button>
+          <button class="btn btn-outline btn-sm" id="email-save-btn">Save Draft</button>
+          <button class="btn btn-outline btn-sm" id="email-save-template-btn" title="Save this as your reusable pitch template, used for all future pitches">Save as My Template</button>
+          <button class="btn btn-outline btn-sm" id="email-apply-template-btn" onclick="openTemplatePicker(event)" title="Apply one of your saved templates to this match">Apply Template ▾</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-outline btn-sm" id="email-restore-btn" style="display:none;">Move Back to New</button>
+          <button class="btn btn-xs" id="email-sent-myself-btn" style="display:none;background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;">I Sent It Myself</button>
+          <button class="btn btn-primary btn-sm" id="email-send-btn" style="display:none;" title="Saves your edits and sends via your connected Gmail">Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-ont-size:10px;font-weight:400;color:var(--text-tertiary);">(short blurb at the top of your profile)</span></label><input type="text" id="profile-bio-short" class="email-edit-field" placeholder="e.g. Founder & CEO | Helping B2B companies scale from $1M to $10M" /></div>
+  <!-- Profile edit modal -->
+  <div id="profile-modal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit My Profile</h3>
+        <button class="modal-close" onclick="closeProfileModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Photo -->
+        <div>
+          <label class="field-label">Profile Photo</label>
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;background:none;border:1.5px solid var(--border-medium);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--text-secondary);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Photo
+            <input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)" />
+          </label>
+        </div>
+
+        <!-- Identity -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><label class="field-label">Name</label><input type="text" id="profile-name" class="email-edit-field" /></div>
+          <div><label class="field-label">How do you introduce yourself?</label><input type="text" id="profile-title" class="email-edit-field" placeholder="e.g. CEO & Speaker, Anxiety Coach & Author" /></div>
+          <div><label class="field-label">Business / Brand Name</label><input type="text" id="profile-business" class="email-edit-field" /></div>
+        </div>
+
+        <!-- LinkedIn Headline -->
+        <div><label class="field-label">LinkedIn Headline <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">(short blurb at the top of your profile)</span></label><input type="text" id="profile-bio-short" class="email-edit-field" placeholder="e.g. Founder & CEO | Helping B2B companies scale from $1M to $10M" /></div>
 
         <!-- LinkedIn About Section -->
         <div><label class="field-label">LinkedIn About Section <span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">(the longer bio on your profile)</span></label><textarea id="profile-bio-long" rows="6" class="email-edit-field" placeholder="Paste your full LinkedIn About section here. This helps us write better pitches and builds your community profile."></textarea></div>
@@ -740,6 +832,6 @@ ont-size:10px;font-weight:400;color:var(--text-tertiary);">(short blurb at the t
   <!-- Toast container -->
   <div id="toast-container" aria-live="polite"></div>
 
-  <script src="/dashboard/app.js?v=20260507-hide-fit-analysis"></script>
+  <script src="/dashboard/app.js?v=20260509-fix-profile-modal"></script>
 </body>
 </html>

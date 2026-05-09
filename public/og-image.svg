@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3d252a"/>
+      <stop offset="100%" stop-color="#2a1a1d"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Purple icon box -->
+  <rect x="490" y="115" width="220" height="220" rx="50" fill="#7F66FF"/>
+
+  <!-- Microphone glyph -->
+  <g fill="#FFFFFF">
+    <!-- capsule (pill) -->
+    <rect x="571" y="166" width="58" height="90" rx="29"/>
+    <!-- cradle left -->
+    <rect x="559" y="264" width="12" height="32" rx="6"/>
+    <!-- cradle right -->
+    <rect x="629" y="264" width="12" height="32" rx="6"/>
+    <!-- cradle bottom -->
+    <rect x="571" y="288" width="58" height="12" rx="6"/>
+    <!-- stand -->
+    <rect x="594" y="300" width="12" height="14" rx="2"/>
+    <!-- base -->
+    <rect x="580" y="314" width="40" height="8" rx="4"/>
+  </g>
+
+  <text x="600" y="405" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="46" font-weight="bold" fill="#eeeef0">Find A Podcast</text>
+  <text x="600" y="460" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#b8aeb2">Your podcast guesting engine</text>
+</svg>
