@@ -3474,6 +3474,9 @@ function populateInlinePitch(matchId) {
   if (presetEl) {
     const presets = buildPitchPresets(match.podcasts, state.client);
     presetEl.innerHTML = '<option value="">Choose a template…</option>' +
+      '<option value="tmpl:my">My Template</option>' +
+      '<option value="tmpl:soft">Soft Option</option>' +
+      '<option value="tmpl:blank">Write it Yourself</option>' +
       '<optgroup label="Quick subject swaps (keeps your current body)">' +
         presets.filter(p => p.type === 'subject').map((p, i) => `<option value="s:${i}">${esc(p.label)}</option>`).join('') +
       '</optgroup>' +
@@ -3483,6 +3486,12 @@ function populateInlinePitch(matchId) {
     presetEl.style.display = 'block';
     presetEl.onchange = () => {
       if (!presetEl.value || !subjEl) return;
+      if (presetEl.value.startsWith('tmpl:')) {
+        const option = presetEl.value.split(':')[1];
+        applyInlineTemplateOption(matchId, option);
+        presetEl.value = '';
+        return;
+      }
       const [kind, idx] = presetEl.value.split(':');
       const list = presets.filter(p => p.type === (kind === 's' ? 'subject' : 'full'));
       const chosen = list[parseInt(idx, 10)];
@@ -3501,6 +3510,50 @@ function populateInlinePitch(matchId) {
     setTimeout(() => rewriteInlinePitch(matchId), 100);
   }
 }
+
+// ── Apply a template option from the inline dropdown ──────────────
+function applyInlineTemplateOption(matchId, option) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const subjEl = $('inline-subject-' + matchId);
+  const bodyEl = $('inline-body-' + matchId);
+  if (!subjEl || !bodyEl) return;
+  const podcast = match.podcasts || match;
+  if (option === 'my') {
+    const saved = (state.client?.email_templates || []).filter(t => t.subject || t.body);
+    if (saved.length > 0) {
+      subjEl.value = saved[0].subject || '';
+      bodyEl.value = saved[0].body || '';
+      showToast('Loaded "' + saved[0].name + '".', 'success');
+    } else if (state.client?.pitch_style) {
+      bodyEl.value = state.client.pitch_style;
+      subjEl.value = '';
+      showToast('Loaded your pitch style.', 'info');
+    } else {
+      showToast('No saved template. Save one in Manage Templates.', 'info');
+    }
+  } else if (option === 'soft') {
+    const hostSubject = match.email_subject_edited || match.email_subject || '';
+    const hostBody = match.email_body_edited || match.email_body || '';
+    if (hostBody && !hostBody.includes('[Write your pitch here') && !hostBody.includes("I'd love to be a guest")) {
+      subjEl.value = hostSubject;
+      bodyEl.value = hostBody;
+      showToast('Loaded the AI generated pitch for this host.', 'success');
+    } else {
+      const hostName = (podcast?.host_name || '').split(' ')[0] || 'there';
+      const showTitle = podcast?.title || 'your show';
+      const fromName = (state.client?.name || '').split(' ')[0] || '';
+      subjEl.value = 'Are you booking guests on ' + showTitle + ' right now?';
+      bodyEl.value = 'Hi ' + hostName + ',\n\nQuick question: what kind of guests are you booking on ' + showTitle + ' this season? I would rather ask than guess whether my angle fits.\n\nIf you are open to it, I will send a short summary of what I would bring to your audience.' + (fromName ? '\n\n' + fromName : '');
+      showToast('No pitch found. Loaded a soft fit check template.', 'success');
+    }
+  } else if (option === 'blank') {
+    subjEl.value = '';
+    bodyEl.value = '';
+  }
+  updatePitchPreview(matchId);
+}
+
 
 function updatePitchPreview(matchId) {
   const subjEl    = $(`inline-subject-${matchId}`);
