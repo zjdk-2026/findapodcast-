@@ -413,4 +413,33 @@ router.get('/leaderboard.html', requireOperatorKey, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/operator/update-client
+ * Updates arbitrary safe fields on a client record.
+ * Body: { clientId, updates: { field: value } }
+ */
+router.post('/update-client', requireOperatorKey, async (req, res) => {
+  const { clientId, updates } = req.body;
+  if (!clientId || !updates) return res.status(400).json({ success: false, error: 'clientId and updates required.' });
+
+  const ALLOWED = ['demo_mode', 'unlimited_credits', 'credits_remaining', 'is_active', 'plan', 'onboarding'];
+  const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => ALLOWED.includes(k)));
+  if (!Object.keys(safe).length) return res.status(400).json({ success: false, error: 'No allowed fields in updates.' });
+
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .update(safe)
+      .eq('id', clientId)
+      .select('id, name, email, plan, unlimited_credits, credits_remaining, is_active, demo_mode')
+      .single();
+
+    if (error) return res.status(500).json({ success: false, error: error.message });
+    logger.info('Operator: client updated', { clientId, updates });
+    return res.json({ success: true, client: data });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
