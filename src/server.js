@@ -181,6 +181,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'landing.html'));
 });
 
+// Preview — redesigned landing page (review before going live)
+app.get('/preview-landing', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'preview-landing.html'));
+});
+
 app.get('/book-demo', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'book-demo.html'));
 });
