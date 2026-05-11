@@ -422,7 +422,7 @@ router.post('/update-client', requireOperatorKey, async (req, res) => {
   const { clientId, updates } = req.body;
   if (!clientId || !updates) return res.status(400).json({ success: false, error: 'clientId and updates required.' });
 
-  const ALLOWED = ['demo_mode', 'unlimited_credits', 'credits_remaining', 'is_active', 'plan', 'onboarding'];
+  const ALLOWED = ['demo_mode', 'unlimited_credits', 'credits_remaining', 'is_active'];
   const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => ALLOWED.includes(k)));
   if (!Object.keys(safe).length) return res.status(400).json({ success: false, error: 'No allowed fields in updates.' });
 
@@ -431,7 +431,7 @@ router.post('/update-client', requireOperatorKey, async (req, res) => {
       .from('clients')
       .update(safe)
       .eq('id', clientId)
-      .select('id, name, email, plan, unlimited_credits, credits_remaining, is_active, demo_mode')
+      .select('id, name, email, unlimited_credits, credits_remaining, is_active, demo_mode')
       .single();
 
     if (error) return res.status(500).json({ success: false, error: error.message });
