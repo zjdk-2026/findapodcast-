@@ -1034,6 +1034,161 @@
       .score-bars { grid-template-columns: 1fr; }
       .leaderboard-teaser-inner { padding: 32px 24px; }
     }
+
+    /* ── FOUNDER'S WEEK ── */
+    .founder-week {
+      background: #f5f5f7;
+      padding: 80px 0;
+    }
+    .founder-week .section-label {
+      text-align: center;
+    }
+    .founder-week .section-title {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .founder-week .section-sub {
+      text-align: center;
+      max-width: 560px;
+      margin: 0 auto 48px;
+      color: #6e6e73;
+      font-size: 15px;
+    }
+    .fw-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .fw-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .fw-card-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6366f1;
+      margin-bottom: 4px;
+    }
+    .fw-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: 16px;
+    }
+    .fw-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      color: #1d1d1f;
+    }
+    .fw-card p {
+      font-size: 14px;
+      line-height: 1.65;
+      color: #6e6e73;
+    }
+    .fw-card-note {
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .fw-card-note svg {
+      vertical-align: middle;
+      margin-right: 6px;
+      display: inline-block;
+    }
+    @media (max-width: 768px) {
+      .fw-grid { grid-template-columns: 1fr; gap: 16px; }
+      .founder-week { padding: 56px 0; }
+    }
+
+    /* ── SOCIAL PROOF POPUP ── */
+    .sp-popup {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 9999;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 340px;
+      font-family: 'Inter', sans-serif;
+      transform: translateY(120px);
+      opacity: 0;
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s ease;
+    }
+    .sp-popup.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .sp-popup-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg,#6366f1,#a78bfa);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .sp-popup-text {
+      flex: 1;
+    }
+    .sp-popup-text strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+    .sp-popup-text span {
+      display: block;
+      font-size: 12px;
+      color: #6e6e73;
+      line-height: 1.4;
+    }
+    .sp-popup-time {
+      font-size: 10px;
+      color: #aeaeb2;
+      flex-shrink: 0;
+    }
+    .sp-popup-close {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #aeaeb2;
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: 10px;
+      line-height: 14px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .sp-popup-close:hover { background: #6e6e73; }
   </style>
 </head>
 <body>
@@ -1113,6 +1268,40 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDER'S WEEK -->
+  <section class="founder-week">
+    <div class="container">
+      <p class="section-label">A realistic week</p>
+      <h2 class="section-title">When podcasting works,<br>your calendar runs on <em>your terms.</em></h2>
+      <p class="section-sub">No inbox scrambling. No cold DMs. Just steady recording, inbound interest, and content that keeps working after you're done.</p>
+
+      <div class="fw-grid">
+
+        <div class="fw-card">
+          <div class="fw-card-heading">Monday Morning</div>
+          <h3>You record one episode.<br>Your pipeline fills while you talk.</h3>
+          <p>45 minutes on mic with a host who's done the prep. You share your story, talk about what you do, and give value to their audience. When you stop recording, the replies have already started arriving in your inbox — from listeners who heard you and want to know more. No outreach. No follow-up. Just one conversation doing the work for you.</p>
+          <div class="fw-card-note">Reply landed in your inbox. No messages sent.</div>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-card-heading">Wednesday Afternoon</div>
+          <h3>You check your dashboard.<br>A lead arrived on its own.</h3>
+          <p>Someone found you through a previous episode and reached out directly. They already trust you because the host vouched for you by having you on. No price objections, no cold pitch to navigate — just a warm conversation with someone who's pre-sold. One deal like this covers your entire monthly investment. It happens because you showed up, not because you chased.</p>
+          <div class="fw-card-note" style="background:#f0f5ff;color:#1e40af;">Warm inbound lead. Pre-sold by the host's credibility.</div>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-card-heading">Friday Evening</div>
+          <h3>You close the week.<br>Your content runs on its own.</h3>
+          <p>Clips from your episodes are circulating — posted by the hosts, picked up by listeners, reshared into conversations you weren't part of. DMs come in asking about your offer. Three recordings are already on your calendar for next week. You didn't chase a single one. The pipeline is self-sustaining. Your job is just to show up and record. The system handles the rest.</p>
+          <div class="fw-card-note" style="background:#fffbeb;color:#92400e;">Three recordings booked. Revenue pipeline flowing. Zero chasing.</div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -1248,6 +1437,62 @@ That's the full revenue machine. Podcasts. Content. Appointments. Closers. Four 
   <footer>
     <p>© 2026 Find A Podcast &nbsp;·&nbsp; findapodcast.io &nbsp;·&nbsp; <a href="/privacy" style="color:#6e6e73;">Privacy Policy</a> &nbsp;·&nbsp; <a href="/onboard" style="color:#6366f1;font-weight:600;">Book a Demo</a></p>
   </footer>
+
+  <!-- SOCIAL PROOF POPUP -->
+  <div class="sp-popup" id="spPopup">
+    <div class="sp-popup-close" onclick="document.getElementById('spPopup').classList.remove('active')">✕</div>
+    <div class="sp-popup-avatar" id="spAvatar">JD</div>
+    <div class="sp-popup-text">
+      <strong id="spName">James D.</strong>
+      <span id="spDetail">just booked a demo from Austin, TX</span>
+    </div>
+    <div class="sp-popup-time" id="spTime">just now</div>
+  </div>
+
+  <script>
+    (function() {
+      var names = [
+        { name: 'James D.', initials: 'JD', loc: 'Austin, TX' },
+        { name: 'Sarah M.', initials: 'SM', loc: 'Denver, CO' },
+        { name: 'Michael R.', initials: 'MR', loc: 'Miami, FL' },
+        { name: 'Rachel K.', initials: 'RK', loc: 'San Diego, CA' },
+        { name: 'David P.', initials: 'DP', loc: 'Seattle, WA' },
+        { name: 'Emily W.', initials: 'EW', loc: 'Nashville, TN' },
+        { name: 'Chris B.', initials: 'CB', loc: 'Phoenix, AZ' },
+        { name: 'Lauren H.', initials: 'LH', loc: 'Chicago, IL' },
+        { name: 'Tom S.', initials: 'TS', loc: 'Atlanta, GA' },
+        { name: 'Jessica L.', initials: 'JL', loc: 'Portland, OR' },
+        { name: 'Kevin A.', initials: 'KA', loc: 'Dallas, TX' },
+        { name: 'Amanda C.', initials: 'AC', loc: 'Boston, MA' }
+      ];
+      var popup = document.getElementById('spPopup');
+      var avatarEl = document.getElementById('spAvatar');
+      var nameEl = document.getElementById('spName');
+      var detailEl = document.getElementById('spDetail');
+      var timeEl = document.getElementById('spTime');
+      var index = 0;
+      var timeout;
+
+      function showNext() {
+        var person = names[index % names.length];
+        index++;
+        avatarEl.textContent = person.initials;
+        nameEl.textContent = person.name;
+        detailEl.textContent = 'just booked a demo from ' + person.loc;
+        timeEl.textContent = 'just now';
+        popup.classList.add('active');
+        clearTimeout(timeout);
+        timeout = setTimeout(function() {
+          popup.classList.remove('active');
+          var nextDelay = 25000 + Math.random() * 25000;
+          timeout = setTimeout(showNext, nextDelay);
+        }, 5000);
+      }
+
+      var firstDelay = 10000 + Math.random() * 15000;
+      timeout = setTimeout(showNext, firstDelay);
+    })();
+  </script>
 
 </body>
 </html>
