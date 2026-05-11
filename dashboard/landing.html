@@ -730,6 +730,7 @@
       pointer-events: none;
     }
     .plan-card.featured > * { position: relative; z-index: 1; }
+    .plan-card:has(> .plan-badge):not(.featured) { padding-top: 54px; }
     .plan-badge {
       position: absolute;
       top: 18px; left: 50%;
