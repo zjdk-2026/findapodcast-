@@ -1034,6 +1034,233 @@
       .score-bars { grid-template-columns: 1fr; }
       .leaderboard-teaser-inner { padding: 32px 24px; }
     }
+
+    /* ── INDUSTRY PULSE ── */
+    .pulse-section { background: #0a0a0f; padding: 100px 24px; }
+    .pulse-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 56px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .pulse-stat {
+      background: #0d0d12;
+      padding: 40px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+    .pulse-number {
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .pulse-label { font-size: 13px; color: #94a3b8; font-weight: 600; letter-spacing: 0.03em; }
+    .pulse-source { font-size: 11px; color: #475569; margin-top: 4px; }
+    .pulse-section .section-sub { color: #94a3b8; max-width: 640px; margin: 0 auto; }
+    @media (max-width: 768px) { .pulse-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .pulse-grid { grid-template-columns: 1fr; } }
+
+    /* ── NEW OFFERS SECTION ── */
+    .offers-section { background: #f5f5f7; }
+
+    /* 2-card comparison row */
+    .offers-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1100px;
+      margin: 52px auto 0;
+    }
+    .offer-card {
+      background: #ffffff;
+      border: 1.5px solid rgba(0,0,0,0.09);
+      border-radius: 24px;
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .offer-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.09); }
+    .offer-card.featured {
+      background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 55%, #0b1120 100%);
+      border: 2px solid #6366f1;
+      box-shadow: 0 20px 60px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+      overflow: hidden;
+      padding-top: 64px;
+    }
+    .offer-card.featured::before {
+      content: ''; position: absolute; top: -40%; right: -20%;
+      width: 70%; height: 70%;
+      background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .offer-card.featured::after {
+      content: ''; position: absolute; bottom: -30%; left: -10%;
+      width: 60%; height: 60%;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .offer-card.featured > * { position: relative; z-index: 1; }
+    .offer-badge {
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+      background: #6366f1; color: #fff; font-size: 11px; font-weight: 700;
+      padding: 4px 18px; border-radius: 999px; letter-spacing: 0.06em;
+      white-space: nowrap; z-index: 2;
+    }
+    .offer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
+    .offer-card.featured .offer-label { color: #c7d2fe; }
+    .offer-name { font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .offer-card.featured .offer-name { color: #ffffff; }
+    .offer-desc { font-size: 15px; color: #6e6e73; line-height: 1.75; margin-bottom: 28px; }
+    .offer-card.featured .offer-desc { color: #cbd5e1; }
+    .btn-offer {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #1d1d1f; color: #fff; font-size: 15px; font-weight: 700;
+      padding: 14px 28px; border-radius: 14px; white-space: nowrap;
+      text-decoration: none; transition: transform 0.15s, background 0.15s;
+      margin-top: auto; width: 100%;
+    }
+    .btn-offer:hover { transform: translateY(-1px); background: #333; }
+    .offer-card.featured .btn-offer { background: #6366f1; }
+    .offer-card.featured .btn-offer:hover { background: #4f46e5; }
+
+    /* Full-width Iconic Partnership */
+    .iconic-section {
+      background: linear-gradient(160deg, #1a0f00 0%, #0f0a05 50%, #0d0d0f 100%);
+      border: 1.5px solid rgba(245,158,11,0.3);
+      border-radius: 24px;
+      max-width: 1100px;
+      margin: 40px auto 0;
+      overflow: hidden;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .iconic-left {
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .iconic-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, #f59e0b, #f97316); color: #000;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+      padding: 3px 14px; border-radius: 999px; text-transform: uppercase;
+      width: fit-content;
+    }
+    .iconic-headline {
+      font-size: clamp(30px, 3.5vw, 48px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .iconic-headline span {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .iconic-sub {
+      font-size: 15px; color: #cbd5e1; line-height: 1.7;
+    }
+    .iconic-engines {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .iconic-engine {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .iconic-engine-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(245,158,11,0.15);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: #f59e0b;
+    }
+    .iconic-engine-text { display: flex; flex-direction: column; gap: 2px; }
+    .iconic-engine-name { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+    .iconic-engine-desc { font-size: 11px; color: #94a3b8; line-height: 1.4; }
+    .btn-iconic {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #f59e0b, #f97316); color: #000;
+      font-size: 15px; font-weight: 700; padding: 14px 28px;
+      border-radius: 14px; text-decoration: none;
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .btn-iconic:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+    /* Iconic right — Hormozi stacked comparison */
+    .iconic-right {
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+      border-left: 1px solid rgba(245,158,11,0.15);
+    }
+    .iconic-compare-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .iconic-compare-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #6b7280;
+    }
+    .iconic-compare-before {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 20px 24px;
+    }
+    .iconic-compare-before-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #ef4444; margin-bottom: 8px;
+    }
+    .iconic-compare-before-text { font-size: 14px; color: #9ca3af; line-height: 1.6; }
+    .iconic-compare-after {
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 14px;
+      padding: 20px 24px;
+    }
+    .iconic-compare-after-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #22c55e; margin-bottom: 8px;
+    }
+    .iconic-compare-after-text { font-size: 14px; color: #e2e8f0; line-height: 1.6; }
+    .iconic-arrow {
+      font-size: 24px; color: #f59e0b; text-align: center;
+    }
+    @media (max-width: 800px) {
+      .iconic-section { grid-template-columns: 1fr; }
+      .iconic-right { border-left: none; border-top: 1px solid rgba(245,158,11,0.15); }
+      .offers-comparison { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -1077,6 +1304,37 @@
       <h2 class="section-title" style="color:#f1f5f9;font-size:clamp(28px,3.5vw,42px);max-width:720px;margin:0 auto 16px;">of podcast listeners <span style="background:linear-gradient(135deg,#e0e7ff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">have bought something</span> after hearing it recommended on a show they trust.</h2>
       <p style="font-size:13px;color:#475569;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:24px;">Edison Research · Infinite Dial</p>
       <p style="font-size:18px;color:#94a3b8;line-height:1.7;max-width:620px;margin:0 auto;">One good podcast appearance does more for your reputation in 45 minutes than six months of posting.</p>
+    </div>
+  </section>
+
+  <!-- INDUSTRY PULSE -->
+  <section class="pulse-section">
+    <div class="container" style="text-align:center;">
+      <p class="section-label" style="color:#a78bfa;">Industry Pulse</p>
+      <h2 class="section-title" style="color:#f1f5f9;">This is why smart founders<br>are betting on podcasts.</h2>
+      <p class="section-sub">Social reach is shrinking. Ads cost more. Trust is gone. Meanwhile podcast audiences are growing faster than any other channel — and they actually buy what they hear.</p>
+    </div>
+    <div class="pulse-grid">
+      <div class="pulse-stat">
+        <div class="pulse-number">95M</div>
+        <div class="pulse-label">weekly podcast listeners in the US</div>
+        <div class="pulse-source">Edison Research · Infinite Dial 2024</div>
+      </div>
+      <div class="pulse-stat">
+        <div class="pulse-number">89%</div>
+        <div class="pulse-label">of listeners trust podcast hosts like a friend</div>
+        <div class="pulse-source">Nielsen · Podcast Advertising Trust Study 2023</div>
+      </div>
+      <div class="pulse-stat">
+        <div class="pulse-number">4.4×</div>
+        <div class="pulse-label">brand recall vs. display ads</div>
+        <div class="pulse-source">Nielsen · Podcast Effectiveness Studies</div>
+      </div>
+      <div class="pulse-stat">
+        <div class="pulse-number">-30%</div>
+        <div class="pulse-label">organic Instagram reach since 2022</div>
+        <div class="pulse-source">Hootsuite · Social Media Trends 2024</div>
+      </div>
     </div>
   </section>
 
@@ -1156,50 +1414,112 @@
     </div>
   </section>
 
-  <!-- PLANS -->
-  <section class="plans">
+  <!-- OFFERS -->
+  <section class="offers-section">
     <div class="container">
       <p class="section-label">Your options</p>
       <h2 class="section-title">Get booked on podcasts.<br><em>Pick your speed.</em></h2>
-      <p class="section-sub" style="margin: 0 auto 0;">Both options get you in front of the right audiences fast. The difference is how much you want us involved. Book a free demo and we'll show you live.</p>
+      <p class="section-sub" style="margin: 0 auto 0;">Every option gets you booked fast. The difference is how much you want us involved.</p>
 
-      <div class="plans-grid">
+      <!-- Two comparison cards -->
+      <div class="offers-comparison">
 
         <!-- SELF-MANAGED-SOFTWARE -->
-        <div class="plan-card">
-          <p class="plan-label">Self Managed Software</p>
-          <p class="plan-name">Our tool<br>does the work.</p>
-          <p class="plan-desc">Imagine waking up to a dashboard full of shows that want you on them. Every pitch pre-written in your voice. Follow-ups running automatically. Replies surfaced instantly. Most founders spend 10+ hours a week doing all of this manually. This system does it for you. Show matches, AI pitch writing, auto follow-up, pipeline tracking. You get back 9 hours a week. The only decision you make is which shows to record.</p>
-          
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
+        <div class="offer-card">
+          <p class="offer-label">Self Managed Software</p>
+          <p class="offer-name">Our tool<br>does the work.</p>
+          <p class="offer-desc">Pitch matches appear in your dashboard daily. AI writes every email in your voice. Follow-ups run on autopilot. Replies surface instantly. You wake up to a queue of shows that want you on. The only decision you make is which ones to record.</p>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-offer">Book a Free 15-Min Demo →</a>
         </div>
 
         <!-- PODCAST TOUR -->
-        <div class="plan-card featured">
-          <div class="plan-badge">DONE FOR YOU</div>
-          <p class="plan-label">Podcast Tour & Content Engine</p>
-          <p class="plan-name" style="color:#ffffff;">You show up.<br>We do everything.</p>
-          <p class="plan-desc">Picture this: 90 days from now, you're the go-to voice in your niche. 20 shows behind you. Your clips everywhere. Deals flowing in from people who heard you, not from you chasing them. No agencies to manage. No pitches to write. No content to create. You just show up and record. We do the rest: booking, pitching, scheduling, repurposing. 90 days to own your category. One team. Zero busywork. You record. You close.</p>
-          
-          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-plan">Book a Free 15-Min Demo →</a>
+        <div class="offer-card featured">
+          <div class="offer-badge">DONE FOR YOU</div>
+          <p class="offer-label">Podcast Tour & Content Engine</p>
+          <p class="offer-name">You show up.<br>We do everything.</p>
+          <p class="offer-desc">90 days. 20+ shows booked and recorded. Your clips repurposed and distributed everywhere. No pitches to write. No scheduling. No content creation. You just record. We handle the rest. Deals flow in from people who heard you, not from you chasing them.</p>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-offer">Book a Free 15-Min Demo →</a>
         </div>
 
-        <!-- ICONIC PARTNERSHIP -->
-        <div class="plan-card" style="background:linear-gradient(160deg, #1a0f00 0%, #0f0a05 50%, #0d0d0f 100%);border-color:rgba(245,158,11,0.4);padding-top:64px;">
-          <div class="plan-badge" style="background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;">ICONIC PARTNERSHIP</div>
-          <p class="plan-name" style="color:#ffffff;">Podcasts.<br>Content.<br>Closers.<br><span style="background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">The full revenue machine.</span></p>
-          <p class="plan-desc" style="color:#ffffff;">Most founders have one machine: content. They get booked, they get clips, and then they get stuck. Because leads without a closer is just more inbox noise.
+      </div>
 
-We build the second machine for you.
+      <!-- Full-width Iconic Partnership: Split-screen narrative + Hormozi comparison -->
+      <div class="iconic-section">
 
-Imagine this.
-Monday you record one episode. While you're on, your closer closes a deal from your high-ticket offer.
-Wednesday you record another. Your setter books two calls from people who heard you.
-Friday you check your revenue. Three deals closed. Zero calls taken. Zero emails written.
+        <!-- LEFT: Narrative + 4 engines -->
+        <div class="iconic-left">
+          <div class="iconic-badge">ICONIC PARTNERSHIP</div>
+          <div class="iconic-headline">Podcasts.<br>Content.<br>Closers.<br><span>The full revenue machine.</span></div>
+          <p class="iconic-sub">Most founders build one machine — content. They get booked, they get clips, and they get stuck. Because leads without a closer is just more inbox noise. We build the second machine for you.</p>
 
-That's the full revenue machine. Podcasts. Content. Appointments. Closers. Four engines. One system. You just show up, record, and get your time back. Because the whole point of building influence isn't more work. It's the freedom to do what you want with your days.</p>
-          
-          <a href="https://api.leadconnectorhq.com/widget/bookings/60-minute-meeting-with-zac-deane" target="_blank" rel="noopener" class="btn-plan" style="background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;">60-Min Strategy Call with Zac →</a>
+          <div class="iconic-engines">
+            <div class="iconic-engine">
+              <div class="iconic-engine-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+              </div>
+              <div class="iconic-engine-text">
+                <div class="iconic-engine-name">Podcast Booking</div>
+                <div class="iconic-engine-desc">We find, pitch, and schedule you on the right shows.</div>
+              </div>
+            </div>
+            <div class="iconic-engine">
+              <div class="iconic-engine-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              </div>
+              <div class="iconic-engine-text">
+                <div class="iconic-engine-name">Content Repurposing</div>
+                <div class="iconic-engine-desc">Every episode turned into clips, posts, and shorts.</div>
+              </div>
+            </div>
+            <div class="iconic-engine">
+              <div class="iconic-engine-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div class="iconic-engine-text">
+                <div class="iconic-engine-name">Appointment Setting</div>
+                <div class="iconic-engine-desc">Warm leads get booked straight onto your calendar.</div>
+              </div>
+            </div>
+            <div class="iconic-engine">
+              <div class="iconic-engine-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="iconic-engine-text">
+                <div class="iconic-engine-name">High-Ticket Closers</div>
+                <div class="iconic-engine-desc">Trained closers turn conversations into revenue.</div>
+              </div>
+            </div>
+          </div>
+
+          <a href="https://api.leadconnectorhq.com/widget/bookings/60-minute-meeting-with-zac-deane" target="_blank" rel="noopener" class="btn-iconic">60-Min Strategy Call with Zac →</a>
+        </div>
+
+        <!-- RIGHT: Hormozi stacked comparison -->
+        <div class="iconic-right">
+          <div class="iconic-compare-stack">
+            <div class="iconic-compare-label">Without Iconic Partnership</div>
+            <div class="iconic-compare-before">
+              <div class="iconic-compare-before-label">BEFORE</div>
+              <div class="iconic-compare-before-text">
+                You pitch shows yourself. You write every email. You chase every follow-up. You create every clip. You post every day. You answer every DM. You book every call. You close every deal. Your calendar is full. Your pipeline is empty. You're working <strong>in</strong> your business, not <strong>on</strong> it.
+              </div>
+            </div>
+          </div>
+
+          <div class="iconic-arrow">↓</div>
+
+          <div class="iconic-compare-stack">
+            <div class="iconic-compare-label">With Iconic Partnership</div>
+            <div class="iconic-compare-after">
+              <div class="iconic-compare-after-label">AFTER</div>
+              <div class="iconic-compare-after-text">
+                Monday: you record one episode. While you're on, your closer closes a deal from your high-ticket offer.<br><br>
+                Wednesday: you record another. Your setter books two calls from people who heard you.<br><br>
+                Friday: you check your revenue. Three deals closed. Zero calls taken. Zero emails written.<br><br>
+                Four engines. One system. You just show up, record, and get your time back.
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
