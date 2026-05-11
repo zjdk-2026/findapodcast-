@@ -1085,6 +1085,31 @@ html:not(.light-mode) .card-booked-highlight {
 .card-row:hover .card-row-title { color: var(--accent); }
 
 .card-row-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-cover-wrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: var(--surface);
+}
+
+.card-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-row-content {
   flex: 1;
   min-width: 0;
 }

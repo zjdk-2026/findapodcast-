@@ -1759,7 +1759,9 @@ function renderMatchCard(match) {
     <!-- Collapsed row — click to expand -->
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
-        <div class="card-row-title">
+        ${podcast.image ? `<div class="card-cover-wrap"><img class="card-cover" src="${esc(podcast.image)}" alt="${esc(podcast.title)||'Podcast'}" loading="lazy" /></div>` : ''}
+        <div class="card-row-content">
+          <div class="card-row-title">
           ${esc(podcast.title) || 'Unknown Show'}
           ${(() => {
             const pills = [];
@@ -1799,6 +1801,8 @@ function renderMatchCard(match) {
           ${isValidSocialProfile(podcast.instagram_url, 'instagram') ? `<a class="card-link-chip" href="${esc(podcast.instagram_url)}" target="_blank" rel="noopener">Instagram <span style="font-size:9px;font-weight:700;background:rgba(99,102,241,0.18);color:#6366f1;border-radius:8px;padding:1px 5px;margin-left:3px;letter-spacing:0.3px;">BETA</span></a>` : ''}
           ${podcast.contact_email && !/podcasts\d*\+[a-f0-9]+@anchor\.fm/i.test(podcast.contact_email) ? `<a class="card-link-chip" href="#" onclick="copyEmail(event,'${esc(podcast.contact_email)}')" title="Click to copy email"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${esc(podcast.contact_email)}</a>` : ''}
         ${match.reply_count >= 1 ? `<span class="reply-count-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${match.reply_count} ${match.reply_count === 1 ? 'reply' : 'replies'}</span>` : ''}
+        </div>
+        <!-- /.card-row-content -->
         </div>
       </div>
       <div class="card-row-right">

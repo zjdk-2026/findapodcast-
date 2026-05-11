@@ -77,7 +77,9 @@ router.get('/dashboard/:token', async (req, res) => {
           host_instagram_url,
           host_linkedin_url,
           host_twitter_url,
-          unlock_count
+          unlock_count,
+          image,
+          thumbnail
         )
         ,
         client_notes,
