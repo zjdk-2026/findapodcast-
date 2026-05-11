@@ -1189,6 +1189,195 @@
       font-weight: 700;
     }
     .sp-popup-close:hover { background: #6e6e73; }
+
+    /* ── INDUSTRY PULSE ── */
+    .pulse {
+      background: #0d0d10;
+      padding: 72px 0;
+    }
+    .pulse .section-label {
+      color: #6366f1;
+      text-align: center;
+    }
+    .pulse .section-title {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .pulse .section-title em {
+      background: linear-gradient(135deg,#6366f1,#a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-style: normal;
+    }
+    .pulse-sub {
+      text-align: center;
+      color: #aeaeb2;
+      font-size: 15px;
+      max-width: 500px;
+      margin: 0 auto 48px;
+    }
+    .pulse-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .pulse-card {
+      background: #1a1a23;
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .pulse-stat {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg,#f59e0b,#f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .pulse-label {
+      color: #e8e8ed;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .pulse-source {
+      color: #6e6e73;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    @media (max-width: 768px) {
+      .pulse-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .pulse { padding: 48px 0; }
+      .pulse-stat { font-size: 28px; }
+    }
+
+    /* ── VALUE COMPARISON ── */
+    .value-compare {
+      background: #ffffff;
+      padding: 80px 0;
+    }
+    .value-compare .section-label {
+      text-align: center;
+      color: #f59e0b;
+    }
+    .value-compare .section-title {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .value-compare .section-title em {
+      background: linear-gradient(135deg,#6366f1,#a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-style: normal;
+    }
+    .value-sub {
+      text-align: center;
+      color: #6e6e73;
+      font-size: 15px;
+      max-width: 540px;
+      margin: 0 auto 48px;
+    }
+    .vc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .vc-col {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .vc-col-header {
+      padding: 16px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .vc-col-header.you {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    .vc-col-header.market {
+      background: linear-gradient(135deg,#92400e,#78350f);
+      color: #fbbf24;
+    }
+    .vc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .vc-row:last-of-type { border-bottom: none; }
+    .vc-row .feature {
+      color: #1d1d1f;
+      font-weight: 500;
+    }
+    .vc-row .feature.muted {
+      color: #aeaeb2;
+      text-decoration: line-through;
+    }
+    .vc-row .price {
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+    .vc-row .price.high {
+      color: #dc2626;
+    }
+    .vc-total {
+      padding: 16px 20px;
+      background: #f5f5f7;
+    }
+    .vc-total-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6e6e73;
+      margin-bottom: 2px;
+    }
+    .vc-total-amount {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1d1d1f;
+    }
+    .vc-total-sub {
+      font-size: 12px;
+      color: #6e6e73;
+      margin-top: 2px;
+    }
+    .vc-bottom {
+      text-align: center;
+      margin-top: 40px;
+    }
+    .vc-bottom strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1d1d1f;
+      margin-bottom: 6px;
+    }
+    .vc-bottom span {
+      font-size: 14px;
+      color: #6e6e73;
+    }
+    @media (max-width: 640px) {
+      .vc-grid { grid-template-columns: 1fr; gap: 16px; }
+      .value-compare { padding: 56px 0; }
+    }
   </style>
 </head>
 <body>
@@ -1272,6 +1461,38 @@
     </div>
   </section>
 
+  <!-- INDUSTRY PULSE -->
+  <section class="pulse">
+    <div class="container">
+      <p class="section-label">Industry pulse</p>
+      <h2 class="section-title">Podcasting isn't a side channel.<br><em>It's where your buyers are.</em></h2>
+      <p class="pulse-sub">The numbers behind why smart founders are choosing mic time over cold outreach.</p>
+
+      <div class="pulse-grid">
+        <div class="pulse-card">
+          <div class="pulse-stat">95M</div>
+          <p class="pulse-label">Americans listen to podcasts weekly</p>
+          <p class="pulse-source">Source: Edison Research, The Infinite Dial 2024</p>
+        </div>
+        <div class="pulse-card">
+          <div class="pulse-stat">89%</div>
+          <p class="pulse-label">Of listeners trust host recommendations</p>
+          <p class="pulse-source">Source: Nielsen Podcast Ad Effectiveness Study 2023</p>
+        </div>
+        <div class="pulse-card">
+          <div class="pulse-stat">4.4x</div>
+          <p class="pulse-label">ROI vs other B2B marketing channels</p>
+          <p class="pulse-source">Source: Convince &amp; Convert / Forrester 2023</p>
+        </div>
+        <div class="pulse-card">
+          <div class="pulse-stat">54%</div>
+          <p class="pulse-label">Of weekly listeners say podcast ads feel more authentic</p>
+          <p class="pulse-source">Source: IAB Podcast Ad Revenue Study 2024</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FOUNDER'S WEEK -->
   <section class="founder-week">
     <div class="container">
@@ -1341,6 +1562,74 @@
             <p>Auto follow-up sequencer until they reply. Reply detected instantly. You walk in pre-sold. Deals close faster.</p>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUE COMPARISON -->
+  <section class="value-compare">
+    <div class="container">
+      <p class="section-label">What You Get vs What It's Worth</p>
+      <h2 class="section-title">You're investing less<br>than a single <em>Facebook ad.</em></h2>
+      <p class="value-sub">A single podcast appearance generates more pipeline than a $5,000 ad campaign. Here's the math.</p>
+
+      <div class="vc-grid">
+
+        <div class="vc-col">
+          <div class="vc-col-header you">What you get</div>
+          <div class="vc-row">
+            <span class="feature">AI-powered host matching</span>
+            <span class="price">Included</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature">Personalized pitch emails</span>
+            <span class="price">Included</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature">Automated follow-up sequence</span>
+            <span class="price">Included</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature">Reply detection + inbox</span>
+            <span class="price">Included</span>
+          </div>
+          <div class="vc-total">
+            <p class="vc-total-label">Your investment</p>
+            <p class="vc-total-amount">$197/mo</p>
+            <p class="vc-total-sub">Full software access, no contract</p>
+          </div>
+        </div>
+
+        <div class="vc-col">
+          <div class="vc-col-header market">What the market charges</div>
+          <div class="vc-row">
+            <span class="feature muted">PR agency retainer</span>
+            <span class="price high">$2,500–$5,000/mo</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature muted">Ghostwritten LinkedIn content</span>
+            <span class="price high">$3,000/mo</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature muted">Facebook ad campaigns</span>
+            <span class="price high">$5,000+/campaign</span>
+          </div>
+          <div class="vc-row">
+            <span class="feature muted">Your own time (manual outreach)</span>
+            <span class="price high">Priceless</span>
+          </div>
+          <div class="vc-total">
+            <p class="vc-total-label">Total market value</p>
+            <p class="vc-total-amount">$10,000+ /mo</p>
+            <p class="vc-total-sub">For what we deliver starting at $197/mo</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="vc-bottom">
+        <strong>A 50:1 value ratio — minimum.</strong>
+        <span>We're not a media buying agency. We're a lead generation system disguised as podcast software.</span>
       </div>
     </div>
   </section>
