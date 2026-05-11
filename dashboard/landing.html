@@ -162,7 +162,7 @@
     .section-label {
       display: inline-block;
       color: #6366f1;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -736,7 +736,7 @@
       transform: translateX(-50%);
       background: #6366f1;
       color: #fff;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       padding: 4px 18px;
       border-radius: 999px;
@@ -746,7 +746,7 @@
     }
     /* Override the > * rule specifically for the badge so it stays absolutely positioned */
     .plan-card.featured > .plan-badge { position: absolute; }
-    .plan-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
+    .plan-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6e6e73; margin-bottom: 10px; }
     .plan-card.featured .plan-label { color: #c7d2fe; }
     .plan-name { font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 8px; }
     .plan-card.featured .plan-name { color: #ffffff; }
@@ -773,7 +773,7 @@
     .plan-features li.plan-section-label { display: block; }
     .plan-features li.plan-section-label::before { content: none; }
     .plan-section-label {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -1256,8 +1256,8 @@
     }
     .pulse-source {
       color: #6e6e73;
-      font-size: 11px;
-      line-height: 1.3;
+      font-size: 13px;
+      line-height: 1.4;
     }
     @media (max-width: 768px) {
       .pulse-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -1266,165 +1266,7 @@
     }
 
 
-  /* ── ICONIC PARTNERSHIP ── */
-  .ip-section {
-    background: #0d0d0f;
-    padding: 80px 0;
-  }
-  .ip-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-    max-width: 1100px;
-    margin: 0 auto;
-    align-items: start;
-  }
-  .ip-left { }
-  .ip-badge {
-    display: inline-block;
-    background: linear-gradient(135deg,#f59e0b,#f97316);
-    color: #000;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 5px 12px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-  }
-  .ip-headline {
-    margin-bottom: 20px;
-  }
-  .ip-headline .faded {
-    font-size: 38px;
-    font-weight: 800;
-    color: #6e6e73;
-    line-height: 1.15;
-    letter-spacing: -0.03em;
-  }
-  .ip-headline .accent {
-    font-size: 38px;
-    font-weight: 800;
-    background: linear-gradient(135deg,#f59e0b,#f97316);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1.15;
-    letter-spacing: -0.03em;
-  }
-  .ip-body {
-    color: #e8e8ed;
-    font-size: 16px;
-    line-height: 1.6;
-    margin-bottom: 18px;
-    max-width: 480px;
-  }
-  .ip-services {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-  .ip-service {
-    background: #1a1a1e;
-    border-radius: 12px;
-    padding: 18px;
-  }
-  .ip-service-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(245,158,11,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    color: #f59e0b;
-  }
-  .ip-service-icon svg {
-    width: 16px;
-    height: 16px;
-  }
-  .ip-service-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 4px;
-  }
-  .ip-service-desc {
-    font-size: 12px;
-    color: #6e6e73;
-    line-height: 1.5;
-  }
-  .ip-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg,#f59e0b,#f97316);
-    color: #000;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 14px 32px;
-    border-radius: 12px;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-  .ip-cta:hover { opacity: 0.9; }
 
-  /* Right column - simplified */
-  .ip-right { }
-  .ip-r-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #f59e0b;
-    margin-bottom: 20px;
-  }
-  .ip-r-card {
-    background: #1a1a1e;
-    border-radius: 14px;
-    padding: 28px;
-  }
-  .ip-r-day {
-    display: flex;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-  .ip-r-day:last-child { margin-bottom: 0; }
-  .ip-r-dayname {
-    color: #f59e0b;
-    font-size: 14px;
-    font-weight: 700;
-    min-width: 62px;
-    flex-shrink: 0;
-    padding-top: 1px;
-  }
-  .ip-r-desc {
-    color: #d1d5db;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .ip-r-desc strong {
-    color: #ffffff;
-  }
-  .ip-r-outcome {
-    margin-top: 20px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.6;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    .ip-grid { grid-template-columns: 1fr; gap: 32px; }
-    .ip-headline .faded { font-size: 28px; }
-    .ip-headline .accent { font-size: 28px; }
-    .ip-services { grid-template-columns: 1fr; }
-  }
 
 </style>
 </head>
@@ -1652,82 +1494,7 @@
       <p style="font-size:14px;color:#aeaeb2;margin-top:28px;text-align:center;">Not sure which plan fits? Book the demo and we'll tell you in the first five minutes.</p>
     </div>
   </section>
-<!-- ICONIC PARTNERSHIP -->
-  <section class="ip-section">
-    <div class="container">
-      <div class="ip-grid">
-
-        <!-- LEFT COLUMN -->
-        <div class="ip-left">
-          <div class="ip-badge">Iconic Partnership</div>
-          <div class="ip-headline">
-            <div class="faded">Podcasts.<br>Content.<br>Closers.</div>
-            <div class="accent">The full revenue machine.</div>
-          </div>
-          <p class="ip-body">Most founders build one machine: content. They get booked on shows. They collect clips. They post them. And then the pipeline stalls. Because influence without a sales engine is just more inbox noise. People hear you. They trust you. But nobody picks up the phone and closes the deal. That's where the system breaks.</p>
-          <p class="ip-body">We build the second machine for you. The one that turns listeners into leads and leads into revenue. So you stop being a founder who also does sales. You become a founder who just shows up, records, and watches the system work.</p>
-
-          <div class="ip-services">
-            <div class="ip-service">
-              <div class="ip-service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-              </div>
-              <div class="ip-service-title">Podcast Booking</div>
-              <div class="ip-service-desc">We find, pitch, and schedule you on the right shows for your offer.</div>
-            </div>
-            <div class="ip-service">
-              <div class="ip-service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-              </div>
-              <div class="ip-service-title">Content Repurposing</div>
-              <div class="ip-service-desc">Every episode turned into clips, posts, shorts, and long-form content.</div>
-            </div>
-            <div class="ip-service">
-              <div class="ip-service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </div>
-              <div class="ip-service-title">Appointment Setting</div>
-              <div class="ip-service-desc">Warm leads get contacted and booked straight onto your calendar.</div>
-            </div>
-            <div class="ip-service">
-              <div class="ip-service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <div class="ip-service-title">High-Ticket Closers</div>
-              <div class="ip-service-desc">Trained closers turn booked calls into closed revenue.</div>
-            </div>
-          </div>
-
-          <a href="https://api.leadconnectorhq.com/widget/bookings/60-minute-meeting-with-zac-deane" target="_blank" rel="noopener" class="ip-cta">
-            60-Min Strategy Call with Zac
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- RIGHT COLUMN -->
-        <div class="ip-right">
-          <p class="ip-r-label">With Iconic Partnership</p>
-          <div class="ip-r-card">
-            <div class="ip-r-day">
-              <div class="ip-r-dayname">Monday</div>
-              <div class="ip-r-desc"><strong>Record one episode.</strong> While you're on mic, your closer closes a deal from your high-ticket offer. You didn't send a single message.</div>
-            </div>
-            <div class="ip-r-day">
-              <div class="ip-r-dayname">Wednesday</div>
-              <div class="ip-r-desc"><strong>Record another.</strong> Your setter books two calls from people who heard you. You didn't follow up with anyone.</div>
-            </div>
-            <div class="ip-r-day">
-              <div class="ip-r-dayname">Friday</div>
-              <div class="ip-r-desc"><strong>Check your revenue.</strong> Three deals closed. Zero calls taken. Zero emails written.</div>
-            </div>
-            <div class="ip-r-outcome">Four engines. One system. You show up and record. Everything else runs without you.</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-  <!-- OBJECTIONS -->
+<!-- OBJECTIONS -->
   <section class="objections">
     <div class="container">
       <p class="section-label">Honest answers</p>
