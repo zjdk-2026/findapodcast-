@@ -2484,11 +2484,11 @@ function renderDashboard(data) {
   const navbarRight = $('navbar-right');
   if (navbarRight) {
     navbarRight.innerHTML = `
-      <button id="find-a-stage-tab" onclick="openFindAStageModal()" title="Find speaking opportunities" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1.5px solid rgba(99,102,241,0.3);color:var(--text-primary);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;line-height:1.3;">
+      <a id="find-a-stage-tab" href="/stages/${state.token}" title="Find speaking opportunities" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1.5px solid rgba(99,102,241,0.3);color:var(--text-primary);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;line-height:1.3;text-decoration:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.6 2.4 7.4L12 16.8 5.8 21.4l2.4-7.4L2 9.4h7.6z"/></svg>
         Find a Stage
-        <span style="font-size:9px;font-weight:800;letter-spacing:0.05em;background:#f59e0b;color:#fff;padding:2px 6px;border-radius:999px;">SOON</span>
-      </button>
+        <span style="font-size:9px;font-weight:800;letter-spacing:0.05em;background:#f59e0b;color:#fff;padding:2px 6px;border-radius:999px;">BETA</span>
+      </a>
       <button id="leaderboard-tab" disabled title="Community unlocks once we hit 50 members" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border-medium);color:var(--text-tertiary);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:not-allowed;line-height:1.3;opacity:0.65;">
         Community
         <span style="font-size:9px;font-weight:800;letter-spacing:0.05em;background:#f59e0b;color:#fff;padding:2px 6px;border-radius:999px;">SOON</span>

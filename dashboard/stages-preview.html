@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Find a Stage · Preview</title>
+<title>Find a Stage · Speaker Opportunities</title>
 <link rel="stylesheet" href="/dashboard/style.css?v=20260424-stages-themes" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <style>
@@ -122,20 +122,15 @@
     </div>
     <span>Find A Podcast</span>
     <span style="color:var(--text-tertiary);margin:0 6px;">/</span>
-    <span class="crumb">Find a Stage (preview)</span>
+    <span class="crumb">Find a Stage</span>
   </div>
   <div class="topbar-actions">
     <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
       <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
     </button>
-    <a href="javascript:history.back()" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">← Back to dashboard</a>
+    <a id="back-to-pipeline-btn" href="/dashboard/" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">← Back to Pipeline</a>
   </div>
-</div>
-
-<div class="preview-banner">
-  <span class="pill">COMING SOON</span>
-  Operator preview — this is what customers will see when Find a Stage goes live. Launches in 90 days.
 </div>
 
 <div class="hero-row">
@@ -190,6 +185,10 @@ function toggleTheme() {
 window.toggleTheme = toggleTheme;
 
 const token = location.pathname.split('/').filter(Boolean).pop();
+
+// Set back-to-pipeline link with token
+const backBtn = document.getElementById('back-to-pipeline-btn');
+if (backBtn) backBtn.href = '/dashboard/' + token;
 
 // Persist last-searched city across page loads
 function getSavedCity() { try { return localStorage.getItem('fap-stages-city') || ''; } catch { return ''; } }
