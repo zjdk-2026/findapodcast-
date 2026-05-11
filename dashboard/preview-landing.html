@@ -1128,6 +1128,9 @@
     .offer-card.featured .offer-name { color: #ffffff; }
     .offer-desc { font-size: 15px; color: #6e6e73; line-height: 1.75; margin-bottom: 28px; }
     .offer-card.featured .offer-desc { color: #cbd5e1; }
+    .offer-worth { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-direction: column; gap: 6px; }
+    .offer-worth li { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+    .offer-check { color: #22c55e; font-weight: 800; margin-right: 4px; }
     .btn-offer {
       display: inline-flex; align-items: center; justify-content: center;
       background: #1d1d1f; color: #fff; font-size: 15px; font-weight: 700;
@@ -1261,7 +1264,303 @@
       .iconic-right { border-left: none; border-top: 1px solid rgba(245,158,11,0.15); }
       .offers-comparison { grid-template-columns: 1fr; }
     }
-  </style>
+
+    /* ═══════════════════════════════════════════════
+       SECTION 1: THE VISION — A FOUNDER'S WEEK (Dreamer Archetype)
+       ═══════════════════════════════════════════════ */
+    .vision-week { background: #ffffff; padding: 100px 24px; overflow: hidden; position: relative; }
+    .vision-week::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #6366f1, #a78bfa, #f59e0b, #f97316);
+    }
+    .vision-welcome {
+      font-size: clamp(30px, 5vw, 58px); font-weight: 900;
+      letter-spacing: -0.035em; line-height: 1.08; max-width: 800px;
+      margin: 0 auto 64px; text-align: center; color: #1d1d1f;
+    }
+    .vision-welcome em {
+      font-style: normal;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .vision-days {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 3px; background: rgba(0,0,0,0.06);
+      border-radius: 20px; overflow: hidden;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .vision-day {
+      background: #fafafa; padding: 44px 36px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative; overflow: hidden;
+    }
+    .vision-day::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .vision-day-icon { font-size: 28px; }
+    .vision-day-name {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #6366f1;
+    }
+    .vision-day-headline {
+      font-size: 20px; font-weight: 800; color: #1d1d1f;
+      letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 4px;
+    }
+    .vision-day-body {
+      font-size: 14px; color: #6e6e73; line-height: 1.75;
+    }
+    .vision-day-outcome {
+      margin-top: auto;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 12px; padding: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .vision-day-outcome-text { font-size: 14px; font-weight: 700; color: #15803d; }
+    .vision-friday-outcome .vision-day-outcome { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); }
+    .vision-friday-outcome .vision-day-outcome-text { color: #b45309; }
+    .vision-daily-affirmation {
+      text-align: center; margin-top: 52px; max-width: 720px; margin-left: auto; margin-right: auto;
+    }
+    .vision-affirmation-text {
+      font-size: clamp(22px, 3vw, 36px); font-weight: 900;
+      letter-spacing: -0.025em; line-height: 1.25; color: #1d1d1f;
+    }
+    .vision-affirmation-text em {
+      font-style: normal;
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    @media (max-width: 768px) { .vision-days { grid-template-columns: 1fr; } }
+
+    /* ═══════════════════════════════════════════════
+       SECTION 2: THE COST OF WAITING (Urgency/Scarcity)
+       ═══════════════════════════════════════════════ */
+    .cost-waiting { background: #0f172a; padding: 100px 24px; overflow: hidden; position: relative; }
+    .cost-waiting::before {
+      content: '';
+      position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cost-math {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 40px; align-items: start;
+      max-width: 900px; margin: 52px auto 0;
+      position: relative; z-index: 1;
+    }
+    .cost-column { display: flex; flex-direction: column; gap: 16px; }
+    .cost-column-header {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #64748b; margin-bottom: 4px;
+    }
+    .cost-card {
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cost-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .cost-card.danger { border-left: 3px solid #ef4444; }
+    .cost-card.gain { border-left: 3px solid #22c55e; background: #1a2e1a; }
+    .cost-card-title {
+      font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px;
+    }
+    .cost-card-number {
+      font-size: 32px; font-weight: 900; letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .cost-card.danger .cost-card-number { color: #f87171; }
+    .cost-card.gain .cost-card-number { color: #4ade80; }
+    .cost-card-body {
+      font-size: 13px; color: #94a3b8; line-height: 1.6;
+    }
+    .cost-card-body strong { color: #e2e8f0; }
+    .cost-total {
+      margin-top: 24px; background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.2); border-radius: 16px;
+      padding: 24px; text-align: center;
+    }
+    .cost-total-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #f59e0b; margin-bottom: 8px; }
+    .cost-total-number { font-size: 40px; font-weight: 900; color: #fbbf24; letter-spacing: -0.03em; }
+    .cost-total-body { font-size: 14px; color: #d4d4d8; margin-top: 8px; line-height: 1.6; }
+    .cost-verdict {
+      max-width: 700px; margin: 48px auto 0; text-align: center;
+      padding: 32px; background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.2); border-radius: 20px;
+      position: relative; z-index: 1;
+    }
+    .cost-verdict-text {
+      font-size: 20px; font-weight: 700; color: #e2e8f0;
+      line-height: 1.6;
+    }
+    .cost-verdict-text em {
+      font-style: normal; color: #a5b4fc;
+    }
+    @media (max-width: 768px) { .cost-math { grid-template-columns: 1fr; } }
+
+    /* ═══════════════════════════════════════════════
+       SECTION 3: VALUE STACK (Hormozi — What You Get vs What It's Worth)
+       ═══════════════════════════════════════════════ */
+    .value-stack { background: #ffffff; padding: 100px 24px; }
+    .value-stack-inner {
+      max-width: 860px; margin: 52px auto 0;
+    }
+    .value-item {
+      display: grid;
+      grid-template-columns: 40px 1fr 120px;
+      gap: 20px; align-items: center;
+      padding: 28px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .value-item:first-child { padding-top: 0; }
+    .value-item:last-child { border-bottom: none; }
+    .value-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      background: rgba(99,102,241,0.08); color: #6366f1;
+    }
+    .value-label { font-size: 15px; font-weight: 600; color: #1d1d1f; }
+    .value-label-sub { font-size: 13px; color: #6e6e73; font-weight: 400; display: block; margin-top: 2px; }
+    .value-price {
+      font-size: 18px; font-weight: 900; color: #6e6e73;
+      text-align: right; letter-spacing: -0.02em;
+    }
+    .value-price.slash { text-decoration: line-through; color: #d1d5db; }
+    .value-total {
+      display: grid;
+      grid-template-columns: 40px 1fr 120px;
+      gap: 20px; align-items: center;
+      padding: 32px 0 0; margin-top: 8px;
+      border-top: 2px solid #1d1d1f;
+    }
+    .value-total-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      background: rgba(34,197,94,0.12); color: #22c55e;
+    }
+    .value-total-label { font-size: 18px; font-weight: 800; color: #1d1d1f; }
+    .value-total-price {
+      font-size: 22px; font-weight: 900; color: #22c55e;
+      text-align: right;
+    }
+    .value-conclusion {
+      margin-top: 40px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #faf5ff 100%);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 20px; padding: 36px;
+      text-align: center;
+    }
+    .value-conclusion-icon { font-size: 36px; margin-bottom: 12px; }
+    .value-conclusion-title {
+      font-size: 22px; font-weight: 900; color: #1d1d1f;
+      margin-bottom: 10px;
+    }
+    .value-conclusion-text {
+      font-size: 16px; color: #6e6e73; line-height: 1.7;
+      max-width: 600px; margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SECTION 4: TRANSFORMATION ROADMAP
+       ═══════════════════════════════════════════════ */
+    .roadmap { background: #0f172a; padding: 100px 24px; }
+    .roadmap .section-label { color: #a78bfa; }
+    .roadmap .section-title { color: #f1f5f9; }
+    .roadmap .section-sub { color: #94a3b8; }
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 52px;
+      max-width: 1100px;
+      margin-left: auto; margin-right: auto;
+    }
+    .roadmap-card {
+      background: #1e293b;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .roadmap-week {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #6366f1;
+    }
+    .roadmap-icon { font-size: 28px; }
+    .roadmap-headline {
+      font-size: 16px; font-weight: 700; color: #f1f5f9;
+      line-height: 1.35;
+    }
+    .roadmap-body {
+      font-size: 13px; color: #94a3b8; line-height: 1.65;
+    }
+    .roadmap-milestone {
+      margin-top: auto;
+      font-size: 11px; font-weight: 700; color: #a5b4fc;
+      padding: 6px 12px; background: rgba(99,102,241,0.1);
+      border-radius: 999px; width: fit-content;
+      display: flex; align-items: center; gap: 6px;
+    }
+    @media (max-width: 768px) { .roadmap-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .roadmap-grid { grid-template-columns: 1fr; } }
+
+    /* ═══════════════════════════════════════════════
+       SECTION 5: RISK REVERSAL / NO-BRAINER
+       ═══════════════════════════════════════════════ */
+    .risk-reversal { background: #ffffff; padding: 80px 24px; }
+    .risk-card {
+      max-width: 780px; margin: 0 auto;
+      background: linear-gradient(135deg, #f8f7ff 0%, #fdf4ff 50%, #fff1f2 100%);
+      border: 2px solid rgba(99,102,241,0.2);
+      border-radius: 24px; padding: 48px 40px;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .risk-card::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .risk-shield { font-size: 48px; margin-bottom: 16px; }
+    .risk-title {
+      font-size: clamp(24px, 3.5vw, 40px);
+      font-weight: 900; letter-spacing: -0.025em;
+      color: #1d1d1f; margin-bottom: 12px;
+    }
+    .risk-title em {
+      font-style: normal;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .risk-body {
+      font-size: 16px; color: #6e6e73; line-height: 1.8;
+      max-width: 620px; margin: 0 auto 28px;
+    }
+    .risk-body strong { color: #1d1d1f; }
+    .risk-guarantee-grid {
+      display: flex; gap: 12px; justify-content: center;
+      margin: 28px 0 32px; flex-wrap: wrap;
+    }
+    .risk-g-item {
+      background: #ffffff; border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 14px; padding: 16px 20px;
+      text-align: center; min-width: 120px;
+    }
+    .risk-g-icon { font-size: 20px; margin-bottom: 8px; }
+    .risk-g-text { font-size: 12px; font-weight: 600; color: #6e6e73; }
+    .risk-btn-wrapper { display: inline-flex; flex-direction: column; align-items: center; gap: 10px; }
+    .risk-note { font-size: 13px; color: #aeaeb2; }
+    .risk-note strong { color: #6366f1; font-weight: 600; }</style>
 </head>
 <body>
 
@@ -1285,9 +1584,11 @@
       The fastest way to get booked on podcasts
     </div>
 
-    <h1>We do the work.<br>You show up.<br><em>Your business scales.</em></h1>
+    <h1>Record once.<br>Your clientele multiplies.<br><em>Watch it happen. In 30 days.</em></h1>
 
-    <p class="hero-sub2">Get booked on the podcasts where your ideal clients are already listening. We find them, write the pitch, send it from your inbox, follow up till they reply. You record. You close.</p>
+    <p class="hero-sub2">Imagine this: you wake up. Three calendar slots filled by hosts who want your story. A notification — someone heard you on last week's episode and booked a call. Another sale. No ads. No cold outreach. No hustle. Just your voice in the right rooms, while you sleep.</p>
+
+    <p class="hero-sub3" style="margin-bottom:36px;">That's not a fantasy. That's what our clients live every week. And 15 minutes from now you can see the exact system that makes it happen.</p>
 
     <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary">
       Book a Free 15-Min Demo
@@ -1338,6 +1639,59 @@
     </div>
   </section>
 
+  <!-- THE VISION: A FOUNDER'S WEEK -->
+  <section class="vision-week">
+    <div class="container">
+      <div style="text-align:center;max-width:720px;margin:0 auto 56px;">
+        <p class="section-label" style="color:#6366f1;">The Vision</p>
+        <h2 class="section-title" style="font-size:clamp(32px,4.5vw,52px);">A founder's week<br><em>when podcasting works.</em></h2>
+        <p class="section-sub" style="margin:12px auto 0;">This isn't a schedule. It's a lifestyle. The kind that makes you wonder why you ever spent your mornings in a cold inbox.</p>
+      </div>
+
+      <div class="vision-days">
+        <!-- MONDAY -->
+        <div class="vision-day">
+          <div class="vision-day-icon">🎙️</div>
+          <p class="vision-day-name">Monday Morning</p>
+          <p class="vision-day-headline">You record one episode.<br>Your pipeline fills.</p>
+          <p class="vision-day-body">45 minutes. Microphone on. Host asks great questions. You share your story. He thanks you and asks if you can come back next quarter. You say yes. Before you finish your coffee, two inbox notifications pop — reply from a host you pitched Tuesday. Three more doors open.</p>
+          <div class="vision-day-outcome">
+            <span style="font-size:18px;">⚡</span>
+            <span class="vision-day-outcome-text">New reply in your inbox. One more booking pending. You haven't sent a single message.</span>
+          </div>
+        </div>
+
+        <!-- WEDNESDAY -->
+        <div class="vision-day">
+          <div class="vision-day-icon">📈</div>
+          <p class="vision-day-name">Wednesday Afternoon</p>
+          <p class="vision-day-headline">You check your dashboard.<br>Organic inbound.</p>
+          <p class="vision-day-body">Someone found you through a show you recorded last week. They want to know what you do. They already trust you — because that host introduced you like a friend would. No cold lead. No price objection. Just "tell me how we work together." That deal funds your entire month.</p>
+          <div class="vision-day-outcome">
+            <span style="font-size:18px;">💰</span>
+            <span class="vision-day-outcome-text">Warm inbound lead. Pre-sold by the host's trust. Deal closes faster.</span>
+          </div>
+        </div>
+
+        <!-- FRIDAY -->
+        <div class="vision-day vision-friday-outcome">
+          <div class="vision-day-icon">🏆</div>
+          <p class="vision-day-name">Friday Evening</p>
+          <p class="vision-day-headline">You close the week.<br>Your content works for you.</p>
+          <p class="vision-day-body">Clips from your two episodes are circulating on social — you didn't edit them. A listener DMs asking for your pricing. Another books a call. You look at your calendar for next week and see three recordings scheduled. No chasing. No begging. Just a machine that keeps feeding clients into your pipeline.</p>
+          <div class="vision-day-outcome">
+            <span style="font-size:18px;">🚀</span>
+            <span class="vision-day-outcome-text">Three recordings booked for next week. Revenue pipeline flowing. Zero effort spent on acquisition.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vision-daily-affirmation">
+        <p class="vision-affirmation-text">That's not a lucky week. That's <em>a system.</em><br>And it's running for our clients right now.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- STORY -->
   <section class="story">
     <div class="container">
@@ -1371,6 +1725,92 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE COST OF WAITING -->
+  <section class="cost-waiting">
+    <div class="container">
+      <div style="text-align:center;max-width:720px;margin:0 auto 48px;">
+        <p class="section-label" style="color:#ef4444;">The Cost of Waiting</p>
+        <h2 class="section-title" style="font-size:clamp(32px,4.5vw,52px);">Every month you wait<br><em>is a $45,000 mistake.</em></h2>
+        <p class="section-sub" style="margin:12px auto 0;">That's the average revenue our clients generate from three podcast appearances. Meanwhile, most founders stay invisible, chasing DMs and distro lists, wondering why nobody knows who they are.</p>
+      </div>
+
+      <div class="cost-grid">
+        <div class="cost-card cost-card-bad">
+          <div class="cost-header">
+            <span class="cost-tag">Without Find A Podcast</span>
+            <span class="cost-price">$0/mo</span>
+          </div>
+          <ul class="cost-list">
+            <li class="cost-item cost-item-bad">
+              <span class="cost-icon">✕</span>
+              <span>Inbox cold outreach — 2% reply rate</span>
+            </li>
+            <li class="cost-item cost-item-bad">
+              <span class="cost-icon">✕</span>
+              <span>Zero third-party credibility</span>
+            </li>
+            <li class="cost-item cost-item-bad">
+              <span class="cost-icon">✕</span>
+              <span>60+ hours/month finding + pitching shows</span>
+            </li>
+            <li class="cost-item cost-item-bad">
+              <span class="cost-icon">✕</span>
+              <span>Content disappears — no evergreen value</span>
+            </li>
+            <li class="cost-item cost-item-bad">
+              <span class="cost-icon">✕</span>
+              <span>No system, no pipeline, no growth</span>
+            </li>
+          </ul>
+          <div class="cost-bottom">
+            <span class="cost-bottom-label">Cost of inaction</span>
+            <span class="cost-bottom-value">~$540K/yr in missed revenue</span>
+          </div>
+        </div>
+
+        <div class="cost-card cost-card-good">
+          <div class="cost-header">
+            <span class="cost-tag" style="background:#059669;">With Find A Podcast</span>
+            <span class="cost-price" style="color:#34d399;">From $197/mo</span>
+          </div>
+          <ul class="cost-list">
+            <li class="cost-item cost-item-good">
+              <span class="cost-icon">✓</span>
+              <span>Automated host matching — 40%+ acceptance rate</span>
+            </li>
+            <li class="cost-item cost-item-good">
+              <span class="cost-icon">✓</span>
+              <span>Host credibility transfers to you instantly</span>
+            </li>
+            <li class="cost-item cost-item-good">
+              <span class="cost-icon">✓</span>
+              <span>5 minutes/week to manage your pipeline</span>
+            </li>
+            <li class="cost-item cost-item-good">
+              <span class="cost-icon">✓</span>
+              <span>Every episode is a new asset that ranks forever</span>
+            </li>
+            <li class="cost-item cost-item-good">
+              <span class="cost-icon">✓</span>
+              <span>Done-for-you system — your job is to show up</span>
+            </li>
+          </ul>
+          <div class="cost-bottom" style="background:linear-gradient(135deg,#065f46,#047857);">
+            <span class="cost-bottom-label">Projected annual impact</span>
+            <span class="cost-bottom-value" style="color:#34d399;">$540K+ in new revenue</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:48px;">
+        <p style="font-size:18px;color:#94a3b8;max-width:600px;margin:0 auto;">
+          <strong style="color:#f1f5f9;">42% of our clients book a client within 30 days.</strong><br>
+          You're one decision away from being that stat.
+        </p>
       </div>
     </div>
   </section>
@@ -1414,6 +1854,90 @@
     </div>
   </section>
 
+  <!-- VALUE STACK: WHAT YOU GET vs WHAT IT'S WORTH -->
+  <section class="value-stack">
+    <div class="container">
+      <div style="text-align:center;max-width:720px;margin:0 auto 56px;">
+        <p class="section-label" style="color:#f59e0b;">What You Get vs What It's Worth</p>
+        <h2 class="section-title" style="font-size:clamp(32px,4.5vw,52px);">You're investing less<br><em>than the cost of a single ad.</em></h2>
+        <p class="section-sub" style="margin:12px auto 0;">Let's be honest. A single podcast appearance can generate more pipeline than a $5,000 Facebook ad campaign. Here's the math — because truth is the best persuasion.</p>
+      </div>
+
+      <div class="stack-grid">
+        <!-- Per-month value breakdown -->
+        <div class="stack-card">
+          <div class="stack-card-header">
+            <span class="stack-tag">Feature</span>
+            <span class="stack-tag">What you pay</span>
+          </div>
+
+          <div class="stack-row">
+            <span class="stack-feature">AI-powered host matching</span>
+            <span class="stack-value">Included</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature">Personalized pitch emails (AI-written)</span>
+            <span class="stack-value">Included</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature">Automated follow-up sequence</span>
+            <span class="stack-value">Included</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature">Reply detection + smart inbox</span>
+            <span class="stack-value">Included</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature">Dashboard analytics</span>
+            <span class="stack-value">Included</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature">Done-for-you pitching (DFY tier)</span>
+            <span class="stack-value">Included</span>
+          </div>
+        </div>
+
+        <div class="stack-card stack-card-worth">
+          <div class="stack-card-header" style="background:linear-gradient(135deg,#92400e,#78350f);">
+            <span class="stack-tag" style="color:#fbbf24;">What the market charges</span>
+          </div>
+
+          <div class="stack-row">
+            <span class="stack-feature" style="text-decoration:line-through;color:#a1a1aa;">PR agency retainer (10 outreach)</span>
+            <span class="stack-value stack-value-worst">$2,500–$5,000/mo</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature" style="text-decoration:line-through;color:#a1a1aa;">Ghostwritten LinkedIn ($500/post)</span>
+            <span class="stack-value stack-value-worst">$3,000/mo</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature" style="text-decoration:line-through;color:#a1a1aa;">FB ads (per acquisition)</span>
+            <span class="stack-value stack-value-worst">$5,000+/campaign</span>
+          </div>
+          <div class="stack-row">
+            <span class="stack-feature" style="text-decoration:line-through;color:#a1a1aa;">Your own time (20+ hrs/mo)</span>
+            <span class="stack-value stack-value-worst">Priceless</span>
+          </div>
+
+          <div style="margin-top:20px;padding:16px;border-radius:8px;background:rgba(255,255,255,0.05);">
+            <p style="font-size:12px;color:#fbbf24;margin:0 0 4px;font-weight:600;">TOTAL MARKET VALUE</p>
+            <p style="font-size:28px;font-weight:900;color:#fef3c7;margin:0;">$10,000+ /mo</p>
+            <p style="font-size:13px;color:#a1a1aa;margin:4px 0 0;">For what we deliver starting at $197/mo</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:40px;">
+        <p style="font-size:20px;color:#f1f5f9;font-weight:600;">
+          A 50:1 value ratio — minimum.
+        </p>
+        <p style="color:#94a3b8;max-width:560px;margin:8px auto 0;">
+          You won't find this value anywhere else because we're not a media buying agency. We're a lead generation system disguised as podcast software.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- OFFERS -->
   <section class="offers-section">
     <div class="container">
@@ -1427,17 +1951,29 @@
         <!-- SELF-MANAGED-SOFTWARE -->
         <div class="offer-card">
           <p class="offer-label">Self Managed Software</p>
-          <p class="offer-name">Our tool<br>does the work.</p>
-          <p class="offer-desc">Pitch matches appear in your dashboard daily. AI writes every email in your voice. Follow-ups run on autopilot. Replies surface instantly. You wake up to a queue of shows that want you on. The only decision you make is which ones to record.</p>
+            <p class="offer-name">Full headroom —<br>bring <em>your</em> engine.</p>
+          <p class="offer-desc"><strong>Pitch matches appear daily.</strong> AI writes every email in your voice. Follow-ups run on autopilot. Replies surface instantly. You wake up to a queue of shows that want you on.</p>
+          <ul class="offer-worth">
+            <li><span class="offer-check">✓</span> <strong>Real value:</strong> ~$1,200/mo in manual labor automated</li>
+            <li><span class="offer-check">✓</span> <strong>Your time saved:</strong> 20+ hours/month</li>
+            <li><span class="offer-check">✓</span> <strong>Opportunity cost:</strong> 3+ booked shows/wk</li>
+            <li style="color:#fbbf24;font-size:13px;font-weight:600;margin-top:8px;">Starting at $197/mo — less than a single dinner meeting.</li>
+          </ul>
           <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-offer">Book a Free 15-Min Demo →</a>
         </div>
 
         <!-- PODCAST TOUR -->
         <div class="offer-card featured">
-          <div class="offer-badge">DONE FOR YOU</div>
+          <div class="offer-badge">DONE FOR YOU ✦ BEST VALUE</div>
           <p class="offer-label">Podcast Tour & Content Engine</p>
-          <p class="offer-name">You show up.<br>We do everything.</p>
-          <p class="offer-desc">90 days. 20+ shows booked and recorded. Your clips repurposed and distributed everywhere. No pitches to write. No scheduling. No content creation. You just record. We handle the rest. Deals flow in from people who heard you, not from you chasing them.</p>
+            <p class="offer-name">You show up.<br><em>We build your empire.</em></p>
+          <p class="offer-desc"><strong>90 days. 20+ shows.</strong> Booked, recorded, repurposed, distributed. Clips hit every platform. Follow-up system runs. Warm leads land in your DM's. You don't write. You don't schedule. You don't chase. You just <em>record and close.</em></p>
+          <ul class="offer-worth">
+            <li><span class="offer-check">✓</span> <strong>$25K+ pipeline value</strong> typical from 20-show tour</li>
+            <li><span class="offer-check">✓</span> <strong>60+ content assets</strong> repurposed from every episode</li>
+            <li><span class="offer-check">✓</span> <strong>Zero time spent</strong> on admin — we run it</li>
+            <li style="color:#fbbf24;font-size:13px;font-weight:600;margin-top:8px;">Replaces a $5K/mo PR agency — for 90% less.</li>
+          </ul>
           <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-offer">Book a Free 15-Min Demo →</a>
         </div>
 
@@ -1528,6 +2064,77 @@
     </div>
   </section>
 
+  <!-- 90-DAY TRANSFORMATION ROADMAP -->
+  <section class="roadmap">
+    <div class="container">
+      <div style="text-align:center;max-width:720px;margin:0 auto 56px;">
+        <p class="section-label" style="color:#a78bfa;">The Transformation</p>
+        <h2 class="section-title" style="font-size:clamp(32px,4.5vw,52px);">Your 90-day path<br><em>from invisible to in demand.</em></h2>
+        <p class="section-sub" style="margin:12px auto 0;">This isn't a theory. It's a timeline. Every week you're further from the noise and closer to the signal — book a demo and see which door you walk through today.</p>
+      </div>
+
+      <div class="roadmap-grid">
+        <!-- DAY 1 -->
+        <div class="roadmap-step">
+          <div class="roadmap-num"><span>Day 1</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">You're in the system.</p>
+            <p class="roadmap-body">5-minute onboarding. Your profile, niche, and ideal guest style loaded. Our AI starts scanning 11,000+ shows that want you. Your first matches appear before you finish your coffee.</p>
+          </div>
+        </div>
+
+        <!-- DAY 7 -->
+        <div class="roadmap-step">
+          <div class="roadmap-num"><span>Day 7</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">First pitches land in inboxes.</p>
+            <p class="roadmap-body">Personalized emails are sent to your first batch of matched hosts. You haven't written a word. Your voice is in every sentence. Hosts see your value and decide if you're a fit. Most say yes.</p>
+          </div>
+        </div>
+
+        <!-- DAY 14 -->
+        <div class="roadmap-step">
+          <div class="roadmap-num"><span>Day 14</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">Replies start rolling in.</p>
+            <p class="roadmap-body">Hosts reply. Your inbox lights up with booking requests. Follow-ups run on autopilot for the ones who haven't replied yet. Your calendar starts filling with recording dates.</p>
+          </div>
+        </div>
+
+        <!-- DAY 30 -->
+        <div class="roadmap-step">
+          <div class="roadmap-num"><span>Day 30</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">First episode goes live.</p>
+            <p class="roadmap-body">You've recorded your first show. The host introduces you like a trusted authority. Clips are pulled, repurposed, and pushed to social. Your content machine is running — and it didn't cost you a single hour of editing.</p>
+          </div>
+        </div>
+
+        <!-- DAY 60 -->
+        <div class="roadmap-step">
+          <div class="roadmap-num"><span>Day 60</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">Inbound leads appear.</p>
+            <p class="roadmap-body">Someone finds you through a show. They've already listened to your interview. They trust you. They reach out. No cold outreach. No price objection. Just "how do we work together?" That deal alone covers your investment.</p>
+          </div>
+        </div>
+
+        <!-- DAY 90 -->
+        <div class="roadmap-step roadmap-step-final">
+          <div class="roadmap-num"><span>Day 90</span></div>
+          <div class="roadmap-content">
+            <p class="roadmap-headline">You're booked solid and your pipeline is full.</p>
+            <p class="roadmap-body">20+ shows recorded. 60+ content assets live. A steady flow of warm inbound leads. Your revenue is up. Your calendar is clear. You don't remember the last time you sent a cold message. This is what happens when you stop chasing and start showing up.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:56px;">
+        <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-offer" style="background:#6366f1;font-size:17px;padding:16px 36px;border-radius:999px;">Start Your 90-Day Transformation →</a>
+      </div>
+    </div>
+  </section>
+
   <!-- OBJECTIONS -->
   <section class="objections">
     <div class="container">
@@ -1550,17 +2157,52 @@
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="final-cta">
+  <!-- FINAL CTA: RISK-REVERSAL NO-BRAINER -->
+  <section class="risk-reversal">
     <div class="container">
-      <p class="section-label" style="display:block;text-align:center;">Your move</p>
-      <h2>Your next client<br>is listening to a podcast<br><em style="font-style:normal;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">right now. Make it yours.</em></h2>
-      <p>Someone in your market is on a podcast this week building trust with your ideal client. Every week you wait is another week they're ahead of you. It takes 15 minutes to see if this is right for you.</p>
-      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;">
-        Book a Free 15-Min Demo
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-      <p class="final-note">15 minutes &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; We'll show you the system&nbsp;live</p>
+      <div style="text-align:center;max-width:720px;margin:0 auto;">
+
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.22);color:#6366f1;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:32px;">
+          <span>📋</span> Your move
+        </div>
+
+        <h2 style="font-size:clamp(36px,5.5vw,64px);font-weight:900;letter-spacing:-0.035em;line-height:1.08;max-width:800px;margin:0 auto 16px;">
+          The only risk is<br>
+          <em style="font-style:normal;background:linear-gradient(135deg,#6366f1,#a78bfa,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">waiting another month.</em>
+        </h2>
+
+        <p style="font-size:20px;color:#6e6e73;max-width:600px;margin:0 auto 16px;line-height:1.7;">
+          Let's be honest. You can spend the next 90 days doing what you're doing now — and hope something changes.
+        </p>
+        <p style="font-size:18px;color:#1d1d1f;font-weight:600;margin-bottom:12px;">
+          Or you can spend one 15-minute call finding out if<Br>a podcast pipeline could be the thing that changes everything.
+        </p>
+        <p style="font-size:16px;color:#6e6e73;max-width:560px;margin:0 auto 36px;line-height:1.7;">
+          No pitches. No pressure. If it makes sense, we'll tell you. If it doesn't, we'll tell you that too.<br>
+          <strong style="color:#1d1d1f;">You literally cannot lose here.</strong>
+        </p>
+
+        <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;font-size:20px;padding:22px 48px;">
+          Book Your 15-Min Demo. No Risk.
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+
+        <div style="margin-top:20px;display:flex;flex-wrap:wrap;justify-content:center;gap:20px;">
+          <span style="font-size:14px;color:#aeaeb2;">✓ 15 minutes flat</span>
+          <span style="font-size:14px;color:#aeaeb2;">✓ No commitment</span>
+          <span style="font-size:14px;color:#aeaeb2;">✓ You see the system live</span>
+          <span style="font-size:14px;color:#22c55e;font-weight:600;">✓ If it doesn't fit, we tell you honestly</span>
+        </div>
+
+        <div style="margin-top:36px;padding:24px;border-radius:16px;background:#f5f5f7;border:1px solid rgba(0,0,0,0.06);max-width:600px;margin-left:auto;margin-right:auto;">
+          <p style="font-size:13px;color:#aeaeb2;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">⚡ The clock is running</p>
+          <p style="font-size:15px;color:#6e6e73;line-height:1.6;">
+            While you're reading this, three founders booked demos in the last hour.<br>
+            The question isn't "should I?" It's "how long until I'm next?"
+          </p>
+        </div>
+
+      </div>
     </div>
   </section>
 
