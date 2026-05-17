@@ -1,0 +1,25 @@
+priority_categories:
+  - business
+  - entrepreneurship
+  - technology
+  - marketing
+  - self-improvement
+  - startups
+  - leadership
+  - productivity
+  - investing
+  - personal-development
+
+secondary_categories:
+  - health
+  - fitness
+  - education
+  - science
+  - design
+  - creativity
+
+skip_categories:
+  - true-crime
+  - comedy
+  - sports
+  - fiction

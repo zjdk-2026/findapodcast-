@@ -1,0 +1,29 @@
+# Database
+psycopg2-binary
+sqlalchemy
+python-dotenv
+
+# Web scraping
+httpx
+beautifulsoup4
+feedparser
+lxml
+
+# Data processing
+pandas
+openpyxl
+
+# APIs
+anthropic
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Dashboard
+streamlit
+
+# Utilities
+loguru
+rich
+pydantic
+pyyaml
