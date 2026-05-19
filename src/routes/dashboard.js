@@ -74,10 +74,18 @@ router.get('/dashboard/:token', async (req, res) => {
           contact_unlocked_at,
           contact_confidence,
           contact_sources,
+          image,
           host_instagram_url,
           host_linkedin_url,
           host_twitter_url,
-          unlock_count
+          unlock_count,
+          apple_rating,
+          apple_review_count,
+          apple_chart_rank,
+          apple_chart_category,
+          has_ads,
+          apple_scraped_at,
+          host_phone
         )
         ,
         client_notes,

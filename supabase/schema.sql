@@ -70,6 +70,7 @@ create table podcasts (
   country text,
   language text default 'English',
   listen_score integer,
+  image text,
   created_at timestamptz default now(),
   enriched_at timestamptz
 );
@@ -107,3 +108,6 @@ create table podcast_matches (
 create index on podcast_matches(client_id, status);
 create index on podcast_matches(client_id, fit_score desc);
 create index on podcast_matches(discovered_at desc);
+
+-- Migration: add image column to podcasts (existing databases)
+alter table podcasts add column if not exists image text;
