@@ -210,27 +210,14 @@ async function fetchAndStoreArtwork(podcastId) {
     return { ok: false, imageUrl: null, error: 'artwork_not_found' };
   }
 
-  // 5. Store in database
-  const { error: updateError } = await supabase
-    .from('podcasts')
-    .update({ image: artworkUrl })
-    .eq('id', podcastId);
-
-  if (updateError) {
-    logger.error('appleArtwork: failed to store image in DB', {
-      podcastId,
-      error: updateError.message,
-    });
-    return { ok: false, imageUrl: null, error: 'db_update_failed' };
-  }
-
-  logger.info('appleArtwork: stored artwork for podcast', {
+  // 5. Return the artwork URL (storage handled client-side)
+  logger.info('appleArtwork: fetched artwork for podcast', {
     podcastId,
     title: podcast.title,
-    imageUrl,
+    imageUrl: artworkUrl,
   });
 
-  return { ok: true, imageUrl };
+  return { ok: true, imageUrl: artworkUrl };
 }
 
 /**
@@ -264,16 +251,14 @@ async function batchFetchArtwork(clientId, max = 20) {
 
     const { data: podcasts } = await supabase
       .from('podcasts')
-      .select('id, title, apple_url, image')
-      .in('id', podcastIds)
-      .or('image.is.null,image.eq.');
+      .select('id, title, apple_url')
+      .in('id', podcastIds);
 
     if (!podcasts || podcasts.length === 0) {
       return { ok: true, results: [], error: null };
     }
 
     const candidates = podcasts
-      .filter((p) => !p.image)
       .slice(0, max);
 
     const results = [];

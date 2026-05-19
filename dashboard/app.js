@@ -1759,7 +1759,7 @@ function renderMatchCard(match) {
     <!-- Collapsed row — click to expand -->
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
       <div class="card-row-left">
-        ${podcast.image ? `<div class="card-cover-wrap"><img class="card-cover" src="${esc(podcast.image)}" alt="${esc(podcast.title)||'Podcast'}" loading="lazy" /></div>` : ''}
+        <div class="card-cover-wrap"><img class="card-cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="${esc(podcast.title)||'Podcast'}" loading="lazy" data-podcast-id="${esc(podcast.id)}" data-artwork-loaded="false" /></div>
         <div class="card-row-content">
           <div class="card-row-title">
           ${esc(podcast.title) || 'Unknown Show'}
@@ -6529,40 +6529,75 @@ function urlBase64ToUint8Array(base64String) {
 function autoFetchMissingArtwork(matches) {
   if (!matches || !matches.length) return;
 
-  const seen = new Set();
+  // Helper: extract Apple Podcast ID from external_id or apple_url
+  function extractAppleId(podcast) {
+    if (!podcast) return null;
+    // From external_id like "itunes_1649325891"
+    if (podcast.external_id && /^itunes_(\d+)$/i.test(podcast.external_id)) {
+      return podcast.external_id.replace(/^itunes_/i, '');
+    }
+    // From apple_url like "https://podcasts.apple.com/us/podcast/.../id1649325891"
+    if (podcast.apple_url) {
+      const m = podcast.apple_url.match(/\/id(\d+)/);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  // Helper: extract Spotify show ID
+  function extractSpotifyId(podcast) {
+    if (!podcast) return null;
+    if (podcast.external_id && /^spotify_([\w]+)$/i.test(podcast.external_id)) {
+      return podcast.external_id.replace(/^spotify_/i, '');
+    }
+    if (podcast.spotify_url) {
+      const m = podcast.spotify_url.match(/\/show\/([\w]+)/);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  const processed = new Set();
 
   for (const match of matches) {
     const podcast = match.podcasts || {};
-    if (!podcast.id || podcast.image) continue;
-    if (!podcast.apple_url) continue;
-    if (seen.has(podcast.id)) continue;
-    seen.add(podcast.id);
+    if (!podcast.id || processed.has(podcast.id)) continue;
+    processed.add(podcast.id);
 
-    // Fire-and-forget: call backend to fetch artwork
-    (async (pid) => {
-      try {
-        const res = await fetch('/api/fetch-artwork/' + pid, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-dashboard-token': state.token,
-          },
-        });
-        const data = await res.json();
-        if (!data.ok || !data.image) { /* not available */ return; }
-        // Update the DOM for ALL cards using this podcast
-        const imgs = document.querySelectorAll('#card-' + match.id + ' .card-cover');
-        imgs.forEach((img) => { img.src = data.image; });
-        // Also update any cards from other matches sharing this podcast
-        const allCards = document.querySelectorAll('.match-card');
-        allCards.forEach((card) => {
-          const cover = card.querySelector('.card-cover');
-          if (!cover && card.id) {
-            // Re-render the card with the image (edge case — skipped for now)
+    const imgEl = document.querySelector('.card-cover[data-podcast-id="' + podcast.id + '"]');
+    if (!imgEl || imgEl.getAttribute('data-artwork-loaded') === 'true') continue;
+
+    const appleId = extractAppleId(podcast);
+
+    if (appleId) {
+      // Fire-and-forget: fetch artwork from public iTunes API
+      (async (pid, el) => {
+        try {
+          const res = await fetch('https://itunes.apple.com/lookup?id=' + appleId);
+          const data = await res.json();
+          if (data.results && data.results[0] && data.results[0].artworkUrl600) {
+            el.src = data.results[0].artworkUrl600;
+            el.setAttribute('data-artwork-loaded', 'true');
+            el.removeAttribute('srcset');
           }
-        });
-      } catch (_) { /* non-critical failure, skip silently */ }
-    })(podcast.id);
+        } catch (_) { /* non-critical */ }
+      })(podcast.id, imgEl);
+    }
+
+    // Also try Spotify for iTunes-fallback podcasts
+    const spotifyId = extractSpotifyId(podcast);
+    if (spotifyId && !appleId) {
+      (async (pid, el) => {
+        try {
+          const res = await fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/show/' + spotifyId));
+          const data = await res.json();
+          if (data.thumbnail_url) {
+            el.src = data.thumbnail_url;
+            el.setAttribute('data-artwork-loaded', 'true');
+          }
+        } catch (_) { /* non-critical */ }
+      })(podcast.id, imgEl);
+    }
   }
 }
 
