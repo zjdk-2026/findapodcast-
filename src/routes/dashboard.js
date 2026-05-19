@@ -74,7 +74,6 @@ router.get('/dashboard/:token', async (req, res) => {
           contact_unlocked_at,
           contact_confidence,
           contact_sources,
-          image,
           host_instagram_url,
           host_linkedin_url,
           host_twitter_url,
