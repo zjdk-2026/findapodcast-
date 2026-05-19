@@ -1,236 +1,582 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>You're Booked — Find A Podcast Demo</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: #f5f5f7;
-      color: #1d1d1f;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      line-height: 1.6;
-      min-height: 100vh;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>You're Booked | Find A Podcast</title>
+<link rel="icon" type="image/svg+xml" href="/dashboard/favicon.svg" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 32px;
-      height: 64px;
-      background: #ffffff;
-      border-bottom: 1px solid rgba(0,0,0,0.07);
-    }
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 17px;
-      font-weight: 700;
-      color: #1d1d1f;
-    }
-    .nav-brand svg { color: #6366f1; }
+:root {
+  --accent:   #6366f1;
+  --accent2:  #8b5cf6;
+  --green:    #059669;
+  --yellow:   #d97706;
+  --bg:       #ffffff;
+  --surface:  #f5f5f7;
+  --surface2: #ebebf0;
+  --border:   rgba(0,0,0,0.08);
+  --border-m: rgba(0,0,0,0.14);
+  --text:     #1d1d1f;
+  --muted:    #6e6e73;
+  --faint:    #aeaeb2;
+}
 
-    .page-wrap {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 64px 24px 96px;
-    }
+html, body {
+  background: var(--bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
 
-    /* Confirmation header */
-    .confirm-header {
-      text-align: center;
-      margin-bottom: 56px;
-    }
-    .check-circle {
-      width: 72px; height: 72px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
-      box-shadow: 0 8px 24px rgba(34,197,94,0.3);
-    }
-    .confirm-header h1 {
-      font-size: clamp(28px, 5vw, 40px);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      color: #1d1d1f;
-      margin-bottom: 14px;
-    }
-    .confirm-header p {
-      font-size: 17px;
-      color: #6e6e73;
-      line-height: 1.75;
-      max-width: 500px;
-      margin: 0 auto;
-    }
+body { padding-top: 40px; }
 
-    /* Steps */
-    .steps-label {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #6366f1;
-      margin-bottom: 20px;
-    }
-    .step-card {
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.07);
-      border-radius: 16px;
-      padding: 24px 26px;
-      margin-bottom: 12px;
-      display: flex;
-      gap: 18px;
-      align-items: flex-start;
-    }
-    .step-num {
-      width: 36px; height: 36px;
-      min-width: 36px;
-      background: rgba(99,102,241,0.09);
-      border: 1px solid rgba(99,102,241,0.22);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 800; color: #6366f1;
-    }
-    .step-content h3 { font-size: 15px; font-weight: 700; color: #1d1d1f; margin-bottom: 5px; }
-    .step-content p { font-size: 14px; color: #6e6e73; line-height: 1.65; }
+/* ── Launch bar ── */
+.launch-bar {
+  width: 100%; background: linear-gradient(90deg, #d97706, #f59e0b);
+  color: #000; font-size: 13px; font-weight: 800;
+  text-align: center; padding: 11px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.01em; position: fixed; top: 0; left: 0; z-index: 200;
+}
 
-    /* Policy card */
-    .policy-card {
-      background: #fff8f0;
-      border: 2px solid #f59e0b;
-      border-radius: 16px;
-      padding: 26px 28px;
-      margin: 32px 0;
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-    .policy-icon {
-      width: 36px; height: 36px; min-width: 36px;
-      background: #fef3c7;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .policy-content h3 { font-size: 15px; font-weight: 700; color: #92400e; margin-bottom: 6px; }
-    .policy-content p { font-size: 14px; color: #a16207; line-height: 1.65; }
+/* ── Confirmation hero ── */
+.confirm-hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 32px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.confirm-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(5,150,105,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.confirm-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+.confirm-inner { position: relative; z-index: 1; max-width: 620px; margin: 0 auto; }
 
-    /* Calendar CTA */
-    .calendar-cta {
-      background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(168,85,247,0.05));
-      border: 1px solid rgba(99,102,241,0.18);
-      border-radius: 20px;
-      padding: 36px;
-      text-align: center;
-      margin-top: 32px;
-    }
-    .calendar-cta h3 { font-size: 18px; font-weight: 800; color: #1d1d1f; margin-bottom: 10px; letter-spacing: -0.01em; }
-    .calendar-cta p { font-size: 14px; color: #6e6e73; line-height: 1.65; margin-bottom: 22px; }
-    .btn-calendar {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #1d1d1f;
-      color: #fff;
-      padding: 14px 28px;
-      border-radius: 999px;
-      font-size: 15px;
-      font-weight: 700;
-      transition: background 0.2s, transform 0.15s;
-    }
-    .btn-calendar:hover { background: #3a3a3c; transform: translateY(-1px); }
-  </style>
+.check-circle {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px;
+  box-shadow: 0 8px 28px rgba(34,197,94,0.28);
+}
+.confirm-hero h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  font-weight: 900; letter-spacing: -0.03em; line-height: 1.08;
+  margin-bottom: 16px;
+}
+.confirm-hero p {
+  font-size: 16px; color: var(--muted); line-height: 1.75;
+  max-width: 480px; margin: 0 auto 32px;
+}
+
+.confirm-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(5,150,105,0.1); border: 1px solid rgba(5,150,105,0.25);
+  border-radius: 999px; padding: 8px 20px;
+  font-size: 13px; font-weight: 700; color: #059669;
+}
+
+/* ── Page body ── */
+.page { max-width: 860px; margin: 0 auto; padding: 0 24px 100px; }
+.section { margin-bottom: 80px; }
+.section-intro { margin-bottom: 40px; }
+
+.eyebrow {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.eyebrow.yellow { color: var(--yellow); }
+.eyebrow.green  { color: var(--green); }
+
+h2 {
+  font-size: clamp(26px, 3.5vw, 44px);
+  font-weight: 900; line-height: 1.08; letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
+
+.lead { font-size: 15px; line-height: 1.8; color: var(--muted); max-width: 680px; }
+
+.grad {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.yellow-grad {
+  background: linear-gradient(135deg, #fde68a 0%, var(--yellow) 60%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.divider {
+  border: none; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-m) 20%, var(--border-m) 80%, transparent);
+  margin: 72px 0;
+}
+
+/* ── Warning / not for everyone ── */
+.warning-box {
+  background: rgba(99,102,241,0.05);
+  border: 1.5px solid rgba(99,102,241,0.2);
+  border-radius: 18px; padding: 32px 32px;
+  margin-bottom: 48px;
+}
+.warning-box h3 { font-size: 17px; font-weight: 900; margin-bottom: 12px; letter-spacing: -0.01em; }
+.warning-box p { font-size: 14px; color: var(--muted); line-height: 1.8; }
+.warning-box p + p { margin-top: 10px; }
+
+/* ── Tier cards ── */
+.tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.tier-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 22px; padding: 28px 22px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  position: relative; transition: transform 0.2s, box-shadow 0.2s;
+}
+.tier-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+.tier-card.featured {
+  border-color: rgba(217,119,6,0.4);
+  background: linear-gradient(165deg, rgba(217,119,6,0.05) 0%, var(--surface) 50%);
+  box-shadow: 0 0 0 1px rgba(217,119,6,0.12), 0 8px 32px rgba(217,119,6,0.06);
+}
+.tier-top-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 4px 14px;
+  border-radius: 999px; white-space: nowrap; color: #000;
+}
+.tier-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.tier-label.gold { color: var(--yellow); }
+.tier-name { font-size: 18px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2; }
+.tier-desc { font-size: 13px; color: var(--muted); line-height: 1.65; flex: 1; }
+.tier-feats { display: flex; flex-direction: column; gap: 8px; }
+.tier-feat {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12.5px; color: var(--muted); line-height: 1.5;
+}
+.tier-feat svg { flex-shrink: 0; margin-top: 1px; }
+.tier-pricing { border-top: 1px solid var(--border); padding-top: 16px; }
+.tier-price { font-size: 38px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.tier-price.gold { color: var(--yellow); }
+.tier-period { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+.tier-guar { font-size: 11.5px; color: var(--green); font-weight: 700; margin-top: 6px; }
+
+.tier-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 20px; border-radius: 12px;
+  font-size: 13px; font-weight: 800; text-decoration: none; letter-spacing: -0.01em;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.tier-btn:hover { opacity: 0.88; transform: scale(0.98); }
+.tier-btn.indigo {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+.tier-btn.gold {
+  background: linear-gradient(135deg, var(--yellow), #fbbf24);
+  color: #000; box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+}
+
+/* ── Guarantee boxes ── */
+.guar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.guar-box {
+  border-radius: 20px; padding: 30px 28px;
+  position: relative;
+}
+.guar-box.purple-box {
+  background: linear-gradient(165deg, rgba(99,102,241,0.06) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(99,102,241,0.22);
+}
+.guar-box.green-box {
+  background: linear-gradient(165deg, rgba(5,150,105,0.06) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(5,150,105,0.22);
+}
+.guar-box.gold-box {
+  background: linear-gradient(165deg, rgba(217,119,6,0.06) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(217,119,6,0.25);
+}
+.guar-tag {
+  position: absolute; top: -12px; left: 24px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 4px 14px; border-radius: 999px; color: #000;
+}
+.guar-title { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.2; }
+.guar-body  { font-size: 13.5px; line-height: 1.8; color: var(--muted); }
+.guar-note { font-size: 12px; color: #4b4b52; line-height: 1.7; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+
+/* ── Why it works ── */
+.why-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.why-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px 20px;
+}
+.why-num { font-size: 32px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; line-height: 1; margin-bottom: 10px; }
+.why-title { font-size: 14px; font-weight: 800; margin-bottom: 6px; }
+.why-body { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* ── Urgency box ── */
+.urgency-box {
+  background: linear-gradient(135deg, rgba(217,119,6,0.07), rgba(217,119,6,0.02));
+  border: 2px solid rgba(217,119,6,0.3);
+  border-radius: 20px; padding: 36px 36px;
+  text-align: center;
+}
+.urgency-box h3 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 12px; }
+.urgency-box p { font-size: 15px; color: var(--muted); line-height: 1.75; max-width: 540px; margin: 0 auto; }
+
+/* ── CTA section ── */
+.cta-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 24px; padding: 52px 44px;
+  position: relative; overflow: hidden; text-align: center;
+}
+.cta-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 70%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
+}
+.cta-wrap::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(99,102,241,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-inner { position: relative; z-index: 1; }
+.cta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 36px; }
+.cta-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 18px; padding: 28px 20px;
+  display: flex; flex-direction: column; gap: 10px; align-items: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.cta-card:hover { transform: translateY(-2px); }
+.cta-card.gold-card { border-color: rgba(245,158,11,0.35); }
+.cta-tier { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.cta-tier.gold { color: var(--yellow); }
+.cta-price { font-size: 36px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.cta-price.gold { color: var(--yellow); }
+.cta-period { font-size: 11px; color: var(--muted); line-height: 1.6; text-align: center; }
+.cta-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 14px; border-radius: 11px; margin-top: 4px;
+  font-size: 13px; font-weight: 800; text-decoration: none; letter-spacing: -0.01em;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.cta-btn:hover { opacity: 0.87; transform: scale(0.98); }
+.cta-btn.indigo {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+.cta-btn.gold {
+  background: linear-gradient(135deg, var(--yellow), #fbbf24);
+  color: #000; box-shadow: 0 4px 16px rgba(245,158,11,0.28);
+}
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 36px 0 0;
+  text-align: center;
+  font-size: 12px; color: var(--faint); line-height: 2;
+}
+
+/* ── Mobile ── */
+@media (max-width: 720px) {
+  .tier-grid  { grid-template-columns: 1fr; }
+  .tier-card.featured { order: -1; }
+  .guar-grid  { grid-template-columns: 1fr; }
+  .why-grid   { grid-template-columns: 1fr; }
+  .cta-grid   { grid-template-columns: 1fr; }
+  .cta-wrap   { padding: 36px 20px; }
+  .urgency-box { padding: 28px 20px; }
+  .warning-box { padding: 24px 20px; }
+  h2 { font-size: 26px; }
+  .page { padding: 0 16px 80px; }
+}
+</style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-brand">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" x2="12" y1="19" y2="22"/>
-      </svg>
-      Find A Podcast
+<!-- ── Launch bar ── -->
+<div class="launch-bar">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  Company Launch Special. Prices increase 50% on June 1
+</div>
+
+<!-- ── Confirmation ── -->
+<div class="confirm-hero">
+  <div class="confirm-inner">
+    <div class="check-circle">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
     </div>
-  </nav>
-
-  <div class="page-wrap">
-
-    <!-- Confirmation -->
-    <div class="confirm-header">
-      <div class="check-circle">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-      </div>
-      <h1>You're in.<br>This is where it starts.</h1>
-      <p>Your 15-minute demo is locked in. Check your email for the calendar invite and call link. We'll show you the whole system live on real shows in your niche. No decks, just the actual tool doing its thing.</p>
+    <h1>You're booked.<br>This is where it starts.</h1>
+    <p>Your demo is locked in. Check your email for the calendar invite and call link. While you wait, read what's below. It'll make our call far more valuable.</p>
+    <div class="confirm-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Demo confirmed. Check your inbox.
     </div>
-
-    <!-- What you'll see -->
-    <p class="steps-label">What we'll cover in 15 minutes</p>
-
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <h3>We find your niche shows live</h3>
-        <p>We'll pull up targeted podcasts in your niche on the spot so you can see the accuracy and speed of the matching engine yourself.</p>
-      </div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <h3>We show you a pitch written in your voice</h3>
-        <p>You'll see how the system writes a personalised pitch for a real show in your niche, something you could send the same day if you wanted to.</p>
-      </div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <h3>We answer your honest questions</h3>
-        <p>We'll tell you straight whether this is the right fit for where you are right now. If it's not, we'll say so.</p>
-      </div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <h3>Come with your niche and a goal in mind</h3>
-        <p>Who do you want in your audience? What would 5 booked podcasts do for your business this quarter? The clearer you are, the more we can show you in 15 minutes.</p>
-      </div>
-    </div>
-
-    <!-- Zero cancellation policy -->
-    <div class="policy-card">
-      <div class="policy-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </div>
-      <div class="policy-content">
-        <h3>Zero Cancellation Policy</h3>
-        <p>We respect your time and ask that you respect ours. If you need to reschedule, please do so at least <strong>24 hours in advance</strong>. No-shows without notice forfeit their slot and will not be offered another. We hold this standard with every client. It's how we keep things running well.</p>
-      </div>
-    </div>
-
-    <!-- Calendar add -->
-    <div class="calendar-cta">
-      <h3>Add it to your calendar</h3>
-      <p>Check your email for the calendar invite. If you don't see it, check spam or add the time manually so you don't miss it.</p>
-      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" class="btn-calendar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        View or Reschedule Booking
-      </a>
-    </div>
-
   </div>
+</div>
+
+<!-- ── Sales letter ── -->
+<div class="page">
+
+  <!-- ── Headline ── -->
+  <div class="section" style="padding-top:72px; text-align:center;">
+    <div class="section-intro">
+      <div class="eyebrow" style="justify-content:center;">Read this before our call</div>
+      <h2>The fastest way to fill your calendar<br>with podcast appearances<br><span class="grad">without sending a single cold email</span></h2>
+      <p class="lead" style="margin:0 auto; text-align:center;">Most people who want to grow through podcasting are doing it completely wrong. They spend hours researching shows. They write pitches that never get replied to. They get booked on shows with 200 listeners. They record a great interview and nothing happens. That is not a podcast strategy. That is busy work.</p>
+    </div>
+
+    <div class="warning-box" style="text-align:left;">
+      <h3>The truth nobody in this space will tell you</h3>
+      <p>Podcast guesting is the highest-trust marketing channel available to an expert today. The host has already built credibility with their audience. When they bring you on, that trust transfers instantly. You are not advertising. You are being endorsed.</p>
+      <p>The problem is not the channel. The problem is execution. Wrong shows. No strategy behind the pitch. Recording once and letting it die. We fix all of it.</p>
+    </div>
+
+    <div class="warning-box" style="text-align:left; background:rgba(217,119,6,0.04); border-color:rgba(217,119,6,0.22);">
+      <h3 style="color:var(--yellow);">This is not for everyone</h3>
+      <p>If you want a cheap shortcut, a VA to blast 500 generic pitches, or you think appearing on 3 podcasts is a strategy — this is not for you.</p>
+      <p>This is for founders, coaches, consultants, and experts who have something real to say, a real offer behind it, and want a real system to get in front of the right audiences consistently. If that is you, keep reading.</p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── Three options ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow">Three ways to work together</div>
+      <h2>Choose the option that fits<br>where you are right now</h2>
+      <p class="lead">Every option is backed by a guarantee. We do not get paid in full until you get the result.</p>
+    </div>
+
+    <div class="tier-grid">
+
+      <!-- Option 1 -->
+      <div class="tier-card">
+        <div>
+          <div class="tier-label">Option 01</div>
+          <div class="tier-name">Self-Managed</div>
+        </div>
+        <p class="tier-desc">You get the full Find A Podcast system. We find the shows, score them by fit, write the pitches, and queue everything up. You review and approve before anything goes out.</p>
+        <div class="tier-feats">
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Podcast matching engine</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Personalised pitch copy written for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Dashboard to track every outreach</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Reply monitoring and instant notifications</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Cancel anytime, no lock-in</div>
+        </div>
+        <div class="tier-pricing">
+          <div class="tier-price">$1,000</div>
+          <div class="tier-period">setup fee · then $500/month</div>
+          <div class="tier-guar">Book 4 shows in month 1 or next month is free</div>
+        </div>
+        <a href="https://buy.stripe.com/eVq9ATf5S0tD3gNdrx8IU0X" class="tier-btn indigo">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
+          Start Today
+        </a>
+      </div>
+
+      <!-- Option 2 -->
+      <div class="tier-card">
+        <div>
+          <div class="tier-label">Option 02</div>
+          <div class="tier-name">Podcast Tour</div>
+        </div>
+        <p class="tier-desc">We do everything. Research, outreach, follow-up, scheduling. You show up and record. 20 booked appearances in your niche, done for you.</p>
+        <div class="tier-feats">
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 booked podcast appearances</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom media kit</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Story session to sharpen your message</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 to 7 episode topics built around your offer</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Branded sales funnel and lead magnet</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>CTA architecture per episode</div>
+        </div>
+        <div class="tier-pricing">
+          <div class="tier-price">$3,000</div>
+          <div class="tier-period">$1,500 now · $1,500 when all 20 are booked</div>
+          <div class="tier-guar">20 bookings in 90 days or we keep working free</div>
+        </div>
+        <a href="https://buy.stripe.com/4gMeVd8Hu5NX4kRfzF8IU12" class="tier-btn indigo">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Claim Your Spot
+        </a>
+      </div>
+
+      <!-- Option 3 -->
+      <div class="tier-card featured">
+        <div class="tier-top-badge" style="background:linear-gradient(135deg,#d97706,#fbbf24);">Most Complete</div>
+        <div>
+          <div class="tier-label gold">Option 03</div>
+          <div class="tier-name">Podcast Tour + Content Engine</div>
+        </div>
+        <p class="tier-desc">Everything in the Tour, plus we turn every recording into 15 to 30 pieces of content. Short videos, quote cards, threads, articles. All in your brand voice, for every platform.</p>
+        <div class="tier-feats">
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Everything in the Podcast Tour</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>15 to 30 content pieces per episode</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Written in your brand voice, not templates</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Created for every platform you are on</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>300 to 600 pieces across the full tour</div>
+        </div>
+        <div class="tier-pricing">
+          <div class="tier-price gold">$5,000</div>
+          <div class="tier-period">$2,500 now · $2,500 when all 20 are booked</div>
+          <div class="tier-guar">Same 20-booking guarantee applies</div>
+        </div>
+        <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="tier-btn gold">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Claim Your Spot
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── Guarantees ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow green">The guarantees</div>
+      <h2>We do not get paid in full<br>until you get the result</h2>
+      <p class="lead">Every option carries a specific guarantee. Not a vague "we'll do our best." A defined outcome, in writing.</p>
+    </div>
+
+    <div class="guar-grid">
+      <div class="guar-box purple-box">
+        <div class="guar-tag" style="background:linear-gradient(135deg,var(--accent),var(--accent2));">Self-Managed</div>
+        <div class="guar-title">4 Bookings or Your Next Month is Free</div>
+        <div class="guar-body">Book a minimum of 4 shows in your first calendar month. If you submit to at least 50 podcasts and do not hit 4 bookings, your next month is on us. No forms, no questions.</div>
+        <div class="guar-note">Minimum 50 podcast submissions required to activate the guarantee. This filters for the right client — someone willing to do the volume.</div>
+      </div>
+      <div class="guar-box green-box">
+        <div class="guar-tag" style="background:linear-gradient(135deg,#059669,#34d399);color:#fff;">Podcast Tour</div>
+        <div class="guar-title">20 Bookings in 90 Days or We Work for Free</div>
+        <div class="guar-body">If we do not hit 20 confirmed bookings within 90 days, we keep working at no extra charge until we do. The final payment only lands when booking 20 is confirmed. That is the deal.</div>
+        <div class="guar-note">You are not paying for effort. You are paying for a result. The final payment only lands when booking 20 is confirmed.</div>
+      </div>
+    </div>
+    <div class="guar-box gold-box" style="margin-top:0;">
+      <div class="guar-tag" style="background:linear-gradient(135deg,#d97706,#fbbf24);">Tour + Content Engine</div>
+      <div class="guar-title">Same 20-Booking Guarantee. Content Delivered Per Episode.</div>
+      <div class="guar-body">Identical tour guarantee applies. On top of that, 15 to 30 content pieces are delivered per episode — aligned to your brand voice, ready to publish across every platform you are active on. Most content companies give you templated posts for one platform. This covers all of them.</div>
+      <div class="guar-note">Content is created from recordings you were already doing. No extra time on your end.</div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── Why it works ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow">Why this works</div>
+      <h2>Podcast guesting works<br>when everything else does not</h2>
+      <p class="lead">The channel is not the problem. Here is why the system behind it matters more than the channel itself.</p>
+    </div>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-num">01</div>
+        <div class="why-title">Trust that transfers</div>
+        <div class="why-body">The host has already earned the audience's trust over years. When they bring you on, that credibility transfers instantly. You are not advertising. You are being endorsed.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-num">02</div>
+        <div class="why-title">Audience that fits</div>
+        <div class="why-body">We match by niche, offer, audience size, episode recency, and interview format. Every show we pitch you to has your ideal client already listening.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-num">03</div>
+        <div class="why-title">Content that compounds</div>
+        <div class="why-body">One 45-minute interview becomes 15 to 30 pieces of content. Short clips, articles, threads, and quote cards — all in your voice, for every platform. Record once. Publish for months.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── Urgency ── -->
+  <div class="section">
+    <div class="urgency-box">
+      <div class="eyebrow yellow" style="justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Company Launch Special
+      </div>
+      <h3>Prices increase 50% on June 1</h3>
+      <p style="margin-top:12px;">This is the launch window. Every price on this page goes up 50% on June 1. If you are reading this before the call, this is the price you lock in today. The decision does not have to happen on our call — if you already know, the links are below.</p>
+    </div>
+  </div>
+
+  <!-- ── CTA ── -->
+  <div class="cta-wrap">
+    <div class="cta-inner">
+      <div class="eyebrow" style="justify-content:center;">Ready to move before our call</div>
+      <h2 style="margin-bottom:14px;">Choose your path.<br><span class="grad">Start this week.</span></h2>
+      <p class="lead" style="margin:0 auto; text-align:center;">All three options are live. Pick the one that fits and you will be set up before Friday.</p>
+      <div class="cta-grid">
+        <div class="cta-card">
+          <div class="cta-tier">Self-Managed</div>
+          <div class="cta-price">$1,000</div>
+          <div class="cta-period">setup · then $500/month<br>cancel anytime</div>
+          <a href="https://buy.stripe.com/eVq9ATf5S0tD3gNdrx8IU0X" class="cta-btn indigo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
+            Start Today
+          </a>
+        </div>
+        <div class="cta-card">
+          <div class="cta-tier">Podcast Tour</div>
+          <div class="cta-price">$3,000</div>
+          <div class="cta-period">$1,500 now · $1,500<br>when all 20 are booked</div>
+          <a href="https://buy.stripe.com/4gMeVd8Hu5NX4kRfzF8IU12" class="cta-btn indigo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Claim Your Spot
+          </a>
+        </div>
+        <div class="cta-card gold-card">
+          <div class="cta-tier gold">Podcast Tour + Content Engine</div>
+          <div class="cta-price gold">$5,000</div>
+          <div class="cta-period">$2,500 now · $2,500<br>when all 20 are booked</div>
+          <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="cta-btn gold">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Claim Your Spot
+          </a>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:28px;">
+        Questions before the call? Message Zac directly on
+        <a href="https://wa.me/61403702111" style="color:var(--accent);font-weight:700;">WhatsApp</a>
+        or email
+        <a href="mailto:hi@zacdeane.com" style="color:var(--accent);font-weight:700;">hi@zacdeane.com</a>
+      </p>
+    </div>
+  </div>
+
+  <footer style="margin-top:56px;">
+    <div style="margin-bottom:4px;"><strong style="color:var(--muted);">Find A Podcast</strong> · findapodcast.io</div>
+    <div>© 2026 Find A Podcast. All rights reserved.</div>
+    <div style="margin-top:8px;">
+      <a href="https://www.youtube.com/@zacharydeane" style="color:var(--faint);margin:0 8px;">YouTube</a>
+      <a href="https://wa.me/61403702111" style="color:var(--faint);margin:0 8px;">WhatsApp</a>
+    </div>
+  </footer>
+
+</div>
 
 </body>
 </html>
