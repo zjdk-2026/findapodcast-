@@ -175,6 +175,10 @@ app.get('/self-managed-overview', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'self-managed-overview.html'));
 });
 
+app.get('/proposal', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'proposal.html'));
+});
+
 // Operator page
 app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));
