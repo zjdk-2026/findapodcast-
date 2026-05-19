@@ -466,18 +466,6 @@ footer {
 
 </div>
 
-<!-- ── Listen button ── -->
-<div id="listen-btn" onclick="toggleListen()" title="Listen to this page">
-  <div id="listen-icon">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-    </svg>
-  </div>
-  <span id="listen-label">Listen</span>
-  <div id="listen-waves" style="display:none;align-items:center;gap:2px;">
-    <span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span>
-  </div>
-</div>
 
 <style>
 #listen-btn {
@@ -511,48 +499,95 @@ footer {
 <script>
 (function() {
   const synth = window.speechSynthesis;
+  let chunks  = [];
+  let idx     = 0;
   let playing = false;
   let paused  = false;
+  let voice   = null;
 
-  // Chrome loads voices async — pre-load them so getBestVoice works immediately on click
-  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  // Hardcoded script — most reliable, no DOM scraping timing issues
+  const SCRIPT = `
+    You're booked. Your Zoom demo is confirmed and this is your prep page.
+    Before we meet, here is exactly what we do and how we work.
+    Most people who try podcast guesting hit the same wall.
+    They find a few shows, send a pitch, forget to follow up, lose track of who replied,
+    and three months later have nothing to show for it.
+    It is not a talent problem. It is an organisation problem. One system fixes it.
+    We run everything. Research, outreach, follow up, scheduling.
+    You show up and record. That is your only job.
+    We have three ways to work together.
+    Option one: Self-Managed. You get the full Find A Podcast system.
+    We find the shows, write the pitches, and queue everything up.
+    You approve before anything goes out. Cancel anytime.
+    Option two: Podcast Tour. We do everything for you.
+    Twenty booked podcast appearances in your niche.
+    Includes a custom media kit, story session, episode topics built around your offer,
+    a branded sales funnel, and a lead magnet to share on every show.
+    If we do not hit twenty bookings in ninety days, we keep working at no extra charge.
+    Option three: Podcast Tour plus Content Engine.
+    Everything in the tour, plus fifteen to thirty pieces of content per episode.
+    Short videos, quote cards, threads, and articles. All written in your brand voice.
+    Not generic templates. Built for every platform you are on, not just one.
+    Three hundred to six hundred pieces of content across the full tour.
+    Every client also gets a dedicated strategist who works with them before and after every recording
+    to make sure they walk away with maximum impact and turn every appearance into real business results.
+    The guarantees: Self-Managed, book four shows in month one or your next month is free.
+    Podcast Tour, twenty bookings in ninety days or we keep working at no extra charge.
+    The final payment only lands when booking twenty is confirmed.
+    Why this works: podcast guesting is the highest trust marketing channel available.
+    The host has already built credibility with the audience. When they bring you on, that trust transfers.
+    You are not advertising. You are being endorsed.
+    We match you to shows by niche, offer, audience size, episode recency, and interview format.
+    Every show we pitch you to has your ideal client already listening.
+    We will cover which option fits on the Zoom. Come ready to talk about your niche and your goal.
+    See you there.
+  `.trim();
+
+  // Split into sentences so Chrome does not cut off
+  function toChunks(text) {
+    return text.match(/[^.!?]+[.!?]+/g) || [text];
   }
-  speechSynthesis.getVoices();
 
-  function getScript() {
-    const sections = [
-      '.confirm-inner h1',
-      '.confirm-inner p',
-      '.section-intro h2',
-      '.section-intro .lead',
-      '.info-box h3',
-      '.info-box p',
-      '.tier-label',
-      '.tier-name',
-      '.tier-desc',
-      '.tier-feat',
-      '.tier-guar',
-      '.guar-title',
-      '.guar-body',
-      '.guar-note',
-      '.why-title',
-      '.why-body',
-      '.close-inner h2',
-      '.close-inner .lead',
+  function loadVoice() {
+    const all = synth.getVoices();
+    const preferred = [
+      'Google UK English Female',
+      'Google US English Female',
+      'Google UK English Male',
+      'Google US English',
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Samantha', 'Karen', 'Daniel',
     ];
-    return Array.from(document.querySelectorAll(sections.join(',')))
-      .map(el => el.innerText.trim())
-      .filter(t => t.length > 2)
-      .join('. ');
+    for (const name of preferred) {
+      const v = all.find(v => v.name === name);
+      if (v) { voice = v; return; }
+    }
+    voice = all.find(v => v.lang && v.lang.startsWith('en')) || all[0] || null;
+  }
+
+  function speakChunk(i) {
+    if (i >= chunks.length || !playing) { done(); return; }
+    idx = i;
+    const u = new SpeechSynthesisUtterance(chunks[i]);
+    if (voice) u.voice = voice;
+    u.rate   = 0.88;
+    u.pitch  = 0.95;
+    u.volume = 1;
+    u.onend  = () => { if (playing && !paused) speakChunk(i + 1); };
+    u.onerror = (e) => { if (e.error !== 'interrupted') done(); };
+    synth.speak(u);
+  }
+
+  function done() {
+    playing = false; paused = false; idx = 0;
+    setUI('idle');
   }
 
   function setUI(state) {
-    const btn   = document.getElementById('listen-btn');
     const icon  = document.getElementById('listen-icon');
     const label = document.getElementById('listen-label');
     const waves = document.getElementById('listen-waves');
-
+    const btn   = document.getElementById('listen-btn');
     if (state === 'playing') {
       icon.style.display  = 'none';
       waves.style.display = 'flex';
@@ -571,40 +606,19 @@ footer {
     }
   }
 
-  function getBestVoice() {
-    const voices = synth.getVoices();
-    const preferred = [
-      'Google UK English Female',
-      'Google US English Female',
-      'Google UK English Male',
-      'Google US English',
-      'Microsoft Aria Online (Natural) - English (United States)',
-      'Microsoft Zira - English (United States)',
-      'Samantha',
-      'Karen',
-      'Daniel',
-    ];
-    for (const name of preferred) {
-      const v = voices.find(v => v.name === name);
-      if (v) return v;
-    }
-    return voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
-  }
+  // Pre-load voices (Chrome async)
+  if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoice;
+  loadVoice();
 
   window.toggleListen = function() {
     if (!playing) {
-      const utterance  = new SpeechSynthesisUtterance(getScript());
-      utterance.voice  = getBestVoice();
-      utterance.rate   = 0.88;
-      utterance.pitch  = 0.95;
-      utterance.volume = 1;
-      utterance.onend  = () => { playing = false; paused = false; setUI('idle'); };
-      utterance.onerror = () => { playing = false; paused = false; setUI('idle'); };
-      synth.cancel();
-      synth.speak(utterance);
+      loadVoice();
+      chunks  = toChunks(SCRIPT);
       playing = true;
       paused  = false;
+      synth.cancel();
       setUI('playing');
+      speakChunk(0);
     } else if (!paused) {
       synth.pause();
       paused = true;
