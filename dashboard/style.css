@@ -1507,6 +1507,45 @@ html:not(.light-mode) .card-booked-highlight {
   font-weight: 500;
 }
 
+/* Apple Podcast Show Stats */
+.show-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+.stat-chip {
+  font-size: 10px;
+  padding: 3px 9px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.stat-star {
+  color: #b8860b;
+  border-color: rgba(184,134,11,0.15);
+  background: rgba(255,191,0,0.06);
+}
+.stat-chart {
+  color: var(--accent);
+  border-color: rgba(99,102,241,0.15);
+  background: rgba(99,102,241,0.06);
+}
+.stat-ads {
+  color: var(--warning);
+  border-color: rgba(255,159,10,0.15);
+  background: rgba(255,159,10,0.06);
+}
+.stat-no-ads {
+  color: var(--success);
+  border-color: rgba(48,209,88,0.15);
+  background: rgba(48,209,88,0.06);
+}
+
 /* Booking likelihood */
 .likelihood-badge {
   font-size: 10px;

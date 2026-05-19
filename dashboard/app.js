@@ -1121,7 +1121,44 @@ function metaTagsHtml(podcast) {
     : '';
 }
 
-// ── Content Boost button — state-aware ───────────────────────────────
+// ── Apple Podcast Stats HTML ─────────────────────────────────────────
+function podcastStatsHtml(podcast) {
+  const chips = [];
+
+  if (podcast.apple_rating) {
+    const stars = parseFloat(podcast.apple_rating);
+    chips.push(`<span class="stat-chip stat-star">⭐ ${stars.toFixed(1)}</span>`);
+  }
+
+  if (podcast.apple_review_count) {
+    const n = parseInt(podcast.apple_review_count, 10);
+    chips.push(`<span class="stat-chip">${n.toLocaleString()} reviews</span>`);
+  }
+
+  if (podcast.apple_chart_rank && podcast.apple_chart_category) {
+    chips.push(`<span class="stat-chip stat-chart">🏆 #${podcast.apple_chart_rank} in ${esc(podcast.apple_chart_category)}</span>`);
+  }
+
+  if (podcast.category) {
+    chips.push(`<span class="stat-chip">${esc(podcast.category)}</span>`);
+  }
+
+  if (podcast.publish_frequency) {
+    chips.push(`<span class="stat-chip">${esc(podcast.publish_frequency)}</span>`);
+  }
+
+  if (podcast.has_ads === true) {
+    chips.push(`<span class="stat-chip stat-ads">📢 Ads</span>`);
+  } else if (podcast.has_ads === false) {
+    chips.push(`<span class="stat-chip stat-no-ads">No Ads</span>`);
+  }
+
+  return chips.length > 0
+    ? `<div class="show-stats">${chips.join('')}</div>`
+    : '';
+}
+
+// ── Content Boost button — state-aware ───────────────────────────────────
 function contentBoostButton(match) {
   const id  = match.id;
   const cbs = match.content_boost_status;
@@ -1875,6 +1912,9 @@ function renderMatchCard(match) {
 
     <!-- Meta tags -->
     ${metaTagsHtml(podcast)}
+
+    <!-- Show Stats -->
+    ${podcastStatsHtml(podcast)}
 
     <!-- Social chips -->
     ${socialHtml}
