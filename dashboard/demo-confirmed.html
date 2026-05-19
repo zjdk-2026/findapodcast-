@@ -31,7 +31,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-body { padding-top: 42px; }
 
 /* ── Confirmation hero ── */
 .confirm-hero {
@@ -243,13 +242,6 @@ footer {
 </head>
 <body>
 
-<!-- ── Must read bar ── -->
-<div style="width:100%;background:#dc2626;color:#fff;text-align:center;padding:13px 20px;font-size:13px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;position:fixed;top:0;left:0;z-index:200;">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  Must read before your Zoom
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-</div>
-
 <!-- ── Confirmation ── -->
 <div class="confirm-hero">
   <div class="confirm-inner">
@@ -257,10 +249,28 @@ footer {
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
     </div>
     <h1>You're booked.<br>This is where it starts.</h1>
-    <p>Your Zoom demo is locked in. Check your email for the link and calendar invite. While you wait, read what's below. It'll make our time together far more valuable.</p>
-    <div class="confirm-badge">
+    <p>Your Zoom demo is locked in. Check your email for the link. Before we meet, this page walks you through exactly how we work. Press play now or read below.</p>
+    <div class="confirm-badge" style="margin-bottom:28px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Demo confirmed. Check your inbox.
+    </div>
+
+    <p style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#dc2626;margin-bottom:12px;">
+      Your next step before the Zoom
+    </p>
+    <div id="listen-btn" onclick="toggleListen()">
+      <div id="listen-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+        </svg>
+      </div>
+      <div>
+        <div id="listen-label" style="font-size:15px;font-weight:900;">Press play. Listen while you scroll.</div>
+        <div style="font-size:11px;opacity:0.75;font-weight:600;margin-top:2px;">3 min listen. We cover everything below.</div>
+      </div>
+      <div id="listen-waves" style="display:none;align-items:center;gap:3px;">
+        <span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -271,7 +281,7 @@ footer {
   <!-- ── Headline ── -->
   <div class="section" style="padding-top:72px; text-align:center;">
     <div class="section-intro">
-      <div class="eyebrow" style="justify-content:center;">Read this before our Zoom</div>
+      <div class="eyebrow" style="justify-content:center;">Or scroll and read below</div>
       <h2>20 booked podcast appearances.<br><span class="grad">Without the juggle, the chasing,<br>or dropping the ball.</span></h2>
       <p class="lead" style="margin:0 auto; text-align:center;">Most people who try podcast guesting run into the same wall. They find a few shows, send a pitch, forget to follow up, lose track of who replied, and three months later have nothing to show for it. It is not a talent problem. It is an organisation problem. One system fixes it.</p>
     </div>
@@ -462,16 +472,16 @@ footer {
 
 <style>
 #listen-btn {
-  position: fixed; bottom: 28px; right: 28px; z-index: 300;
+  display: inline-flex; align-items: center; gap: 16px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff; border-radius: 999px;
-  padding: 13px 22px; display: flex; align-items: center; gap: 10px;
-  font-size: 14px; font-weight: 800; cursor: pointer; user-select: none;
-  box-shadow: 0 8px 28px rgba(99,102,241,0.45);
+  color: #fff; border-radius: 20px;
+  padding: 18px 32px; cursor: pointer; user-select: none;
+  box-shadow: 0 8px 32px rgba(99,102,241,0.5);
   transition: transform 0.15s, box-shadow 0.15s;
+  text-align: left;
 }
-#listen-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(99,102,241,0.5); }
-#listen-btn:active { transform: scale(0.97); }
+#listen-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(99,102,241,0.55); }
+#listen-btn:active { transform: scale(0.98); }
 
 .wave {
   display: inline-block; width: 3px; border-radius: 2px;
@@ -523,25 +533,25 @@ footer {
   }
 
   function setUI(state) {
-    const btn    = document.getElementById('listen-btn');
-    const icon   = document.getElementById('listen-icon');
-    const label  = document.getElementById('listen-label');
-    const waves  = document.getElementById('listen-waves');
+    const btn   = document.getElementById('listen-btn');
+    const icon  = document.getElementById('listen-icon');
+    const label = document.getElementById('listen-label');
+    const waves = document.getElementById('listen-waves');
 
     if (state === 'playing') {
       icon.style.display  = 'none';
       waves.style.display = 'flex';
-      label.textContent   = 'Pause';
+      label.textContent   = 'Playing. Tap to pause.';
       btn.classList.remove('paused');
     } else if (state === 'paused') {
       icon.style.display  = 'none';
       waves.style.display = 'flex';
-      label.textContent   = 'Resume';
+      label.textContent   = 'Paused. Tap to resume.';
       btn.classList.add('paused');
     } else {
       icon.style.display  = 'block';
       waves.style.display = 'none';
-      label.textContent   = 'Listen';
+      label.textContent   = 'Press play. Listen while you scroll.';
       btn.classList.remove('paused');
     }
   }
