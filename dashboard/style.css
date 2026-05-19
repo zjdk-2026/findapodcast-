@@ -3028,3 +3028,128 @@ td.muted { color: var(--text-secondary); font-size: 13px; }
   }
 }
 
+/* Dossier sections — About the Show, Episodes, Reviews */
+.dossier-section {
+  padding: 14px 0;
+  border-top: 1px solid var(--border-light, #eee);
+}
+
+.dossier-section:first-of-type {
+  border-top: none;
+}
+
+.dossier-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary, #888);
+  margin: 0 0 8px 0;
+}
+
+.dossier-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary, #555);
+  margin: 0;
+}
+
+/* Episode list in dossier */
+.episodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.episode-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-light, #f0f0f0);
+  gap: 8px;
+}
+
+.episode-item:last-child {
+  border-bottom: none;
+}
+
+.episode-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #222);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.episode-date {
+  font-size: 11px;
+  color: var(--text-tertiary, #999);
+  flex-shrink: 0;
+}
+
+/* Featured reviews in dossier */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-item {
+  padding: 10px 12px;
+  background: var(--bg-secondary, #f9f9f9);
+  border-radius: 8px;
+  border: 1px solid var(--border-light, #eee);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.review-author {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.review-stars {
+  font-size: 11px;
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.review-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #555);
+  margin: 0 0 3px 0;
+}
+
+.review-body {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary, #777);
+  margin: 0;
+}
+
+/* Apple stats pill row on collapsed card */
+.card-row-apple {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.pill-apple {
+  background: rgba(255, 149, 0, 0.08);
+  color: #c2410c;
+  border-color: rgba(255, 149, 0, 0.2);
+}
+
+/* Show Stats — uses existing .show-stats > .stat-chip styles */
+

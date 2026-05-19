@@ -218,7 +218,7 @@ async function scrapeApplePage(appleUrl) {
         const ds = txt.match(/"description"\s*:\s*"([^"]+)"/g);
         if (ds) {
           for (const d of ds.slice(0, MAX_EPISODES)) {
-            const c = d.replace(/"description"\s*:\s*"/, '').replace(/"$/, '').replace(/\\"/g, '').replace(/\\n/g, ' ');
+            const c = d.replace(/"description"\s*:\s*"/, '').replace(/"$/, '').replace(/\"/g, '').replace(/\\n/g, ' ');
             if (c.length > 10) notes += c + '\n\n';
           }
           break;
@@ -248,6 +248,35 @@ async function scrapeApplePage(appleUrl) {
     // Episode count
     const ec = bodyText.match(/(\d+)\s+Episodes?/);
     if (ec) { const c = parseInt(ec[1], 10); if (c > 0) data.total_episodes = c; }
+
+    // ── Recent episode titles + dates from HTML ──────────────────────────
+    const recentEpisodes = $('[data-testid="episode-content"]')
+      .slice(0, MAX_EPISODES)
+      .map(function() {
+        const el = $(this);
+        return {
+          title: el.find('h3').first().text().trim(),
+          date: el.find('[data-testid="episode-details__published-date"]').first().text().trim(),
+          description: el.find('[class*="episode-details__summary"]').first().text().trim().slice(0, 500),
+        };
+      })
+      .get()
+      .filter(e => e.title);
+    if (recentEpisodes.length) data.recent_episodes = recentEpisodes;
+
+    // ── Featured reviews from JSON-LD ────────────────────────────────────
+    if (pld && Array.isArray(pld.review) && pld.review.length) {
+      data.featured_reviews = pld.review
+        .filter(r => r.reviewBody && r.reviewBody.length > 10)
+        .slice(0, 5)
+        .map(r => ({
+          author: r.author?.name || null,
+          title: r.name || null,
+          body: r.reviewBody || null,
+          rating: r.reviewRating?.ratingValue ? parseFloat(r.reviewRating.ratingValue) : null,
+          date: r.datePublished || null,
+        }));
+    }
 
     // Frequency
     const fm = bodyText.match(/(Updated|Publishes)\s+(Weekly|Biweekly|Monthly|Daily)/i);
@@ -336,6 +365,8 @@ async function scrapeAndStoreAppleData(podcastId) {
     ...(d.last_episode_date    ? { last_episode_date: d.last_episode_date } : {}),
     ...(d.publish_frequency    ? { publish_frequency: d.publish_frequency } : {}),
     ...(d.country              ? { country: d.country } : {}),
+    ...(d.recent_episodes     ? { recent_episodes: d.recent_episodes } : {}),
+    ...(d.featured_reviews    ? { featured_reviews: d.featured_reviews } : {}),
   };
 
   const { error: uerr } = await supabase

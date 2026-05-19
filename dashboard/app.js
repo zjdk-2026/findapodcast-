@@ -1824,6 +1824,21 @@ function renderMatchCard(match) {
           })()}
         </div>
         ${podcast.host_name ? `<div class="card-row-host">Hosted by ${esc(podcast.host_name)}</div>` : ''}
+        ${(() => {
+          const applePills = [];
+          if (podcast.apple_rating) {
+            const r = parseFloat(podcast.apple_rating);
+            applePills.push(`<span class="inline-pill pill-apple">${r.toFixed(1)} Rating</span>`);
+          }
+          if (podcast.apple_review_count) {
+            const n = parseInt(podcast.apple_review_count, 10);
+            applePills.push(`<span class="inline-pill pill-apple">${n.toLocaleString()} reviews</span>`);
+          }
+          if (podcast.apple_chart_rank && podcast.apple_chart_category) {
+            applePills.push(`<span class="inline-pill pill-apple">#${podcast.apple_chart_rank} in ${esc(podcast.apple_chart_category)}</span>`);
+          }
+          return applePills.length ? `<div class="card-row-apple">${applePills.join('')}</div>` : '';
+        })()}
         <div class="card-row-links" onclick="event.stopPropagation()">
           ${isValidUrl(podcast.apple_url) && podcast.apple_url.toLowerCase().includes('apple.com') ? `<a class="card-link-chip" href="${esc(podcast.apple_url)}" target="_blank" rel="noopener">Apple Podcasts</a>` : ''}
           ${isValidUrl(podcast.spotify_url) && podcast.spotify_url.toLowerCase().includes('spotify.com') ? `<a class="card-link-chip" href="${esc(podcast.spotify_url)}" target="_blank" rel="noopener">Spotify</a>` : ''}
@@ -1883,25 +1898,60 @@ function renderMatchCard(match) {
           ${match.seo_score != null ? scoreBarHtml('SEO Value', match.seo_score) : ''}
         </div>
 
-        <!-- Why fits — only relevant for pre-booking pipeline stages -->
-        ${['new','dream','sent','followed_up','replied'].includes(match.status) && match.why_this_client_fits ? `
+        <!-- Why You Fit -->
+        ${match.why_this_client_fits ? `
         <div class="why-fits-box">
           <p class="why-fits-label">Why You Fit</p>
           <p class="why-fits-text">${esc(match.why_this_client_fits)}</p>
         </div>` : ''}
 
-        <!-- Best Pitch Angle — only for pre-booking stages -->
-        ${['new','dream','sent','followed_up','replied'].includes(match.status) ? `
-        <div class="card-analysis">
-          ${match.best_pitch_angle ? `
-          <div class="why-fits-box">
-            <p class="why-fits-label">Best Pitch Angle</p>
-            <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
-          </div>` : ''}
-      ${episodeHtml}
-    </div>` : ''}
+        <!-- Best Pitch Angle -->
+        ${match.best_pitch_angle ? `
+        <div class="why-fits-box">
+          <p class="why-fits-label">Best Pitch Angle</p>
+          <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
+        </div>` : ''}
 
-        <!-- Booking info — shown on Booked tab -->
+      ${episodeHtml}
+
+        <!-- About the Show -->
+        ${podcast.apple_description ? `
+        <div class="dossier-section">
+          <p class="dossier-label">About the Show</p>
+          <p class="dossier-text">${esc(podcast.apple_description)}</p>
+        </div>` : ''}
+
+        <!-- Recent Episodes -->
+        ${podcast.recent_episodes && Array.isArray(podcast.recent_episodes) && podcast.recent_episodes.length ? `
+        <div class="dossier-section">
+          <p class="dossier-label">Recent Episodes</p>
+          <div class="episodes-list">
+            ${podcast.recent_episodes.slice(0, 5).map(ep => `
+            <div class="episode-item">
+              <span class="episode-title">${esc(ep.title)}</span>
+              ${ep.date ? `<span class="episode-date">${esc(ep.date)}</span>` : ''}
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Featured Reviews -->
+        ${podcast.featured_reviews && Array.isArray(podcast.featured_reviews) && podcast.featured_reviews.length ? `
+        <div class="dossier-section">
+          <p class="dossier-label">Featured Reviews</p>
+          <div class="reviews-list">
+            ${podcast.featured_reviews.slice(0, 3).map(rev => `
+            <div class="review-item">
+              <div class="review-header">
+                ${rev.author ? `<span class="review-author">${esc(rev.author)}</span>` : ''}
+                ${rev.rating ? `<span class="review-stars">${'★'.repeat(Math.round(parseFloat(rev.rating)))}</span>` : ''}
+              </div>
+              ${rev.title ? `<p class="review-title">${esc(rev.title)}</p>` : ''}
+              ${rev.body ? `<p class="review-body">${esc(rev.body)}</p>` : ''}
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Booking info -->
         ${match.status === 'booked' ? `
         <div class="why-fits-box">
           <p class="why-fits-label">Booking Details</p>
@@ -1913,8 +1963,15 @@ function renderMatchCard(match) {
     <!-- Meta tags -->
     ${metaTagsHtml(podcast)}
 
-    <!-- Show Stats -->
-    ${podcastStatsHtml(podcast)}
+    <!-- Show Stats (category, frequency, ads only) -->
+    ${(() => {
+      const chips = [];
+      if (podcast.category) chips.push(`<span class="stat-chip">${esc(podcast.category)}</span>`);
+      if (podcast.publish_frequency) chips.push(`<span class="stat-chip">${esc(podcast.publish_frequency)}</span>`);
+      if (podcast.has_ads === true) chips.push(`<span class="stat-chip stat-ads">Ads</span>`);
+      else if (podcast.has_ads === false) chips.push(`<span class="stat-chip stat-no-ads">No Ads</span>`);
+      return chips.length ? `<div class="show-stats">${chips.join('')}</div>` : '';
+    })()}
 
     <!-- Social chips -->
     ${socialHtml}
