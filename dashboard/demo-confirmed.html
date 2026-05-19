@@ -499,7 +499,7 @@ footer {
 <script>
 (function() {
   let audio = null;
-  let loaded = false;
+  let started = false;
 
   function setUI(state) {
     const icon  = document.getElementById('listen-icon');
@@ -529,36 +529,71 @@ footer {
     }
   }
 
-  window.toggleListen = function() {
-    if (!audio) {
-      setUI('loading');
-      audio = new Audio('/api/tts');
-      audio.oncanplaythrough = () => {
-        loaded = true;
+  function showTapOverlay() {
+    const overlay = document.getElementById('tap-overlay');
+    if (overlay) overlay.style.display = 'flex';
+  }
+
+  function hideTapOverlay() {
+    const overlay = document.getElementById('tap-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  function initAudio(autoplay) {
+    if (audio) return;
+    setUI('loading');
+    audio = new Audio('/api/tts');
+    audio.oncanplaythrough = () => {
+      if (autoplay) {
+        audio.play().then(() => {
+          setUI('playing');
+          hideTapOverlay();
+        }).catch(() => {
+          setUI('idle');
+          showTapOverlay();
+        });
+      } else {
         audio.play();
         setUI('playing');
-      };
-      audio.onended = () => setUI('idle');
-      audio.onerror = () => {
-        audio = null; loaded = false;
-        setUI('idle');
-        alert('Audio failed to load. Please try again.');
-      };
-      audio.load();
-      return;
-    }
-    if (audio.paused) {
-      audio.play();
-      setUI('playing');
-    } else {
-      audio.pause();
-      setUI('paused');
-    }
+        hideTapOverlay();
+      }
+    };
+    audio.onended = () => setUI('idle');
+    audio.onerror = () => { audio = null; setUI('idle'); };
+    audio.load();
+  }
+
+  // Try autoplay on load
+  window.addEventListener('load', () => initAudio(true));
+
+  // Tap overlay triggers play
+  window.startFromOverlay = function() {
+    hideTapOverlay();
+    if (!audio) { initAudio(false); return; }
+    if (audio.paused) { audio.play(); setUI('playing'); }
+  };
+
+  // Button toggle
+  window.toggleListen = function() {
+    if (!audio) { initAudio(false); return; }
+    if (audio.paused) { audio.play(); setUI('playing'); }
+    else { audio.pause(); setUI('paused'); }
   };
 
   window.addEventListener('beforeunload', () => { if (audio) audio.pause(); });
 })();
 </script>
+
+<!-- Tap to start overlay (shown if autoplay is blocked) -->
+<div id="tap-overlay" onclick="startFromOverlay()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;cursor:pointer;">
+  <div style="background:#fff;border-radius:24px;padding:40px 48px;text-align:center;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+    </div>
+    <div style="font-size:20px;font-weight:900;color:#1d1d1f;margin-bottom:10px;letter-spacing:-0.02em;">Tap to listen</div>
+    <div style="font-size:14px;color:#6e6e73;line-height:1.6;">This page has an audio summary. Tap anywhere to start playing while you scroll.</div>
+  </div>
+</div>
 
 </body>
 </html>
