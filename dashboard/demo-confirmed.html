@@ -616,9 +616,10 @@ footer {
       chunks  = toChunks(SCRIPT);
       playing = true;
       paused  = false;
-      synth.cancel();
       setUI('playing');
-      speakChunk(0);
+      // Cancel then wait a tick — Chrome blocks speak() called immediately after cancel()
+      synth.cancel();
+      setTimeout(() => speakChunk(0), 150);
     } else if (!paused) {
       synth.pause();
       paused = true;
