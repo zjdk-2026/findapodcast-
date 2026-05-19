@@ -505,6 +505,12 @@ footer {
   let playing = false;
   let paused  = false;
 
+  // Chrome loads voices async — pre-load them so getBestVoice works immediately on click
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  }
+  speechSynthesis.getVoices();
+
   function getScript() {
     const sections = [
       '.confirm-inner h1',
@@ -556,12 +562,34 @@ footer {
     }
   }
 
+  function getBestVoice() {
+    const voices = synth.getVoices();
+    const preferred = [
+      'Google UK English Female',
+      'Google US English Female',
+      'Google UK English Male',
+      'Google US English',
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Microsoft Zira - English (United States)',
+      'Samantha',
+      'Karen',
+      'Daniel',
+    ];
+    for (const name of preferred) {
+      const v = voices.find(v => v.name === name);
+      if (v) return v;
+    }
+    return voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
+  }
+
   window.toggleListen = function() {
     if (!playing) {
-      const utterance = new SpeechSynthesisUtterance(getScript());
-      utterance.rate  = 0.95;
-      utterance.pitch = 1;
-      utterance.onend = () => { playing = false; paused = false; setUI('idle'); };
+      const utterance  = new SpeechSynthesisUtterance(getScript());
+      utterance.voice  = getBestVoice();
+      utterance.rate   = 0.88;
+      utterance.pitch  = 0.95;
+      utterance.volume = 1;
+      utterance.onend  = () => { playing = false; paused = false; setUI('idle'); };
       utterance.onerror = () => { playing = false; paused = false; setUI('idle'); };
       synth.cancel();
       synth.speak(utterance);
