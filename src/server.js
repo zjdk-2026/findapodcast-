@@ -118,6 +118,66 @@ app.use('/api', artworkRouter);
 app.use('/api', appleEnrichRouter);
 app.use(require('./routes/upload'));
 
+// ── ElevenLabs TTS — cached per server lifecycle ─────────────────────
+let _ttsCache = null;
+app.get('/api/tts', async (req, res) => {
+  try {
+    if (_ttsCache) {
+      res.set('Content-Type', 'audio/mpeg');
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.send(_ttsCache);
+    }
+    const key = process.env.ELEVENLABS_API_KEY;
+    if (!key) return res.status(503).json({ error: 'TTS not configured' });
+
+    const script = `
+      Your Zoom demo is confirmed and this page is your prep before we meet.
+      Most people who try podcast guesting hit the same wall.
+      They find a few shows, send a pitch, forget to follow up, lose track of who replied,
+      and three months later have nothing to show for it.
+      It is not a talent problem. It is an organisation problem. One system fixes it.
+      We run everything. Research, outreach, follow up, scheduling. You show up and record. That is your only job.
+      We have three ways to work together.
+      Option one: Self-Managed. You get the full Find A Podcast system.
+      We find the shows, write the pitches, and queue everything up. You approve before anything goes out. Cancel anytime.
+      Option two: Podcast Tour. We do everything for you. Twenty booked podcast appearances in your niche.
+      Includes a custom media kit, story session, episode topics built around your offer, a branded sales funnel and lead magnet to share on every show.
+      If we do not hit twenty bookings in ninety days, we keep working at no extra charge.
+      Option three: Podcast Tour plus Content Engine. Everything in the tour, plus fifteen to thirty pieces of content per episode.
+      Short videos, quote cards, threads, and articles. All written in your brand voice, not generic templates. Built for every platform you are on, not just one.
+      Three hundred to six hundred pieces of content across the full tour.
+      Every client gets a dedicated strategist who works with them before and after every recording
+      to make sure they walk away with maximum impact and turn every appearance into real business results.
+      The guarantees: Self-Managed, book four shows in month one or your next month is free.
+      Podcast Tour, twenty bookings in ninety days or we keep working at no extra charge. The final payment only lands when booking twenty is confirmed.
+      Why this works: podcast guesting is the highest trust marketing channel available today.
+      The host has already built credibility with the audience. When they bring you on, that trust transfers instantly. You are not advertising. You are being endorsed.
+      We will cover which option fits best on the Zoom. Come ready to talk about your niche and your goal. See you there.
+    `.trim();
+
+    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': key,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text: script,
+        model_id: 'eleven_turbo_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      }),
+    });
+    if (!r.ok) return res.status(502).json({ error: `ElevenLabs error ${r.status}` });
+    _ttsCache = Buffer.from(await r.arrayBuffer());
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(_ttsCache);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Public static files (served before catch-alls) ───────────────────
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
