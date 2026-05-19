@@ -374,6 +374,15 @@ footer {
   font-size: 12px; color: var(--faint); line-height: 2;
 }
 
+/* ─── LAUNCH BAR ─────────────────────────────────────────────── */
+.launch-bar {
+  width: 100%; background: linear-gradient(90deg, #d97706, #f59e0b);
+  color: #000; font-size: 13px; font-weight: 800;
+  text-align: center; padding: 11px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.01em; position: relative; z-index: 200;
+}
+
 /* ─── MOBILE ──────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .hero { padding: 100px 20px 80px; min-height: auto; }
@@ -394,6 +403,12 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- ── Launch bar ── -->
+<div class="launch-bar">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  Company Launch Special — prices increase 40% on June 1
+</div>
 
 <!-- ── Logo pinned top-left ── -->
 <div class="hero-logo">
@@ -418,7 +433,7 @@ footer {
       Your podcast<br>presence. <span class="grad">Built.</span>
     </h1>
     <p class="hero-sub">
-      Three paths. One outcome — your name on shows your ideal clients actually listen to. Pick the level that fits where you are right now.
+      Three paths. One outcome: your name on shows your ideal clients actually listen to. Pick the level that fits where you are right now.
     </p>
     <div class="hero-stats">
       <div class="hero-stat">
@@ -448,7 +463,7 @@ footer {
     <div class="section-intro">
       <div class="eyebrow">The three options</div>
       <h2>Choose your level<br>of involvement.</h2>
-      <p class="lead">One system does the legwork. You decide how much you want to handle yourself.</p>
+      <p class="lead">We do the legwork. You decide how much you want to handle yourself.</p>
     </div>
 
     <div class="tier-grid">
@@ -459,12 +474,12 @@ footer {
           <div class="tier-label">Done-With-You</div>
           <div class="tier-name">Self-Managed Plan</div>
         </div>
-        <div class="tier-desc">The system finds shows, writes pitches in your voice, and follows up automatically. You review, approve, and hit send. About 2 hours a week.</div>
+        <div class="tier-desc">We find shows, write pitches in your voice, and follow up until they reply. You review, approve, and hit send. About 2 hours a week.</div>
         <div class="tier-feats">
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daily show discovery, 4M+ database</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Pitches written in your voice</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Auto follow-up sequencer</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Full pipeline dashboard</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Follow-up emails sent for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Full tracking dashboard</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>Book 4 podcasts or next month free</div>
         </div>
         <div class="tier-pricing">
@@ -483,11 +498,13 @@ footer {
           <div class="tier-label">Done-For-You</div>
           <div class="tier-name">Podcast Tour</div>
         </div>
-        <div class="tier-desc">We handle everything. Pitching, follow-up, scheduling. You show up and record. 20 booked appearances in 90 days — or we keep working until we get there.</div>
+        <div class="tier-desc">We handle everything. Pitching, follow-up, scheduling. You show up and record. 20 booked appearances in 90 days. Or we keep working until we get there.</div>
         <div class="tier-feats">
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 booked recordings in 90 days</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Media kit + signature story written for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Episode topic strategy + CTA architecture</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branded sales funnel built for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Lead magnet written and designed for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>We keep pitching until all 20 are booked</div>
         </div>
         <div class="tier-pricing">
@@ -514,6 +531,8 @@ footer {
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>100–200 content pieces total</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Quote cards, captions, threads, articles</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Post-episode email sequence per drop</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branded sales funnel built for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Lead magnet written and designed for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>20-booking guarantee</div>
         </div>
         <div class="tier-pricing">
@@ -546,16 +565,16 @@ footer {
       </div>
       <div class="stack-wrap">
         <div class="stack-row core">
-          <div style="flex:1"><div class="s-label">Core Offer</div><div class="s-name">Find A Podcast Engine</div><div class="s-desc">500 monthly action credits, daily matches, pitches written in your voice, email send, full pipeline, reply detection</div></div>
+          <div style="flex:1"><div class="s-label">Core Offer</div><div class="s-name">Find A Podcast Engine</div><div class="s-desc">Daily show matches, pitches written in your voice, email send, reply tracking</div></div>
           <div class="s-val core-v">$4,997</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 1 — Pitches Written In Your Voice</div><div class="s-desc">We ingest your sales pages, podcast appearances, and About page so every pitch reads like you wrote it</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 2 — Niche Clarity Onboarding Call</div><div class="s-desc">90-minute kickoff. Positioning, story, three pitch angles, host avatar. Locked in before the system runs</div></div><div class="s-val">$1,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 3 — 4M Podcast Database, Weekly-Refreshed</div><div class="s-desc">Listen Notes plus enrichment plus Google CSE plus operator curation. Ranked by host responsiveness</div></div><div class="s-val">$1,200</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 4 — Auto Follow-Up Sequencer</div><div class="s-desc">Unlimited follow-ups per pitch, sent in your voice. Most replies come from follow-up 2 or later</div></div><div class="s-val">$797</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 6 — First 10 Pitches Co-Pilot Session</div><div class="s-desc">30 minutes on Zoom. Zac watches your first 10 pitches go out live and fixes positioning in real time</div></div><div class="s-val">$497</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 7 — Pipeline Health Dashboard</div><div class="s-desc">Daily streak, pitches sent, replies waiting, follow-ups due. The momentum loop that keeps you moving</div></div><div class="s-val">$297</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 11 — Book 4 Guarantee</div><div class="s-desc">Follow the system for 30 days. If you don't book 4 podcast appearances, your next month is free</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Pitches Written In Your Voice</div><div class="s-desc">We ingest your sales pages, podcast appearances, and About page so every pitch reads like you wrote it</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Niche Clarity Onboarding Call</div><div class="s-desc">90-minute kickoff. Positioning, story, three pitch angles, host avatar. Locked in before we start</div></div><div class="s-val">$1,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">4M Podcast Database, Weekly-Refreshed</div><div class="s-desc">Listen Notes plus enrichment plus Google CSE plus operator curation. Ranked by host responsiveness</div></div><div class="s-val">$1,200</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Follow-Up Emails Sent For You</div><div class="s-desc">Unlimited follow-ups per pitch, sent in your voice. Most replies come from follow-up 2 or later</div></div><div class="s-val">$797</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">First 10 Pitches Co-Pilot Session</div><div class="s-desc">30 minutes on Zoom. Zac watches your first 10 pitches go out live and fixes positioning in real time</div></div><div class="s-val">$497</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Activity Dashboard</div><div class="s-desc">Pitches sent, replies waiting, follow-ups due. Everything in one place so nothing slips</div></div><div class="s-val">$297</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Book 4 Guarantee</div><div class="s-desc">Submit to 50 podcasts minimum. If you don't book 4 appearances, your next month is free</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total green-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$13,850</div></div>
@@ -574,11 +593,13 @@ footer {
           <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">20 Booked Podcast Appearances in 90 Days</div><div class="s-desc">We pitch, follow up, negotiate, and schedule. You show up and record. No caps, no extra charges</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 1 — Media Kit Written For You</div><div class="s-desc">One-page kit so your first impression is already working before the conversation starts</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 2 — Signature Story Session</div><div class="s-desc">60-minute interview turned into your 3 core stories: origin, transformation, best client win</div></div><div class="s-val">$2,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 3 — Episode Topic Strategy</div><div class="s-desc">5–7 episode angles ranked by conversion. Built around your ideal client and your offer</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 4 — Podcast CTA Architecture</div><div class="s-desc">The exact words that move listeners to action without it sounding like a pitch</div></div><div class="s-val">$1,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 7 — We Don't Stop Until 20 Are Booked</div><div class="s-desc">If we miss 20 in 90 days, we keep working at no extra charge until every recording is confirmed</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Media Kit Written For You</div><div class="s-desc">One-page kit so your first impression is already working before the conversation starts</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Signature Story Session</div><div class="s-desc">60-minute interview turned into your 3 core stories: origin, transformation, best client win</div></div><div class="s-val">$2,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Episode Topic Strategy</div><div class="s-desc">5–7 episode angles ranked by conversion. Built around your ideal client and your offer</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Podcast CTA Architecture</div><div class="s-desc">The exact words that move listeners to action without it sounding like a pitch</div></div><div class="s-val">$1,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Custom Branded Sales Funnel</div><div class="s-desc">A fully built funnel to share on every podcast. Captures listeners and moves them toward your offer</div></div><div class="s-val">$2,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Lead Magnet Written and Designed For You</div><div class="s-desc">PDF, checklist or guide built for podcast traffic. Ready to hand out on every show</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">We Don't Stop Until 20 Are Booked</div><div class="s-desc">If we miss 20 in 90 days, we keep working at no extra charge until every recording is confirmed</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total gold-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$39,000+</div></div>
@@ -594,15 +615,15 @@ footer {
       </div>
       <div class="stack-wrap">
         <div class="stack-row core gold-core">
-          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">Everything in Podcast Tour + Full Content Repurposing</div><div class="s-desc">All pitching, scheduling, and delivery — plus every recording is repurposed into months of ready-to-publish content</div></div>
+          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">Everything in Podcast Tour + Full Content Repurposing</div><div class="s-desc">All pitching, scheduling, and delivery — plus every recording is turned into months of ready-to-publish content</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">All Podcast Tour Bonuses (1–7 above)</div><div class="s-desc">Media kit, story session, topic strategy, CTA architecture</div></div><div class="s-val">$12,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 8 — Maximum Content Per Episode</div><div class="s-desc">5–10 short video clips per recording (100–200 across the tour), quote cards, captions, threads, articles — everything that can be extracted from each conversation</div></div><div class="s-val">$6,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 9 — Post-Episode Email Sequence</div><div class="s-desc">3-email sequence per episode drop that opens sales conversations with people who already know and trust you</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 10 — Listener Funnel Audit</div><div class="s-desc">Full journey from episode to offer. Every leak found. Exactly what to change to convert listeners into leads</div></div><div class="s-val">$2,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 11 — Lead Magnet Written For You</div><div class="s-desc">PDF, checklist or guide built for podcast traffic. Drops listeners directly into your world</div></div><div class="s-val">$2,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Bonus 12 — Double Guarantee</div><div class="s-desc">We don't stop pitching until all 20 bookings are confirmed</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">All Podcast Tour Bonuses (1–7 above)</div><div class="s-desc">Media kit, story session, topic strategy, CTA architecture, sales funnel, lead magnet</div></div><div class="s-val">$12,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Maximum Content Per Episode</div><div class="s-desc">5–10 short video clips per recording (100–200 across the tour), quote cards, captions, threads, articles — everything that can be extracted from each conversation</div></div><div class="s-val">$6,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Post-Episode Email Sequence</div><div class="s-desc">3-email sequence per episode drop that opens sales conversations with people who already know and trust you</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Listener Funnel Audit</div><div class="s-desc">Full journey from episode to offer. Every leak found. Exactly what to change to convert listeners into leads</div></div><div class="s-val">$2,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Lead Magnet Written For You</div><div class="s-desc">PDF, checklist or guide built for podcast traffic. Drops listeners directly into your world</div></div><div class="s-val">$2,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">The Guarantee</div><div class="s-desc">We don't stop pitching until all 20 bookings are confirmed</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total gold-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$50,964</div></div>
@@ -617,7 +638,7 @@ footer {
     <div class="section-intro">
       <div class="eyebrow yellow">The Guarantees</div>
       <h2>We only win<br>when you win.</h2>
-      <p class="lead">Every option is backed by a specific, written promise. Not marketing language — terms you can hold us to.</p>
+      <p class="lead">Every option is backed by a specific, written promise. Terms you can hold us to.</p>
     </div>
 
     <!-- Self-Managed -->
@@ -625,13 +646,13 @@ footer {
       <div class="guar-box purple-box">
         <div class="guar-tag" style="background:var(--accent);color:#fff;">SELF-MANAGED PLAN</div>
         <div class="guar-title">Book 4.<br>Or your next month is free.</div>
-        <div class="guar-body">Follow the system for 30 days. If you don't book <strong style="color:var(--text);">4 podcast appearances</strong>, your next month of the dashboard runs on us at zero cost.</div>
+        <div class="guar-body">Submit to a minimum of 50 podcasts. If you don't book <strong style="color:var(--text);">4 podcast appearances</strong>, your next month of the dashboard runs on us at zero cost.</div>
         <div class="guar-numbers">
           <div class="gp"><div class="gn">30</div><div class="gl">Days to prove it</div></div>
           <div class="gp"><div class="gn">4</div><div class="gl">Booked appearances</div></div>
           <div class="gp"><div class="gn" style="font-size:18px;padding-top:4px;">Free</div><div class="gl">Next month if missed</div></div>
         </div>
-        <div class="guar-note">Not a refund — a free month to keep the system running while we diagnose what isn't landing for your niche. One booked podcast appearance typically covers the entire setup cost.</div>
+        <div class="guar-note">Not a refund. A free month to keep going while we work out what isn't landing for your niche. One booked appearance typically covers the entire setup cost.</div>
       </div>
     </div>
 
@@ -641,7 +662,7 @@ footer {
         <div class="guar-tag" style="background:var(--green);">PODCAST TOUR</div>
         <div class="guar-title">20 bookings.<br>Or we keep working.</div>
         <div class="guar-body">We commit to 20 booked recordings in 90 days. Miss that window, we keep pitching at no extra cost until every spot is filled. The final $1,500 only lands when booking 20 is confirmed.</div>
-        <div class="guar-note">You're not paying for effort. You're paying for a result. That's not a policy — it's the contract.</div>
+        <div class="guar-note">You're not paying for effort. You're paying for a result. The final payment only lands when booking 20 is confirmed.</div>
       </div>
       <div class="guar-box gold-box">
         <div class="guar-tag" style="background:var(--yellow);color:#000;">TOUR + CONTENT</div>
