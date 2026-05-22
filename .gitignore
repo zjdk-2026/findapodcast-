@@ -1,3 +1,4 @@
 node_modules/
 .env
 *.log
+pdf-tools/output/
