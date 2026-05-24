@@ -193,6 +193,27 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 .tier-price.gold { color: var(--yellow); }
 .tier-period { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
 
+/* Dual pricing for Content Engine card */
+.tier-dual-pricing {
+  border-top: 1px solid var(--border); padding-top: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.tier-dual-option {
+  background: rgba(217,119,6,0.06); border: 1px solid rgba(217,119,6,0.22);
+  border-radius: 12px; padding: 12px 10px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.tier-dual-label {
+  font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--yellow); margin-bottom: 2px;
+}
+.tier-dual-price {
+  font-size: 28px; font-weight: 900; letter-spacing: -0.04em; line-height: 1;
+  color: var(--yellow);
+}
+.tier-dual-period { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.tier-dual-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
 .tier-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 13px 20px; border-radius: 12px;
@@ -208,6 +229,11 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
   background: linear-gradient(135deg, var(--yellow), #fbbf24);
   color: #000; box-shadow: 0 4px 16px rgba(245,158,11,0.3);
 }
+.tier-btn.gold-outline {
+  background: transparent; border: 1.5px solid rgba(217,119,6,0.5);
+  color: var(--yellow); font-size: 12px;
+}
+.tier-btn.gold-outline:hover { background: rgba(217,119,6,0.08); }
 
 /* ─── VALUE STACK ────────────────────────────────────────────── */
 .stack-header {
@@ -336,24 +362,24 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 }
 .cta-inner { position: relative; z-index: 1; }
 
-.cta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 36px; }
+.cta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 36px; }
 .cta-card {
   background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 18px; padding: 28px 20px;
+  border-radius: 18px; padding: 24px 16px;
   display: flex; flex-direction: column; gap: 10px; align-items: center;
   transition: border-color 0.2s, transform 0.2s;
 }
 .cta-card:hover { transform: translateY(-2px); }
 .cta-card.gold-card { border-color: rgba(245,158,11,0.35); }
-.cta-tier { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.cta-tier { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
 .cta-tier.gold { color: var(--yellow); }
-.cta-price { font-size: 36px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.cta-price { font-size: 32px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
 .cta-price.gold { color: var(--yellow); }
 .cta-period { font-size: 11px; color: var(--muted); line-height: 1.6; text-align: center; }
 .cta-btn {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 14px; border-radius: 11px; margin-top: 4px;
-  font-size: 13px; font-weight: 800; text-decoration: none; letter-spacing: -0.01em;
+  padding: 13px; border-radius: 11px; margin-top: 4px;
+  font-size: 12px; font-weight: 800; text-decoration: none; letter-spacing: -0.01em;
   transition: opacity 0.15s, transform 0.1s;
 }
 .cta-btn:hover { opacity: 0.87; transform: scale(0.98); }
@@ -394,13 +420,19 @@ body { padding-top: 40px; }
   .hero-stats { flex-direction: column; align-items: stretch; }
   .tier-grid  { grid-template-columns: 1fr; }
   .tier-card.featured { order: -1; }
+  .tier-dual-pricing { grid-template-columns: 1fr 1fr; }
+  .tier-dual-btns { grid-template-columns: 1fr; }
   .guar-grid  { grid-template-columns: 1fr; }
-  .cta-grid   { grid-template-columns: 1fr; }
+  .cta-grid   { grid-template-columns: 1fr 1fr; }
   .cta-wrap   { padding: 36px 20px; }
   h2 { font-size: 26px; }
   .page { padding: 0 16px 80px; }
   .stack-row { padding: 14px 16px; }
   .stack-row.core { padding: 18px 16px; }
+}
+@media (max-width: 480px) {
+  .cta-grid { grid-template-columns: 1fr; }
+  .tier-dual-pricing { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -448,8 +480,8 @@ body { padding-top: 40px; }
         <div class="hl">shows in our database, matched to your niche and offer</div>
       </div>
       <div class="hero-stat">
-        <div class="hn">90 days</div>
-        <div class="hl">guaranteed to 10 booked recordings on both Tour plans</div>
+        <div class="hn">6 months</div>
+        <div class="hl">guaranteed to 12 booked recordings on both Tour plans</div>
       </div>
     </div>
   </div>
@@ -501,18 +533,18 @@ body { padding-top: 40px; }
           <div class="tier-label">Done-For-You</div>
           <div class="tier-name">Podcast Tour</div>
         </div>
-        <div class="tier-desc">We handle everything. Pitching, follow-up, scheduling. You show up and record. 10 booked appearances in 90 days. Or we keep working until we get there.</div>
+        <div class="tier-desc">We handle everything. Pitching, follow-up, scheduling. You show up and record. 12 booked appearances in 6 months. Or we keep working until we get there.</div>
         <div class="tier-feats">
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>10 booked recordings in 90 days</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>12 booked recordings in 6 months</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Media kit + signature story written for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Episode topic strategy + CTA architecture</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branded sales funnel built for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Lead magnet written and designed for you</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>We keep pitching until all 10 are booked</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>We keep pitching until all 12 are booked</div>
         </div>
         <div class="tier-pricing">
-          <div class="tier-price">$3,000</div>
-          <div class="tier-period">paid in full · 10-booking guarantee</div>
+          <div class="tier-price">$4,000</div>
+          <div class="tier-period">paid in full · 12-booking guarantee · 6 months</div>
         </div>
         <a href="https://buy.stripe.com/4gMeVd8Hu5NX4kRfzF8IU12" class="tier-btn indigo">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -527,23 +559,37 @@ body { padding-top: 40px; }
           <div class="tier-label gold">Done-For-You + Content</div>
           <div class="tier-name">Podcast Tour +<br>Content Engine</div>
         </div>
-        <div class="tier-desc">10 booked podcast appearances plus 15 to 30 pieces of repurposed content per episode. Short videos, quote cards, threads, articles. Record once. Publish for months.</div>
+        <div class="tier-desc">All the bookings plus 15 to 30 pieces of repurposed content per episode. Short videos, quote cards, threads, articles. Record once. Publish for months. Choose 6 or 12 months.</div>
         <div class="tier-feats">
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Everything in Podcast Tour</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>15 to 30 content pieces per episode</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Short video clips, quote cards, threads, articles</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branded sales funnel built for you</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Lead magnet written and designed for you</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>10-booking guarantee</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>12 or 24 booking guarantee</div>
         </div>
-        <div class="tier-pricing">
-          <div class="tier-price gold">$5,000</div>
-          <div class="tier-period">paid in full · 10-booking guarantee</div>
+        <div class="tier-dual-pricing">
+          <div class="tier-dual-option">
+            <div class="tier-dual-label">6 Months</div>
+            <div class="tier-dual-price">$6,000</div>
+            <div class="tier-dual-period">12 bookings · 150–300 content pieces</div>
+          </div>
+          <div class="tier-dual-option">
+            <div class="tier-dual-label">12 Months</div>
+            <div class="tier-dual-price">$10,000</div>
+            <div class="tier-dual-period">24 bookings · 360–720 content pieces</div>
+          </div>
         </div>
-        <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="tier-btn gold">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Claim Your Spot
-        </a>
+        <div class="tier-dual-btns">
+          <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="tier-btn gold">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            6-Month Plan
+          </a>
+          <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="tier-btn gold-outline">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            12-Month Plan
+          </a>
+        </div>
       </div>
 
     </div>
@@ -587,11 +633,11 @@ body { padding-top: 40px; }
     <div style="margin-bottom:48px;">
       <div class="stack-header">
         <span class="stack-header-pill yellow">Podcast Tour</span>
-        <span class="stack-header-value">$39,000+ of work, yours for $3,000</span>
+        <span class="stack-header-value">$39,000+ of work, yours for $4,000</span>
       </div>
       <div class="stack-wrap">
         <div class="stack-row core gold-core">
-          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">10 Booked Podcast Appearances in 90 Days</div><div class="s-desc">We pitch, follow up, negotiate, and schedule. You show up and record. No caps, no extra charges</div></div>
+          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 Booked Podcast Appearances in 6 Months</div><div class="s-desc">We pitch, follow up, negotiate, and schedule. You show up and record. No caps, no extra charges</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
         <div class="stack-row"><div style="flex:1"><div class="s-name">Media Kit Written For You</div><div class="s-desc">One-page kit so your first impression is already working before the conversation starts</div></div><div class="s-val">$1,500</div></div>
@@ -600,33 +646,36 @@ body { padding-top: 40px; }
         <div class="stack-row"><div style="flex:1"><div class="s-name">Podcast CTA Architecture</div><div class="s-desc">The exact words that move listeners to action without it sounding like a pitch</div></div><div class="s-val">$1,000</div></div>
         <div class="stack-row"><div style="flex:1"><div class="s-name">Custom Branded Sales Funnel</div><div class="s-desc">A fully built funnel to share on every podcast. Captures listeners and moves them toward your offer</div></div><div class="s-val">$2,500</div></div>
         <div class="stack-row"><div style="flex:1"><div class="s-name">Lead Magnet Written and Designed For You</div><div class="s-desc">PDF, checklist or guide built for podcast traffic. Ready to hand out on every show</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">We Don't Stop Until 10 Are Booked</div><div class="s-desc">If we miss 10 in 90 days, we keep working at no extra charge until every recording is confirmed</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">We Don't Stop Until 12 Are Booked</div><div class="s-desc">If we miss 12 in 6 months, we keep working at no extra charge until every recording is confirmed</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total gold-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$39,000+</div></div>
-        <div><div class="price-lbl gold">Your Price</div><div class="total-price gold">$3,000</div><div class="total-period">paid in full · 10-booking guarantee</div></div>
+        <div><div class="price-lbl gold">Your Price</div><div class="total-price gold">$4,000</div><div class="total-period">paid in full · 12-booking guarantee · 6 months</div></div>
       </div>
     </div>
 
-    <!-- Podcast Tour + Content Engine Engine -->
+    <!-- Podcast Tour + Content Engine -->
     <div>
       <div class="stack-header">
         <span class="stack-header-pill yellow" style="border-width:1.5px;">Podcast Tour + Content Engine</span>
-        <span class="stack-header-value">$50,964 of work, yours for $5,000</span>
+        <span class="stack-header-value">$50,964+ of work, from $6,000</span>
       </div>
       <div class="stack-wrap">
         <div class="stack-row core gold-core">
-          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">10 Booked Podcasts + 15 to 30 Content Pieces Per Episode</div><div class="s-desc">We book the appearances and repurpose every recording into short videos, quote cards, threads, and articles. 150 to 300 pieces of content across the tour</div></div>
+          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 or 24 Booked Podcasts + 15 to 30 Content Pieces Per Episode</div><div class="s-desc">We book the appearances and repurpose every recording into short videos, quote cards, threads, and articles. 150–300 pieces over 6 months or 360–720 pieces over 12 months</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
         <div class="stack-row"><div style="flex:1"><div class="s-name">All Podcast Tour Bonuses (1 to 7 above)</div><div class="s-desc">Media kit, story session, topic strategy, CTA architecture, sales funnel, lead magnet</div></div><div class="s-val">$12,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">15 to 30 Repurposed Content Pieces Per Episode</div><div class="s-desc">Short video clips, quote cards, captions, threads, and articles from every recording. All written in your brand voice, not generic templates. Created for every platform you're on, not just one. 150 to 300 pieces across the full tour, ready to publish</div></div><div class="s-val">$6,000</div></div>
-
-        <div class="stack-row"><div style="flex:1"><div class="s-name">The Guarantee</div><div class="s-desc">We don't stop pitching until all 10 bookings are confirmed</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">15 to 30 Repurposed Content Pieces Per Episode</div><div class="s-desc">Short video clips, quote cards, captions, threads, and articles from every recording. All written in your brand voice, not generic templates. Created for every platform you're on, not just one. Ready to publish</div></div><div class="s-val">$6,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">The Guarantee</div><div class="s-desc">We don't stop pitching until all bookings are confirmed — 12 on the 6-month plan, 24 on the 12-month plan</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
-      <div class="stack-total gold-total">
-        <div><div class="total-lbl">Total Real Value</div><div class="total-was">$50,964</div></div>
-        <div><div class="price-lbl gold">Your Price</div><div class="total-price gold">$5,000</div><div class="total-period">paid in full · 10-booking guarantee</div></div>
+      <div class="stack-total gold-total" style="flex-direction:column;align-items:flex-start;gap:14px;">
+        <div><div class="total-lbl">Total Real Value</div><div class="total-was">$50,964+</div></div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+          <div><div class="price-lbl gold">6-Month Plan</div><div class="total-price gold" style="font-size:40px;">$6,000</div><div class="total-period">12 bookings · 150–300 content pieces</div></div>
+          <div style="width:1px;background:rgba(217,119,6,0.2);align-self:stretch;"></div>
+          <div><div class="price-lbl gold">12-Month Plan</div><div class="total-price gold" style="font-size:40px;">$10,000</div><div class="total-period">24 bookings · 360–720 content pieces</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -659,15 +708,15 @@ body { padding-top: 40px; }
     <div class="guar-grid">
       <div class="guar-box green-box">
         <div class="guar-tag" style="background:var(--green);">PODCAST TOUR</div>
-        <div class="guar-title">10 bookings.<br>Or we keep working.</div>
-        <div class="guar-body">We commit to 10 booked recordings in 90 days. Miss that window, we keep pitching at no extra cost until every spot is filled.</div>
-        <div class="guar-note">You're not paying for effort. You're paying for a result: 10 confirmed recordings.</div>
+        <div class="guar-title">12 bookings.<br>Or we keep working.</div>
+        <div class="guar-body">We commit to 12 booked recordings in 6 months. Miss that window, we keep pitching at no extra cost until every spot is filled.</div>
+        <div class="guar-note">You're not paying for effort. You're paying for a result: 12 confirmed recordings in 6 months.</div>
       </div>
       <div class="guar-box gold-box">
         <div class="guar-tag" style="background:var(--yellow);color:#000;">TOUR + CONTENT</div>
-        <div class="guar-title">10 bookings.<br>Or we keep working.</div>
-        <div class="guar-body">The same 10-booking guarantee: we don't stop pitching until every recording is confirmed.</div>
-        <div class="guar-note">You're not paying for effort. You're paying for a result: 10 confirmed recordings.</div>
+        <div class="guar-title">12 or 24 bookings.<br>Or we keep working.</div>
+        <div class="guar-body">12-booking guarantee on the 6-month plan. 24-booking guarantee on the 12-month plan. We don't stop pitching until every recording is confirmed.</div>
+        <div class="guar-note">You're not paying for effort. You're paying for a result: your full booking count confirmed.</div>
       </div>
     </div>
   </div>
@@ -682,7 +731,7 @@ body { padding-top: 40px; }
     <div class="faq-list">
       <div class="faq-item">
         <div class="faq-q">Which option is right for me?</div>
-        <div class="faq-a">Self-Managed if you have 2 hours a week and want to stay in control of every outreach decision. Podcast Tour if you want your calendar filled without touching the process. Podcast Tour + Content Engine if you also want 15 to 30 pieces of social content coming out of every recording.</div>
+        <div class="faq-a">Self-Managed if you have 2 hours a week and want to stay in control of every outreach decision. Podcast Tour if you want your calendar filled without touching the process. Podcast Tour + Content Engine if you also want 15 to 30 pieces of social content coming out of every recording. Choose 6 months to get started, or 12 months to go deeper and double the output.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">How fast does it start?</div>
@@ -697,8 +746,12 @@ body { padding-top: 40px; }
         <div class="faq-a">Yes. Cancel anytime, no questions, no lock-in. Your dashboard stays active until the end of the current billing month.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">What if you don't hit 10 bookings in 90 days on the Tour?</div>
-        <div class="faq-a">We keep working at no extra charge until all 10 are on your calendar. That's the deal. It's in writing.</div>
+        <div class="faq-q">What if you don't hit 12 bookings in 6 months on the Tour?</div>
+        <div class="faq-a">We keep working at no extra charge until all 12 are on your calendar. That's the deal. It's in writing.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What's the difference between the 6-month and 12-month Content Engine?</div>
+        <div class="faq-a">The 6-month plan delivers 12 booked podcast appearances and 150–300 pieces of repurposed content for $6,000. The 12-month plan doubles everything: 24 appearances and 360–720 content pieces for $10,000. Both carry the same guarantee — we don't stop until every booking is confirmed.</div>
       </div>
     </div>
   </div>
@@ -709,32 +762,41 @@ body { padding-top: 40px; }
     <div class="cta-inner">
       <div class="eyebrow" style="justify-content:center;">Ready to move</div>
       <h2 style="margin-bottom:14px;">Choose your path.<br><span class="grad">Start this week.</span></h2>
-      <p class="lead" style="margin:0 auto;text-align:center;">All three options are live. Pick the one that fits and you'll be set up before Friday.</p>
+      <p class="lead" style="margin:0 auto;text-align:center;">All options are live. Pick the one that fits and you'll be set up before Friday.</p>
       <div class="cta-grid">
         <div class="cta-card">
           <div class="cta-tier">Self-Managed</div>
           <div class="cta-price">$1,000</div>
           <div class="cta-period">setup · then $500/month<br>cancel anytime · book 4 or next month free</div>
           <a href="https://buy.stripe.com/eVq9ATf5S0tD3gNdrx8IU0X" class="cta-btn indigo">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
             Start Today
           </a>
         </div>
         <div class="cta-card">
           <div class="cta-tier">Podcast Tour</div>
-          <div class="cta-price">$3,000</div>
-          <div class="cta-period">paid in full<br>10-booking guarantee</div>
+          <div class="cta-price">$4,000</div>
+          <div class="cta-period">paid in full · 6 months<br>12-booking guarantee</div>
           <a href="https://buy.stripe.com/4gMeVd8Hu5NX4kRfzF8IU12" class="cta-btn indigo">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Claim Your Spot
           </a>
         </div>
         <div class="cta-card gold-card">
-          <div class="cta-tier gold">Podcast Tour + Content Engine</div>
-          <div class="cta-price gold">$5,000</div>
-          <div class="cta-period">paid in full<br>10-booking guarantee</div>
+          <div class="cta-tier gold">Tour + Content · 6 Months</div>
+          <div class="cta-price gold">$6,000</div>
+          <div class="cta-period">paid in full · 6 months<br>12 bookings · 150–300 content pieces</div>
           <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="cta-btn gold">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Claim Your Spot
+          </a>
+        </div>
+        <div class="cta-card gold-card">
+          <div class="cta-tier gold">Tour + Content · 12 Months</div>
+          <div class="cta-price gold">$10,000</div>
+          <div class="cta-period">paid in full · 12 months<br>24 bookings · 360–720 content pieces</div>
+          <a href="https://buy.stripe.com/dRm8wP3naa4d7x32MT8IU13" class="cta-btn gold">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Claim Your Spot
           </a>
         </div>
