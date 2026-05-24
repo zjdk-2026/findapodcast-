@@ -15,6 +15,7 @@
   --accent2:  #8b5cf6;
   --green:    #059669;
   --yellow:   #d97706;
+  --red:      #dc2626;
   --bg:       #ffffff;
   --surface:  #f5f5f7;
   --surface2: #ebebf0;
@@ -33,18 +34,15 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── HERO / COVER ──────────────────────────────────────────── */
+/* ─── HERO ─────────────────────────────────────────────────── */
 .hero {
   min-height: 100vh;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   text-align: center;
   padding: 80px 32px;
-  position: relative;
-  overflow: hidden;
+  position: relative; overflow: hidden;
 }
-
-/* Radial glow */
 .hero::before {
   content: '';
   position: absolute; inset: 0;
@@ -54,8 +52,6 @@ html, body {
     radial-gradient(ellipse 50% 35% at 80% 70%, rgba(5,150,105,0.05) 0%, transparent 60%);
   pointer-events: none;
 }
-
-/* Dot grid */
 .hero::after {
   content: '';
   position: absolute; inset: 0;
@@ -63,10 +59,7 @@ html, body {
   background-size: 32px 32px;
   pointer-events: none;
 }
-
 .hero-inner { position: relative; z-index: 1; max-width: 820px; }
-
-/* Top logo bar inside hero */
 .hero-logo {
   position: absolute; top: 52px; left: 28px; z-index: 100;
   display: flex; align-items: center; gap: 9px;
@@ -77,25 +70,21 @@ html, body {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .logo-name { font-size: 14px; font-weight: 800; letter-spacing: -0.02em; }
-
 .hero-badge {
   display: inline-flex; align-items: center; gap: 7px;
   background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.28);
   border-radius: 999px; padding: 6px 18px; margin-bottom: 36px;
   font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
 }
-
 .hero h1 {
-  font-size: clamp(44px, 7vw, 88px);
-  font-weight: 900; line-height: 1.02; letter-spacing: -0.04em;
+  font-size: clamp(38px, 6vw, 76px);
+  font-weight: 900; line-height: 1.05; letter-spacing: -0.04em;
   margin-bottom: 28px;
 }
-
 .hero-sub {
-  font-size: clamp(16px, 1.8vw, 20px);
-  color: var(--muted); line-height: 1.7; max-width: 600px; margin: 0 auto 44px;
+  font-size: clamp(16px, 1.8vw, 19px);
+  color: var(--muted); line-height: 1.75; max-width: 640px; margin: 0 auto 44px;
 }
-
 .hero-stats {
   display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
 }
@@ -104,9 +93,8 @@ html, body {
   border-radius: 14px; padding: 18px 24px; text-align: center;
   backdrop-filter: blur(12px); min-width: 140px;
 }
-.hero-stat .hn { font-size: 32px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
+.hero-stat .hn { font-size: 30px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
 .hero-stat .hl { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
-
 .hero-scroll {
   position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -117,45 +105,39 @@ html, body {
 
 /* ─── PAGE BODY ─────────────────────────────────────────────── */
 .page { max-width: 940px; margin: 0 auto; padding: 0 24px 100px; }
-
 .section { margin-bottom: 88px; }
-
 .section-intro { margin-bottom: 40px; }
-
 .eyebrow {
   font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
 }
 .eyebrow.yellow { color: var(--yellow); }
 .eyebrow.green  { color: var(--green); }
-
+.eyebrow.red    { color: var(--red); }
 h2 {
   font-size: clamp(28px, 3.8vw, 48px);
   font-weight: 900; line-height: 1.08; letter-spacing: -0.03em;
   margin-bottom: 16px;
 }
 h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
-
 .lead { font-size: 16px; line-height: 1.75; color: var(--muted); max-width: 680px; }
-
 .grad {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.yellow-grad {
-  background: linear-gradient(135deg, #fde68a 0%, var(--yellow) 60%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
 
-.divider {
-  border: none; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-m) 20%, var(--border-m) 80%, transparent);
-  margin: 80px 0;
+/* ─── PAIN GRID ──────────────────────────────────────────────── */
+.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pain-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px 20px;
 }
+.pain-card-icon { font-size: 22px; margin-bottom: 10px; }
+.pain-card-title { font-size: 13px; font-weight: 800; margin-bottom: 6px; color: var(--text); }
+.pain-card-desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
 
 /* ─── TIER GRID ─────────────────────────────────────────────── */
 .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-
 .tier-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 22px; padding: 28px 22px 24px;
@@ -169,31 +151,25 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
   box-shadow: 0 0 0 1px rgba(217,119,6,0.12), 0 8px 32px rgba(217,119,6,0.06);
 }
 .tier-card.featured:hover { box-shadow: 0 0 0 1px rgba(217,119,6,0.2), 0 16px 48px rgba(217,119,6,0.1); }
-
 .tier-top-badge {
   position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
   font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 4px 14px;
   border-radius: 999px; white-space: nowrap; color: #000;
 }
-
 .tier-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
 .tier-label.gold { color: var(--yellow); }
 .tier-name { font-size: 18px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2; }
 .tier-desc { font-size: 13px; color: var(--muted); line-height: 1.65; flex: 1; }
-
 .tier-feats { display: flex; flex-direction: column; gap: 8px; }
 .tier-feat {
   display: flex; align-items: flex-start; gap: 8px;
   font-size: 12.5px; color: var(--muted); line-height: 1.5;
 }
 .tier-feat svg { flex-shrink: 0; margin-top: 1px; }
-
 .tier-pricing { border-top: 1px solid var(--border); padding-top: 16px; }
 .tier-price { font-size: 38px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
 .tier-price.gold { color: var(--yellow); }
 .tier-period { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
-
-/* Dual pricing for Content Engine card */
 .tier-dual-pricing {
   border-top: 1px solid var(--border); padding-top: 16px;
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
@@ -203,17 +179,10 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
   border-radius: 12px; padding: 12px 10px;
   display: flex; flex-direction: column; gap: 3px;
 }
-.tier-dual-label {
-  font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--yellow); margin-bottom: 2px;
-}
-.tier-dual-price {
-  font-size: 28px; font-weight: 900; letter-spacing: -0.04em; line-height: 1;
-  color: var(--yellow);
-}
+.tier-dual-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow); margin-bottom: 2px; }
+.tier-dual-price { font-size: 28px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: var(--yellow); }
 .tier-dual-period { font-size: 10px; color: var(--muted); line-height: 1.4; }
 .tier-dual-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
 .tier-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 13px 20px; border-radius: 12px;
@@ -235,6 +204,27 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 }
 .tier-btn.gold-outline:hover { background: rgba(217,119,6,0.08); }
 
+/* ─── IS THIS FOR YOU ────────────────────────────────────────── */
+.fit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fit-box { border-radius: 18px; padding: 28px 26px; }
+.fit-box.yes-box {
+  background: linear-gradient(165deg, rgba(5,150,105,0.05) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(5,150,105,0.2);
+}
+.fit-box.no-box {
+  background: linear-gradient(165deg, rgba(220,38,38,0.04) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(220,38,38,0.15);
+}
+.fit-box-title { font-size: 13px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 16px; }
+.fit-box-title.green { color: var(--green); }
+.fit-box-title.red { color: var(--red); }
+.fit-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px;
+}
+.fit-item:last-child { margin-bottom: 0; }
+.fit-item svg { flex-shrink: 0; margin-top: 2px; }
+
 /* ─── VALUE STACK ────────────────────────────────────────────── */
 .stack-header {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -248,24 +238,16 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 .stack-header-pill.indigo { background: rgba(99,102,241,0.14); color: var(--accent); border: 1px solid rgba(99,102,241,0.25); }
 .stack-header-pill.yellow { background: rgba(245,158,11,0.14); color: var(--yellow); border: 1px solid rgba(245,158,11,0.28); }
 .stack-header-value { font-size: 13px; color: var(--muted); font-weight: 600; }
-
-.stack-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-}
+.stack-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
 .stack-row {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 20px; padding: 15px 24px;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
+  border-bottom: 1px solid var(--border); transition: background 0.15s;
 }
 .stack-row:last-child { border-bottom: none; }
 .stack-row:hover { background: rgba(0,0,0,0.02); }
 .stack-row.core { background: rgba(99,102,241,0.05); padding: 22px 24px; }
 .stack-row.core.gold-core { background: rgba(245,158,11,0.05); }
-
 .s-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
 .s-label.gold { color: var(--yellow); }
 .s-name { font-size: 14px; font-weight: 800; line-height: 1.3; margin-bottom: 4px; }
@@ -273,22 +255,13 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 .s-val { font-size: 16px; font-weight: 900; color: var(--green); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
 .s-val.core-v { font-size: 20px; color: var(--text); }
 .s-val.priceless { color: var(--yellow); font-size: 14px; }
-
 .stack-total {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 20px; flex-wrap: wrap;
-  padding: 22px 26px;
-  border-radius: 16px;
-  margin-top: 14px;
+  gap: 20px; flex-wrap: wrap; padding: 22px 26px;
+  border-radius: 16px; margin-top: 14px;
 }
-.stack-total.green-total {
-  background: linear-gradient(135deg, rgba(5,150,105,0.07), rgba(5,150,105,0.02));
-  border: 1.5px solid rgba(5,150,105,0.25);
-}
-.stack-total.gold-total {
-  background: linear-gradient(135deg, rgba(217,119,6,0.08), rgba(217,119,6,0.02));
-  border: 1.5px solid rgba(217,119,6,0.28);
-}
+.stack-total.green-total { background: linear-gradient(135deg, rgba(5,150,105,0.07), rgba(5,150,105,0.02)); border: 1.5px solid rgba(5,150,105,0.25); }
+.stack-total.gold-total { background: linear-gradient(135deg, rgba(217,119,6,0.08), rgba(217,119,6,0.02)); border: 1.5px solid rgba(217,119,6,0.28); }
 .total-lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
 .total-was { font-size: 24px; font-weight: 900; color: var(--faint); text-decoration: line-through; text-decoration-thickness: 2px; }
 .price-lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
@@ -301,23 +274,9 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 
 /* ─── GUARANTEE ──────────────────────────────────────────────── */
 .guar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-.guar-single { margin-bottom: 14px; }
-.guar-box {
-  border-radius: 20px; padding: 32px 30px;
-  position: relative; height: 100%;
-}
-.guar-box.purple-box {
-  background: linear-gradient(165deg, rgba(99,102,241,0.06) 0%, var(--surface) 100%);
-  border: 1.5px solid rgba(99,102,241,0.22);
-}
-.guar-box.green-box {
-  background: linear-gradient(165deg, rgba(5,150,105,0.06) 0%, var(--surface) 100%);
-  border: 1.5px solid rgba(5,150,105,0.22);
-}
-.guar-box.gold-box {
-  background: linear-gradient(165deg, rgba(217,119,6,0.06) 0%, var(--surface) 100%);
-  border: 1.5px solid rgba(217,119,6,0.25);
-}
+.guar-box { border-radius: 20px; padding: 32px 30px; position: relative; height: 100%; }
+.guar-box.green-box { background: linear-gradient(165deg, rgba(5,150,105,0.06) 0%, var(--surface) 100%); border: 1.5px solid rgba(5,150,105,0.22); }
+.guar-box.gold-box { background: linear-gradient(165deg, rgba(217,119,6,0.06) 0%, var(--surface) 100%); border: 1.5px solid rgba(217,119,6,0.25); }
 .guar-tag {
   position: absolute; top: -12px; left: 24px;
   font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
@@ -325,22 +284,36 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 }
 .guar-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 14px; line-height: 1.2; }
 .guar-body  { font-size: 14px; line-height: 1.75; color: var(--muted); margin-bottom: 16px; }
-.guar-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
-.gp { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
-.gp .gn { font-size: 24px; font-weight: 900; color: var(--green); letter-spacing: -0.02em; }
-.gp .gl { font-size: 10px; color: var(--muted); margin-top: 3px; }
 .guar-note { font-size: 12.5px; color: #4b4b52; line-height: 1.7; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
+
+/* ─── TIMELINE ───────────────────────────────────────────────── */
+.timeline { display: flex; flex-direction: column; gap: 0; max-width: 700px; }
+.timeline-item { display: flex; gap: 20px; padding-bottom: 36px; position: relative; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 17px; top: 38px; bottom: 0;
+  width: 2px; background: linear-gradient(to bottom, var(--border-m), transparent);
+}
+.timeline-dot {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; font-weight: 900;
+}
+.timeline-dot.gold { background: linear-gradient(135deg, var(--yellow), #fbbf24); color: #000; }
+.timeline-content { flex: 1; padding-top: 5px; }
+.timeline-label { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+.timeline-label.gold { color: var(--yellow); }
+.timeline-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.01em; }
+.timeline-desc { font-size: 13px; color: var(--muted); line-height: 1.72; }
 
 /* ─── FAQ ────────────────────────────────────────────────────── */
 .faq-list { display: flex; flex-direction: column; gap: 10px; }
-.faq-item {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 20px 24px;
-  transition: border-color 0.2s;
-}
+.faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; transition: border-color 0.2s; }
 .faq-item:hover { border-color: var(--border-m); }
-.faq-q { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-.faq-a { font-size: 13px; color: var(--muted); line-height: 1.72; }
+.faq-q { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.faq-a { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.faq-a strong { color: var(--text); }
 
 /* ─── CTA SECTION ────────────────────────────────────────────── */
 .cta-wrap {
@@ -361,7 +334,6 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
   pointer-events: none;
 }
 .cta-inner { position: relative; z-index: 1; }
-
 .cta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 36px; }
 .cta-card {
   background: var(--surface2); border: 1px solid var(--border);
@@ -383,22 +355,11 @@ h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
   transition: opacity 0.15s, transform 0.1s;
 }
 .cta-btn:hover { opacity: 0.87; transform: scale(0.98); }
-.cta-btn.indigo {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.3);
-}
-.cta-btn.gold {
-  background: linear-gradient(135deg, var(--yellow), #fbbf24);
-  color: #000; box-shadow: 0 4px 16px rgba(245,158,11,0.28);
-}
+.cta-btn.indigo { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
+.cta-btn.gold { background: linear-gradient(135deg, var(--yellow), #fbbf24); color: #000; box-shadow: 0 4px 16px rgba(245,158,11,0.28); }
 
 /* ─── FOOTER ──────────────────────────────────────────────────── */
-footer {
-  border-top: 1px solid var(--border);
-  padding: 36px 0 0;
-  text-align: center;
-  font-size: 12px; color: var(--faint); line-height: 2;
-}
+footer { border-top: 1px solid var(--border); padding: 36px 0 0; text-align: center; font-size: 12px; color: var(--faint); line-height: 2; }
 
 /* ─── LAUNCH BAR ─────────────────────────────────────────────── */
 .launch-bar {
@@ -408,29 +369,31 @@ footer {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   letter-spacing: 0.01em; position: fixed; top: 0; left: 0; z-index: 200;
 }
-
 body { padding-top: 40px; }
 
 /* ─── MOBILE ──────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .hero { padding: 100px 20px 80px; min-height: auto; }
-  .hero h1 { font-size: 36px; }
+  .hero h1 { font-size: 34px; }
   .hero-sub { font-size: 15px; }
   .hero-logo { top: 52px; left: 16px; }
   .hero-stats { flex-direction: column; align-items: stretch; }
-  .tier-grid  { grid-template-columns: 1fr; }
+  .pain-grid { grid-template-columns: 1fr 1fr; }
+  .tier-grid { grid-template-columns: 1fr; }
   .tier-card.featured { order: -1; }
   .tier-dual-pricing { grid-template-columns: 1fr 1fr; }
   .tier-dual-btns { grid-template-columns: 1fr; }
-  .guar-grid  { grid-template-columns: 1fr; }
-  .cta-grid   { grid-template-columns: 1fr 1fr; }
-  .cta-wrap   { padding: 36px 20px; }
+  .fit-grid { grid-template-columns: 1fr; }
+  .guar-grid { grid-template-columns: 1fr; }
+  .cta-grid { grid-template-columns: 1fr 1fr; }
+  .cta-wrap { padding: 36px 20px; }
   h2 { font-size: 26px; }
   .page { padding: 0 16px 80px; }
   .stack-row { padding: 14px 16px; }
   .stack-row.core { padding: 18px 16px; }
 }
 @media (max-width: 480px) {
+  .pain-grid { grid-template-columns: 1fr; }
   .cta-grid { grid-template-columns: 1fr; }
   .tier-dual-pricing { grid-template-columns: 1fr; }
 }
@@ -444,7 +407,7 @@ body { padding-top: 40px; }
   Company Launch Special. Prices increase 50% on June 1
 </div>
 
-<!-- ── Logo pinned top-left ── -->
+<!-- ── Logo ── -->
 <div class="hero-logo">
   <div class="logo-icon">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -461,27 +424,28 @@ body { padding-top: 40px; }
   <div class="hero-inner">
     <div class="hero-badge">
       <svg width="7" height="7" viewBox="0 0 24 24" fill="var(--accent)"><circle cx="12" cy="12" r="10"/></svg>
-      Client Proposal
+      For Coaches · Consultants · Experts
     </div>
     <h1>
-      Are you ready for your <span class="grad">podcast tour?</span><br>
-      <span style="font-size:0.6em;font-weight:800;opacity:0.75;">Without the juggle, the chasing,<br>or dropping the ball.</span>
+      Your ideal clients are already<br>
+      <span class="grad">listening to someone in your space.</span><br>
+      <span style="font-size:0.65em;font-weight:800;opacity:0.8;">It should be you.</span>
     </h1>
     <p class="hero-sub">
-      Three paths. One outcome: your name on shows your ideal clients actually listen to. Pick the level that fits where you are right now.
+      You've built real expertise and real results. But referrals are unpredictable, LinkedIn posts land flat, and cold outreach feels beneath you. Meanwhile, 95 million people tune in every week — already primed to trust the voices in their ears. The Podcast Tour puts you there.
     </p>
     <div class="hero-stats">
       <div class="hero-stat">
+        <div class="hn">95M</div>
+        <div class="hl">Americans listen to podcasts every week</div>
+      </div>
+      <div class="hero-stat">
         <div class="hn">80%</div>
-        <div class="hl">of listeners have bought from a host recommendation</div>
+        <div class="hl">have bought from a host recommendation (Edison Research)</div>
       </div>
       <div class="hero-stat">
-        <div class="hn">4M+</div>
-        <div class="hl">shows in our database, matched to your niche and offer</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hn">6 months</div>
-        <div class="hl">guaranteed to 12 booked recordings on both Tour plans</div>
+        <div class="hn">4.4×</div>
+        <div class="hl">ROI vs other B2B marketing channels</div>
       </div>
     </div>
   </div>
@@ -493,12 +457,55 @@ body { padding-top: 40px; }
 
 <div class="page">
 
+  <!-- ── PAIN SECTION ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow red">Sound familiar?</div>
+      <h2>You're great at what you do.<br>You're just invisible.</h2>
+      <p class="lead">The problem isn't your expertise. It's that strangers can't trust you yet — and trust is what closes $10k to $50k clients. Every week this goes unsolved, a competitor fills the gap.</p>
+    </div>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-card-icon">📭</div>
+        <div class="pain-card-title">Posting into the void</div>
+        <div class="pain-card-desc">You share real insights on LinkedIn. 9 likes — mostly other coaches. Your ideal clients never see it.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-icon">🎲</div>
+        <div class="pain-card-title">Referrals you can't scale</div>
+        <div class="pain-card-desc">Great when they arrive. But you can't predict them, turn them on, or build a business around them.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-icon">🥶</div>
+        <div class="pain-card-title">Cold outreach burns you out</div>
+        <div class="pain-card-desc">You didn't build 15 years of expertise to slide into DMs. And it's not working anyway.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-icon">💸</div>
+        <div class="pain-card-title">Ads don't work at your price point</div>
+        <div class="pain-card-desc">At $5k to $50k offers, the paid traffic math rarely pencils out. You need trust, not clicks.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-icon">⏳</div>
+        <div class="pain-card-title">60-day sales cycles</div>
+        <div class="pain-card-desc">Strangers take months to trust you enough to buy. Pre-built trust cuts that in half.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-icon">📈</div>
+        <div class="pain-card-title">Your competitors are winning</div>
+        <div class="pain-card-desc">Someone in your niche is recording an episode right now. First movers own the category.</div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ── 3 TIERS ── -->
   <div class="section">
     <div class="section-intro">
       <div class="eyebrow">The three options</div>
       <h2>Choose your level<br>of involvement.</h2>
-      <p class="lead">We do the legwork. You decide how much you want to handle yourself.</p>
+      <p class="lead">One outcome: your name on shows your ideal clients actually listen to, with leads coming in pre-sold. Pick the level that fits where you are right now.</p>
     </div>
 
     <div class="tier-grid">
@@ -509,12 +516,13 @@ body { padding-top: 40px; }
           <div class="tier-label">Done-With-You</div>
           <div class="tier-name">Self-Managed Plan</div>
         </div>
-        <div class="tier-desc">We find shows, write pitches in your voice, and follow up until they reply. You review, approve, and hit send. About 2 hours a week.</div>
+        <div class="tier-desc">You want a system, not a service. We build the machine — show discovery, pitches written in your voice, follow-up sequences. You review, approve, and hit send. About 2 hours a week.</div>
         <div class="tier-feats">
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daily show discovery, 4M+ database</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Pitches written in your voice</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daily show discovery from 4M+ database</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Pitches written in your voice (not templates)</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Follow-up emails sent for you</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Full tracking dashboard</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Real-time tracking dashboard</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Cancel anytime — no lock-in</div>
         </div>
         <div class="tier-pricing">
           <div class="tier-price">$1,000</div>
@@ -532,13 +540,13 @@ body { padding-top: 40px; }
           <div class="tier-label">Done-For-You</div>
           <div class="tier-name">Podcast Tour</div>
         </div>
-        <div class="tier-desc">We handle everything. Pitching, follow-up, scheduling. You show up and record. 12 booked appearances in 6 months. Or we keep working until we get there.</div>
+        <div class="tier-desc">We handle everything. Research, Story Arc positioning, personalized pitching, follow-up, scheduling. You show up, record, and wake up with bookings confirmed. 12 appearances in 6 months.</div>
         <div class="tier-feats">
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>12 booked recordings in 6 months</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Media kit + signature story written for you</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Episode topic strategy + CTA architecture</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branded sales funnel built for you</div>
-          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Lead magnet written and designed for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Story Arc built — origin, contrarian angle, proof</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Media kit + episode topic strategy written for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom sales funnel + lead magnet built for you</div>
+          <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Prep sheet sent 48hrs before every recording</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 8 5.2C20 17.5 12 22 12 22z"/></svg>We keep pitching until all 12 are booked</div>
         </div>
         <div class="tier-pricing">
@@ -558,7 +566,7 @@ body { padding-top: 40px; }
           <div class="tier-label gold">Done-For-You + Content</div>
           <div class="tier-name">Podcast Tour +<br>Content Engine</div>
         </div>
-        <div class="tier-desc">All the bookings plus 20 to 40 pieces of repurposed content per episode. Short videos, quote cards, threads, articles. Record once. Publish for months. Choose 6 or 12 months.</div>
+        <div class="tier-desc">Every recording becomes a content machine. 20–40 pieces per episode — clips, quote cards, threads, articles — all in your voice, distributed across every platform. Record once. Stay visible for months. Choose 6 or 12 months.</div>
         <div class="tier-feats">
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Everything in Podcast Tour</div>
           <div class="tier-feat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 to 40 content pieces per episode</div>
@@ -596,12 +604,71 @@ body { padding-top: 40px; }
   </div>
 
 
+  <!-- ── IS THIS FOR YOU ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow">Before you decide</div>
+      <h2>This isn't for everyone.<br>It might be for you.</h2>
+      <p class="lead">We say no to the majority of applicants. Not to be difficult — because the results only happen when the foundation is right.</p>
+    </div>
+
+    <div class="fit-grid">
+      <div class="fit-box yes-box">
+        <div class="fit-box-title green">✓ This is built for you if...</div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You have a proven offer at $2k+ and real client results
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You can commit 1–2 hours a week to recording
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You're ready to be visible, not just good
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You want inbound leads from people who already trust you
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You've been in business 3+ years with 10+ successful clients
+        </div>
+      </div>
+      <div class="fit-box no-box">
+        <div class="fit-box-title red">✗ This isn't for you if...</div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Your offer is under $1,000 (the ROI math doesn't work)
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          You've been in business under 2 years (no proof, weak positioning)
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          You need leads tomorrow (this is a 6-month authority play)
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          You're not willing to commit 1–2 hours per week
+        </div>
+        <div class="fit-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          You're a thought leader with no actual business behind the brand
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ── VALUE STACKS ── -->
   <div class="section">
     <div class="section-intro">
       <div class="eyebrow">Full value stacks</div>
       <h2>Everything you get.<br>Every dollar counted.</h2>
-      <p class="lead">Add up the real value. Then see the price.</p>
+      <p class="lead">Add up the real value of what would take you 360 hours and $36,000 in your own time to replicate. Then see the price.</p>
     </div>
 
     <!-- Self-Managed -->
@@ -612,15 +679,15 @@ body { padding-top: 40px; }
       </div>
       <div class="stack-wrap">
         <div class="stack-row core">
-          <div style="flex:1"><div class="s-label">Core Offer</div><div class="s-name">Find A Podcast Engine</div><div class="s-desc">Daily show matches, pitches written in your voice, email send, reply tracking</div></div>
+          <div style="flex:1"><div class="s-label">Core Offer</div><div class="s-name">Find A Podcast Engine</div><div class="s-desc">Daily show matches from 4M+ database, pitches written in your voice, email send, reply tracking — all in one dashboard</div></div>
           <div class="s-val core-v">$4,997</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Pitches Written In Your Voice</div><div class="s-desc">We ingest your sales pages, podcast appearances, and About page so every pitch reads like you wrote it</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Niche Clarity Onboarding Call</div><div class="s-desc">90-minute kickoff. Positioning, story, three pitch angles, host avatar. Locked in before we start</div></div><div class="s-val">$1,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">4M Podcast Database, Weekly-Refreshed</div><div class="s-desc">Listen Notes plus enrichment plus Google CSE plus operator curation.</div></div><div class="s-val">$1,200</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Follow-Up Emails Sent For You</div><div class="s-desc">Unlimited follow-ups per pitch, sent in your voice. Most replies come from follow-up 2 or later</div></div><div class="s-val">$797</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">First 10 Pitches Co-Pilot Session</div><div class="s-desc">30 minutes on Zoom. Zac watches your first 10 pitches go out live and fixes positioning in real time</div></div><div class="s-val">$497</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Activity Dashboard</div><div class="s-desc">Pitches sent, replies waiting, follow-ups due. Everything in one place so nothing slips</div></div><div class="s-val">$297</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Pitches Written In Your Voice</div><div class="s-desc">We ingest your sales pages, past appearances, and About page so every pitch reads like you wrote it — not a template a VA sent to 500 hosts</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Niche Clarity Onboarding Call</div><div class="s-desc">90-minute kickoff to lock in your positioning, story, three pitch angles, and host avatar before a single pitch goes out</div></div><div class="s-val">$1,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">4M Podcast Database, Weekly-Refreshed</div><div class="s-desc">Listen Notes plus enrichment plus Google CSE plus operator curation. Every show vetted for audience fit, episode recency, and host responsiveness</div></div><div class="s-val">$1,200</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Follow-Up Emails Sent For You</div><div class="s-desc">Unlimited follow-ups per pitch, sent in your voice. Most bookings come from follow-up 2, 3, or 5 — not the first email</div></div><div class="s-val">$797</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">First 10 Pitches Co-Pilot Session</div><div class="s-desc">30 minutes on Zoom. Zac watches your first 10 pitches go out live and adjusts your positioning in real time</div></div><div class="s-val">$497</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Activity Dashboard</div><div class="s-desc">Pitches sent, replies waiting, follow-ups due. Everything in one place so nothing slips through the cracks</div></div><div class="s-val">$297</div></div>
       </div>
       <div class="stack-total green-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$13,850</div></div>
@@ -636,16 +703,16 @@ body { padding-top: 40px; }
       </div>
       <div class="stack-wrap">
         <div class="stack-row core gold-core">
-          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 Booked Podcast Appearances in 6 Months</div><div class="s-desc">We pitch, follow up, negotiate, and schedule. You show up and record. No caps, no extra charges</div></div>
+          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 Booked Podcast Appearances in 6 Months</div><div class="s-desc">We pitch, follow up, negotiate, and schedule. You show up and record. No caps, no extra charges. Most bookings happen within the first 30 days</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Media Kit Written For You</div><div class="s-desc">One-page kit so your first impression is already working before the conversation starts</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Signature Story Session</div><div class="s-desc">60-minute interview turned into your 3 core stories: origin, transformation, best client win</div></div><div class="s-val">$2,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Episode Topic Strategy</div><div class="s-desc">5 to 7 episode angles ranked by conversion. Built around your ideal client and your offer</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Podcast CTA Architecture</div><div class="s-desc">The exact words that move listeners to action without it sounding like a pitch</div></div><div class="s-val">$1,000</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Custom Branded Sales Funnel</div><div class="s-desc">A fully built funnel to share on every podcast. Captures listeners and moves them toward your offer</div></div><div class="s-val">$2,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">Lead Magnet Written and Designed For You</div><div class="s-desc">PDF, checklist or guide built for podcast traffic. Ready to hand out on every show</div></div><div class="s-val">$1,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">We Don't Stop Until 12 Are Booked</div><div class="s-desc">If we miss 12 in 6 months, we keep working at no extra charge until every recording is confirmed</div></div><div class="s-val priceless">Priceless</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Story Arc Positioning</div><div class="s-desc">We don't pitch your LinkedIn bio. We extract your origin story, contrarian belief, and client transformation proof. You become the main character — not just another guest</div></div><div class="s-val">$2,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Media Kit Written For You</div><div class="s-desc">A one-page kit that makes your first impression work before the conversation starts. Hosts say yes because you look like the real deal</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Episode Topic Strategy</div><div class="s-desc">5 to 7 episode angles ranked by conversion potential — built around your ideal client and your offer, not generic talking points</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Podcast CTA Architecture</div><div class="s-desc">The exact words that move listeners to action without sounding like a pitch. This is how listeners become leads</div></div><div class="s-val">$1,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Custom Branded Sales Funnel</div><div class="s-desc">A fully built funnel to share on every podcast. Captures listeners at peak trust and moves them toward your offer</div></div><div class="s-val">$2,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">Lead Magnet Written and Designed For You</div><div class="s-desc">PDF, checklist or guide purpose-built for podcast traffic. Ready to hand out on every show</div></div><div class="s-val">$1,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">We Don't Stop Until 12 Are Booked</div><div class="s-desc">If we miss 12 in 6 months, we keep working at no extra charge until every recording is confirmed. We own the outcome</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total gold-total">
         <div><div class="total-lbl">Total Real Value</div><div class="total-was">$39,000+</div></div>
@@ -661,11 +728,12 @@ body { padding-top: 40px; }
       </div>
       <div class="stack-wrap">
         <div class="stack-row core gold-core">
-          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 or 24 Booked Podcasts + 20 to 40 Content Pieces Per Episode</div><div class="s-desc">We book the appearances and repurpose every recording into short videos, quote cards, threads, and articles. 240–480 pieces over 6 months or 480–960 pieces over 12 months</div></div>
+          <div style="flex:1"><div class="s-label gold">Core Offer</div><div class="s-name">12 or 24 Booked Podcasts + 20 to 40 Content Pieces Per Episode</div><div class="s-desc">We book the appearances and repurpose every recording. 240–480 content pieces over 6 months or 480–960 over 12 months. One recording eliminates your content problem for a year</div></div>
           <div class="s-val core-v">$25,000</div>
         </div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">All Podcast Tour Bonuses (1 to 7 above)</div><div class="s-desc">Media kit, story session, topic strategy, CTA architecture, sales funnel, lead magnet</div></div><div class="s-val">$12,500</div></div>
-        <div class="stack-row"><div style="flex:1"><div class="s-name">20 to 40 Repurposed Content Pieces Per Episode</div><div class="s-desc">Short video clips, quote cards, captions, threads, and articles from every recording. All written in your brand voice, not generic templates. Created for every platform you're on, not just one. Ready to publish</div></div><div class="s-val">$6,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">All Podcast Tour Deliverables (Story Arc through to Lead Magnet)</div><div class="s-desc">Story Arc positioning, media kit, topic strategy, CTA architecture, sales funnel, lead magnet — all built for you</div></div><div class="s-val">$12,500</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">20 to 40 Repurposed Content Pieces Per Episode</div><div class="s-desc">Short video clips, quote cards, captions, threads, and articles from every recording. Written in your brand voice — not generic templates. Delivered within 5 business days of each recording, ready to publish</div></div><div class="s-val">$6,000</div></div>
+        <div class="stack-row"><div style="flex:1"><div class="s-name">ManyChat Automations Built and Scheduled For You</div><div class="s-desc">Automated follow-up sequences triggered from every episode so leads don't fall through after listening</div></div><div class="s-val">$2,000</div></div>
         <div class="stack-row"><div style="flex:1"><div class="s-name">The Guarantee</div><div class="s-desc">We don't stop pitching until all bookings are confirmed — 12 on the 6-month plan, 24 on the 12-month plan</div></div><div class="s-val priceless">Priceless</div></div>
       </div>
       <div class="stack-total gold-total" style="flex-direction:column;align-items:flex-start;gap:14px;">
@@ -685,23 +753,74 @@ body { padding-top: 40px; }
     <div class="section-intro">
       <div class="eyebrow yellow">The Guarantees</div>
       <h2>We only win<br>when you win.</h2>
-      <p class="lead">Every option is backed by a specific, written promise. Terms you can hold us to.</p>
+      <p class="lead">Every Tour plan is backed by a specific, written promise. We own the outcome — not just the effort.</p>
     </div>
 
-
-    <!-- Tours side-by-side -->
     <div class="guar-grid">
       <div class="guar-box green-box">
         <div class="guar-tag" style="background:var(--green);">PODCAST TOUR</div>
         <div class="guar-title">12 bookings.<br>Or we keep working.</div>
-        <div class="guar-body">We commit to 12 booked recordings in 6 months. Miss that window, we keep pitching at no extra cost until every spot is filled.</div>
-        <div class="guar-note">You're not paying for effort. You're paying for a result: 12 confirmed recordings in 6 months.</div>
+        <div class="guar-body">We commit to 12 booked recordings in 6 months. Miss that window and we keep pitching at no extra cost — pitching 50 to 100 shows at a time until every spot is filled.</div>
+        <div class="guar-note">You're not paying for effort. You're paying for a result: 12 confirmed recordings on shows your ideal clients actually listen to.</div>
       </div>
       <div class="guar-box gold-box">
         <div class="guar-tag" style="background:var(--yellow);color:#000;">TOUR + CONTENT</div>
         <div class="guar-title">12 or 24 bookings.<br>Or we keep working.</div>
-        <div class="guar-body">12-booking guarantee on the 6-month plan. 24-booking guarantee on the 12-month plan. We don't stop pitching until every recording is confirmed.</div>
-        <div class="guar-note">You're not paying for effort. You're paying for a result: your full booking count confirmed.</div>
+        <div class="guar-body">12-booking guarantee on the 6-month plan. 24-booking guarantee on the 12-month plan. Same deal — we don't stop pitching until every recording is confirmed.</div>
+        <div class="guar-note">You're not paying for effort. You're paying for a result: your full booking count confirmed, plus every episode repurposed into content within 5 days.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── WHAT HAPPENS NEXT ── -->
+  <div class="section">
+    <div class="section-intro">
+      <div class="eyebrow green">After you sign</div>
+      <h2>You'll be live on a podcast<br>within 30 days.</h2>
+      <p class="lead">Here's exactly what happens — hour by hour, day by day. No agency black hole. No waiting for someone to get back to you.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot">0</div>
+        <div class="timeline-content">
+          <div class="timeline-label">Immediately</div>
+          <div class="timeline-title">Welcome email, dashboard access, onboarding calendar link</div>
+          <div class="timeline-desc">You receive everything in under 5 minutes. Log in to your client dashboard — it's our own software, not a shared spreadsheet. Book your onboarding call for any time in the next 7 days.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-content">
+          <div class="timeline-label">Day 1</div>
+          <div class="timeline-title">We start. You do nothing yet.</div>
+          <div class="timeline-desc">We review your website, LinkedIn, any past podcast appearances, sales pages, and testimonials. We build your initial target list of 50 to 100 shows matched to your niche — curated before your onboarding call so you can approve them live.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">7</div>
+        <div class="timeline-content">
+          <div class="timeline-label">Day 2–7</div>
+          <div class="timeline-title">Onboarding call + first pitches go out same day</div>
+          <div class="timeline-desc">30 to 60 minutes. We walk through your approved show list, finalize your Story Arc (origin, contrarian angle, proof), review your CTA and lead magnet. First pitches go out same day or next business day. You start seeing updates in your dashboard immediately — pitches sent, replies received, bookings confirmed.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot gold">★</div>
+        <div class="timeline-content">
+          <div class="timeline-label gold">Week 2–4</div>
+          <div class="timeline-title">First bookings confirmed. Prep sheets sent 48hrs before each recording.</div>
+          <div class="timeline-desc">Typically 2 to 3 bookings in the first 30 days. You receive a prep sheet 48 hours before each recording — talking points, episode angle, host background, 3 to 5 stories to tell. You're never walking in blind.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot gold">∞</div>
+        <div class="timeline-content">
+          <div class="timeline-label gold">Month 2 onwards</div>
+          <div class="timeline-title">Content starts flowing. Credibility compounds.</div>
+          <div class="timeline-desc">First clips, posts, and articles delivered within 5 business days of your first recording. Content engine running. New bookings confirming. Your name appearing in more inboxes every week — not because you posted more, but because you recorded once.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -711,33 +830,50 @@ body { padding-top: 40px; }
   <div class="section">
     <div class="section-intro">
       <div class="eyebrow">Common Questions</div>
-      <h2>Answered before<br>you ask them.</h2>
+      <h2>The real objections.<br>The real answers.</h2>
     </div>
     <div class="faq-list">
+
       <div class="faq-item">
-        <div class="faq-q">Which option is right for me?</div>
-        <div class="faq-a">Self-Managed if you have 2 hours a week and want to stay in control of every outreach decision. Podcast Tour if you want your calendar filled without touching the process. Podcast Tour + Content Engine if you also want 20 to 40 pieces of social content coming out of every recording. Choose 6 months to get started, or 12 months to go deeper and double the output.</div>
+        <div class="faq-q">How do you guarantee bookings if you can't control the hosts?</div>
+        <div class="faq-a">We don't control hosts. We control <strong>volume, quality, and follow-up.</strong> Our database has 4M+ podcasts refreshed weekly. We personalize every pitch — not templates sent to 500 shows. We follow up relentlessly. Most bookings come from follow-up 2, 3, or 5 — not the first email. We don't pitch 10 shows and hope. We pitch 50 to 100 until we hit the guarantee. If we miss 6 months, we keep working at no extra charge. We own the risk, not you.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-q">How fast does it start?</div>
-        <div class="faq-a">Self-Managed: first shows queued within 24 hours of onboarding. Tours: kick-off call booked within 48 hours, first pitches sent within the week. Most clients see their first reply within days.</div>
+        <div class="faq-q">I'm not a big name. Will hosts actually want me?</div>
+        <div class="faq-a">Good. That's exactly who this works for. 90% of our clients are invisible experts — great results, zero reach. <strong>Hosts don't book followers. They book stories.</strong> Your origin arc, contrarian belief, and client transformation proof — that's what gets you booked. We've turned complete unknowns into podcast authorities. The Story Arc positioning makes you interesting whether you have 500 followers or 50,000. Follower count is a vanity metric. A compelling story is a booking.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-q">What podcasts will I be pitched to?</div>
-        <div class="faq-a">Matched to your niche, offer, and ideal listener during the onboarding call. We filter by audience fit, interview format, episode recency, and host responsiveness. We never pitch you to shows that don't fit. Volume without alignment wastes everyone's time.</div>
+        <div class="faq-q">I don't have time for 12 recordings.</div>
+        <div class="faq-a">Total time investment: <strong>2 hours per week average.</strong> One hour for one podcast recording (some weeks two, some weeks zero). One hour to review and approve content assets. That's it. We handle research (10 to 20 hours per week), pitching (15 to 30 hours per week), booking coordination, prep sheets, and content production. You show up, talk about your work, and approve the output. If you can't commit 2 hours per week to becoming the authority in your space, this isn't for you.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-q">Can I cancel the Self-Managed plan?</div>
-        <div class="faq-a">Yes. Cancel anytime, no questions, no lock-in. Your dashboard stays active until the end of the current billing month.</div>
+        <div class="faq-q">What if I go on 12 shows and get zero clients?</div>
+        <div class="faq-a">Two scenarios. <strong>Scenario 1:</strong> The shows didn't deliver listeners. That means we failed — wrong shows, wrong audience, wrong positioning. We owe you replacement bookings until the guarantee is met with better matched shows. <strong>Scenario 2:</strong> The shows delivered listeners but your offer or funnel didn't convert. That's a conversion problem, not a visibility problem. We include sales funnel optimization and lead magnet creation in the Tour package specifically to reduce this risk. 80% of podcast listeners have bought from host recommendations (Edison Research). If you're on the right shows with the right message and a working funnel, leads will come.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-q">What if you don't hit 12 bookings in 6 months on the Tour?</div>
-        <div class="faq-a">We keep working at no extra charge until all 12 are on your calendar. That's the deal. It's in writing.</div>
+        <div class="faq-q">What if I freeze or bomb on the show? I'm not confident on camera.</div>
+        <div class="faq-a">Most clients feel this way before recording number one. Here's what actually happens: We send you a prep sheet 48 hours before — talking points, episode angle, host background, 3 to 5 stories to tell. You're never walking in blind. Podcast hosts are professional interviewers. They ask questions. You answer. It's a conversation, not a speech. If you can talk about your work for 45 minutes with a client, you can do this. <strong>95% of clients say the same thing after their first recording:</strong> "That was way easier than I thought. I actually enjoyed it." The nerves disappear after recording number one — every time.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-q">What's the difference between the 6-month and 12-month Content Engine?</div>
-        <div class="faq-a">The 6-month plan delivers 12 booked podcast appearances and 150–300 pieces of repurposed content for $6,000. The 12-month plan doubles everything: 24 appearances and 480–960 content pieces for $10,000. Both carry the same guarantee — we don't stop until every booking is confirmed.</div>
+        <div class="faq-q">What type of shows can you actually get me on?</div>
+        <div class="faq-a">We match you to shows your ideal clients listen to — regardless of size. <strong>Small but targeted shows (500 to 5,000 downloads per episode)</strong> often convert better than massive shows because the audience is niche-specific. A leadership coach on a 2,000-download HR podcast gets more leads than on a 50,000-download general business show. We also pitch medium shows (5k–50k) and swing at big ones (50k+) when your positioning is strong. The filter isn't size. The filter is: does this host's audience contain your ideal clients? If yes, we pitch. If no, we skip it even if it's massive. You approve every show before we send a single pitch.</div>
       </div>
+
+      <div class="faq-item">
+        <div class="faq-q">What's the difference between a Podcast Tour and what other booking services do?</div>
+        <div class="faq-a">Other services — MatchMaker.fm, Interview Valet, Upwork VAs — are transactional. They spray 500 generic pitches, hope for 5 bookings, and disappear. <strong>We're a production company.</strong> We don't pitch your LinkedIn bio. We build your Story Arc, craft personalized pitches that make hosts say "who IS this person?", produce your content, build your funnel, and keep working until every booking is confirmed. Competitors book you on shows and leave. We book you, eliminate your content creation problem for a year, and give you a system that keeps compounding.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">If I sign today, what happens in the next 24 hours?</div>
+        <div class="faq-a"><strong>Immediately:</strong> Welcome email, dashboard access, calendar link to book your onboarding call. <strong>Day 1:</strong> We start reviewing your materials and building your initial target list of 50 to 100 shows. You do nothing. <strong>Day 2–7:</strong> Onboarding call (30 to 60 min). We finalize your Story Arc, walk through the approved show list, and first pitches go out same day. <strong>Week 2–4:</strong> First bookings confirmed. Prep sheets sent 48 hours before each recording. <strong>The bottom line:</strong> You're live on a podcast within 30 days. Guaranteed.</div>
+      </div>
+
     </div>
   </div>
 
@@ -745,9 +881,9 @@ body { padding-top: 40px; }
   <!-- ── CTA ── -->
   <div class="cta-wrap">
     <div class="cta-inner">
-      <div class="eyebrow" style="justify-content:center;">Ready to move</div>
-      <h2 style="margin-bottom:14px;">Choose your path.<br><span class="grad">Start this week.</span></h2>
-      <p class="lead" style="margin:0 auto;text-align:center;">All options are live. Pick the one that fits and you'll be set up before Friday.</p>
+      <div class="eyebrow" style="justify-content:center;">Ready to become the authority</div>
+      <h2 style="margin-bottom:14px;">Stop being the best-kept secret<br>in your niche. <span class="grad">Change that this week.</span></h2>
+      <p class="lead" style="margin:0 auto;text-align:center;">Your competitors who aren't on podcasts yet have a 6 to 12 month window before everyone figures this out. First movers own the category.</p>
       <div class="cta-grid">
         <div class="cta-card">
           <div class="cta-tier">Self-Managed</div>
