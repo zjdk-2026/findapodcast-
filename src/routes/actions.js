@@ -187,11 +187,17 @@ router.post('/send', async (req, res) => {
 
     // ── RESEND SEND ─────────────────────────────────────────────────────
     try {
-      const emailSubject = match.email_subject_edited || match.email_subject || '';
-      const emailBody    = match.email_body_edited    || match.email_body    || '';
+      const emailSubject = (match.email_subject_edited || match.email_subject || '').trim();
+      const emailBody    = (match.email_body_edited    || match.email_body    || '').trim();
       const contactEmail = match.podcasts?.contact_email || null;
       if (!contactEmail?.includes('@')) {
         return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
+      }
+      if (!emailSubject) {
+        return res.status(400).json({ success: false, error: 'Pitch has no subject line. Open "Write Pitch Email" to compose it first.' });
+      }
+      if (!emailBody) {
+        return res.status(400).json({ success: false, error: 'Pitch has no body. Open "Write Pitch Email" to compose it first.' });
       }
 
       // Build attachments array if audio is attached
@@ -272,8 +278,21 @@ router.post('/send', async (req, res) => {
         logger.warn('match_thread_messages insert failed (table may not exist yet)', { matchId, error: logErr.message });
       }
     } catch (sendErr) {
-      logger.warn('Resend send failed', { matchId, error: sendErr.message });
-      return res.status(500).json({ success: false, error: 'Email send failed. Please try again.' });
+      const resendDetail = sendErr.resendData?.message
+        || sendErr.resendData?.error
+        || sendErr.message
+        || 'Unknown error';
+      logger.warn('Resend send failed', {
+        matchId,
+        error: sendErr.message,
+        status: sendErr.status,
+        resendData: sendErr.resendData,
+      });
+      // Surface the real Resend error so we can diagnose (domain not verified, rate limit, invalid recipient, etc.)
+      return res.status(500).json({
+        success: false,
+        error: `Email send failed: ${resendDetail}`,
+      });
     }
 
     const { data: updated, error: updateError } = await supabase
