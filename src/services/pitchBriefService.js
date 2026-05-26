@@ -96,30 +96,31 @@ async function fetchItunesMetadata(itunesId) {
 }
 
 // ── Profile completeness gate ──────────────────────────────────────────────
+// Minimum to produce decent angles: ICP + at least one story field.
+// `offer` is helpful but Claude can usually infer it from bio_long/speaking_angles,
+// so we don't hard-block on it (was blocking every legacy customer where the
+// onboarding form silently dropped offer before the DB column existed).
 function hasAnglePoweringProfile(client) {
-  // Minimum to produce decent angles: ICP + offer + at least one of (contrarian, credential, bio_long).
-  const hasICP   = !!(client.target_audience && client.target_audience.trim());
-  const hasOffer = !!(client.offer && client.offer.trim());
+  const hasICP = !!(client.target_audience && client.target_audience.trim());
   const hasAnyStory = !!(
     (client.contrarian_belief && client.contrarian_belief.trim()) ||
     (client.origin_story      && client.origin_story.trim())      ||
-    (client.credential        && client.credential.trim())        ||
-    (client.bio_long          && client.bio_long.trim())
+    (client.bio_long          && client.bio_long.trim())          ||
+    (Array.isArray(client.speaking_angles) && client.speaking_angles.length > 0)
   );
-  return hasICP && hasOffer && hasAnyStory;
+  return hasICP && hasAnyStory;
 }
 
 function profileGapMessage(client) {
   const missing = [];
   if (!(client.target_audience && client.target_audience.trim())) missing.push('your target audience');
-  if (!(client.offer && client.offer.trim())) missing.push('your offer / call to action');
   const noStory = !(
     (client.contrarian_belief && client.contrarian_belief.trim()) ||
     (client.origin_story      && client.origin_story.trim())      ||
-    (client.credential        && client.credential.trim())        ||
-    (client.bio_long          && client.bio_long.trim())
+    (client.bio_long          && client.bio_long.trim())          ||
+    (Array.isArray(client.speaking_angles) && client.speaking_angles.length > 0)
   );
-  if (noStory) missing.push('at least one of: contrarian belief, origin story, or your biggest result');
+  if (noStory) missing.push('at least one of: contrarian belief, origin story, talking points, or full bio');
   return `Complete your profile to unlock pitch briefs. Add: ${missing.join('; ')}.`;
 }
 

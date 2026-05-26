@@ -387,6 +387,7 @@ router.post('/onboard', async (req, res) => {
       credential,
       contrarian_belief,
       origin_story,
+      offer,
       photo_url,
       logo_url,
     } = req.body;
@@ -462,6 +463,7 @@ router.post('/onboard', async (req, res) => {
       logo_url:          logo_url          || null,
       contrarian_belief: contrarian_belief || null,
       origin_story:      origin_story      || null,
+      offer:             offer             || null,
     };
 
     // ── Insert into Supabase ──────────────────────────────────

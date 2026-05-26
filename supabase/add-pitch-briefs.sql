@@ -2,10 +2,12 @@
 -- Adds 2 onboarding fields for stronger angle generation, plus a per-client cached brief table.
 -- Idempotent: safe to run multiple times.
 
--- 1. Add contrarian_belief + origin_story to clients (powers the angle section of every brief)
+-- 1. Add contrarian_belief + origin_story + offer to clients
+-- (offer was being captured by the onboarding form but never had a DB column to land in — fixed here)
 ALTER TABLE clients
   ADD COLUMN IF NOT EXISTS contrarian_belief TEXT,
-  ADD COLUMN IF NOT EXISTS origin_story      TEXT;
+  ADD COLUMN IF NOT EXISTS origin_story      TEXT,
+  ADD COLUMN IF NOT EXISTS offer             TEXT;
 
 -- 2. pitch_briefs: per (podcast, client) cached AI brief
 CREATE TABLE IF NOT EXISTS pitch_briefs (
