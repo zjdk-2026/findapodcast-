@@ -248,6 +248,8 @@ function collectFormData() {
     business_name:    val('f-business')     || undefined,
     title:            val('f-title')        || undefined,
     credential:       val('f-credential')   || undefined,
+    contrarian_belief: val('f-contrarian-belief') || undefined,
+    origin_story:     val('f-origin-story')  || undefined,
     past_podcasts:    val('f-past-podcasts')|| undefined,
     bio_short:        val('f-bio-short'),
     bio_long:         val('f-bio-long')     || undefined,
@@ -727,7 +729,7 @@ window.suggestField = suggestField;
 // On page load: if a draft exists, show a resume banner. User can resume or reset.
 const ONBOARD_DRAFT_KEY = 'pp-onboard-draft-v2';
 const ONBOARD_FIELDS = [
-  'f-name','f-email','f-title','f-business','f-bio-short','f-credential','f-bio-long',
+  'f-name','f-email','f-title','f-business','f-bio-short','f-credential','f-bio-long','f-contrarian-belief','f-origin-story',
   'f-website','f-instagram','f-linkedin','f-twitter','f-facebook','f-extra-links',
   'f-audience','f-angles','f-offer','f-past-podcasts','f-country','f-tone','f-email-signature',
 ];

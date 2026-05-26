@@ -385,6 +385,8 @@ router.post('/onboard', async (req, res) => {
       extra_links,
       email_signature,
       credential,
+      contrarian_belief,
+      origin_story,
       photo_url,
       logo_url,
     } = req.body;
@@ -458,6 +460,8 @@ router.post('/onboard', async (req, res) => {
       is_active:         true,
       photo_url:         photo_url         || null,
       logo_url:          logo_url          || null,
+      contrarian_belief: contrarian_belief || null,
+      origin_story:      origin_story      || null,
     };
 
     // ── Insert into Supabase ──────────────────────────────────

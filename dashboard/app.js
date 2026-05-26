@@ -813,6 +813,171 @@ function renderPipelineHealth(stats) {
   el.innerHTML = '';
 }
 
+// ── PITCH BRIEF ─────────────────────────────────────────────────────────────
+// Per-(podcast, client) AI brief: about the show + about the host + 3 angles
+// tuned to the customer's profile + pre-pitch gotchas. Loads on first expand,
+// caches in DB. 5 credits per generate, first regenerate free.
+const _pitchBriefLoaded = new Set();
+
+window.togglePitchBrief = async function(matchId) {
+  const box     = document.getElementById(`pitch-brief-${matchId}`);
+  const content = document.getElementById(`pb-content-${matchId}`);
+  const chev    = document.getElementById(`pb-chev-${matchId}`);
+  if (!box || !content) return;
+
+  const isOpen = content.style.display !== 'none';
+  if (isOpen) {
+    content.style.display = 'none';
+    if (chev) { chev.textContent = '+'; chev.style.transform = 'rotate(0deg)'; }
+    return;
+  }
+
+  content.style.display = 'block';
+  if (chev) { chev.textContent = '−'; chev.style.transform = 'rotate(0deg)'; }
+
+  if (_pitchBriefLoaded.has(matchId)) return;
+
+  content.innerHTML = `<div style="padding:18px 0;text-align:center;color:#6e6e73;font-size:13px;">
+    <div style="width:24px;height:24px;border:2px solid #e5e7eb;border-top-color:#6366f1;border-radius:50%;margin:0 auto 10px;animation:spin 0.8s linear infinite;"></div>
+    Researching the show and building your angles. About 10 seconds.
+  </div>`;
+
+  try {
+    const r = await fetch(`/api/pitch-brief/${matchId}`, { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    if (!data.success) {
+      if (data.error === 'profile_incomplete') {
+        content.innerHTML = `<div style="padding:14px;background:#fff8f0;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;line-height:1.55;">
+          <strong>Complete your profile to unlock pitch briefs.</strong><br>${esc(data.message || '')}
+          <div style="margin-top:10px;"><a href="/onboard?clientId=${state.clientId || ''}" style="color:#6366f1;font-weight:700;text-decoration:underline;">Open onboarding →</a></div>
+        </div>`;
+      } else if (data.error === 'insufficient_credits') {
+        content.innerHTML = `<div style="padding:14px;background:#fff1f0;border:1px solid #ff4d4f;border-radius:8px;font-size:13px;color:#cf1322;">
+          Not enough credits. Need ${data.needed}, have ${data.balance}. Top up to generate this brief.
+        </div>`;
+      } else {
+        content.innerHTML = `<div style="padding:14px;background:#fff1f0;border:1px solid #ff4d4f;border-radius:8px;font-size:13px;color:#cf1322;">
+          Could not generate brief: ${esc(data.message || data.error || 'unknown error')}
+          <div style="margin-top:8px;"><button onclick="_pitchBriefLoaded.delete('${matchId}');togglePitchBrief('${matchId}');togglePitchBrief('${matchId}')" style="background:#6366f1;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Try again</button></div>
+        </div>`;
+      }
+      return;
+    }
+    _pitchBriefLoaded.add(matchId);
+    content.innerHTML = renderPitchBrief(matchId, data);
+  } catch (err) {
+    content.innerHTML = `<div style="padding:14px;background:#fff1f0;border:1px solid #ff4d4f;border-radius:8px;font-size:13px;color:#cf1322;">
+      Network error. ${esc(err.message || '')}
+    </div>`;
+  }
+};
+
+function renderPitchBrief(matchId, data) {
+  const b = data.brief || {};
+  const about = b.about_show || {};
+  const host  = b.about_host || {};
+  const angles = Array.isArray(b.angles) ? b.angles : [];
+  const before = b.before_you_pitch || {};
+  const isCached = data.cached;
+  const regenCount = data.regenerate_count || 0;
+  const isFreeRegenAvailable = regenCount === 0;
+
+  const sectionStyle = 'margin-top:14px;';
+  const headStyle = 'font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#4f46e5;margin-bottom:6px;';
+  const bodyStyle = 'font-size:13.5px;color:#1d1d1f;line-height:1.6;';
+
+  let anglesHtml = '';
+  angles.forEach((a, i) => {
+    anglesHtml += `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:800;color:#6366f1;letter-spacing:0.05em;margin-bottom:6px;">ANGLE ${i+1}</div>
+        <div style="font-size:14.5px;font-weight:700;color:#1d1d1f;line-height:1.4;margin-bottom:8px;">${esc(a.hook || '')}</div>
+        ${a.why_this_show ? `<div style="font-size:13px;color:#3a3a3c;margin-bottom:6px;line-height:1.55;"><b style="color:#6366f1;">Why this show:</b> ${esc(a.why_this_show)}</div>` : ''}
+        ${a.supporting_proof ? `<div style="font-size:13px;color:#3a3a3c;line-height:1.55;"><b style="color:#6366f1;">Lead with:</b> ${esc(a.supporting_proof)}</div>` : ''}
+      </div>`;
+  });
+
+  const recentThemes = Array.isArray(about.recent_themes) ? about.recent_themes : [];
+  const recurringThemes = Array.isArray(host.recurring_themes) ? host.recurring_themes : [];
+  const pastGuests = Array.isArray(about.notable_past_guests) ? about.notable_past_guests : [];
+  const redFlags = Array.isArray(before.red_flags) ? before.red_flags : [];
+
+  return `
+    <div style="padding-top:6px;">
+      ${data.data_quality === 'limited' ? `<div style="background:#fff8f0;border:1px solid #fbbf24;border-radius:6px;padding:8px 12px;font-size:12px;color:#92400e;margin-bottom:12px;">Limited data: the show's RSS feed or iTunes listing was unavailable. Brief generated from what we have.</div>` : ''}
+
+      <div style="${sectionStyle}">
+        <div style="${headStyle}">About the show</div>
+        ${about.summary ? `<div style="${bodyStyle}">${esc(about.summary)}</div>` : ''}
+        ${about.audience ? `<div style="${bodyStyle};margin-top:6px;color:#3a3a3c;"><b>Audience:</b> ${esc(about.audience)}</div>` : ''}
+        ${about.format ? `<div style="${bodyStyle};margin-top:4px;color:#3a3a3c;"><b>Format:</b> ${esc(about.format)}</div>` : ''}
+        ${recentThemes.length ? `<div style="${bodyStyle};margin-top:6px;color:#3a3a3c;"><b>Recent themes:</b> ${recentThemes.map(esc).join(' · ')}</div>` : ''}
+        ${pastGuests.length ? `<div style="${bodyStyle};margin-top:4px;color:#3a3a3c;"><b>Past guests:</b> ${pastGuests.map(esc).join(', ')}</div>` : ''}
+      </div>
+
+      <div style="${sectionStyle}">
+        <div style="${headStyle}">About the host</div>
+        ${host.background ? `<div style="${bodyStyle}">${esc(host.background)}</div>` : ''}
+        ${host.communication_style ? `<div style="${bodyStyle};margin-top:6px;color:#3a3a3c;"><b>Style:</b> ${esc(host.communication_style)}</div>` : ''}
+        ${host.values_in_guests ? `<div style="${bodyStyle};margin-top:4px;color:#3a3a3c;"><b>Values in guests:</b> ${esc(host.values_in_guests)}</div>` : ''}
+        ${recurringThemes.length ? `<div style="${bodyStyle};margin-top:4px;color:#3a3a3c;"><b>Recurring themes:</b> ${recurringThemes.map(esc).join(' · ')}</div>` : ''}
+      </div>
+
+      <div style="${sectionStyle}">
+        <div style="${headStyle}">Your angles for this show</div>
+        ${anglesHtml || '<div style="' + bodyStyle + ';color:#6e6e73;">No angles generated.</div>'}
+      </div>
+
+      <div style="${sectionStyle}">
+        <div style="${headStyle}">Before you pitch</div>
+        ${before.do_mention ? `<div style="${bodyStyle};color:#065f46;"><b style="color:#10b981;">Do mention:</b> ${esc(before.do_mention)}</div>` : ''}
+        ${before.dont_mention ? `<div style="${bodyStyle};margin-top:6px;color:#991b1b;"><b style="color:#ef4444;">Don't mention:</b> ${esc(before.dont_mention)}</div>` : ''}
+        ${redFlags.length ? `<div style="${bodyStyle};margin-top:6px;color:#92400e;"><b style="color:#f59e0b;">Red flags:</b> ${redFlags.map(esc).join(' · ')}</div>` : ''}
+      </div>
+
+      <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px;border-top:1px solid #e5e7eb;">
+        <div style="font-size:11px;color:#6e6e73;">
+          ${isCached ? 'Cached brief' : 'Fresh brief'} · ${data.episodes_analyzed_count || 0} episodes analyzed
+          ${regenCount > 0 ? ` · regenerated ${regenCount}x` : ''}
+        </div>
+        <button onclick="regeneratePitchBrief('${matchId}')" style="background:transparent;border:1px solid #6366f1;color:#6366f1;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+          ${isFreeRegenAvailable ? 'Regenerate (free)' : 'Regenerate (5 credits)'}
+        </button>
+      </div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+  `;
+}
+
+window.regeneratePitchBrief = async function(matchId) {
+  const content = document.getElementById(`pb-content-${matchId}`);
+  if (!content) return;
+  const prev = content.innerHTML;
+  content.innerHTML = `<div style="padding:18px 0;text-align:center;color:#6e6e73;font-size:13px;">
+    <div style="width:24px;height:24px;border:2px solid #e5e7eb;border-top-color:#6366f1;border-radius:50%;margin:0 auto 10px;animation:spin 0.8s linear infinite;"></div>
+    Rebuilding your brief.
+  </div>`;
+  try {
+    const data = await apiPost(`/api/pitch-brief/${matchId}/regenerate`, {});
+    if (!data.success) {
+      if (data.error === 'insufficient_credits') {
+        content.innerHTML = `<div style="padding:14px;background:#fff1f0;border:1px solid #ff4d4f;border-radius:8px;font-size:13px;color:#cf1322;">
+          Not enough credits to regenerate. Need ${data.needed}, have ${data.balance}.
+        </div>`;
+      } else {
+        content.innerHTML = prev;
+        showToast(data.error || 'Could not regenerate.', 'error');
+      }
+      return;
+    }
+    content.innerHTML = renderPitchBrief(matchId, { ...data, cached: false });
+    showToast(data.was_free_regen ? 'Brief regenerated (free).' : 'Brief regenerated.', 'success');
+  } catch (err) {
+    content.innerHTML = prev;
+    showToast('Network error during regenerate.', 'error');
+  }
+};
+
 window.openMatchDetail = window.openMatchDetail || function(id) {
   // Fallback: scroll to the card. Existing app.js may have a richer modal opener.
   const card = document.querySelector(`[data-match-id="${id}"]`) || document.getElementById(`match-${id}`);
@@ -1911,6 +2076,18 @@ function renderMatchCard(match) {
           <p class="why-fits-label">Best Pitch Angle</p>
           <p class="pitch-text">${esc(match.best_pitch_angle)}</p>
         </div>` : ''}
+
+        <!-- Pitch Brief (collapsible AI-generated, per-show + per-client) -->
+        <div class="pitch-brief-box" id="pitch-brief-${esc(match.id)}" style="margin-top:14px;border:1px solid var(--border-light,#e5e7eb);border-radius:12px;overflow:hidden;background:#fafbff;">
+          <div onclick="togglePitchBrief('${esc(match.id)}')" style="cursor:pointer;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:13px;font-weight:800;color:#4f46e5;letter-spacing:0.02em;text-transform:uppercase;">Pitch Brief</span>
+              <span style="font-size:12px;color:#6e6e73;">Tuned to your profile</span>
+            </div>
+            <span class="pb-chev" id="pb-chev-${esc(match.id)}" style="font-size:18px;color:#6366f1;transition:transform 0.2s;">+</span>
+          </div>
+          <div class="pb-content" id="pb-content-${esc(match.id)}" style="display:none;padding:0 18px 18px;"></div>
+        </div>
 
       ${episodeHtml}
 

@@ -100,6 +100,7 @@ app.use('/api', dashboardRouter);
 app.use('/api/operator', operatorRouter);
 app.use('/api',          require('./routes/manual-podcast')); // add-podcast + re-enrich for both operator and client dashboard
 app.use('/api', followupRouter);
+app.use('/api', require('./routes/pitchBrief'));
 app.use('/api', require('./routes/lead-scraper'));
 app.use('/api', require('./routes/pitch'));
 app.use('/api', require('./routes/credits'));
