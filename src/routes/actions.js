@@ -223,6 +223,7 @@ router.post('/send', async (req, res) => {
 
     const gmailRefreshToken = match.clients?.gmail_refresh_token || null;
     let sentMessageId = null;
+    let sentThreadId = null;
     let sentFromEmail = null;
 
     if (gmailRefreshToken) {
@@ -234,6 +235,7 @@ router.post('/send', async (req, res) => {
         const draftId = await createDraft(gmailRefreshToken, contactEmail, emailSubject, emailBody, null, audioAttachment);
         const sent = await sendDraft(gmailRefreshToken, draftId);
         sentMessageId = sent.id;
+        sentThreadId  = sent.threadId || null;  // Capture threadId so follow-ups can reply into this thread
         sentFromEmail = null; // Gmail sets the From header to the connected mailbox automatically
       } catch (gmailErr) {
         const msg = gmailErr.message || 'Gmail send failed';
@@ -290,6 +292,9 @@ router.post('/send', async (req, res) => {
       last_message_at:        new Date().toISOString(),
       message_count:          (match.message_count || 0) + 1,
     };
+    // Only set gmail_thread_id when we actually got one from Gmail (Resend path returns null).
+    // Future follow-ups will read this and send as a true threaded reply.
+    if (sentThreadId) updates.gmail_thread_id = sentThreadId;
     await supabase.from('podcast_matches').update(updates).eq('id', matchId);
 
     // Log outbound message for the thread view
@@ -718,8 +723,28 @@ router.post('/send-followup', async (req, res) => {
     }
 
     const gmailRefreshToken = match.clients?.gmail_refresh_token || null;
-    const threadId = match.gmail_thread_id || null;
+    let threadId = match.gmail_thread_id || null;
     let sentResult = null;
+
+    // Backfill threadId for older pitches (e.g. ones sent via Resend before today's fix).
+    // Searches Gmail for any sent message to this contact and uses that thread.
+    if (gmailRefreshToken && !threadId) {
+      try {
+        const { findThreadByContactEmail } = require('../services/gmailService');
+        threadId = await findThreadByContactEmail(
+          gmailRefreshToken,
+          contactEmail,
+          match.email_subject_edited || match.email_subject || null
+        );
+        if (threadId) {
+          // Persist so we don't re-search on every follow-up
+          await supabase.from('podcast_matches').update({ gmail_thread_id: threadId }).eq('id', matchId).eq('client_id', req.clientId);
+          logger.info('Backfilled gmail_thread_id for follow-up', { matchId, threadId });
+        }
+      } catch (lookupErr) {
+        logger.warn('Thread backfill lookup failed (will send without threading)', { matchId, error: lookupErr.message });
+      }
+    }
 
     if (gmailRefreshToken && threadId) {
       // ── Gmail path: send as a true threaded reply (Gmail groups by threadId) ──
