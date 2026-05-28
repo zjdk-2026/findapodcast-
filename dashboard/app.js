@@ -5984,6 +5984,10 @@ async function openFollowUpModal(matchId) {
     generateFollowUpModalBody();
   }
 
+  // Click outside the modal box (on the dark overlay) closes — wired here, not
+  // at document level, to avoid racing with the opening click event.
+  modal.onclick = (e) => { if (e.target === modal) closeFollowUpModal(); };
+
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -6080,17 +6084,15 @@ function closeFollowUpModal() {
 }
 window.closeFollowUpModal = closeFollowUpModal;
 
-// Escape key + click-on-overlay closes the modal
+// Escape key closes the modal (only when actually open)
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('followup-modal');
-    if (modal && modal.style.display !== 'none') closeFollowUpModal();
-  }
-});
-document.addEventListener('click', (e) => {
+  if (e.key !== 'Escape') return;
   const modal = document.getElementById('followup-modal');
-  if (modal && modal.style.display !== 'none' && e.target === modal) closeFollowUpModal();
+  if (!modal || modal.style.display === 'none') return;
+  closeFollowUpModal();
 });
+// NOTE: click-on-overlay close is wired via the overlay's own onclick (set on open)
+// rather than a document-level listener — avoids race with the click that opens the modal.
 
 // ── LEGACY inline follow-up panel (kept for backwards compat; no longer triggered by buttons) ──
 function toggleFollowUpPanel(matchId) {
