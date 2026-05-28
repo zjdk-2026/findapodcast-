@@ -2251,7 +2251,7 @@ function renderMatchCard(match) {
         <span class="inline-pitch-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Follow Up Email
         </span>
-        <button class="inline-pitch-close" onclick="toggleFollowUpPanel('${esc(match.id)}')" title="Close">&#x2715;</button>
+        <button class="inline-pitch-close" onclick="closeFollowUpPanel('${esc(match.id)}')" title="Close">&#x2715;</button>
       </div>
 
       <!-- Previous-pitch context (collapsed by default; loads thread on expand) -->
@@ -5922,17 +5922,32 @@ function applyFollowUpSequence() {
 window.applyFollowUpSequence = applyFollowUpSequence;
 
 // ── Inline follow-up panel ────────────────────────────────────────────
+// `toggleFollowUpPanel` is misleadingly named: the card's "Follow Up" button
+// calls this and customers naturally re-click the same button thinking it'll
+// send. So this is now an OPEN/scroll-to operation, never a close.
+// Use closeFollowUpPanel (X button + send success) to actually close.
 function toggleFollowUpPanel(matchId) {
   const panel = $(`followup-panel-${matchId}`);
   if (!panel) return;
   const isOpen = panel.style.display === 'block';
-  if (isOpen) { panel.style.display = 'none'; return; }
   expandCard(matchId);
   document.querySelectorAll('.inline-pitch-panel, .social-dm-panel').forEach(p => { if (p !== panel) p.style.display = 'none'; });
   panel.style.display = 'block';
-  populateFollowUpPanel(matchId);
+  if (!isOpen) {
+    populateFollowUpPanel(matchId);
+  } else {
+    // Already open — just focus the message body so the customer can keep typing.
+    const bodyEl = $(`followup-body-${matchId}`);
+    if (bodyEl && !bodyEl.disabled) bodyEl.focus();
+  }
 }
 window.toggleFollowUpPanel = toggleFollowUpPanel;
+
+function closeFollowUpPanel(matchId) {
+  const panel = $(`followup-panel-${matchId}`);
+  if (panel) panel.style.display = 'none';
+}
+window.closeFollowUpPanel = closeFollowUpPanel;
 
 function populateFollowUpPanel(matchId) {
   const match = state.matches.find(m => m.id === matchId);
@@ -6006,7 +6021,7 @@ async function sendFollowUpFromPanel(matchId) {
       localStorage.removeItem(`followup_template_${matchId}`);
       updateMatchInState(matchId, { status: 'followed_up' });
       updateStatBadges();
-      toggleFollowUpPanel(matchId);
+      closeFollowUpPanel(matchId);
       switchToFilter('followed_up');
     } else {
       showToast(data.error || 'Send failed.', 'error');
