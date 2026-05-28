@@ -5097,8 +5097,13 @@ async function openTemplatePicker(event) {
     if (data.ok) templates = data.templates || [];
   } catch {}
 
-  if (templates.length === 0) {
-    showToast('No saved templates yet. Save one first with the "Save as My Template" button.', 'success');
+  // Surface the Settings-level template as a synthetic first entry in the dropdown.
+  // The settings textarea writes to clients.email_template (a separate field used by
+  // the AI as a style guide). Customers expect it to appear here too — this exposes it.
+  const settingsTpl = (state.client?.email_template || '').trim();
+
+  if (templates.length === 0 && !settingsTpl) {
+    showToast('No saved templates yet. Save one in Settings or use "Save as My Template" on a pitch.', 'success');
     return;
   }
 
@@ -5111,7 +5116,17 @@ async function openTemplatePicker(event) {
   picker.id = 'template-picker';
   picker.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.bottom + 4}px;background:var(--surface-card);border:1.5px solid var(--border-medium);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);z-index:99999;min-width:260px;max-width:320px;max-height:340px;overflow-y:auto;padding:6px;`;
 
-  picker.innerHTML = templates.map(t => `
+  const settingsEntryHtml = settingsTpl ? `
+    <button onclick="applySettingsTemplate('${esc(matchId)}')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-primary);transition:background 0.1s;border-bottom:1px solid var(--border-light);margin-bottom:4px;">
+      <div style="font-weight:700;display:flex;align-items:center;gap:6px;">
+        From Settings
+        <span style="font-size:9px;font-weight:800;background:#6366f1;color:#fff;padding:2px 6px;border-radius:999px;">DEFAULT</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">${esc(settingsTpl.slice(0, 60))}${settingsTpl.length > 60 ? '…' : ''}</div>
+    </button>
+  ` : '';
+
+  picker.innerHTML = settingsEntryHtml + templates.map(t => `
     <button onclick="applyTemplate('${esc(t.id)}', '${esc(matchId)}')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-primary);transition:background 0.1s;">
       <div style="font-weight:700;display:flex;align-items:center;gap:6px;">
         ${esc(t.name)}
@@ -5141,6 +5156,36 @@ async function openTemplatePicker(event) {
   }, 0);
 }
 window.openTemplatePicker = openTemplatePicker;
+
+// Apply the Settings-level template (clients.email_template) to the open pitch.
+// Substitutes the same placeholders the backend templates use ({host_name},
+// {host_first_name}, {podcast_title}, {client_name}, {client_first_name},
+// {one_liner}, {business_name}).
+window.applySettingsTemplate = function(matchId) {
+  document.getElementById('template-picker')?.remove();
+  const tpl = (state.client?.email_template || '').trim();
+  if (!tpl) { showToast('No template found in Settings.', 'error'); return; }
+  const m = (state.matches || []).find(x => x.id === matchId);
+  if (!m) { showToast('Open the pitch first.', 'error'); return; }
+  const podcast = m.podcasts || {};
+  const client  = state.client || {};
+  const map = {
+    host_name:         podcast.host_name || '',
+    host_first_name:   (podcast.host_name || '').split(' ')[0] || '',
+    podcast_title:     podcast.title || '',
+    client_name:       client.name || '',
+    client_first_name: (client.name || '').split(' ')[0] || '',
+    one_liner:         client.bio_short || '',
+    business_name:     client.business_name || '',
+  };
+  const filled = tpl.replace(/\{(\w+)\}/gi, (_, key) => map[key.toLowerCase()] ?? `{${key}}`);
+  const bodyEl = document.getElementById('modal-body-text');
+  if (bodyEl) {
+    bodyEl.value = filled;
+    bodyEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  showToast('Applied Settings template.', 'success');
+};
 
 // ── Thread Reply: Template picker dropdown ─────────────────────────────
 async function openThreadTemplatePicker() {
