@@ -5939,14 +5939,16 @@ function populateFollowUpPanel(matchId) {
   if (!match) return;
   const saved = localStorage.getItem(`followup_template_${matchId}`);
   let subject, body;
-  if (saved) { try { ({ subject, body } = JSON.parse(saved)); } catch { subject = null; } }
+  if (saved) { try { ({ subject, body } = JSON.parse(saved)); } catch { body = null; } }
   const subjEl = $(`followup-subj-${matchId}`);
   const bodyEl = $(`followup-body-${matchId}`);
-  if (subject && body) {
-    if (subjEl) subjEl.value = subject;
+  // Body is the only required field (subject is hidden + auto-prefixed Re: server-side).
+  // If a draft body exists, restore it. Don't regenerate on every panel open.
+  if (body) {
+    if (subjEl) subjEl.value = subject || '';
     if (bodyEl) bodyEl.value = body;
   } else {
-    // No saved content — auto-generate
+    // First time opening this card's follow-up — auto-generate one draft.
     setTimeout(() => rewriteFollowUp(matchId), 100);
   }
 }
@@ -5999,7 +6001,9 @@ async function sendFollowUpFromPanel(matchId) {
   try {
     const data = await apiPost('/api/send-followup', { matchId, subject, body });
     if (data.success) {
-      showToast(data.gmailSent ? 'Follow-up sent.' : 'Follow-up saved (Gmail not connected).', 'success');
+      showToast('Follow-up sent.', 'success');
+      // Clear the saved draft so the next visit shows a fresh AI suggestion, not the one we just sent.
+      localStorage.removeItem(`followup_template_${matchId}`);
       updateMatchInState(matchId, { status: 'followed_up' });
       updateStatBadges();
       toggleFollowUpPanel(matchId);
