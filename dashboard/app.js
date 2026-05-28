@@ -2255,8 +2255,8 @@ function renderMatchCard(match) {
       </div>
 
       <!-- Previous-pitch context (collapsed by default; loads thread on expand) -->
-      <div id="followup-prev-${esc(match.id)}" style="margin-bottom:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafbff;overflow:hidden;">
-        <div onclick="togglePreviousPitch('${esc(match.id)}')" style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none;font-size:12px;font-weight:700;color:#4f46e5;letter-spacing:0.02em;">
+      <div id="followup-prev-${esc(match.id)}" onclick="event.stopPropagation()" style="margin-bottom:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafbff;overflow:hidden;">
+        <div onclick="event.stopPropagation();togglePreviousPitch('${esc(match.id)}')" style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none;font-size:12px;font-weight:700;color:#4f46e5;letter-spacing:0.02em;">
           <span>Show previous email I sent</span>
           <span id="followup-prev-chev-${esc(match.id)}" style="font-size:14px;">+</span>
         </div>
