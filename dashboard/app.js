@@ -978,6 +978,56 @@ window.regeneratePitchBrief = async function(matchId) {
   }
 };
 
+// ── PREVIOUS PITCH (follow-up context) ──────────────────────────────────────
+// Loads the original pitch (subject + body) from the thread cache on demand,
+// so the customer can see what they sent before composing the follow-up.
+const _prevPitchLoaded = new Set();
+window.togglePreviousPitch = async function(matchId) {
+  const content = document.getElementById(`followup-prev-content-${matchId}`);
+  const chev    = document.getElementById(`followup-prev-chev-${matchId}`);
+  if (!content) return;
+  const isOpen = content.style.display !== 'none';
+  if (isOpen) {
+    content.style.display = 'none';
+    if (chev) chev.textContent = '+';
+    return;
+  }
+  content.style.display = 'block';
+  if (chev) chev.textContent = '−';
+
+  if (_prevPitchLoaded.has(matchId)) return;
+
+  content.innerHTML = '<div style="padding:6px 0;color:#6e6e73;font-size:12px;">Loading…</div>';
+  try {
+    const r = await fetch(`/api/thread/${matchId}`, { headers: { 'x-dashboard-token': state.token } });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'fetch_failed');
+    const outbound = (data.messages || []).filter(m => m.direction === 'outbound');
+    if (outbound.length === 0) {
+      content.innerHTML = '<div style="padding:6px 0;color:#6e6e73;font-size:12px;font-style:italic;">No previous email found in the thread cache.</div>';
+      _prevPitchLoaded.add(matchId);
+      return;
+    }
+    // Render each outbound message (pitch + any previous follow-ups), newest at bottom
+    const items = outbound.map(msg => {
+      const when = msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '';
+      const subj = (msg.subject || '').trim();
+      const body = (msg.body_text || '').trim();
+      const label = (msg.message_type === 'pitch') ? 'Original pitch' : 'Follow-up';
+      return `
+        <div style="border-top:1px solid #eef;margin-top:8px;padding-top:8px;">
+          <div style="font-size:11px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${esc(label)} · ${esc(when)}</div>
+          ${subj ? `<div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-bottom:6px;">${esc(subj)}</div>` : ''}
+          <div style="white-space:pre-wrap;font-size:12.5px;color:#3a3a3c;line-height:1.55;">${esc(body)}</div>
+        </div>`;
+    }).join('');
+    content.innerHTML = items;
+    _prevPitchLoaded.add(matchId);
+  } catch (err) {
+    content.innerHTML = `<div style="padding:6px 0;color:#cf1322;font-size:12px;">Could not load previous email.</div>`;
+  }
+};
+
 window.openMatchDetail = window.openMatchDetail || function(id) {
   // Fallback: scroll to the card. Existing app.js may have a richer modal opener.
   const card = document.querySelector(`[data-match-id="${id}"]`) || document.getElementById(`match-${id}`);
@@ -2181,6 +2231,16 @@ function renderMatchCard(match) {
         </span>
         <button class="inline-pitch-close" onclick="toggleFollowUpPanel('${esc(match.id)}')" title="Close">&#x2715;</button>
       </div>
+
+      <!-- Previous-pitch context (collapsed by default; loads thread on expand) -->
+      <div id="followup-prev-${esc(match.id)}" style="margin-bottom:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafbff;overflow:hidden;">
+        <div onclick="togglePreviousPitch('${esc(match.id)}')" style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none;font-size:12px;font-weight:700;color:#4f46e5;letter-spacing:0.02em;">
+          <span>Show previous email I sent</span>
+          <span id="followup-prev-chev-${esc(match.id)}" style="font-size:14px;">+</span>
+        </div>
+        <div id="followup-prev-content-${esc(match.id)}" style="display:none;padding:0 12px 12px;font-size:12.5px;color:#3a3a3c;line-height:1.55;"></div>
+      </div>
+
       <select id="followup-seq-${esc(match.id)}" class="inline-pitch-field" style="cursor:pointer;" onchange="applyFollowUpSequenceInline('${esc(match.id)}')">
         <option value="custom">Custom message…</option>
         <option value="followup1">Follow-up 1: Quick check-in</option>
@@ -2195,6 +2255,7 @@ function renderMatchCard(match) {
         <label class="inline-field-label">Message</label>
         <textarea id="followup-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your follow-up message…"></textarea>
       </div>
+      <p style="font-size:11px;color:#6e6e73;margin:6px 0 8px;">Sends as a reply in the same email thread as your original pitch.</p>
       <div class="inline-pitch-actions">
         <button class="btn btn-action-followup btn-xs" id="followup-send-btn-${esc(match.id)}" onclick="sendFollowUpFromPanel('${esc(match.id)}')">Send Follow Up</button>
         <button class="btn btn-xs" id="followup-rewrite-btn-${esc(match.id)}" style="background:#f0ebff;color:#6366f1;border:1.5px solid #c4b5fd;font-weight:600;" onclick="rewriteFollowUp('${esc(match.id)}')">Generate</button>

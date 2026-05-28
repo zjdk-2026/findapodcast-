@@ -700,7 +700,7 @@ router.post('/send-followup', async (req, res) => {
 
     const finalSubject = subject || `Re: ${match.email_subject_edited || match.email_subject || 'Guest pitch'}`;
 
-    // Get the latest message's RFC-822 Message-ID for In-Reply-To threading
+    // Get the latest message's RFC-822 Message-ID for In-Reply-To threading (used by both Gmail + Resend paths)
     let inReplyTo = null;
     let references = null;
     const { data: latestMsg } = await supabase
@@ -717,18 +717,58 @@ router.post('/send-followup', async (req, res) => {
       references = latestMsg.rfc822_message_id;
     }
 
+    const gmailRefreshToken = match.clients?.gmail_refresh_token || null;
+    const threadId = match.gmail_thread_id || null;
     let sentResult = null;
-    try {
-      sentResult = await sendEmail({
-        to: contactEmail,
-        subject: finalSubject,
-        body,
-        inReplyTo: inReplyTo || undefined,
-        references: references || undefined,
-      });
-      logger.info('Manual follow-up sent via Resend', { matchId });
-    } catch (sendErr) {
-      logger.warn('Manual follow-up Resend send failed', { matchId, error: sendErr.message });
+
+    if (gmailRefreshToken && threadId) {
+      // ── Gmail path: send as a true threaded reply (Gmail groups by threadId) ──
+      try {
+        const { sendThreadedReply } = require('../services/gmailService');
+        const sent = await sendThreadedReply({
+          refreshToken: gmailRefreshToken,
+          to: contactEmail,
+          subject: finalSubject,
+          body,
+          threadId,
+          inReplyTo: inReplyTo || undefined,
+          references: references || undefined,
+        });
+        sentResult = { id: sent.id, from: null };
+        logger.info('Manual follow-up sent via Gmail (threaded)', { matchId, threadId });
+      } catch (gmailErr) {
+        logger.warn('Manual follow-up Gmail threaded send failed', { matchId, error: gmailErr.message });
+        // Don't fall through to Resend — surface the error so the customer can reconnect Gmail
+        return res.status(500).json({ success: false, error: `Gmail send failed: ${gmailErr.message}. Try reconnecting Gmail in Settings.` });
+      }
+    } else if (gmailRefreshToken) {
+      // Gmail connected but no threadId stored — send via createDraft+sendDraft.
+      // Gmail will thread on the host's side via In-Reply-To header even without threadId.
+      try {
+        const { createDraft, sendDraft } = require('../services/gmailService');
+        const draftId = await createDraft(gmailRefreshToken, contactEmail, finalSubject, body, null, null);
+        const sent = await sendDraft(gmailRefreshToken, draftId);
+        sentResult = { id: sent.id, from: null };
+        logger.info('Manual follow-up sent via Gmail (no threadId fallback)', { matchId });
+      } catch (gmailErr) {
+        logger.warn('Manual follow-up Gmail (no threadId) send failed', { matchId, error: gmailErr.message });
+        return res.status(500).json({ success: false, error: `Gmail send failed: ${gmailErr.message}. Try reconnecting Gmail in Settings.` });
+      }
+    } else {
+      // ── Resend fallback (no Gmail connected) ────────────────────────────────
+      try {
+        sentResult = await sendEmail({
+          to: contactEmail,
+          subject: finalSubject,
+          body,
+          inReplyTo: inReplyTo || undefined,
+          references: references || undefined,
+        });
+        logger.info('Manual follow-up sent via Resend', { matchId });
+      } catch (sendErr) {
+        logger.warn('Manual follow-up Resend send failed', { matchId, error: sendErr.message });
+        return res.status(500).json({ success: false, error: `Email send failed: ${sendErr.message}. Connect Gmail in Settings.` });
+      }
     }
 
     // Cache the outbound message so future follow-ups + replies thread off it
