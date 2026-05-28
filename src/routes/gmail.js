@@ -550,8 +550,22 @@ async function checkInboxForReplyFromEmail(refreshToken, fromEmail, sentAt, subj
 
     // Strategy 2b: broaden to the email's domain — catches replies from any sender at acme.com
     // when the pitch went to podcast@acme.com but Sarah replied from sarah@acme.com.
+    // Skip multi-tenant platform / relay domains, where "from:@domain.com" would match
+    // any random newsletter or auto-confirm from another tenant on the same platform.
+    const PLATFORM_DOMAINS = new Set([
+      // Personal inbox providers
+      'gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com','aol.com','protonmail.com','proton.me','live.com','msn.com',
+      // Newsletter / creator platforms
+      'substack.com','beehiiv.com','convertkit.com','kit.com','mailchimp.com','mc.mailchimp.com','ghost.io','buttondown.email','revue.co',
+      // Podcast hosting (anchor.fm already special-cased on email regex but include for safety)
+      'anchor.fm','buzzsprout.com','podbean.com','transistor.fm','simplecast.com','captivate.fm','rss.com',
+      // Form / calendar / chat platforms
+      'typeform.com','calendly.com','google.com','forms.gle','docs.google.com','notion.so','airtable.com','tally.so',
+      // Commerce / community
+      'gumroad.com','stripe.com','paypal.com','circle.so','discord.com','slack.com','zoom.us','linkedin.com',
+    ]);
     const domain = (fromEmail.split('@')[1] || '').trim();
-    if (domain && domain.split('.').length >= 2 && !['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com'].includes(domain.toLowerCase())) {
+    if (domain && domain.split('.').length >= 2 && !PLATFORM_DOMAINS.has(domain.toLowerCase())) {
       tries.push(`from:@${domain}${afterClause}${noBounce}`);
     }
 
