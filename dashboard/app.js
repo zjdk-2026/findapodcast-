@@ -2269,10 +2269,8 @@ function renderMatchCard(match) {
         <option value="followup2">Follow-up 2: Add value angle</option>
         <option value="followup3">Follow-up 3: Last note</option>
       </select>
-      <div class="inline-field-group">
-        <label class="inline-field-label">Subject</label>
-        <input id="followup-subj-${esc(match.id)}" type="text" class="inline-pitch-field inline-subject-field" placeholder="Subject line…" />
-      </div>
+      <!-- Subject hidden: follow-ups send as a threaded reply, so subject must stay as Re: original to preserve Gmail threading. Backend auto-prefixes Re:. -->
+      <input id="followup-subj-${esc(match.id)}" type="hidden" value="" />
       <div class="inline-field-group">
         <label class="inline-field-label">Message</label>
         <textarea id="followup-body-${esc(match.id)}" class="inline-pitch-field inline-pitch-body-field" placeholder="Your follow-up message…"></textarea>
