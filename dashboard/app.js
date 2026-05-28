@@ -998,33 +998,55 @@ window.togglePreviousPitch = async function(matchId) {
   if (_prevPitchLoaded.has(matchId)) return;
 
   content.innerHTML = '<div style="padding:6px 0;color:#6e6e73;font-size:12px;">Loading…</div>';
+
+  // Fallback renderer: use the match's stored pitch subject + body when the
+  // thread cache is empty (older sends pre-Gmail-fix never wrote to thread cache).
+  const renderFromMatchRow = () => {
+    const m = (state.matches || []).find(x => x.id === matchId);
+    if (!m) return null;
+    const subj = (m.email_subject_edited || m.email_subject || '').trim();
+    const body = (m.email_body_edited || m.email_body || '').trim();
+    if (!subj && !body) return null;
+    const when = m.sent_at ? new Date(m.sent_at).toLocaleString() : '';
+    return `
+      <div style="margin-top:4px;">
+        <div style="font-size:11px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Original pitch${when ? ' · ' + esc(when) : ''}</div>
+        ${subj ? `<div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-bottom:6px;">${esc(subj)}</div>` : ''}
+        <div style="white-space:pre-wrap;font-size:12.5px;color:#3a3a3c;line-height:1.55;">${esc(body)}</div>
+      </div>`;
+  };
+
   try {
     const r = await fetch(`/api/thread/${matchId}`, { headers: { 'x-dashboard-token': state.token } });
     const data = await r.json();
-    if (!r.ok || !data.ok) throw new Error(data.error || 'fetch_failed');
-    const outbound = (data.messages || []).filter(m => m.direction === 'outbound');
-    if (outbound.length === 0) {
-      content.innerHTML = '<div style="padding:6px 0;color:#6e6e73;font-size:12px;font-style:italic;">No previous email found in the thread cache.</div>';
-      _prevPitchLoaded.add(matchId);
-      return;
+    if (r.ok && data.ok) {
+      const outbound = (data.messages || []).filter(m => m.direction === 'outbound');
+      if (outbound.length > 0) {
+        const items = outbound.map(msg => {
+          const when = msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '';
+          const subj = (msg.subject || '').trim();
+          const body = (msg.body_text || '').trim();
+          const label = (msg.message_type === 'pitch') ? 'Original pitch' : 'Follow-up';
+          return `
+            <div style="border-top:1px solid #eef;margin-top:8px;padding-top:8px;">
+              <div style="font-size:11px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${esc(label)} · ${esc(when)}</div>
+              ${subj ? `<div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-bottom:6px;">${esc(subj)}</div>` : ''}
+              <div style="white-space:pre-wrap;font-size:12.5px;color:#3a3a3c;line-height:1.55;">${esc(body)}</div>
+            </div>`;
+        }).join('');
+        content.innerHTML = items;
+        _prevPitchLoaded.add(matchId);
+        return;
+      }
     }
-    // Render each outbound message (pitch + any previous follow-ups), newest at bottom
-    const items = outbound.map(msg => {
-      const when = msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '';
-      const subj = (msg.subject || '').trim();
-      const body = (msg.body_text || '').trim();
-      const label = (msg.message_type === 'pitch') ? 'Original pitch' : 'Follow-up';
-      return `
-        <div style="border-top:1px solid #eef;margin-top:8px;padding-top:8px;">
-          <div style="font-size:11px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${esc(label)} · ${esc(when)}</div>
-          ${subj ? `<div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-bottom:6px;">${esc(subj)}</div>` : ''}
-          <div style="white-space:pre-wrap;font-size:12.5px;color:#3a3a3c;line-height:1.55;">${esc(body)}</div>
-        </div>`;
-    }).join('');
-    content.innerHTML = items;
+    // Thread cache empty — fall back to the match row's stored pitch text.
+    const fallback = renderFromMatchRow();
+    content.innerHTML = fallback || '<div style="padding:6px 0;color:#6e6e73;font-size:12px;font-style:italic;">No previous email on record. The pitch was probably sent before this view was added.</div>';
     _prevPitchLoaded.add(matchId);
   } catch (err) {
-    content.innerHTML = `<div style="padding:6px 0;color:#cf1322;font-size:12px;">Could not load previous email.</div>`;
+    const fallback = renderFromMatchRow();
+    content.innerHTML = fallback || `<div style="padding:6px 0;color:#cf1322;font-size:12px;">Could not load previous email.</div>`;
+    _prevPitchLoaded.add(matchId);
   }
 };
 
