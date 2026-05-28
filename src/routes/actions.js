@@ -4,6 +4,7 @@ const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
 const { sendEmail } = require('../services/resendMailService');
+const { createDraft, sendDraft } = require('../services/gmailService');
 const { writeEmail } = require('../services/emailWriter');
 const { chargeCredits, awardPoints } = require('../lib/credits');
 const requireDashboardToken = require('../middleware/requireDashboardToken');
@@ -185,114 +186,129 @@ router.post('/send', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Match not found.' });
     }
 
-    // ── RESEND SEND ─────────────────────────────────────────────────────
-    try {
-      const emailSubject = (match.email_subject_edited || match.email_subject || '').trim();
-      const emailBody    = (match.email_body_edited    || match.email_body    || '').trim();
-      const contactEmail = match.podcasts?.contact_email || null;
-      if (!contactEmail?.includes('@')) {
-        return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
-      }
-      if (!emailSubject) {
-        return res.status(400).json({ success: false, error: 'Pitch has no subject line. Open "Write Pitch Email" to compose it first.' });
-      }
-      if (!emailBody) {
-        return res.status(400).json({ success: false, error: 'Pitch has no body. Open "Write Pitch Email" to compose it first.' });
-      }
+    // ── SEND (Gmail preferred when connected, Resend fallback) ──────────
+    const emailSubject = (match.email_subject_edited || match.email_subject || '').trim();
+    const emailBody    = (match.email_body_edited    || match.email_body    || '').trim();
+    const contactEmail = match.podcasts?.contact_email || null;
+    if (!contactEmail?.includes('@')) {
+      return res.status(400).json({ success: false, error: 'No contact email found for this podcast. Use the DM Template to reach out via social media instead.' });
+    }
+    if (!emailSubject) {
+      return res.status(400).json({ success: false, error: 'Pitch has no subject line. Open "Write Pitch Email" to compose it first.' });
+    }
+    if (!emailBody) {
+      return res.status(400).json({ success: false, error: 'Pitch has no body. Open "Write Pitch Email" to compose it first.' });
+    }
 
-      // Build attachments array if audio is attached
-      let attachments = null;
-      if (match.audio_attachment_path) {
-        try {
-          const { data: audioBlob, error: dlErr } = await supabase.storage
-            .from('pitch-audio')
-            .download(match.audio_attachment_path);
-          if (!dlErr && audioBlob) {
-            const buffer = Buffer.from(await audioBlob.arrayBuffer());
-            attachments = [{
-              filename: match.audio_attachment_filename || 'voice-intro.webm',
-              content:  buffer,
-              mime:     match.audio_attachment_mime || 'audio/webm',
-            }];
-          } else if (dlErr) {
-            logger.warn('Could not fetch pitch audio for send', { matchId, error: dlErr.message });
-          }
-        } catch (audioErr) {
-          logger.warn('Audio fetch error during send', { matchId, error: audioErr.message });
-        }
-      }
-
-      // Get the latest message's RFC-822 Message-ID for threading (if any prior messages exist)
-      let inReplyTo = null;
-      let references = null;
-      const { data: latestMsg } = await supabase
-        .from('match_thread_messages')
-        .select('rfc822_message_id')
-        .eq('match_id', matchId)
-        .not('rfc822_message_id', 'is', null)
-        .order('sent_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (latestMsg?.rfc822_message_id) {
-        inReplyTo = latestMsg.rfc822_message_id;
-        references = latestMsg.rfc822_message_id;
-      }
-
-      const sentResult = await sendEmail({
-        to: contactEmail,
-        subject: emailSubject,
-        body: emailBody,
-        inReplyTo: inReplyTo || undefined,
-        references: references || undefined,
-        attachments: attachments || undefined,
-      });
-
-      const resendMessageId = sentResult.id;
-
-      // Update match with Resend message info
-      const updates = {
-        gmail_message_id:       resendMessageId,  // field name stays for DB compatibility
-        gmail_pitch_message_id: resendMessageId,
-        last_message_at:        new Date().toISOString(),
-        message_count:          (match.message_count || 0) + 1,
-      };
-      await supabase.from('podcast_matches').update(updates).eq('id', matchId);
-
-      // Insert outbound row in match_thread_messages
+    // Fetch audio attachment ONCE, normalize for both Gmail and Resend shapes
+    let audioBuffer = null;
+    let audioMime = null;
+    let audioFilename = null;
+    if (match.audio_attachment_path) {
       try {
-        await supabase.from('match_thread_messages').insert({
-          match_id:           matchId,
-          gmail_message_id:   resendMessageId,
-          direction:          'outbound',
-          message_type:       'pitch',
-          from_email:         sentResult.from || null,
-          to_email:           contactEmail,
-          subject:            emailSubject,
-          body_text:          emailBody,
-          rfc822_message_id:  resendMessageId,
-          audio_attached:     !!attachments,
-          sent_at:            new Date().toISOString(),
-        });
-      } catch (logErr) {
-        logger.warn('match_thread_messages insert failed (table may not exist yet)', { matchId, error: logErr.message });
+        const { data: audioBlob, error: dlErr } = await supabase.storage
+          .from('pitch-audio')
+          .download(match.audio_attachment_path);
+        if (!dlErr && audioBlob) {
+          audioBuffer = Buffer.from(await audioBlob.arrayBuffer());
+          audioMime = match.audio_attachment_mime || 'audio/webm';
+          audioFilename = match.audio_attachment_filename || 'voice-intro.webm';
+        } else if (dlErr) {
+          logger.warn('Could not fetch pitch audio for send', { matchId, error: dlErr.message });
+        }
+      } catch (audioErr) {
+        logger.warn('Audio fetch error during send', { matchId, error: audioErr.message });
       }
-    } catch (sendErr) {
-      const resendDetail = sendErr.resendData?.message
-        || sendErr.resendData?.error
-        || sendErr.message
-        || 'Unknown error';
-      logger.warn('Resend send failed', {
-        matchId,
-        error: sendErr.message,
-        status: sendErr.status,
-        resendData: sendErr.resendData,
+    }
+
+    const gmailRefreshToken = match.clients?.gmail_refresh_token || null;
+    let sentMessageId = null;
+    let sentFromEmail = null;
+
+    if (gmailRefreshToken) {
+      // ── Gmail path: send from the customer's connected Gmail ──────────
+      try {
+        const audioAttachment = audioBuffer
+          ? { buffer: audioBuffer, mime: audioMime, filename: audioFilename }
+          : null;
+        const draftId = await createDraft(gmailRefreshToken, contactEmail, emailSubject, emailBody, null, audioAttachment);
+        const sent = await sendDraft(gmailRefreshToken, draftId);
+        sentMessageId = sent.id;
+        sentFromEmail = null; // Gmail sets the From header to the connected mailbox automatically
+      } catch (gmailErr) {
+        const msg = gmailErr.message || 'Gmail send failed';
+        logger.warn('Gmail send failed', { matchId, error: msg });
+        return res.status(500).json({ success: false, error: `Gmail send failed: ${msg}. Try reconnecting Gmail in Settings.` });
+      }
+    } else {
+      // ── Resend fallback: for customers without Gmail connected ────────
+      try {
+        // Threading headers (only present if there are prior messages in this thread)
+        let inReplyTo = null;
+        let references = null;
+        const { data: latestMsg } = await supabase
+          .from('match_thread_messages')
+          .select('rfc822_message_id')
+          .eq('match_id', matchId)
+          .not('rfc822_message_id', 'is', null)
+          .order('sent_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (latestMsg?.rfc822_message_id) {
+          inReplyTo = latestMsg.rfc822_message_id;
+          references = latestMsg.rfc822_message_id;
+        }
+
+        const attachments = audioBuffer
+          ? [{ filename: audioFilename, content: audioBuffer, mime: audioMime }]
+          : null;
+
+        const sentResult = await sendEmail({
+          to: contactEmail,
+          subject: emailSubject,
+          body: emailBody,
+          inReplyTo: inReplyTo || undefined,
+          references: references || undefined,
+          attachments: attachments || undefined,
+        });
+        sentMessageId = sentResult.id;
+        sentFromEmail = sentResult.from || null;
+      } catch (sendErr) {
+        const resendDetail = sendErr.resendData?.message
+          || sendErr.resendData?.error
+          || sendErr.message
+          || 'Unknown error';
+        logger.warn('Resend send failed', { matchId, error: sendErr.message, status: sendErr.status, resendData: sendErr.resendData });
+        return res.status(500).json({ success: false, error: `Email send failed: ${resendDetail}. Connect Gmail in Settings to send from your own inbox.` });
+      }
+    }
+
+    // Update match with sent message info (field names stay for DB compatibility)
+    const updates = {
+      gmail_message_id:       sentMessageId,
+      gmail_pitch_message_id: sentMessageId,
+      last_message_at:        new Date().toISOString(),
+      message_count:          (match.message_count || 0) + 1,
+    };
+    await supabase.from('podcast_matches').update(updates).eq('id', matchId);
+
+    // Log outbound message for the thread view
+    try {
+      await supabase.from('match_thread_messages').insert({
+        match_id:           matchId,
+        gmail_message_id:   sentMessageId,
+        direction:          'outbound',
+        message_type:       'pitch',
+        from_email:         sentFromEmail,
+        to_email:           contactEmail,
+        subject:            emailSubject,
+        body_text:          emailBody,
+        rfc822_message_id:  sentMessageId,
+        audio_attached:     !!audioBuffer,
+        sent_at:            new Date().toISOString(),
       });
-      // Surface the real Resend error so we can diagnose (domain not verified, rate limit, invalid recipient, etc.)
-      return res.status(500).json({
-        success: false,
-        error: `Email send failed: ${resendDetail}`,
-      });
+    } catch (logErr) {
+      logger.warn('match_thread_messages insert failed (table may not exist yet)', { matchId, error: logErr.message });
     }
 
     const { data: updated, error: updateError } = await supabase
