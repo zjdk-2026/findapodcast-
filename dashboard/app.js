@@ -1463,14 +1463,14 @@ function actionButtonsHtml(match) {
 
   // ── PITCHED tab ──
   } else if (status === 'sent') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Follow Up</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="event.stopPropagation();openFollowUpModal('${id}')">Follow Up</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;font-weight:600;" onclick="markAsFollowedUpManually('${id}')">I Sent It Myself</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
 
   // ── FOLLOWED UP tab ──
   } else if (status === 'followed_up') {
-    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="toggleFollowUpPanel('${id}')">Follow Up Again</button>`);
+    buttons.push(`<button class="btn btn-action-followup btn-xs" onclick="event.stopPropagation();openFollowUpModal('${id}')">Follow Up Again</button>`);
     buttons.push(`<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;font-weight:600;" onclick="markReplied('${id}')">Host Replied</button>`);
     buttons.push(`<button class="btn btn-action-ignore btn-xs" onclick="confirmDismiss('${id}')">Not a Fit</button>`);
 
@@ -5921,11 +5921,178 @@ function applyFollowUpSequence() {
 }
 window.applyFollowUpSequence = applyFollowUpSequence;
 
-// ── Inline follow-up panel ────────────────────────────────────────────
-// `toggleFollowUpPanel` is misleadingly named: the card's "Follow Up" button
-// calls this and customers naturally re-click the same button thinking it'll
-// send. So this is now an OPEN/scroll-to operation, never a close.
-// Use closeFollowUpPanel (X button + send success) to actually close.
+// ═══════════════════════════════════════════════════════════════════════════
+// FOLLOW-UP MODAL (new — replaces the inline follow-up panel)
+//
+// The inline panel had structural UX problems: nested inside a clickable card,
+// fighting expand/collapse handlers, multiple buried sub-toggles, hidden subject
+// field, AI auto-regenerate loops. Reworked as a dedicated focused modal that
+// mirrors Gmail's reply experience: the original pitch is always visible at the
+// top, the composer is in the middle, three clear actions at the bottom.
+// ═══════════════════════════════════════════════════════════════════════════
+const _followupModalState = { matchId: null, original: null };
+
+async function openFollowUpModal(matchId) {
+  const m = (state.matches || []).find(x => x.id === matchId);
+  if (!m) { showToast('Could not find this match.', 'error'); return; }
+
+  _followupModalState.matchId  = matchId;
+  _followupModalState.original = null;
+
+  const modal     = document.getElementById('followup-modal');
+  const titleEl   = document.getElementById('followup-modal-title');
+  const subEl     = document.getElementById('followup-modal-subtitle');
+  const origEl    = document.getElementById('followup-modal-original-content');
+  const subjLbl   = document.getElementById('followup-modal-subject-label');
+  const bodyEl    = document.getElementById('followup-modal-body');
+  const sendBtn   = document.getElementById('followup-modal-send');
+  if (!modal || !bodyEl) return;
+
+  const podcast = m.podcasts || {};
+  if (titleEl) titleEl.textContent = podcast.title || 'Podcast';
+  if (subEl)   subEl.textContent   = podcast.host_name ? `with ${podcast.host_name}` : (podcast.contact_email || '');
+
+  const originalSubject = (m.email_subject_edited || m.email_subject || '').trim();
+  const originalBody    = (m.email_body_edited    || m.email_body    || '').trim();
+  const sentAt          = m.sent_at ? new Date(m.sent_at).toLocaleString() : '';
+
+  if (subjLbl) subjLbl.textContent = `Re: ${originalSubject || 'Guest pitch'}`;
+
+  if (origEl) {
+    if (originalSubject || originalBody) {
+      origEl.innerHTML = `
+        ${sentAt ? `<div style="font-size:11px;color:#aeaeb2;margin-bottom:6px;">Sent ${esc(sentAt)}</div>` : ''}
+        ${originalSubject ? `<div style="font-weight:700;color:#1d1d1f;margin-bottom:8px;">${esc(originalSubject)}</div>` : ''}
+        <div style="white-space:pre-wrap;color:#3a3a3c;line-height:1.6;">${esc(originalBody) || '<i style="color:#aeaeb2;">(No body recorded)</i>'}</div>`;
+    } else {
+      origEl.innerHTML = '<div style="color:#aeaeb2;font-style:italic;">No previous email on record.</div>';
+    }
+    _followupModalState.original = { subject: originalSubject, body: originalBody };
+  }
+
+  // Restore a draft if the customer was mid-compose
+  const saved = localStorage.getItem(`followup_draft_${matchId}`);
+  if (saved) {
+    bodyEl.value = saved;
+    bodyEl.placeholder = '';
+  } else {
+    bodyEl.value = '';
+    bodyEl.placeholder = 'Drafting your follow-up with AI…';
+    bodyEl.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+    // Auto-generate the first time
+    generateFollowUpModalBody();
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+window.openFollowUpModal = openFollowUpModal;
+
+async function generateFollowUpModalBody() {
+  const matchId = _followupModalState.matchId;
+  if (!matchId) return;
+  const bodyEl  = document.getElementById('followup-modal-body');
+  const sendBtn = document.getElementById('followup-modal-send');
+  const regenBtn = document.getElementById('followup-modal-regenerate');
+  if (!bodyEl) return;
+
+  bodyEl.disabled = true;
+  bodyEl.placeholder = 'Drafting your follow-up with AI…';
+  if (sendBtn)  sendBtn.disabled = true;
+  if (regenBtn) { regenBtn.disabled = true; regenBtn.textContent = 'Writing…'; }
+
+  try {
+    const data = await apiPost('/api/generate-followup', { matchId });
+    if (data.success && data.body) {
+      bodyEl.value = data.body;
+    } else {
+      showToast(data.error || 'Could not generate follow-up.', 'error');
+    }
+  } catch {
+    showToast('Network error generating follow-up.', 'error');
+  } finally {
+    bodyEl.disabled = false;
+    bodyEl.placeholder = '';
+    if (sendBtn)  sendBtn.disabled = false;
+    if (regenBtn) { regenBtn.disabled = false; regenBtn.textContent = 'Regenerate'; }
+    bodyEl.focus();
+  }
+}
+
+window.regenerateFollowUpModal = function() {
+  const matchId = _followupModalState.matchId;
+  if (!matchId) return;
+  // Wipe any saved draft so we don't restore it mid-regen
+  localStorage.removeItem(`followup_draft_${matchId}`);
+  generateFollowUpModalBody();
+};
+
+async function sendFollowUpModal() {
+  const matchId = _followupModalState.matchId;
+  if (!matchId) return;
+  const bodyEl  = document.getElementById('followup-modal-body');
+  const sendBtn = document.getElementById('followup-modal-send');
+  const body = (bodyEl?.value || '').trim();
+  if (!body) { showToast('Write a follow-up message first.', 'error'); return; }
+
+  // Save draft pre-flight (restored if send fails)
+  localStorage.setItem(`followup_draft_${matchId}`, body);
+
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; }
+
+  try {
+    // subject is left blank — backend auto-prefixes Re: original subject for thread integrity
+    const data = await apiPost('/api/send-followup', { matchId, subject: '', body });
+    if (data.success) {
+      showToast('Follow-up sent.', 'success');
+      localStorage.removeItem(`followup_draft_${matchId}`);
+      updateMatchInState(matchId, { status: 'followed_up' });
+      updateStatBadges();
+      closeFollowUpModal();
+      switchToFilter('followed_up');
+    } else {
+      showToast(data.error || 'Send failed.', 'error');
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = 'Send follow-up <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+    }
+  }
+}
+window.sendFollowUpModal = sendFollowUpModal;
+
+function closeFollowUpModal() {
+  const modal = document.getElementById('followup-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+  // Save draft on close so customers don't lose work
+  const matchId = _followupModalState.matchId;
+  const bodyEl  = document.getElementById('followup-modal-body');
+  if (matchId && bodyEl) {
+    const body = (bodyEl.value || '').trim();
+    if (body) localStorage.setItem(`followup_draft_${matchId}`, body);
+  }
+  _followupModalState.matchId = null;
+}
+window.closeFollowUpModal = closeFollowUpModal;
+
+// Escape key + click-on-overlay closes the modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('followup-modal');
+    if (modal && modal.style.display !== 'none') closeFollowUpModal();
+  }
+});
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('followup-modal');
+  if (modal && modal.style.display !== 'none' && e.target === modal) closeFollowUpModal();
+});
+
+// ── LEGACY inline follow-up panel (kept for backwards compat; no longer triggered by buttons) ──
 function toggleFollowUpPanel(matchId) {
   const panel = $(`followup-panel-${matchId}`);
   if (!panel) return;
