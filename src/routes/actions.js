@@ -176,7 +176,7 @@ router.post('/send', async (req, res) => {
   try {
     const { data: match, error: matchError } = await supabase
       .from('podcast_matches')
-      .select('*, podcasts(contact_email), clients(gmail_refresh_token, name)')
+      .select('*, podcasts(contact_email, contact_sources), clients(gmail_refresh_token, name)')
       .eq('id', matchId)
       .eq('client_id', req.clientId)
       .single();
@@ -184,6 +184,30 @@ router.post('/send', async (req, res) => {
     if (matchError || !match) {
       logger.warn('/api/send match lookup failed', { matchId, clientId: req.clientId, supabaseError: matchError?.message });
       return res.status(404).json({ success: false, error: 'Match not found.' });
+    }
+
+    // Fallback: if contact_email column is empty but contact_sources receipt has
+    // a verified email, use it. Handles cases where the unlock system stored the
+    // address in the JSON receipt but later Claude verification nulled the column.
+    if (match.podcasts && !match.podcasts.contact_email) {
+      const sources = match.podcasts.contact_sources;
+      let fallbackEmail = null;
+      if (Array.isArray(sources)) {
+        const hit = sources.find(s => s?.field === 'contact_email' && typeof s.value === 'string' && s.value.includes('@'));
+        if (hit) fallbackEmail = hit.value;
+      } else if (sources && typeof sources === 'object') {
+        const hit = sources.contact_email;
+        if (hit && typeof hit === 'object' && typeof hit.value === 'string' && hit.value.includes('@')) {
+          fallbackEmail = hit.value;
+        } else if (typeof hit === 'string' && hit.includes('@')) {
+          fallbackEmail = hit;
+        }
+      }
+      if (fallbackEmail) {
+        match.podcasts.contact_email = fallbackEmail;
+        // Backfill the column so it self-heals — only does anything the first time.
+        supabase.from('podcasts').update({ contact_email: fallbackEmail }).eq('id', match.podcast_id).then(() => {}, () => {});
+      }
     }
 
     // ── SEND (Gmail preferred when connected, Resend fallback) ──────────
