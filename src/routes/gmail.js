@@ -207,10 +207,17 @@ async function getThreadMessageCount(refreshToken, threadId) {
 async function scanRepliesForClient(client) {
   if (!client?.gmail_refresh_token) return { checked: 0, updated: [], firstReplies: [] };
 
+  // The showcase podcast is seeded for every new customer as a demo card.
+  // Skip it entirely from the reply scanner — Zac's actual emails to the
+  // customer (welcome/onboarding) would otherwise false-positive as "Zac replied
+  // to my pitch" on a pitch the customer never sent.
+  const SHOWCASE_PODCAST_ID = 'fa9303fd-3567-4535-9c6f-b918723d8c68';
+
   const { data: matches } = await supabase
     .from('podcast_matches')
-    .select('id, gmail_thread_id, email_subject, sent_at, discovered_at, status, reply_count, client_id, podcasts(contact_email, title, host_name)')
+    .select('id, gmail_thread_id, email_subject, sent_at, discovered_at, status, reply_count, client_id, podcast_id, podcasts(contact_email, title, host_name)')
     .eq('client_id', client.id)
+    .neq('podcast_id', SHOWCASE_PODCAST_ID)
     .in('status', ['new', 'sent', 'followed_up', 'replied']);
 
   if (!matches?.length) return { checked: 0, updated: [], firstReplies: [] };
