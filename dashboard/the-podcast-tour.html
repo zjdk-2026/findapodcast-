@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Podcast Tour. — Become the obvious choice in your category.</title>
+  <meta name="description" content="A 90-day production campaign that puts your voice on the shows your buyers already trust. Done for you. You show up to record." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='12' fill='%230a0a0a'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-family='Georgia,serif' font-size='52' font-weight='400' fill='%23f5f1e8'%3ET%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+
+  <style>
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0a0a0a;
+      --ink-2: #14141a;
+      --cream: #f5f1e8;
+      --cream-soft: #e8e2d1;
+      --cream-dim: #8a8576;
+      --rule: rgba(245, 241, 232, 0.12);
+      --accent: #6366f1;
+      --accent-soft: #a5b4fc;
+    }
+
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 400;
+      line-height: 1.6;
+      letter-spacing: -0.005em;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .serif { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; letter-spacing: -0.02em; }
+    .sans { font-family: 'Inter', sans-serif; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+    /* ── NAV ─────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 22px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+    .wordmark .dot { color: var(--accent); }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 11px 22px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      transition: all 0.2s ease;
+      color: var(--cream);
+    }
+    .nav-cta:hover { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+
+    /* ── HERO ────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 120px 32px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -20%; right: -10%;
+      width: 60vw; height: 60vw;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 60%);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+
+    .hero-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin-bottom: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero-label::before {
+      content: '';
+      width: 32px; height: 1px;
+      background: var(--accent-soft);
+    }
+
+    h1.headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(48px, 8vw, 112px);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.035em;
+      max-width: 14ch;
+      margin-bottom: 36px;
+    }
+    h1.headline em { font-style: italic; color: var(--accent-soft); font-weight: 400; }
+
+    .hero-sub {
+      font-size: clamp(17px, 1.6vw, 21px);
+      color: var(--cream-soft);
+      max-width: 620px;
+      line-height: 1.55;
+      font-weight: 300;
+      margin-bottom: 56px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 42px;
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+      border: 1px solid var(--cream);
+    }
+    .cta:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(245, 241, 232, 0.18); }
+    .cta-secondary {
+      background: transparent; color: var(--cream); border-color: var(--rule);
+    }
+    .cta-secondary:hover { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+
+    .hero-foot {
+      margin-top: 80px;
+      padding-top: 32px;
+      border-top: 1px solid var(--rule);
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      flex-wrap: wrap;
+    }
+    .hero-foot strong { color: var(--cream-soft); font-weight: 500; }
+
+    /* ── PROOF MARQUEE ───────────────────────────────────────────────── */
+    section.proof {
+      padding: 96px 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      background: var(--ink-2);
+      overflow: hidden;
+    }
+    .proof-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: 56px;
+    }
+    .proof-names {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(28px, 4vw, 56px);
+      font-weight: 400;
+      line-height: 1.25;
+      text-align: center;
+      letter-spacing: -0.02em;
+      max-width: 1000px;
+      margin: 0 auto;
+      color: var(--cream-soft);
+    }
+    .proof-names em { font-style: italic; color: var(--accent-soft); }
+    .proof-names .sep { color: var(--cream-dim); margin: 0 0.4em; }
+    .proof-cta {
+      margin-top: 56px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cream-soft);
+    }
+
+    /* ── TRANSFORMATION ──────────────────────────────────────────────── */
+    section.transform {
+      padding: 160px 0;
+      position: relative;
+    }
+    .transform-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .transform-block {
+      padding: 0 8px;
+    }
+    .transform-tag {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: 28px;
+    }
+    .transform-tag.after { color: var(--accent-soft); }
+    .transform-text {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(28px, 3vw, 42px);
+      font-weight: 400;
+      line-height: 1.22;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+    }
+    .transform-text.muted { color: var(--cream-dim); }
+
+    @media (max-width: 820px) {
+      .transform-grid { grid-template-columns: 1fr; gap: 56px; }
+    }
+
+    /* ── TIERS ───────────────────────────────────────────────────────── */
+    section.tiers {
+      padding: 140px 0;
+      background: var(--ink-2);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    .tiers-head {
+      max-width: 760px;
+      margin: 0 auto 80px;
+      text-align: center;
+    }
+    .tiers-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin-bottom: 24px;
+    }
+    .tiers-headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      margin-bottom: 24px;
+    }
+    .tiers-sub {
+      font-size: 17px;
+      color: var(--cream-dim);
+      line-height: 1.65;
+      font-weight: 300;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    @media (max-width: 980px) {
+      .tiers-grid { grid-template-columns: 1fr; max-width: 480px; }
+    }
+
+    .tier {
+      background: var(--ink);
+      border: 1px solid var(--rule);
+      border-radius: 24px;
+      padding: 40px 36px 36px;
+      display: flex; flex-direction: column;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+      position: relative;
+    }
+    .tier:hover { transform: translateY(-4px); border-color: rgba(245, 241, 232, 0.3); }
+
+    .tier.featured {
+      background: linear-gradient(165deg, #1a1a2e 0%, #14141f 100%);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .tier.featured::before {
+      content: 'The sweet spot';
+      position: absolute;
+      top: -12px;
+      left: 36px;
+      background: var(--accent);
+      color: var(--cream);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    .tier-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .tier-tagline {
+      font-size: 13px;
+      color: var(--cream-dim);
+      letter-spacing: 0.02em;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .tier-price {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 48px;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 6px;
+      color: var(--cream);
+    }
+    .tier-price-meta {
+      font-size: 12px;
+      color: var(--cream-dim);
+      letter-spacing: 0.02em;
+      margin-bottom: 32px;
+    }
+    .tier-promises {
+      font-size: 14px;
+      color: var(--cream-soft);
+      line-height: 1.7;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+      margin-bottom: 36px;
+      flex: 1;
+    }
+    .tier-promises p { margin-bottom: 12px; }
+    .tier-promises p:last-child { margin-bottom: 0; }
+    .tier-promises strong { color: var(--cream); font-weight: 500; }
+
+    .tier-cta {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: all 0.2s ease;
+    }
+    .tier.featured .tier-cta { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+    .tier-cta:hover { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+    .tier.featured .tier-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245, 241, 232, 0.2); }
+
+    /* ── FINAL ───────────────────────────────────────────────────────── */
+    section.final {
+      padding: 160px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    section.final::before {
+      content: '';
+      position: absolute;
+      bottom: -30%; left: 50%;
+      transform: translateX(-50%);
+      width: 80vw; height: 80vw;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 60%);
+      filter: blur(100px);
+      pointer-events: none;
+    }
+    .final-inner { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; }
+    .final-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin-bottom: 32px;
+    }
+    .final-headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(40px, 6vw, 80px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 28px;
+    }
+    .final-headline em { font-style: italic; color: var(--accent-soft); font-weight: 400; }
+    .final-sub {
+      font-size: 17px;
+      color: var(--cream-dim);
+      line-height: 1.65;
+      font-weight: 300;
+      max-width: 540px;
+      margin: 0 auto 56px;
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────── */
+    footer {
+      padding: 56px 32px 40px;
+      border-top: 1px solid var(--rule);
+      background: var(--ink);
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: var(--cream-dim);
+    }
+    .footer-inner a:hover { color: var(--cream); }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      nav { padding: 18px 22px; }
+      .container { padding: 0 22px; }
+      .hero { padding: 100px 22px 60px; min-height: auto; }
+      .hero-foot { font-size: 10px; gap: 12px; }
+      section.transform { padding: 100px 0; }
+      section.tiers { padding: 96px 0; }
+      .tiers-grid { padding: 0 22px; }
+      section.final { padding: 100px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="wordmark">The Podcast Tour<span class="dot">.</span></a>
+    <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="nav-cta">Book a Strategy Call</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-label">A premium done-for-you service</div>
+      <h1 class="headline">Become the obvious choice in <em>your category.</em></h1>
+      <p class="hero-sub">A 90-day production campaign that puts your voice on the shows your buyers already trust. Story Arc, bookings, prep, content, distribution. We handle every detail. You show up to record.</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="cta">Book a Strategy Call
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#tiers" class="cta cta-secondary">See the offer</a>
+      </div>
+      <div class="hero-foot">
+        <span><strong>12 seats</strong> per quarter</span>
+        <span>90 days, fixed start and end</span>
+        <span>Guaranteed bookings &middot; full-stack production</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF -->
+  <section class="proof">
+    <div class="container">
+      <div class="proof-label">The biggest names already toured</div>
+      <p class="proof-names">
+        Tony Robbins<span class="sep">&middot;</span>Mel Robbins<span class="sep">&middot;</span>Alex Hormozi<span class="sep">&middot;</span>Tim Ferriss<span class="sep">&middot;</span>Naval Ravikant<span class="sep">&middot;</span>Codie Sanchez<span class="sep">&middot;</span>Lewis Howes<span class="sep">&middot;</span>Matthew McConaughey<span class="sep">&middot;</span>David Goggins<span class="sep">&middot;</span>Russell Brunson<span class="sep">&middot;</span>Brené Brown
+      </p>
+      <p class="proof-cta"><em>Now it's your turn.</em></p>
+    </div>
+  </section>
+
+  <!-- TRANSFORMATION -->
+  <section class="transform">
+    <div class="container">
+      <div class="transform-grid">
+        <div class="transform-block">
+          <div class="transform-tag">Before</div>
+          <p class="transform-text muted">You're the best at what you do. Your work compounds for the wrong people. LinkedIn posts get twelve likes. Cold outreach gets ignored. Referrals are unpredictable. The people who should be working with you don't know you exist.</p>
+        </div>
+        <div class="transform-block">
+          <div class="transform-tag after">Ninety days later</div>
+          <p class="transform-text">Your name moves through rooms before you do. Strangers tell you they heard you somewhere they trust. The right inbound shows up on its own. You stop chasing. You're the one being chased.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIERS -->
+  <section class="tiers" id="tiers">
+    <div class="container">
+      <div class="tiers-head">
+        <div class="tiers-label">The offer</div>
+        <h2 class="tiers-headline">Three ways to <em>tour.</em></h2>
+        <p class="tiers-sub">Twelve seats per quarter. Each Tour is a complete 90-day production campaign with a fixed start, a fixed end, and a guaranteed outcome.</p>
+      </div>
+
+      <div class="tiers-grid">
+
+        <div class="tier">
+          <div class="tier-name">The Tour</div>
+          <p class="tier-tagline">For experts ready to be the name in their niche.</p>
+          <div class="tier-price">$4,997</div>
+          <div class="tier-price-meta">One-time &middot; 90-day campaign</div>
+          <div class="tier-promises">
+            <p><strong>12 booked podcast appearances</strong> on shows your buyers already listen to.</p>
+            <p>Story Arc positioning, custom-written pitches, full follow-up.</p>
+            <p>Prep sheets 48 hours before every recording. You show up and talk.</p>
+          </div>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="tier-cta">Reserve your seat</a>
+        </div>
+
+        <div class="tier featured">
+          <div class="tier-name">The Tour + Engine</div>
+          <p class="tier-tagline">Tour your voice. Distribute everything you say. For twelve months.</p>
+          <div class="tier-price">$12,497</div>
+          <div class="tier-price-meta">One-time &middot; 90-day tour + 12-month engine</div>
+          <div class="tier-promises">
+            <p><strong>Everything in The Tour</strong>, plus the production engine that turns every recording into 20-40 ready-to-share assets.</p>
+            <p>Clips, quote cards, threads, long-form articles, scheduled distribution across your channels.</p>
+            <p>One year of done-for-you content from your tour. No content team needed.</p>
+          </div>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="tier-cta">Reserve your seat</a>
+        </div>
+
+        <div class="tier">
+          <div class="tier-name">Dominate</div>
+          <p class="tier-tagline">For founders who want to own their category. Period.</p>
+          <div class="tier-price">$34,997</div>
+          <div class="tier-price-meta">One-time &middot; full ownership campaign</div>
+          <div class="tier-promises">
+            <p><strong>Everything in Tour + Engine</strong>, plus a guaranteed <strong>1,000,000 cumulative views</strong> across episodes and distribution.</p>
+            <p>Niche dominance: <strong>#1 search-result guarantee</strong> for your name + category in 12 months.</p>
+            <p>Three private strategy sessions with the founder. Limited to <strong>3 seats</strong> per quarter.</p>
+          </div>
+          <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="tier-cta">Apply for Dominate</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final">
+    <div class="final-inner">
+      <div class="final-label">The invitation</div>
+      <h2 class="final-headline">The Tour starts <em>when you say go.</em></h2>
+      <p class="final-sub">A 15-minute strategy call. We'll show you the shows your buyers already trust, the angle that gets you booked, and whether this is a fit. No pitch. No pressure.</p>
+      <a href="https://api.leadconnectorhq.com/widget/bookings/find-a-podcast-demo-15-minutes" target="_blank" rel="noopener" class="cta">Book a Strategy Call
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="wordmark" style="font-size:15px;">The Podcast Tour<span class="dot">.</span></a>
+      <span>&copy; 2026 The Podcast Tour. A Unitas Ventures production.</span>
+      <a href="mailto:hi@thepodcasttour.com">hi@thepodcasttour.com</a>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -245,9 +245,20 @@ app.get('/operator', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'operator.html'));
 });
 
-// Root — landing page
+// Root — host-aware landing
+// thepodcasttour.com -> premium tour landing
+// everything else (findapodcast.io etc) -> existing landing
 app.get('/', (req, res) => {
+  const host = (req.headers.host || '').toLowerCase();
+  if (host.includes('thepodcasttour.com')) {
+    return res.sendFile(path.join(dashboardDir, 'the-podcast-tour.html'));
+  }
   res.sendFile(path.join(dashboardDir, 'landing.html'));
+});
+
+// Direct route for testing / share-links before DNS cuts over
+app.get('/tour', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'the-podcast-tour.html'));
 });
 
 // Preview — redesigned landing page (review before going live)
