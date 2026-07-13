@@ -1029,6 +1029,15 @@ html:not(.light-mode) .onboarding-inner {
   position: relative;
   overflow: visible;
 }
+.match-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.filter-tab.drop-target {
+  outline: 2px dashed var(--accent, #6366f1);
+  outline-offset: 2px;
+  background: var(--bg-hover, rgba(99, 102, 241, 0.12));
+}
 .match-card .card-row {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   overflow: hidden;

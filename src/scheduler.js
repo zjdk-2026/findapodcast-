@@ -288,25 +288,9 @@ function initScheduler() {
     } catch (err) { logger.error('Monthly credits reset failed', { error: err.message }); }
   }, { timezone: 'UTC', scheduled: true });
 
-  // Daily auto follow-up sweep — 7am UTC
-  // Picks up matches sent ~7 days ago that haven't had a reply or follow-up yet,
-  // generates a personalised follow-up via Claude, charges 1 credit, sends via Gmail.
-  cron.schedule('0 7 * * *', async () => {
-    try {
-      const { runFollowupSweep } = require('./services/followupSweep');
-      await runFollowupSweep();
-    } catch (err) { logger.error('Daily follow-up sweep failed', { error: err.message }); }
-  }, { timezone: 'UTC', scheduled: true });
-
-  // 24h-before heads-up — 6am UTC, one hour before the sweep runs.
-  // Emails customers a heads-up so they can edit/skip/send-now from the dashboard
-  // BEFORE the 7-day auto-fire happens. Premium UX = control, not surprises.
-  cron.schedule('0 6 * * *', async () => {
-    try {
-      const { runFollowupHeadsUp } = require('./services/followupSweep');
-      await runFollowupHeadsUp();
-    } catch (err) { logger.error('Daily follow-up heads-up failed', { error: err.message }); }
-  }, { timezone: 'UTC', scheduled: true });
+  // Automatic follow-up email is DISABLED. Follow-ups are now sent manually by the
+  // customer from the dashboard (the "Follow Up" button on each card). The daily
+  // auto-sweep and its 24h heads-up email are intentionally not scheduled.
 
   logger.info('Scheduler initialised');
 }

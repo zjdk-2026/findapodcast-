@@ -1304,15 +1304,9 @@ async function unlockContact(event, podcastId) {
   }
 }
 
-function showToast(msg) {
-  try {
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,0.3);';
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  } catch { /* no-op */ }
-}
+// NOTE: showToast is defined once near the top of this file (with type support).
+// A second bare definition used to live here and silently overrode it via
+// function hoisting, killing success/error styling app-wide. Do not re-add.
 
 // ── Social chips HTML (legacy, kept for compatibility) ─────────────────
 function socialChipsHtml(podcast) { return []; }
@@ -2018,7 +2012,7 @@ function renderMatchCard(match) {
   const socialHtml = '';
 
   return `
-  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false">
+  <article class="match-card status-${esc(match.status)} ${tierClass} ${bookedClass}" id="card-${esc(match.id)}" data-match-id="${esc(match.id)}" data-status="${esc(match.status)}" data-score="${fitScore}" data-expanded="false" draggable="true" ondragstart="cardDragStart(event,'${esc(match.id)}')" ondragend="cardDragEnd(event)">
 
     <!-- Collapsed row — click to expand -->
     <div class="card-row" onclick="toggleCardExpand('${esc(match.id)}')">
@@ -5687,10 +5681,71 @@ function loadTemplate(templateId) {
 }
 window.loadTemplate = loadTemplate;
 
+// ── Drag & drop cards onto stage tabs ─────────────────────────────────
+const DRAG_TARGET_STATUSES = ['new', 'sent', 'followed_up', 'replied', 'booked', 'appeared', 'dream', 'dismissed'];
+const STAGE_LABELS = {
+  new: 'New', sent: 'Pitched', followed_up: 'Followed Up', replied: 'Host Replied',
+  booked: 'Booked', appeared: 'Aired', dream: 'Wish List', dismissed: 'Not a Fit',
+};
+
+function cardDragStart(e, matchId) {
+  e.dataTransfer.setData('text/plain', matchId);
+  e.dataTransfer.effectAllowed = 'move';
+  const card = document.getElementById(`card-${matchId}`);
+  if (card) card.classList.add('dragging');
+}
+function cardDragEnd() {
+  document.querySelectorAll('.match-card.dragging').forEach((c) => c.classList.remove('dragging'));
+  document.querySelectorAll('.filter-tab.drop-target').forEach((t) => t.classList.remove('drop-target'));
+}
+window.cardDragStart = cardDragStart;
+window.cardDragEnd = cardDragEnd;
+
+async function moveCardToStage(matchId, targetStatus) {
+  const match = state.matches.find((m) => m.id === matchId);
+  if (!match || match.status === targetStatus) return;
+  const prevStatus = match.status;
+  updateMatchInState(matchId, { status: targetStatus });
+  renderGrid();
+  updateStatBadges();
+  const data = await apiPost('/api/update-status', { matchId, status: targetStatus });
+  if (data && data.success) {
+    updateMatchInState(matchId, data.match || { status: targetStatus });
+    showToast(`Moved to ${STAGE_LABELS[targetStatus] || targetStatus}`, 'success');
+  } else {
+    updateMatchInState(matchId, { status: prevStatus });
+    renderGrid();
+    updateStatBadges();
+    showToast((data && data.error) || 'Could not move card', 'error');
+  }
+}
+
 // ── Filter tabs ───────────────────────────────────────────────────────
 function initFilterTabs() {
   const tabs = $('filter-tabs');
   if (!tabs) return;
+
+  tabs.addEventListener('dragover', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab || !DRAG_TARGET_STATUSES.includes(tab.dataset.status)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    tabs.querySelectorAll('.filter-tab.drop-target').forEach((t) => { if (t !== tab) t.classList.remove('drop-target'); });
+    tab.classList.add('drop-target');
+  });
+  tabs.addEventListener('dragleave', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (tab) tab.classList.remove('drop-target');
+  });
+  tabs.addEventListener('drop', (e) => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab || !DRAG_TARGET_STATUSES.includes(tab.dataset.status)) return;
+    e.preventDefault();
+    tab.classList.remove('drop-target');
+    const matchId = e.dataTransfer.getData('text/plain');
+    if (matchId) moveCardToStage(matchId, tab.dataset.status);
+  });
+
   tabs.addEventListener('click', (e) => {
     const tab = e.target.closest('.filter-tab');
     if (!tab) return;
