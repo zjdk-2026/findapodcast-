@@ -61,7 +61,8 @@
       "Bash(curl -s \"https://findapodcast.io/api/stages/c1e62c5c-c2a4-4cca-9411-66f0571e704a\")",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('ok:',j.ok\\);console.log\\('matches:',j.matches?.length\\);const byCity={};\\(j.matches||[]\\).forEach\\(m=>{const k=m.stages?.is_virtual?'virtual':\\(m.stages?.location_city||'?'\\);byCity[k]=\\(byCity[k]||0\\)+1}\\);console.log\\('by location:',byCity\\)}\\)\")",
       "Bash(node -c src/routes/gmail.js)",
-      "Bash(node -c src/routes/referral.js)"
+      "Bash(node -c src/routes/referral.js)",
+      "Bash(cp /root/.claude/uploads/9174a083-d3bf-466f-aee2-5dcf6f943c29/e06453d3-generate_pdfs.py /home/user/findapodcast-/pdf-tools/generate_pdfs.py)"
     ]
   }
 }
