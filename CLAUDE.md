@@ -54,6 +54,7 @@ Restart: kill PID on port 3000, then start again
 - POST /api/unlock/:podcastId (zero-hallucination deep contact reveal — requires dashboard token)
 - PATCH /api/onboard/:clientId (profile update)
 - Gmail OAuth: /auth/gmail, /auth/gmail/callback
+- Tour Tracker: GET /tour-tracker?key=OPERATOR_KEY (live Notion Show Directory dashboard), GET /api/tour-tracker
 
 ## Supabase
 URL: https://ldyocadmkwesdwcnojjf.supabase.co
@@ -75,7 +76,8 @@ Push: `git add . && git commit -m "msg" && git push origin master`
 ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, LISTENNOTES_API_KEY,
 GOOGLE_SEARCH_API_KEY, GOOGLE_SEARCH_CX, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
 RESEND_API_KEY, RESEND_FROM_EMAIL, OPERATOR_KEY, BASE_URL, GOOGLE_REDIRECT_URI,
-CRON_SECRET (required for /api/cron/check-replies-all)
+CRON_SECRET (required for /api/cron/check-replies-all),
+NOTION_TOKEN (Tour Tracker; integration must be connected to Podcast Tour HQ › Show Directory)
 
 ## Reply detection cron (Apr 27 2026)
 - POST /api/cron/check-replies-all (header `x-cron-secret: $CRON_SECRET`) scans every connected client every 5 min, regardless of whether their dashboard tab is open.
@@ -84,3 +86,8 @@ CRON_SECRET (required for /api/cron/check-replies-all)
 - Set up Railway cron via Railway dashboard → Cron Jobs: `*/5 * * * *  curl -X POST -H "x-cron-secret: $CRON_SECRET" $BASE_URL/api/cron/check-replies-all`
 - Bounce-aware: mailer-daemon delivery failures NEVER count as replies. `getThreadMessageCount` uses metadata format and filters via `isBounceMessage()`. `checkInboxForReplyFromEmail` injects `-from:mailer-daemon -subject:"delivery status notification" -subject:"undeliverable"` into every search query.
 - Thread caching tags bounces with `message_type='bounce'` and reverts the match to 'sent' if every inbound message was a bounce.
+
+## Tour Tracker (Oct 2026)
+- `/tour-tracker?key=OPERATOR_KEY` reads Notion Podcast Tour HQ › Show Directory (data source `d1500ea9-ff0f-402b-86c7-2b334911111f`) live on every load. Notion API version 2025-09-03.
+- Notion keeps no status history, so each sync logs status changes to `tour_status_events` (`supabase/add-tour-tracker.sql`). "Pitched date" = first observed transition to PITCHED. Drives the follow-up list + activity feed.
+- Response rate = (BOOKED+PASSED) ÷ (PITCHED+BOOKED+PASSED). Booking rate = BOOKED ÷ (BOOKED+PASSED). DUPLICATE excluded.

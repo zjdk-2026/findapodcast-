@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour Tracker</title>
+<link rel="icon" href="/dashboard/favicon.svg">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f4f2;
+    --surface-1: #fcfcfb;
+    --border: #e3e2de;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #85847f;
+    --accent: #2a78d6;
+    --accent-track: #dbe8f8;
+    --warning: #b26b00;
+    --warning-bg: #fdf3e1;
+    --critical: #c33a39;
+    --good: #00733a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #111110;
+      --surface-1: #1a1a19;
+      --border: #2e2e2c;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8e8d86;
+      --accent: #3987e5;
+      --accent-track: #1f3550;
+      --warning: #e0a03a;
+      --warning-bg: #2e2412;
+      --critical: #e66767;
+      --good: #4cc27f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface-0); color: var(--text-primary);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; }
+  .sub { color: var(--text-muted); font-size: 13px; }
+  button, input, select {
+    font: inherit; color: var(--text-primary); background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px;
+  }
+  button { cursor: pointer; font-weight: 600; }
+  button:hover { border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .card h2 .hint { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .tile .label { color: var(--text-secondary); font-size: 13px; }
+  .tile .value { font-size: 34px; font-weight: 650; margin-top: 2px; }
+  .tile .detail { color: var(--text-muted); font-size: 12px; }
+  .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .stage { display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 10px; padding: 6px 0; }
+  .stage .name { font-size: 14px; color: var(--text-secondary); }
+  .stage .track { height: 14px; background: var(--accent-track); border-radius: 4px; overflow: hidden; }
+  .stage .fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 0; }
+  .stage .n { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stage.stuck .name { color: var(--warning); font-weight: 600; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list li { padding: 9px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 12px; }
+  ul.list li:first-child { border-top: 0; }
+  .meta { color: var(--text-muted); font-size: 12px; }
+  .empty { color: var(--text-muted); font-size: 14px; padding: 8px 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--text-muted)); }
+  .s-PITCHED { --dot: var(--warning); }
+  .s-BOOKED { --dot: var(--good); }
+  .s-PASSED { --dot: var(--critical); }
+  .overdue { color: var(--warning); font-weight: 600; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .controls input[type=search] { min-width: 200px; }
+  .days-input { width: 64px; padding: 4px 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--text-muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td a, ul.list a { color: var(--text-primary); font-weight: 600; text-decoration: none; }
+  td a:hover, ul.list a:hover { text-decoration: underline; }
+  .banner { background: var(--warning-bg); color: var(--text-primary); border: 1px solid var(--warning); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  .banner.error { border-color: var(--critical); }
+  .footnote { color: var(--text-muted); font-size: 12px; margin-top: 10px; }
+  @media (max-width: 860px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .stage { grid-template-columns: 110px 1fr 32px; }
+    thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tr { border-bottom: 1px solid var(--border); padding: 8px 0; }
+    td { border: 0; padding: 2px 0; }
+    td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-size: 12px; }
+    .controls input[type=search] { min-width: 0; flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Podcast Tour Outreach</h1>
+      <div class="sub" id="synced">Loading from Notion…</div>
+    </div>
+    <button id="refresh">⟳ Refresh</button>
+  </header>
+
+  <div id="banners"></div>
+
+  <section class="tiles">
+    <div class="card tile"><div class="label">Pitched</div><div class="value" id="t-sent">–</div><div class="detail">Pitched + Booked + Passed</div></div>
+    <div class="card tile"><div class="label">Response rate</div><div class="value" id="t-resp">–</div><div class="detail" id="t-resp-d">responded ÷ pitched</div></div>
+    <div class="card tile"><div class="label">Booking rate</div><div class="value" id="t-book">–</div><div class="detail" id="t-book-d">booked ÷ responded</div></div>
+    <div class="card tile"><div class="label">Needs follow-up</div><div class="value" id="t-fu">–</div><div class="detail" id="t-fu-d">&nbsp;</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Pipeline</h2>
+      <div id="pipeline"></div>
+    </div>
+    <div class="card">
+      <h2>Needs follow-up
+        <span class="hint">Pitched <input class="days-input" id="days" type="number" min="1" max="90"> + days ago, no response</span>
+      </h2>
+      <ul class="list" id="followups"></ul>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card" style="grid-column: 1 / -1">
+      <h2>Recent activity <span class="hint">Last 15 status changes</span></h2>
+      <ul class="list" id="activity"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>All shows
+      <span class="controls">
+        <input type="search" id="q" placeholder="Search show, host, client">
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option>NEW</option><option>PITCHED</option><option>BOOKED</option><option>PASSED</option>
+        </select>
+      </span>
+    </h2>
+    <table>
+      <thead><tr><th>Show</th><th>Host</th><th>Client</th><th>Pitched</th><th>Status</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="footnote">Source: Notion › Podcast Tour HQ › Show Directory. Notion has no "date reached out" field, so the pitched date is when this dashboard first saw the show move to PITCHED. "Responded" counts shows marked BOOKED or PASSED, because Show Directory has no "replied" status.</div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const STAGES = [
+    { key: 'NEW', label: 'New (not pitched)' },
+    { key: 'PITCHED', label: 'Pitched, no response' },
+    { key: 'BOOKED', label: 'Booked' },
+    { key: 'PASSED', label: 'Passed (declined)' },
+  ];
+  const AUTO_REFRESH_MS = 5 * 60 * 1000;
+  const DAY = 86400000;
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key') || '';
+  const $ = (id) => document.getElementById(id);
+  let data = null;
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (_) { return null; } }
+  $('days').value = Number(store('tourTracker.days')) || 7;
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '–');
+  const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—';
+  const daysAgo = (iso) => Math.floor((Date.now() - new Date(iso).getTime()) / DAY);
+  const ago = (iso) => {
+    const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    if (m < 1440) return Math.round(m / 60) + 'h ago';
+    return Math.round(m / 1440) + 'd ago';
+  };
+  const pill = (s) => `<span class="pill s-${esc(s)}">${esc(s || 'No status')}</span>`;
+
+  async function load() {
+    $('refresh').disabled = true;
+    $('refresh').textContent = 'Refreshing…';
+    try {
+      const res = await fetch('/api/tour-tracker?key=' + encodeURIComponent(key));
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+      data = json;
+      render();
+    } catch (err) {
+      $('banners').innerHTML = `<div class="banner error">Couldn't load from Notion: ${esc(err.message)}</div>`;
+      $('synced').textContent = data ? 'Showing last loaded data' : 'Not loaded';
+    } finally {
+      $('refresh').disabled = false;
+      $('refresh').textContent = '⟳ Refresh';
+    }
+  }
+
+  function render() {
+    const shows = data.shows;
+    const count = (s) => shows.filter((x) => x.status === s).length;
+    const pitched = count('PITCHED'), booked = count('BOOKED'), passed = count('PASSED');
+    const sent = pitched + booked + passed, responded = booked + passed;
+    const X = Number($('days').value) || 7;
+
+    $('synced').textContent = `Synced ${new Date(data.syncedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${shows.length} shows · auto-refreshes every 5 min`;
+    $('banners').innerHTML = data.historyError
+      ? `<div class="banner">Status history isn't being recorded yet (${esc(data.historyError)}). Run <code>supabase/add-tour-tracker.sql</code> in Supabase to enable follow-ups and the activity feed.</div>`
+      : '';
+
+    $('t-sent').textContent = sent;
+    $('t-resp').textContent = pct(responded, sent);
+    $('t-resp-d').textContent = `${responded} of ${sent} responded`;
+    $('t-book').textContent = pct(booked, responded);
+    $('t-book-d').textContent = `${booked} of ${responded} booked`;
+
+    const max = Math.max(1, ...STAGES.map((s) => count(s.key)));
+    const biggestOpen = Math.max(count('NEW'), pitched);
+    $('pipeline').innerHTML = STAGES.map((s) => {
+      const n = count(s.key);
+      const stuck = (s.key === 'NEW' || s.key === 'PITCHED') && n > 0 && n === biggestOpen;
+      return `<div class="stage${stuck ? ' stuck' : ''}" title="${esc(s.label)}: ${n}">
+        <div class="name">${esc(s.label)}${stuck ? ' ⚠' : ''}</div>
+        <div class="track"><div class="fill" style="width:${(n / max) * 100}%"></div></div>
+        <div class="n">${n}</div></div>`;
+    }).join('') + `<div class="footnote">⚠ marks the open stage holding the most shows.</div>`;
+
+    const followups = shows
+      .filter((s) => s.status === 'PITCHED' && s.pitchedAt && daysAgo(s.pitchedAt) >= X)
+      .sort((a, b) => new Date(a.pitchedAt) - new Date(b.pitchedAt));
+    const undated = shows.filter((s) => s.status === 'PITCHED' && !s.pitchedAt).length;
+    $('t-fu').textContent = data.historyError ? '–' : followups.length;
+    $('t-fu-d').textContent = `pitched ${X}+ days ago`;
+    $('followups').innerHTML = followups.length
+      ? followups.map((s) => `<li><div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.clients.length ? ' · for ' + esc(s.clients.join(', ')) : ''}</div></div>
+          <div class="overdue">${daysAgo(s.pitchedAt)}d${s.pitchedAtIsFirstSeen ? '+' : ''}</div></li>`).join('')
+      : `<li class="empty">${data.historyError ? 'Needs status history (see banner).' : 'Nothing overdue. Nice.'}${undated ? ` ${undated} pitched show(s) have no tracked pitch date yet.` : ''}</li>`;
+
+    $('activity').innerHTML = !data.activity
+      ? '<li class="empty">Needs status history (see banner).</li>'
+      : data.activity.length
+        ? data.activity.map((e) => `<li><div><strong>${esc(e.show_name)}</strong> <span class="meta">${e.from_status ? esc(e.from_status) + ' →' : 'added as'}</span> ${pill(e.to_status)}</div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`).join('')
+        : '<li class="empty">No status changes yet.</li>';
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = $('q').value.trim().toLowerCase();
+    const sf = $('statusFilter').value;
+    const rows = data.shows
+      .filter((s) => !sf || s.status === sf)
+      .filter((s) => !q || [s.name, s.host, ...s.clients].join(' ').toLowerCase().includes(q))
+      .sort((a, b) => (b.pitchedAt || '').localeCompare(a.pitchedAt || '') || a.name.localeCompare(b.name));
+    $('rows').innerHTML = rows.length
+      ? rows.map((s) => `<tr>
+          <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td>
+          <td data-label="Host">${esc(s.host || '—')}</td>
+          <td data-label="Client">${esc(s.clients.join(', ') || '—')}</td>
+          <td data-label="Pitched" title="${s.pitchedAtIsFirstSeen ? 'Already pitched when first seen — actual date may be earlier' : ''}">${fmtDate(s.pitchedAt)}${s.pitchedAtIsFirstSeen ? ' (first seen)' : ''}</td>
+          <td data-label="Status">${pill(s.status)}</td></tr>`).join('')
+      : `<tr><td colspan="5" class="empty">${data.shows.length ? 'No shows match.' : 'Show Directory is empty. Shows appear here as soon as they are added in Notion.'}</td></tr>`;
+  }
+
+  $('refresh').addEventListener('click', load);
+  $('days').addEventListener('change', () => { store('tourTracker.days', $('days').value); if (data) render(); });
+  $('q').addEventListener('input', () => data && renderTable());
+  $('statusFilter').addEventListener('change', () => data && renderTable());
+  setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && data && Date.now() - new Date(data.syncedAt).getTime() > AUTO_REFRESH_MS) load();
+  });
+  load();
+})();
+</script>
+</body>
+</html>

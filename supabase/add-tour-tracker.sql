@@ -1,0 +1,15 @@
+-- Tour Tracker — status change log for the Notion "Show Directory".
+-- Notion keeps no status history, so /api/tour-tracker records each change it observes.
+CREATE TABLE IF NOT EXISTS public.tour_status_events (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  page_id      TEXT NOT NULL,
+  show_name    TEXT,
+  from_status  TEXT,
+  to_status    TEXT,
+  observed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_status_events_page     ON public.tour_status_events(page_id, observed_at);
+CREATE INDEX IF NOT EXISTS idx_tour_status_events_observed ON public.tour_status_events(observed_at DESC);
+
+ALTER TABLE public.tour_status_events ENABLE ROW LEVEL SECURITY;

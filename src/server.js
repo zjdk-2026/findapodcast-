@@ -91,6 +91,7 @@ app.get('/health', async (req, res) => {
 app.use('/', require('./routes/agency'));
 app.use('/', require('./routes/stages'));
 app.use('/', require('./routes/referral'));
+app.use('/', require('./routes/tour-tracker'));
 app.use('/api', require('./routes/inbound-email')); // Resend webhook — no auth, must be first
 
 app.use('/api/auth', authRouter);
@@ -238,6 +239,11 @@ app.get('/self-managed-overview', (req, res) => {
 
 app.get('/proposal', (req, res) => {
   res.sendFile(path.join(dashboardDir, 'proposal.html'));
+});
+
+// Tour outreach tracker (operator key required by its API)
+app.get('/tour-tracker', (req, res) => {
+  res.sendFile(path.join(dashboardDir, 'tour-tracker.html'));
 });
 
 // Operator page
