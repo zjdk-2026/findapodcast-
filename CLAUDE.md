@@ -89,7 +89,7 @@ NOTION_TOKEN (Tour Tracker; integration must be connected to Podcast Tour HQ ›
 
 ## Tour Tracker (Oct 2026)
 - `/tour-tracker?key=OPERATOR_KEY` reads Notion Podcast Tour HQ › Show Directory (data source `d1500ea9-ff0f-402b-86c7-2b334911111f`) live. Notion API version 2025-09-03. READ ONLY — never write to Notion.
-- Fields read: Show Name, Host, Status, Client, Clients Introduced, Instagram Link, Facebook Link, Email or Booking Link, Channel, Date Sent, Follow Up Date, DM Draft, Perfect Guest, Source.
+- Fields read: every url-type property (shown as Website & socials links — only what is in Notion, nothing inferred), Show Name, Host, Status, Client, Clients Introduced, Instagram Link, Facebook Link, Email or Booking Link, Channel, Date Sent, Follow Up Date, DM Draft, Perfect Guest, Source.
 - Status order: NEW, DM READY, SENT, REPLIED, CALL BOOKED, GUEST INTRODUCED, BOOKED, PASSED, CONTACT NEEDED, DUPLICATE. Legacy PITCHED = SENT.
 - Sent = SENT..BOOKED + PASSED. Response = (REPLIED..BOOKED + PASSED) ÷ Sent. Call = (CALL BOOKED..BOOKED) ÷ Replied. Booking = BOOKED ÷ Replied.
 - Timing uses Date Sent; falls back to first-seen-as-SENT/PITCHED from `tour_status_events` (`supabase/add-tour-tracker.sql`), shown as "est.". Server syncs every 15 min so history is kept without the page open.

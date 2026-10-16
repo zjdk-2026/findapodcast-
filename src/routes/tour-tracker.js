@@ -74,6 +74,10 @@ async function fetchShows() {
       dmDraft:            prop(p['DM Draft']),
       perfectGuest:       prop(p['Perfect Guest']),
       source:             prop(p['Source']),
+      links:              Object.entries(p)
+        .filter(([, v]) => v.type === 'url' && v.url)
+        .map(([name, v]) => ({ label: name.replace(/ Link$/, ''), url: v.url }))
+        .sort((a, b) => (a.label === 'Website' ? -1 : b.label === 'Website' ? 1 : 0)),
     };
   });
 }

@@ -196,7 +196,7 @@
       </span>
     </h2>
     <table>
-      <thead><tr><th>Show</th><th>Status</th><th>Contact</th><th>Date sent</th><th>Follow up</th><th>Source</th><th>Client</th></tr></thead>
+      <thead><tr><th>Show</th><th>Status</th><th>Website &amp; socials</th><th>Date sent</th><th>Follow up</th><th>Source</th><th>Client</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
     <div class="footnote">Source: Notion › Podcast Tour HQ › Show Directory (read only). Timing uses Date Sent. Where Date Sent is empty, the date the dashboard first saw the show as SENT is used and marked "est.". PITCHED counts as SENT.</div>
@@ -220,7 +220,12 @@
   $('statusFilter').insertAdjacentHTML('beforeend', PIPELINE.map((s) => `<option>${s}</option>`).join(''));
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const safeUrl = (u) => (/^(https?:|mailto:)/i.test(u || '') ? u : null);
+  const safeUrl = (u) => {
+    if (/^(https?:|mailto:)/i.test(u || '')) return u;
+    if (/^[^\s@/]+@[^\s@/]+\.[a-z]{2,}$/i.test(u || '')) return 'mailto:' + u;
+    if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(u || '')) return 'https://' + u;
+    return null;
+  };
   const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '–');
   const fmtDate = (iso) => iso ? new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—';
   const dayStart = (iso) => new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).setHours(0, 0, 0, 0);
@@ -237,7 +242,7 @@
   };
   const pill = (s) => `<span class="pill ${cls(s)}">${esc(s || 'No status')}</span>`;
   const link = (u, label) => (safeUrl(u) ? `<a class="chip" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${label}</a>` : '');
-  const contactLinks = (s) => [link(s.instagram, 'Instagram'), link(s.facebook, 'Facebook'), link(s.emailOrBooking, 'Email / Booking')].filter(Boolean).join(' ') || '<span class="meta">—</span>';
+  const contactLinks = (s) => (s.links || []).map((l) => link(l.url, esc(l.label))).filter(Boolean).join(' ') || '<span class="meta">No links in Notion</span>';
   const sentLabel = (s) => s.sentAt ? `${fmtDate(s.sentAt)}${s.sentEstimated ? ' <span class="meta">est.</span>' : ''}` : '—';
 
   async function load() {
@@ -296,7 +301,7 @@
           <div class="dm-head">
             <div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
               <div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · via ' + esc(s.channel) : ''}${s.clients.length ? ' · for ' + esc(s.clients.join(', ')) : ''}</div></div>
-            <div class="dm-links">${link(s.instagram, 'Instagram')} ${link(s.facebook, 'Facebook')}${!s.instagram && !s.facebook ? link(s.emailOrBooking, 'Email / Booking') || '<span class="meta">No DM link</span>' : ''}</div>
+            <div class="dm-links">${contactLinks(s)}</div>
           </div>
           ${s.dmDraft ? `<div class="draft">${esc(s.dmDraft)}</div><button class="copy" data-i="${i}">Copy DM</button>` : '<div class="meta">No DM Draft yet.</div>'}
         </div>`).join('')
@@ -346,7 +351,7 @@
       ? rows.map((s) => `<tr>
           <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · ' + esc(s.channel) : ''}</div></td>
           <td data-label="Status">${pill(s.status)}</td>
-          <td data-label="Contact">${contactLinks(s)}</td>
+          <td data-label="Links">${contactLinks(s)}</td>
           <td data-label="Date sent">${sentLabel(s)}</td>
           <td data-label="Follow up">${fmtDate(s.followUpDate)}</td>
           <td data-label="Source">${esc(s.source || '—')}</td>
