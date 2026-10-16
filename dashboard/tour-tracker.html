@@ -76,13 +76,13 @@
   .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
   .card h2 { font-size: 15px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
   .card h2 .hint { font-weight: 400; color: var(--text-muted); font-size: 12px; }
-  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
   .tile .label { color: var(--text-secondary); font-size: 13px; }
-  .tile .value { font-size: 34px; font-weight: 650; margin-top: 2px; }
+  .tile .value { font-size: 30px; font-weight: 650; margin-top: 2px; }
   .tile .detail { color: var(--text-muted); font-size: 12px; }
   .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-bottom: 16px; }
-  .stage { display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 10px; padding: 6px 0; }
-  .stage .name { font-size: 14px; color: var(--text-secondary); }
+  .stage { display: grid; grid-template-columns: 160px 1fr 40px; align-items: center; gap: 10px; padding: 6px 0; }
+  .stage .name { font-size: 13px; color: var(--text-secondary); }
   .stage .track { height: 14px; background: var(--accent-track); border-radius: 4px; overflow: hidden; }
   .stage .fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 0; }
   .stage .n { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -94,9 +94,19 @@
   .empty { color: var(--text-muted); font-size: 14px; padding: 8px 0; }
   .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
   .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--text-muted)); }
-  .s-PITCHED { --dot: var(--warning); }
+  .s-DM-READY, .s-REPLIED, .s-CALL-BOOKED, .s-GUEST-INTRODUCED { --dot: var(--accent); }
+  .s-SENT, .s-CONTACT-NEEDED { --dot: var(--warning); }
   .s-BOOKED { --dot: var(--good); }
   .s-PASSED { --dot: var(--critical); }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; margin: 0 4px 4px 0; }
+  .dm { border-top: 1px solid var(--border); padding: 12px 0; }
+  .dm:first-child { border-top: 0; padding-top: 0; }
+  .dm-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .dm-head a { color: var(--text-primary); font-weight: 600; text-decoration: none; }
+  .dm-links a.chip { color: var(--text-primary); text-decoration: none; }
+  .dm-links a.chip:hover, td a.chip:hover { border-color: var(--accent); text-decoration: none; }
+  .draft { white-space: pre-wrap; background: var(--surface-0); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 8px; }
+  button.copy { padding: 5px 12px; font-size: 13px; }
   .overdue { color: var(--warning); font-weight: 600; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; }
   .controls input[type=search] { min-width: 200px; }
@@ -109,6 +119,7 @@
   .banner { background: var(--warning-bg); color: var(--text-primary); border: 1px solid var(--warning); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
   .banner.error { border-color: var(--critical); }
   .footnote { color: var(--text-muted); font-size: 12px; margin-top: 10px; }
+  @media (max-width: 1100px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 860px) {
     .tiles { grid-template-columns: repeat(2, 1fr); }
     .grid { grid-template-columns: 1fr; }
@@ -140,10 +151,17 @@
   <div id="banners"></div>
 
   <section class="tiles">
-    <div class="card tile"><div class="label">Pitched</div><div class="value" id="t-sent">–</div><div class="detail">Pitched + Booked + Passed</div></div>
-    <div class="card tile"><div class="label">Response rate</div><div class="value" id="t-resp">–</div><div class="detail" id="t-resp-d">responded ÷ pitched</div></div>
-    <div class="card tile"><div class="label">Booking rate</div><div class="value" id="t-book">–</div><div class="detail" id="t-book-d">booked ÷ responded</div></div>
+    <div class="card tile"><div class="label">Sent</div><div class="value" id="t-sent">–</div><div class="detail">SENT or further along</div></div>
+    <div class="card tile"><div class="label">Response rate</div><div class="value" id="t-resp">–</div><div class="detail" id="t-resp-d">&nbsp;</div></div>
+    <div class="card tile"><div class="label">Call rate</div><div class="value" id="t-call">–</div><div class="detail" id="t-call-d">&nbsp;</div></div>
+    <div class="card tile"><div class="label">Booking rate</div><div class="value" id="t-book">–</div><div class="detail" id="t-book-d">&nbsp;</div></div>
+    <div class="card tile"><div class="label">DM ready</div><div class="value" id="t-dm">–</div><div class="detail">to send today</div></div>
     <div class="card tile"><div class="label">Needs follow-up</div><div class="value" id="t-fu">–</div><div class="detail" id="t-fu-d">&nbsp;</div></div>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <h2>DM Ready queue <span class="hint">Your daily send list</span></h2>
+    <div id="dmqueue"></div>
   </section>
 
   <section class="grid">
@@ -153,7 +171,7 @@
     </div>
     <div class="card">
       <h2>Needs follow-up
-        <span class="hint">Pitched <input class="days-input" id="days" type="number" min="1" max="90"> + days ago, no response</span>
+        <span class="hint">Follow Up Date due, or sent <input class="days-input" id="days" type="number" min="1" max="90"> + days ago with none set</span>
       </h2>
       <ul class="list" id="followups"></ul>
     </div>
@@ -170,42 +188,46 @@
     <h2>All shows
       <span class="controls">
         <input type="search" id="q" placeholder="Search show, host, client">
-        <select id="statusFilter">
-          <option value="">All statuses</option>
-          <option>NEW</option><option>PITCHED</option><option>BOOKED</option><option>PASSED</option>
+        <select id="statusFilter"><option value="">All statuses</option></select>
+        <select id="sourceFilter">
+          <option value="">All sources</option>
+          <option>Tom Sheet</option><option>Stewart Sheet</option><option>Gaetan Sheet</option><option>Agent</option>
         </select>
       </span>
     </h2>
     <table>
-      <thead><tr><th>Show</th><th>Host</th><th>Client</th><th>Pitched</th><th>Status</th></tr></thead>
+      <thead><tr><th>Show</th><th>Status</th><th>Contact</th><th>Date sent</th><th>Follow up</th><th>Source</th><th>Client</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
-    <div class="footnote">Source: Notion › Podcast Tour HQ › Show Directory. Notion has no "date reached out" field, so the pitched date is when this dashboard first saw the show move to PITCHED. "Responded" counts shows marked BOOKED or PASSED, because Show Directory has no "replied" status.</div>
+    <div class="footnote">Source: Notion › Podcast Tour HQ › Show Directory (read only). Timing uses Date Sent. Where Date Sent is empty, the date the dashboard first saw the show as SENT is used and marked "est.". PITCHED counts as SENT.</div>
   </section>
 </div>
 
 <script>
 (function () {
-  const STAGES = [
-    { key: 'NEW', label: 'New (not pitched)' },
-    { key: 'PITCHED', label: 'Pitched, no response' },
-    { key: 'BOOKED', label: 'Booked' },
-    { key: 'PASSED', label: 'Passed (declined)' },
-  ];
+  const PIPELINE = ['NEW', 'DM READY', 'SENT', 'REPLIED', 'CALL BOOKED', 'GUEST INTRODUCED', 'BOOKED', 'PASSED', 'CONTACT NEEDED', 'DUPLICATE'];
+  const FORWARD = ['SENT', 'REPLIED', 'CALL BOOKED', 'GUEST INTRODUCED', 'BOOKED'];
+  const OPEN = ['DM READY', 'SENT', 'REPLIED', 'CALL BOOKED', 'GUEST INTRODUCED', 'CONTACT NEEDED'];
   const AUTO_REFRESH_MS = 5 * 60 * 1000;
   const DAY = 86400000;
-  const params = new URLSearchParams(location.search);
-  const key = params.get('key') || '';
+  const key = new URLSearchParams(location.search).get('key') || '';
   const $ = (id) => document.getElementById(id);
   let data = null;
+  let drafts = [];
 
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (_) { return null; } }
   $('days').value = Number(store('tourTracker.days')) || 7;
+  $('statusFilter').insertAdjacentHTML('beforeend', PIPELINE.map((s) => `<option>${s}</option>`).join(''));
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeUrl = (u) => (/^(https?:|mailto:)/i.test(u || '') ? u : null);
   const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '–');
-  const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—';
-  const daysAgo = (iso) => Math.floor((Date.now() - new Date(iso).getTime()) / DAY);
+  const fmtDate = (iso) => iso ? new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—';
+  const dayStart = (iso) => new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).setHours(0, 0, 0, 0);
+  const today = () => new Date().setHours(0, 0, 0, 0);
+  const daysAgo = (iso) => Math.round((today() - dayStart(iso)) / DAY);
+  const norm = (s) => (s === 'PITCHED' ? 'SENT' : s);
+  const cls = (s) => 's-' + String(s || '').replace(/\s+/g, '-');
   const ago = (iso) => {
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
     if (m < 1) return 'just now';
@@ -213,7 +235,10 @@
     if (m < 1440) return Math.round(m / 60) + 'h ago';
     return Math.round(m / 1440) + 'd ago';
   };
-  const pill = (s) => `<span class="pill s-${esc(s)}">${esc(s || 'No status')}</span>`;
+  const pill = (s) => `<span class="pill ${cls(s)}">${esc(s || 'No status')}</span>`;
+  const link = (u, label) => (safeUrl(u) ? `<a class="chip" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${label}</a>` : '');
+  const contactLinks = (s) => [link(s.instagram, 'Instagram'), link(s.facebook, 'Facebook'), link(s.emailOrBooking, 'Email / Booking')].filter(Boolean).join(' ') || '<span class="meta">—</span>';
+  const sentLabel = (s) => s.sentAt ? `${fmtDate(s.sentAt)}${s.sentEstimated ? ' <span class="meta">est.</span>' : ''}` : '—';
 
   async function load() {
     $('refresh').disabled = true;
@@ -233,50 +258,76 @@
     }
   }
 
+  function needsFollowUp(s, X) {
+    if (s.status !== 'SENT') return false;
+    if (s.followUpDate) return dayStart(s.followUpDate) <= today();
+    return !!s.sentAt && daysAgo(s.sentAt) >= X;
+  }
+
   function render() {
     const shows = data.shows;
-    const count = (s) => shows.filter((x) => x.status === s).length;
-    const pitched = count('PITCHED'), booked = count('BOOKED'), passed = count('PASSED');
-    const sent = pitched + booked + passed, responded = booked + passed;
+    const live = shows.filter((s) => s.status !== 'DUPLICATE');
+    const count = (st) => shows.filter((x) => x.status === st).length;
+    const countIn = (list) => shows.filter((x) => list.includes(x.status)).length;
+    const sent = countIn(FORWARD) + count('PASSED');
+    const replied = countIn(FORWARD.slice(1)) + count('PASSED');
+    const calls = countIn(['CALL BOOKED', 'GUEST INTRODUCED', 'BOOKED']);
+    const booked = count('BOOKED');
     const X = Number($('days').value) || 7;
 
-    $('synced').textContent = `Synced ${new Date(data.syncedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${shows.length} shows · auto-refreshes every 5 min`;
+    $('synced').textContent = `Synced ${new Date(data.syncedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${live.length} shows · auto-refreshes every 5 min`;
     $('banners').innerHTML = data.historyError
-      ? `<div class="banner">Status history isn't being recorded yet (${esc(data.historyError)}). Run <code>supabase/add-tour-tracker.sql</code> in Supabase to enable follow-ups and the activity feed.</div>`
+      ? `<div class="banner">Status history isn't being recorded (${esc(data.historyError)}). Run <code>supabase/add-tour-tracker.sql</code> in Supabase to enable the activity feed and estimated sent dates.</div>`
       : '';
 
     $('t-sent').textContent = sent;
-    $('t-resp').textContent = pct(responded, sent);
-    $('t-resp-d').textContent = `${responded} of ${sent} responded`;
-    $('t-book').textContent = pct(booked, responded);
-    $('t-book-d').textContent = `${booked} of ${responded} booked`;
+    $('t-resp').textContent = pct(replied, sent);
+    $('t-resp-d').textContent = `${replied} of ${sent} replied or passed`;
+    $('t-call').textContent = pct(calls, replied);
+    $('t-call-d').textContent = `${calls} of ${replied} got a call`;
+    $('t-book').textContent = pct(booked, replied);
+    $('t-book-d').textContent = `${booked} of ${replied} booked`;
 
-    const max = Math.max(1, ...STAGES.map((s) => count(s.key)));
-    const biggestOpen = Math.max(count('NEW'), pitched);
-    $('pipeline').innerHTML = STAGES.map((s) => {
-      const n = count(s.key);
-      const stuck = (s.key === 'NEW' || s.key === 'PITCHED') && n > 0 && n === biggestOpen;
-      return `<div class="stage${stuck ? ' stuck' : ''}" title="${esc(s.label)}: ${n}">
-        <div class="name">${esc(s.label)}${stuck ? ' ⚠' : ''}</div>
+    const dm = shows.filter((s) => s.status === 'DM READY');
+    $('t-dm').textContent = dm.length;
+    drafts = dm.map((s) => s.dmDraft || '');
+    $('dmqueue').innerHTML = dm.length
+      ? dm.map((s, i) => `<div class="dm">
+          <div class="dm-head">
+            <div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
+              <div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · via ' + esc(s.channel) : ''}${s.clients.length ? ' · for ' + esc(s.clients.join(', ')) : ''}</div></div>
+            <div class="dm-links">${link(s.instagram, 'Instagram')} ${link(s.facebook, 'Facebook')}${!s.instagram && !s.facebook ? link(s.emailOrBooking, 'Email / Booking') || '<span class="meta">No DM link</span>' : ''}</div>
+          </div>
+          ${s.dmDraft ? `<div class="draft">${esc(s.dmDraft)}</div><button class="copy" data-i="${i}">Copy DM</button>` : '<div class="meta">No DM Draft yet.</div>'}
+        </div>`).join('')
+      : '<div class="empty">No shows at DM READY.</div>';
+
+    const max = Math.max(1, ...PIPELINE.map(count));
+    const biggestOpen = Math.max(...OPEN.map(count));
+    $('pipeline').innerHTML = PIPELINE.map((st) => {
+      const n = count(st);
+      const stuck = OPEN.includes(st) && n > 0 && n === biggestOpen;
+      return `<div class="stage${stuck ? ' stuck' : ''}" title="${esc(st)}: ${n}">
+        <div class="name">${esc(st)}${stuck ? ' ⚠' : ''}</div>
         <div class="track"><div class="fill" style="width:${(n / max) * 100}%"></div></div>
         <div class="n">${n}</div></div>`;
     }).join('') + `<div class="footnote">⚠ marks the open stage holding the most shows.</div>`;
 
-    const followups = shows
-      .filter((s) => s.status === 'PITCHED' && s.pitchedAt && daysAgo(s.pitchedAt) >= X)
-      .sort((a, b) => new Date(a.pitchedAt) - new Date(b.pitchedAt));
-    const undated = shows.filter((s) => s.status === 'PITCHED' && !s.pitchedAt).length;
-    $('t-fu').textContent = data.historyError ? '–' : followups.length;
-    $('t-fu-d').textContent = `pitched ${X}+ days ago`;
+    const followups = shows.filter((s) => needsFollowUp(s, X))
+      .sort((a, b) => (a.followUpDate || a.sentAt || '').localeCompare(b.followUpDate || b.sentAt || ''));
+    $('t-fu').textContent = followups.length;
+    $('t-fu-d').textContent = `SENT with no reply`;
     $('followups').innerHTML = followups.length
-      ? followups.map((s) => `<li><div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.clients.length ? ' · for ' + esc(s.clients.join(', ')) : ''}</div></div>
-          <div class="overdue">${daysAgo(s.pitchedAt)}d${s.pitchedAtIsFirstSeen ? '+' : ''}</div></li>`).join('')
-      : `<li class="empty">${data.historyError ? 'Needs status history (see banner).' : 'Nothing overdue. Nice.'}${undated ? ` ${undated} pitched show(s) have no tracked pitch date yet.` : ''}</li>`;
+      ? followups.map((s) => `<li><div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
+          <div class="meta">${esc(s.host || 'Host unknown')} · sent ${sentLabel(s)}${s.followUpDate ? ' · follow up ' + fmtDate(s.followUpDate) : ''}</div>
+          <div class="dm-links" style="margin-top:4px">${contactLinks(s)}</div></div>
+          <div class="overdue">${s.sentAt ? daysAgo(s.sentAt) + 'd' : 'due'}</div></li>`).join('')
+      : '<li class="empty">Nothing overdue.</li>';
 
     $('activity').innerHTML = !data.activity
       ? '<li class="empty">Needs status history (see banner).</li>'
       : data.activity.length
-        ? data.activity.map((e) => `<li><div><strong>${esc(e.show_name)}</strong> <span class="meta">${e.from_status ? esc(e.from_status) + ' →' : 'added as'}</span> ${pill(e.to_status)}</div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`).join('')
+        ? data.activity.map((e) => `<li><div><strong>${esc(e.show_name)}</strong> <span class="meta">${e.from_status ? esc(norm(e.from_status)) + ' →' : 'added as'}</span> ${pill(norm(e.to_status))}</div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`).join('')
         : '<li class="empty">No status changes yet.</li>';
 
     renderTable();
@@ -285,24 +336,43 @@
   function renderTable() {
     const q = $('q').value.trim().toLowerCase();
     const sf = $('statusFilter').value;
+    const src = $('sourceFilter').value;
     const rows = data.shows
-      .filter((s) => !sf || s.status === sf)
-      .filter((s) => !q || [s.name, s.host, ...s.clients].join(' ').toLowerCase().includes(q))
-      .sort((a, b) => (b.pitchedAt || '').localeCompare(a.pitchedAt || '') || a.name.localeCompare(b.name));
+      .filter((s) => (sf ? s.status === sf : s.status !== 'DUPLICATE'))
+      .filter((s) => !src || s.source === src)
+      .filter((s) => !q || [s.name, s.host, ...s.clients, ...s.clientsIntroduced].join(' ').toLowerCase().includes(q))
+      .sort((a, b) => PIPELINE.indexOf(a.status) - PIPELINE.indexOf(b.status) || (b.sentAt || '').localeCompare(a.sentAt || '') || a.name.localeCompare(b.name));
     $('rows').innerHTML = rows.length
       ? rows.map((s) => `<tr>
-          <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td>
-          <td data-label="Host">${esc(s.host || '—')}</td>
-          <td data-label="Client">${esc(s.clients.join(', ') || '—')}</td>
-          <td data-label="Pitched" title="${s.pitchedAtIsFirstSeen ? 'Already pitched when first seen — actual date may be earlier' : ''}">${fmtDate(s.pitchedAt)}${s.pitchedAtIsFirstSeen ? ' (first seen)' : ''}</td>
-          <td data-label="Status">${pill(s.status)}</td></tr>`).join('')
-      : `<tr><td colspan="5" class="empty">${data.shows.length ? 'No shows match.' : 'Show Directory is empty. Shows appear here as soon as they are added in Notion.'}</td></tr>`;
+          <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · ' + esc(s.channel) : ''}</div></td>
+          <td data-label="Status">${pill(s.status)}</td>
+          <td data-label="Contact">${contactLinks(s)}</td>
+          <td data-label="Date sent">${sentLabel(s)}</td>
+          <td data-label="Follow up">${fmtDate(s.followUpDate)}</td>
+          <td data-label="Source">${esc(s.source || '—')}</td>
+          <td data-label="Client">${esc(s.clients.join(', ') || '—')}${s.clientsIntroduced.length ? `<div class="meta">Introduced: ${esc(s.clientsIntroduced.join(', '))}</div>` : ''}</td></tr>`).join('')
+      : `<tr><td colspan="7" class="empty">${data.shows.length ? 'No shows match.' : 'Show Directory is empty. Shows appear here as soon as they are added in Notion.'}</td></tr>`;
   }
+
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (_) {}
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy'); ta.remove(); return ok;
+  }
+  $('dmqueue').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button.copy');
+    if (!btn) return;
+    const ok = await copyText(drafts[Number(btn.dataset.i)]);
+    btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+    setTimeout(() => { btn.textContent = 'Copy DM'; }, 1500);
+  });
 
   $('refresh').addEventListener('click', load);
   $('days').addEventListener('change', () => { store('tourTracker.days', $('days').value); if (data) render(); });
   $('q').addEventListener('input', () => data && renderTable());
   $('statusFilter').addEventListener('change', () => data && renderTable());
+  $('sourceFilter').addEventListener('change', () => data && renderTable());
   setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MS);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && data && Date.now() - new Date(data.syncedAt).getTime() > AUTO_REFRESH_MS) load();

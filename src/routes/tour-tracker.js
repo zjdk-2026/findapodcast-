@@ -38,6 +38,7 @@ function prop(p) {
     case 'title':     return p.title.map((t) => t.plain_text).join('') || null;
     case 'rich_text': return p.rich_text.map((t) => t.plain_text).join('') || null;
     case 'select':    return p.select?.name || null;
+    case 'status':    return p.status?.name || null;
     case 'date':      return p.date?.start || null;
     case 'url':       return p.url || null;
     case 'relation':  return p.relation.map((r) => r.id);
@@ -54,17 +55,27 @@ async function fetchShows() {
     cursor = page.has_more ? page.next_cursor : undefined;
   } while (cursor);
 
-  return rows.filter((r) => !r.in_trash && !r.archived).map((r) => ({
-    id:        r.id,
-    url:       r.url,
-    name:      prop(r.properties['Show Name']) || 'Untitled',
-    host:      prop(r.properties['Host']),
-    status:    prop(r.properties['Status']),
-    clientIds: prop(r.properties['Client']) || [],
-    dateAdded: prop(r.properties['Date Added']),
-    notes:     prop(r.properties['Notes']),
-    lastEdited: r.last_edited_time,
-  }));
+  return rows.filter((r) => !r.in_trash && !r.archived).map((r) => {
+    const p = r.properties;
+    return {
+      id:                 r.id,
+      url:                r.url,
+      name:               prop(p['Show Name']) || 'Untitled',
+      host:               prop(p['Host']),
+      status:             prop(p['Status']),
+      clientIds:          prop(p['Client']) || [],
+      introducedIds:      prop(p['Clients Introduced']) || [],
+      instagram:          prop(p['Instagram Link']),
+      facebook:           prop(p['Facebook Link']),
+      emailOrBooking:     prop(p['Email or Booking Link']),
+      channel:            prop(p['Channel']),
+      dateSent:           prop(p['Date Sent']),
+      followUpDate:       prop(p['Follow Up Date']),
+      dmDraft:            prop(p['DM Draft']),
+      perfectGuest:       prop(p['Perfect Guest']),
+      source:             prop(p['Source']),
+    };
+  });
 }
 
 const clientNameCache = new Map();
@@ -73,7 +84,8 @@ async function resolveClientNames(ids) {
   await Promise.all(missing.map(async (id) => {
     try {
       const page = await notion(`pages/${id}`);
-      clientNameCache.set(id, prop(page.properties['Name']) || 'Unnamed');
+      const title = Object.values(page.properties).find((v) => v.type === 'title');
+      clientNameCache.set(id, prop(title) || 'Unnamed');
     } catch (err) {
       logger.warn('[tour-tracker] client lookup failed', { id, error: err.message });
     }
@@ -114,12 +126,14 @@ async function syncEvents(shows) {
   return events;
 }
 
+const SENT_STATUSES = new Set(['SENT', 'PITCHED']);
+
 let inflight = null;
 async function buildPayload() {
   if (!process.env.NOTION_TOKEN) throw new Error('NOTION_TOKEN is not set.');
 
-  const shows = (await fetchShows()).filter((s) => s.status !== 'DUPLICATE');
-  await resolveClientNames(shows.flatMap((s) => s.clientIds));
+  const shows = await fetchShows();
+  await resolveClientNames(shows.flatMap((s) => [...s.clientIds, ...s.introducedIds]));
 
   let events = null;
   let historyError = null;
@@ -130,36 +144,43 @@ async function buildPayload() {
     logger.warn('[tour-tracker] history unavailable', { error: err.message });
   }
 
-  const pitchedAt = new Map();
+  const firstSeenSent = new Map();
   for (const e of events || []) {
-    if (e.to_status === 'PITCHED' && !pitchedAt.has(e.page_id)) {
-      pitchedAt.set(e.page_id, { at: e.observed_at, firstSeen: e.from_status === null });
-    }
+    if (SENT_STATUSES.has(e.to_status) && !firstSeenSent.has(e.page_id)) firstSeenSent.set(e.page_id, e.observed_at);
   }
+
+  const names = (ids) => ids.map((id) => clientNameCache.get(id)).filter(Boolean);
 
   return {
     syncedAt: new Date().toISOString(),
     historyError,
-    shows: shows.map((s) => ({
-      id: s.id,
-      url: s.url,
-      name: s.name,
-      host: s.host,
-      status: s.status,
-      clients: s.clientIds.map((id) => clientNameCache.get(id)).filter(Boolean),
-      dateAdded: s.dateAdded,
-      notes: s.notes,
-      pitchedAt: pitchedAt.get(s.id)?.at || null,
-      pitchedAtIsFirstSeen: pitchedAt.get(s.id)?.firstSeen || false,
+    shows: shows.map(({ clientIds, introducedIds, ...s }) => ({
+      ...s,
+      status: s.status === 'PITCHED' ? 'SENT' : s.status,
+      clients: names(clientIds),
+      clientsIntroduced: names(introducedIds),
+      sentAt: s.dateSent || firstSeenSent.get(s.id) || null,
+      sentEstimated: !s.dateSent && firstSeenSent.has(s.id),
     })),
     activity: events ? events.slice(-15).reverse() : null,
   };
 }
 
+function sync() {
+  inflight = inflight || buildPayload().finally(() => { inflight = null; });
+  return inflight;
+}
+
+// Keeps status history accurate between dashboard visits.
+if (process.env.NOTION_TOKEN) {
+  setInterval(() => {
+    sync().catch((err) => logger.warn('[tour-tracker] background sync failed', { error: err.message }));
+  }, 15 * 60 * 1000).unref();
+}
+
 router.get('/api/tour-tracker', requireOperatorKey, async (req, res) => {
   try {
-    inflight = inflight || buildPayload().finally(() => { inflight = null; });
-    res.json({ success: true, ...(await inflight) });
+    res.json({ success: true, ...(await sync()) });
   } catch (err) {
     logger.error('[tour-tracker] sync failed', { error: err.message });
     res.status(500).json({ success: false, error: err.message });
