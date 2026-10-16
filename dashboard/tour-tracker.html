@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tour Tracker</title>
 <link rel="icon" href="/dashboard/favicon.svg">
+<script>
+  try { var t = localStorage.getItem('tourTracker.theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
+</script>
 <style>
   :root {
     color-scheme: light;
@@ -38,6 +41,21 @@
       --good: #4cc27f;
     }
   }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #111110;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8e8d86;
+    --accent: #3987e5;
+    --accent-track: #1f3550;
+    --warning: #e0a03a;
+    --warning-bg: #2e2412;
+    --critical: #e66767;
+    --good: #4cc27f;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--surface-0); color: var(--text-primary);
@@ -54,6 +72,7 @@
   button { cursor: pointer; font-weight: 600; }
   button:hover { border-color: var(--accent); }
   button:disabled { opacity: .5; cursor: default; }
+  .actions { display: flex; gap: 8px; }
   .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
   .card h2 { font-size: 15px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
   .card h2 .hint { font-weight: 400; color: var(--text-muted); font-size: 12px; }
@@ -112,7 +131,10 @@
       <h1>Podcast Tour Outreach</h1>
       <div class="sub" id="synced">Loading from Notion…</div>
     </div>
-    <button id="refresh">⟳ Refresh</button>
+    <div class="actions">
+      <button id="theme" aria-label="Toggle light or dark mode"></button>
+      <button id="refresh">⟳ Refresh</button>
+    </div>
   </header>
 
   <div id="banners"></div>
@@ -285,6 +307,18 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && data && Date.now() - new Date(data.syncedAt).getTime() > AUTO_REFRESH_MS) load();
   });
+  function isDark() {
+    const t = document.documentElement.getAttribute('data-theme');
+    return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function paintThemeButton() { $('theme').textContent = isDark() ? '☀ Light' : '☾ Dark'; }
+  $('theme').addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    store('tourTracker.theme', next);
+    paintThemeButton();
+  });
+  paintThemeButton();
   load();
 })();
 </script>
