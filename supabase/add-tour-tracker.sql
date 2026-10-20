@@ -13,3 +13,16 @@ CREATE INDEX IF NOT EXISTS idx_tour_status_events_page     ON public.tour_status
 CREATE INDEX IF NOT EXISTS idx_tour_status_events_observed ON public.tour_status_events(observed_at DESC);
 
 ALTER TABLE public.tour_status_events ENABLE ROW LEVEL SECURITY;
+
+-- Verified socials found by the Tour Tracker "Find socials" button (strictEnrich, same law as Unlock).
+-- Keyed by Notion Show Directory page id. Never written back to Notion.
+CREATE TABLE IF NOT EXISTS public.tour_show_socials (
+  page_id     TEXT PRIMARY KEY,
+  show_name   TEXT,
+  fields      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sources     JSONB NOT NULL DEFAULT '{}'::jsonb,
+  confidence  TEXT,
+  checked_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.tour_show_socials ENABLE ROW LEVEL SECURITY;

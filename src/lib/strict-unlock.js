@@ -25,6 +25,10 @@ const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
 const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
 const FETCH_TIMEOUT = 8000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const CONTACT_FIELDS = [
+  'contact_email', 'instagram_url', 'twitter_url', 'facebook_url', 'linkedin_page_url',
+  'youtube_url', 'tiktok_url', 'website', 'host_instagram_url', 'host_linkedin_url', 'host_twitter_url',
+];
 
 // ── Public entry ─────────────────────────────────────────────────────────────
 
@@ -74,53 +78,11 @@ async function unlockPodcast(podcastId, clientId) {
       return { ok: true, podcast: { ...podcast, ...(sourcesPatch ? { contact_sources: sourcesPatch } : {}) }, cached: true };
     }
 
-    // ── 2. Run the existing enrichment pipeline to get baseline ────────────
-    let enriched;
-    try {
-      enriched = await enrichPodcast({
-        ...podcast,
-        _strictMode: true, // reserved flag — enrichPodcast may read it in future
-      });
-    } catch (err) {
-      logger.warn('strict-unlock: enrichPodcast threw', { podcastId, error: err.message });
-      enriched = { ...podcast };
-    }
-
-    // ── 3. Host personal socials deep search (with show-mention verification)
-    const hostSocials = await findHostSocials(enriched);
-    Object.assign(enriched, hostSocials);
-
-    // ── 4. Claude verification pass on ambiguous emails ─────────────────────
-    const emailIsAuthoritative = enriched._email_source === 'rss_owner';
-    if (enriched.contact_email && !emailIsAuthoritative) {
-      const verdict = await claudeVerifyEmail(enriched);
-      if (!verdict.accept) {
-        logger.info('strict-unlock: Claude rejected email', {
-          podcastId, email: enriched.contact_email, reason: verdict.reason,
-        });
-        enriched.contact_email = null;
-      }
-    }
-
-    // ── 5. Build the sources receipt ───────────────────────────────────────
-    const contact_sources = buildSources(enriched, podcast);
-
-    // ── 6. Compute final confidence ────────────────────────────────────────
-    const contact_confidence = computeContactLikelihood(enriched);
+    const { fields, contact_sources, contact_confidence } = await strictEnrich(podcast);
 
     // ── 7. Save ────────────────────────────────────────────────────────────
     const payload = {
-      contact_email: cleanField(enriched.contact_email),
-      instagram_url: cleanField(enriched.instagram_url),
-      twitter_url: cleanField(enriched.twitter_url),
-      facebook_url: cleanField(enriched.facebook_url),
-      linkedin_page_url: cleanField(enriched.linkedin_page_url),
-      youtube_url: cleanField(enriched.youtube_url),
-      tiktok_url: cleanField(enriched.tiktok_url),
-      website: cleanField(enriched.website),
-      host_instagram_url: cleanField(enriched.host_instagram_url),
-      host_linkedin_url: cleanField(enriched.host_linkedin_url),
-      host_twitter_url: cleanField(enriched.host_twitter_url),
+      ...fields,
       contact_sources,
       contact_confidence,
       contact_unlocked_at: new Date().toISOString(),
@@ -153,6 +115,48 @@ async function unlockPodcast(podcastId, clientId) {
     logger.error('strict-unlock: unexpected error', { podcastId, error: err.message, stack: err.stack });
     return { ok: false, error: 'internal_error' };
   }
+}
+
+// ── Strict enrichment (steps 2-6), shared by unlock and the Tour Tracker ─────
+
+async function strictEnrich(podcast) {
+  // ── 2. Run the existing enrichment pipeline to get baseline ────────────
+  let enriched;
+  try {
+    enriched = await enrichPodcast({
+      ...podcast,
+      _strictMode: true, // reserved flag — enrichPodcast may read it in future
+    });
+  } catch (err) {
+    logger.warn('strict-unlock: enrichPodcast threw', { title: podcast.title, error: err.message });
+    enriched = { ...podcast };
+  }
+
+  // ── 3. Host personal socials deep search (with show-mention verification)
+  const hostSocials = await findHostSocials(enriched);
+  Object.assign(enriched, hostSocials);
+
+  // ── 4. Claude verification pass on ambiguous emails ─────────────────────
+  const emailIsAuthoritative = enriched._email_source === 'rss_owner';
+  if (enriched.contact_email && !emailIsAuthoritative) {
+    const verdict = await claudeVerifyEmail(enriched);
+    if (!verdict.accept) {
+      logger.info('strict-unlock: Claude rejected email', {
+        title: podcast.title, email: enriched.contact_email, reason: verdict.reason,
+      });
+      enriched.contact_email = null;
+    }
+  }
+
+  // ── 5. Build the sources receipt ───────────────────────────────────────
+  const contact_sources = buildSources(enriched, podcast);
+
+  // ── 6. Compute final confidence ────────────────────────────────────────
+  const contact_confidence = computeContactLikelihood(enriched);
+
+  const fields = {};
+  for (const f of CONTACT_FIELDS) fields[f] = cleanField(enriched[f]);
+  return { fields, contact_sources, contact_confidence };
 }
 
 // ── Host personal socials deep search ────────────────────────────────────────
@@ -459,4 +463,4 @@ async function writeLog(entry, startedAt) {
   }
 }
 
-module.exports = { unlockPodcast };
+module.exports = { unlockPodcast, strictEnrich };

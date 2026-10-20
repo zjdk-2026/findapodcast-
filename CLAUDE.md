@@ -27,7 +27,7 @@ Full architecture in memory/enrichment_architecture.md. Critical rules:
 ## Unlock System — zero hallucination contact reveal (shipped April 2026)
 Full architecture: `unlock_system_architecture` project memory. Runbook: `findapodcast-unlock-maintenance` skill. The law: `findapodcast-zero-hallucination` skill.
 
-Flow: customer clicks Unlock on card → `POST /api/unlock/:podcastId` (requires dashboard token) → `src/lib/strict-unlock.js :: unlockPodcast` → 30d shared cache check → runs enrichPodcast + host socials deep search (Google CSE + bio mention verify) + Claude haiku-4.5 email verification → builds `contact_sources` receipt → saves.
+Flow: customer clicks Unlock on card → `POST /api/unlock/:podcastId` (requires dashboard token) → `src/lib/strict-unlock.js :: unlockPodcast` (steps 2-6 live in exported `strictEnrich`, also used by Tour Tracker) → 30d shared cache check → runs enrichPodcast + host socials deep search (Google CSE + bio mention verify) + Claude haiku-4.5 email verification → builds `contact_sources` receipt → saves.
 
 Critical rules:
 1. Contact pills HIDDEN on customer cards unless `contact_unlocked_at` is set (dashboard/app.js :: contactChipsHtml)
@@ -93,3 +93,4 @@ NOTION_TOKEN (Tour Tracker; integration must be connected to Podcast Tour HQ ›
 - Status order: NEW, DM READY, SENT, REPLIED, CALL BOOKED, GUEST INTRODUCED, BOOKED, PASSED, CONTACT NEEDED, DUPLICATE. Legacy PITCHED = SENT.
 - Sent = SENT..BOOKED + PASSED. Response = (REPLIED..BOOKED + PASSED) ÷ Sent. Call = (CALL BOOKED..BOOKED) ÷ Replied. Booking = BOOKED ÷ Replied.
 - Timing uses Date Sent; falls back to first-seen-as-SENT/PITCHED from `tour_status_events` (`supabase/add-tour-tracker.sql`), shown as "est.". Server syncs every 15 min so history is kept without the page open.
+- "Find socials" button per show → `POST /api/tour-tracker/find-socials/:pageId` runs `strictEnrich` (same zero-hallucination law as Unlock) on the Notion row's name/host/website/Apple/Spotify and stores results in Supabase `tour_show_socials` (in `supabase/add-tour-tracker.sql`). Shown as ✓ chips with source tooltip. Never written to Notion.

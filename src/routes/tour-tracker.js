@@ -3,6 +3,7 @@
 const express  = require('express');
 const supabase = require('../lib/supabase');
 const logger   = require('../lib/logger');
+const { strictEnrich } = require('../lib/strict-unlock');
 
 const router = express.Router();
 
@@ -132,6 +133,25 @@ async function syncEvents(shows) {
 
 const SENT_STATUSES = new Set(['SENT', 'PITCHED']);
 
+async function fetchVerifiedSocials() {
+  const { data, error } = await supabase.from('tour_show_socials').select('page_id, fields, sources, checked_at');
+  if (error) {
+    logger.warn('[tour-tracker] verified socials unavailable', { error: error.message });
+    return new Map();
+  }
+  return new Map(data.map((r) => [r.page_id, r]));
+}
+
+function toVerified(row) {
+  if (!row) return null;
+  return {
+    checkedAt: row.checked_at,
+    links: Object.entries(row.fields || {})
+      .filter(([, url]) => url)
+      .map(([field, url]) => ({ field, url, source: row.sources?.[field] || null })),
+  };
+}
+
 let inflight = null;
 async function buildPayload() {
   if (!process.env.NOTION_TOKEN) throw new Error('NOTION_TOKEN is not set.');
@@ -154,6 +174,7 @@ async function buildPayload() {
   }
 
   const names = (ids) => ids.map((id) => clientNameCache.get(id)).filter(Boolean);
+  const verified = await fetchVerifiedSocials();
 
   return {
     syncedAt: new Date().toISOString(),
@@ -165,6 +186,7 @@ async function buildPayload() {
       clientsIntroduced: names(introducedIds),
       sentAt: s.dateSent || firstSeenSent.get(s.id) || null,
       sentEstimated: !s.dateSent && firstSeenSent.has(s.id),
+      verified: toVerified(verified.get(s.id)),
     })),
     activity: events ? events.slice(-15).reverse() : null,
   };
@@ -187,6 +209,45 @@ router.get('/api/tour-tracker', requireOperatorKey, async (req, res) => {
     res.json({ success: true, ...(await sync()) });
   } catch (err) {
     logger.error('[tour-tracker] sync failed', { error: err.message });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+const finding = new Map();
+
+// Runs the Unlock system's strict, zero-hallucination enrichment for one show.
+// Reads the Notion row, stores results in Supabase only. Never writes to Notion.
+async function findSocials(pageId) {
+  const page = await notion(`pages/${pageId}`);
+  const parentId = (page.parent?.data_source_id || '').replace(/-/g, '');
+  if (parentId !== DATA_SOURCE_ID.replace(/-/g, '')) throw new Error('Not a Show Directory page.');
+
+  const p = page.properties;
+  const website = prop(p['Website']);
+  const title = prop(p['Show Name']);
+  const { fields, contact_sources, contact_confidence } = await strictEnrich({
+    title,
+    host_name: prop(p['Host']),
+    website,
+    apple_url: prop(p['Apple Link']),
+    spotify_url: prop(p['Spotify Link']),
+    contact_sources: website ? { website: 'notion' } : {},
+  });
+
+  const row = { page_id: page.id, show_name: title, fields, sources: contact_sources, confidence: contact_confidence, checked_at: new Date().toISOString() };
+  const { error } = await supabase.from('tour_show_socials').upsert(row);
+  if (error) throw new Error(`Could not save results: ${error.message}. Run supabase/add-tour-tracker.sql.`);
+  return toVerified(row);
+}
+
+router.post('/api/tour-tracker/find-socials/:pageId', requireOperatorKey, async (req, res) => {
+  const { pageId } = req.params;
+  if (!/^[0-9a-f-]{32,36}$/i.test(pageId)) return res.status(400).json({ success: false, error: 'Bad page id.' });
+  try {
+    if (!finding.has(pageId)) finding.set(pageId, findSocials(pageId).finally(() => finding.delete(pageId)));
+    res.json({ success: true, verified: await finding.get(pageId) });
+  } catch (err) {
+    logger.error('[tour-tracker] find socials failed', { pageId, error: err.message });
     res.status(500).json({ success: false, error: err.message });
   }
 });

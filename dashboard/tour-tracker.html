@@ -98,6 +98,8 @@
   .s-SENT, .s-CONTACT-NEEDED { --dot: var(--warning); }
   .s-BOOKED { --dot: var(--good); }
   .s-PASSED { --dot: var(--critical); }
+  .chip.verified { border-color: var(--good); }
+  button.find { padding: 2px 10px; font-size: 12px; border-radius: 999px; margin: 0 4px 4px 0; }
   .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; margin: 0 4px 4px 0; }
   .dm { border-top: 1px solid var(--border); padding: 12px 0; }
   .dm:first-child { border-top: 0; padding-top: 0; }
@@ -242,7 +244,30 @@
   };
   const pill = (s) => `<span class="pill ${cls(s)}">${esc(s || 'No status')}</span>`;
   const link = (u, label) => (safeUrl(u) ? `<a class="chip" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${label}</a>` : '');
-  const contactLinks = (s) => (s.links || []).map((l) => link(l.url, esc(l.label))).filter(Boolean).join(' ') || '<span class="meta">No links in Notion</span>';
+  const VERIFIED_LABELS = {
+    website: 'Website', instagram_url: 'Instagram', facebook_url: 'Facebook', twitter_url: 'X', linkedin_page_url: 'LinkedIn',
+    youtube_url: 'YouTube', tiktok_url: 'TikTok', contact_email: 'Email', host_instagram_url: 'Host Instagram',
+    host_linkedin_url: 'Host LinkedIn', host_twitter_url: 'Host X',
+  };
+  const SOURCE_LABELS = {
+    notion: 'Notion', website_link: "the show's website", rss_or_apple: 'RSS feed / Apple Podcasts', bio_mention: 'profile bio names the show',
+    cross_verified: 'cross-checked sources', rss_owner: 'RSS feed owner', verified: 'verified source', legacy_enrichment: 'earlier enrichment',
+  };
+  const normUrl = (u) => String(u || '').toLowerCase().replace(/^mailto:/, '').replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '').replace(/\/$/, '');
+  const contactLinks = (s, withButton = true) => {
+    const seen = new Set((s.links || []).map((l) => normUrl(l.url)));
+    const chips = (s.links || []).map((l) => link(l.url, esc(l.label)));
+    for (const v of s.verified?.links || []) {
+      if (seen.has(normUrl(v.url))) continue;
+      seen.add(normUrl(v.url));
+      const u = safeUrl(v.field === 'contact_email' && !/^mailto:/i.test(v.url) ? 'mailto:' + v.url : v.url);
+      if (u) chips.push(`<a class="chip verified" href="${esc(u)}" target="_blank" rel="noopener" title="Verified via ${esc(SOURCE_LABELS[v.source] || v.source || 'verified source')}">✓ ${esc(VERIFIED_LABELS[v.field] || v.field)}</a>`);
+    }
+    const list = chips.filter(Boolean).join(' ') || '<span class="meta">No links yet</span>';
+    if (!withButton) return list;
+    const status = s.verified ? `<span class="meta">checked ${ago(s.verified.checkedAt)}${s.verified.links.length ? '' : ', nothing verifiable found'}</span>` : '';
+    return `${list} <button class="find" data-id="${esc(s.id)}">${s.verified ? 'Re-check' : 'Find socials'}</button> ${status}`;
+  };
   const sentLabel = (s) => s.sentAt ? `${fmtDate(s.sentAt)}${s.sentEstimated ? ' <span class="meta">est.</span>' : ''}` : '—';
 
   async function load() {
@@ -334,7 +359,7 @@
       ? '<li class="empty">Needs status history (see banner).</li>'
       : data.activity.length
         ? data.activity.map((e) => { const s = byId.get(e.page_id); return `<li><div>${s ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : `<strong>${esc(e.show_name)}</strong>`} <span class="meta">${e.from_status ? esc(norm(e.from_status)) + ' →' : 'added as'}</span> ${pill(norm(e.to_status))}
-          <div class="dm-links" style="margin-top:4px">${s ? contactLinks(s) : '<span class="meta">No longer in Show Directory</span>'}</div></div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`; }).join('')
+          <div class="dm-links" style="margin-top:4px">${s ? contactLinks(s, false) : '<span class="meta">No longer in Show Directory</span>'}</div></div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`; }).join('')
         : '<li class="empty">No status changes yet.</li>';
 
     renderTable();
@@ -367,6 +392,25 @@
     ta.value = text; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand('copy'); ta.remove(); return ok;
   }
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button.find');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = 'Searching… up to a minute';
+    try {
+      const res = await fetch(`/api/tour-tracker/find-socials/${encodeURIComponent(btn.dataset.id)}?key=${encodeURIComponent(key)}`, { method: 'POST' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Search failed');
+      const show = data.shows.find((x) => x.id === btn.dataset.id);
+      if (show) show.verified = json.verified;
+      render();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Retry';
+      btn.title = err.message;
+      alert('Find socials failed: ' + err.message);
+    }
+  });
   $('dmqueue').addEventListener('click', async (e) => {
     const btn = e.target.closest('button.copy');
     if (!btn) return;
