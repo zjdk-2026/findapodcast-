@@ -26,3 +26,13 @@ CREATE TABLE IF NOT EXISTS public.tour_show_socials (
 );
 
 ALTER TABLE public.tour_show_socials ENABLE ROW LEVEL SECURITY;
+
+-- Notes typed on the Tour Tracker per show. Never written back to Notion.
+CREATE TABLE IF NOT EXISTS public.tour_show_notes (
+  page_id       TEXT PRIMARY KEY,
+  tour_notes    TEXT NOT NULL DEFAULT '',
+  client_notes  TEXT NOT NULL DEFAULT '',
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.tour_show_notes ENABLE ROW LEVEL SECURITY;

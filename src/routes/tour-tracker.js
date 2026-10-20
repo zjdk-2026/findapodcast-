@@ -142,6 +142,15 @@ async function fetchVerifiedSocials() {
   return new Map(data.map((r) => [r.page_id, r]));
 }
 
+async function fetchNotes() {
+  const { data, error } = await supabase.from('tour_show_notes').select('page_id, tour_notes, client_notes, updated_at');
+  if (error) {
+    logger.warn('[tour-tracker] notes unavailable', { error: error.message });
+    return null;
+  }
+  return new Map(data.map((r) => [r.page_id, r]));
+}
+
 function toVerified(row) {
   if (!row) return null;
   return {
@@ -174,7 +183,7 @@ async function buildPayload() {
   }
 
   const names = (ids) => ids.map((id) => clientNameCache.get(id)).filter(Boolean);
-  const verified = await fetchVerifiedSocials();
+  const [verified, notes] = await Promise.all([fetchVerifiedSocials(), fetchNotes()]);
 
   return {
     syncedAt: new Date().toISOString(),
@@ -187,8 +196,10 @@ async function buildPayload() {
       sentAt: s.dateSent || firstSeenSent.get(s.id) || null,
       sentEstimated: !s.dateSent && firstSeenSent.has(s.id),
       verified: toVerified(verified.get(s.id)),
+      notes: notes?.get(s.id) || null,
     })),
     activity: events ? events.slice(-15).reverse() : null,
+    notesAvailable: !!notes,
   };
 }
 
@@ -239,6 +250,19 @@ async function findSocials(pageId) {
   if (error) throw new Error(`Could not save results: ${error.message}. Run supabase/add-tour-tracker.sql.`);
   return toVerified(row);
 }
+
+router.put('/api/tour-tracker/notes/:pageId', requireOperatorKey, async (req, res) => {
+  const { pageId } = req.params;
+  if (!/^[0-9a-f-]{32,36}$/i.test(pageId)) return res.status(400).json({ success: false, error: 'Bad page id.' });
+  const text = (v) => (typeof v === 'string' ? v.slice(0, 20000) : '');
+  const row = { page_id: pageId, tour_notes: text(req.body?.tour_notes), client_notes: text(req.body?.client_notes), updated_at: new Date().toISOString() };
+  const { error } = await supabase.from('tour_show_notes').upsert(row);
+  if (error) {
+    logger.error('[tour-tracker] save notes failed', { pageId, error: error.message });
+    return res.status(500).json({ success: false, error: `Could not save notes: ${error.message}. Run supabase/add-tour-tracker.sql.` });
+  }
+  res.json({ success: true, notes: row });
+});
 
 router.post('/api/tour-tracker/find-socials/:pageId', requireOperatorKey, async (req, res) => {
   const { pageId } = req.params;

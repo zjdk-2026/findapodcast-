@@ -98,6 +98,10 @@
   .s-SENT, .s-CONTACT-NEEDED { --dot: var(--warning); }
   .s-BOOKED { --dot: var(--good); }
   .s-PASSED { --dot: var(--critical); }
+  details.notes { margin-top: 6px; font-size: 13px; }
+  details.notes summary { cursor: pointer; color: var(--text-secondary); font-weight: 600; }
+  details.notes label { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  details.notes textarea { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 14px; resize: vertical; }
   .chip.verified { border-color: var(--good); }
   button.find { padding: 2px 10px; font-size: 12px; border-radius: 999px; margin: 0 4px 4px 0; }
   .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; margin: 0 4px 4px 0; }
@@ -270,6 +274,19 @@
   };
   const sentLabel = (s) => s.sentAt ? `${fmtDate(s.sentAt)}${s.sentEstimated ? ' <span class="meta">est.</span>' : ''}` : '—';
 
+  const openNotes = new Set();
+  const notesLabel = (s) => (s.clients.length ? s.clients.map((c) => c.split(' ')[0]).join(' & ') : 'Client') + ' notes:';
+  const notesHtml = (s) => {
+    const n = s.notes || {};
+    const preview = (n.tour_notes || n.client_notes || '').trim().split('\n')[0];
+    return `<details class="notes" data-id="${esc(s.id)}"${openNotes.has(s.id) ? ' open' : ''}>
+      <summary>Notes${preview ? ` <span class="meta">— ${esc(preview.slice(0, 90))}</span>` : ''}${n.updated_at ? ` <span class="meta">· ${ago(n.updated_at)}</span>` : ''}</summary>
+      <label>Podcast Tour notes:<textarea class="note" data-field="tour_notes" rows="3" placeholder="Where the conversation is up to…">${esc(n.tour_notes || '')}</textarea></label>
+      <label>${esc(notesLabel(s))}<textarea class="note" data-field="client_notes" rows="3" placeholder="Notes for the client…">${esc(n.client_notes || '')}</textarea></label>
+      <span class="meta save-state"></span>
+    </details>`;
+  };
+
   async function load() {
     $('refresh').disabled = true;
     $('refresh').textContent = 'Refreshing…';
@@ -306,9 +323,10 @@
     const X = Number($('days').value) || 7;
 
     $('synced').textContent = `Synced ${new Date(data.syncedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${live.length} shows · auto-refreshes every 5 min`;
-    $('banners').innerHTML = data.historyError
+    const notesBanner = data.notesAvailable === false ? '<div class="banner">Notes can\'t be saved yet. Run <code>supabase/add-tour-tracker.sql</code> in Supabase to enable them.</div>' : '';
+    $('banners').innerHTML = notesBanner + (data.historyError
       ? `<div class="banner">Status history isn't being recorded (${esc(data.historyError)}). Run <code>supabase/add-tour-tracker.sql</code> in Supabase to enable the activity feed and estimated sent dates.</div>`
-      : '';
+      : '');
 
     $('t-sent').textContent = sent;
     $('t-resp').textContent = pct(replied, sent);
@@ -328,6 +346,7 @@
               <div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · via ' + esc(s.channel) : ''}${s.clients.length ? ' · for ' + esc(s.clients.join(', ')) : ''}</div></div>
             <div class="dm-links">${contactLinks(s)}</div>
           </div>
+          ${notesHtml(s)}
           ${s.dmDraft ? `<div class="draft">${esc(s.dmDraft)}</div><button class="copy" data-i="${i}">Copy DM</button>` : '<div class="meta">No DM Draft yet.</div>'}
         </div>`).join('')
       : '<div class="empty">No shows at DM READY.</div>';
@@ -350,7 +369,7 @@
     $('followups').innerHTML = followups.length
       ? followups.map((s) => `<li><div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
           <div class="meta">${esc(s.host || 'Host unknown')} · sent ${sentLabel(s)}${s.followUpDate ? ' · follow up ' + fmtDate(s.followUpDate) : ''}</div>
-          <div class="dm-links" style="margin-top:4px">${contactLinks(s)}</div></div>
+          <div class="dm-links" style="margin-top:4px">${contactLinks(s)}</div>${notesHtml(s)}</div>
           <div class="overdue">${s.sentAt ? daysAgo(s.sentAt) + 'd' : 'due'}</div></li>`).join('')
       : '<li class="empty">Nothing overdue.</li>';
 
@@ -372,12 +391,12 @@
     const rows = data.shows
       .filter((s) => (sf ? s.status === sf : s.status !== 'DUPLICATE'))
       .filter((s) => !src || s.source === src)
-      .filter((s) => !q || [s.name, s.host, ...s.clients, ...s.clientsIntroduced].join(' ').toLowerCase().includes(q))
+      .filter((s) => !q || [s.name, s.host, ...s.clients, ...s.clientsIntroduced, s.notes?.tour_notes, s.notes?.client_notes].join(' ').toLowerCase().includes(q))
       .sort((a, b) => PIPELINE.indexOf(a.status) - PIPELINE.indexOf(b.status) || (b.sentAt || '').localeCompare(a.sentAt || '') || a.name.localeCompare(b.name));
     $('rows').innerHTML = rows.length
       ? rows.map((s) => `<tr>
           <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · ' + esc(s.channel) : ''}</div>
-            <div class="dm-links" style="margin-top:6px">${contactLinks(s)}</div></td>
+            <div class="dm-links" style="margin-top:6px">${contactLinks(s)}</div>${notesHtml(s)}</td>
           <td data-label="Status">${pill(s.status)}</td>
           <td data-label="Date sent">${sentLabel(s)}</td>
           <td data-label="Follow up">${fmtDate(s.followUpDate)}</td>
@@ -419,14 +438,49 @@
     setTimeout(() => { btn.textContent = 'Copy DM'; }, 1500);
   });
 
+  const saveTimers = new Map();
+  async function saveNotes(box) {
+    const id = box.dataset.id;
+    const state = box.querySelector('.save-state');
+    const body = {};
+    box.querySelectorAll('textarea.note').forEach((t) => { body[t.dataset.field] = t.value; });
+    state.textContent = 'Saving…';
+    try {
+      const res = await fetch(`/api/tour-tracker/notes/${encodeURIComponent(id)}?key=${encodeURIComponent(key)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Save failed');
+      const show = data.shows.find((x) => x.id === id);
+      if (show) show.notes = json.notes;
+      state.textContent = 'Saved ✓';
+    } catch (err) {
+      state.textContent = 'Not saved: ' + err.message;
+    } finally {
+      saveTimers.delete(id);
+    }
+  }
+  document.addEventListener('input', (e) => {
+    const box = e.target.closest('details.notes');
+    if (!box || !e.target.matches('textarea.note')) return;
+    box.querySelector('.save-state').textContent = 'Typing…';
+    clearTimeout(saveTimers.get(box.dataset.id));
+    saveTimers.set(box.dataset.id, setTimeout(() => saveNotes(box), 800));
+  });
+  document.addEventListener('toggle', (e) => {
+    if (!e.target.matches?.('details.notes')) return;
+    if (e.target.open) openNotes.add(e.target.dataset.id); else openNotes.delete(e.target.dataset.id);
+  }, true);
+  const editingNotes = () => saveTimers.size > 0 || document.activeElement?.matches?.('textarea.note');
+
   $('refresh').addEventListener('click', load);
   $('days').addEventListener('change', () => { store('tourTracker.days', $('days').value); if (data) render(); });
   $('q').addEventListener('input', () => data && renderTable());
   $('statusFilter').addEventListener('change', () => data && renderTable());
   $('sourceFilter').addEventListener('change', () => data && renderTable());
-  setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MS);
+  setInterval(() => { if (!document.hidden && !editingNotes()) load(); }, AUTO_REFRESH_MS);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && data && Date.now() - new Date(data.syncedAt).getTime() > AUTO_REFRESH_MS) load();
+    if (!document.hidden && !editingNotes() && data && Date.now() - new Date(data.syncedAt).getTime() > AUTO_REFRESH_MS) load();
   });
   function isDark() {
     const t = document.documentElement.getAttribute('data-theme');
