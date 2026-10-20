@@ -196,7 +196,7 @@
       </span>
     </h2>
     <table>
-      <thead><tr><th>Show</th><th>Status</th><th>Website &amp; socials</th><th>Date sent</th><th>Follow up</th><th>Source</th><th>Client</th></tr></thead>
+      <thead><tr><th>Show &amp; links</th><th>Status</th><th>Date sent</th><th>Follow up</th><th>Source</th><th>Client</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
     <div class="footnote">Source: Notion › Podcast Tour HQ › Show Directory (read only). Timing uses Date Sent. Where Date Sent is empty, the date the dashboard first saw the show as SENT is used and marked "est.". PITCHED counts as SENT.</div>
@@ -351,14 +351,14 @@
       .sort((a, b) => PIPELINE.indexOf(a.status) - PIPELINE.indexOf(b.status) || (b.sentAt || '').localeCompare(a.sentAt || '') || a.name.localeCompare(b.name));
     $('rows').innerHTML = rows.length
       ? rows.map((s) => `<tr>
-          <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · ' + esc(s.channel) : ''}</div></td>
+          <td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a><div class="meta">${esc(s.host || 'Host unknown')}${s.channel ? ' · ' + esc(s.channel) : ''}</div>
+            <div class="dm-links" style="margin-top:6px">${contactLinks(s)}</div></td>
           <td data-label="Status">${pill(s.status)}</td>
-          <td data-label="Links">${contactLinks(s)}</td>
           <td data-label="Date sent">${sentLabel(s)}</td>
           <td data-label="Follow up">${fmtDate(s.followUpDate)}</td>
           <td data-label="Source">${esc(s.source || '—')}</td>
           <td data-label="Client">${esc(s.clients.join(', ') || '—')}${s.clientsIntroduced.length ? `<div class="meta">Introduced: ${esc(s.clientsIntroduced.join(', '))}</div>` : ''}</td></tr>`).join('')
-      : `<tr><td colspan="7" class="empty">${data.shows.length ? 'No shows match.' : 'Show Directory is empty. Shows appear here as soon as they are added in Notion.'}</td></tr>`;
+      : `<tr><td colspan="6" class="empty">${data.shows.length ? 'No shows match.' : 'Show Directory is empty. Shows appear here as soon as they are added in Notion.'}</td></tr>`;
   }
 
   async function copyText(text) {
