@@ -329,10 +329,12 @@
           <div class="overdue">${s.sentAt ? daysAgo(s.sentAt) + 'd' : 'due'}</div></li>`).join('')
       : '<li class="empty">Nothing overdue.</li>';
 
+    const byId = new Map(shows.map((x) => [x.id, x]));
     $('activity').innerHTML = !data.activity
       ? '<li class="empty">Needs status history (see banner).</li>'
       : data.activity.length
-        ? data.activity.map((e) => `<li><div><strong>${esc(e.show_name)}</strong> <span class="meta">${e.from_status ? esc(norm(e.from_status)) + ' →' : 'added as'}</span> ${pill(norm(e.to_status))}</div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`).join('')
+        ? data.activity.map((e) => { const s = byId.get(e.page_id); return `<li><div>${s ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : `<strong>${esc(e.show_name)}</strong>`} <span class="meta">${e.from_status ? esc(norm(e.from_status)) + ' →' : 'added as'}</span> ${pill(norm(e.to_status))}
+          <div class="dm-links" style="margin-top:4px">${s ? contactLinks(s) : '<span class="meta">No longer in Show Directory</span>'}</div></div><div class="meta" title="${esc(new Date(e.observed_at).toLocaleString())}">${ago(e.observed_at)}</div></li>`; }).join('')
         : '<li class="empty">No status changes yet.</li>';
 
     renderTable();
